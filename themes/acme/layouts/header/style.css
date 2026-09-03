@@ -1,0 +1,8 @@
+/* A theme adding to a layout it did not write. The engine's rules still apply. */
+[data-layout="header"] main::before {
+    content: ""; display: block;
+    position: relative; z-index: 1;
+    width: 4rem; height: 5px; margin-bottom: 1.2rem;
+    background: var(--pac-accent);
+}
+[data-layout="header"] h1 { text-transform: uppercase; letter-spacing: -.02em; }

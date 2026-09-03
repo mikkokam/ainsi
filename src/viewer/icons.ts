@@ -1,0 +1,17 @@
+/**
+ * Lucide-style icons, inlined rather than pulled from the package: one icon is a few bytes
+ * of path data and a dependency is the whole set. 24x24, 2px stroke, round caps and joins,
+ * drawn to lucide's grid. Not copied from a pinned version, so they are lucide-shaped rather
+ * than byte-identical to any release.
+ */
+const wrap = (body: string): string =>
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+
+export const icons = {
+    play: wrap(`<polygon points="6 3 20 12 6 21 6 3"/>`),
+    x: wrap(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`),
+    chevronLeft: wrap(`<path d="m15 18-6-6 6-6"/>`),
+    chevronRight: wrap(`<path d="m9 18 6-6-6-6"/>`),
+};
+
+export type IconName = keyof typeof icons;

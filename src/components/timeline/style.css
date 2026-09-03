@@ -1,0 +1,47 @@
+.pac-timeline {
+    --pac-timeline-marker: .9em;
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--pac-gap);
+}
+.pac-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
+.pac-timeline__step {
+    display: flex; flex-direction: column; gap: .3em;
+    padding-top: 1.5em; position: relative;
+}
+.pac-timeline--horizontal .pac-timeline__step::before {
+    content: ""; position: absolute;
+    top: calc(var(--pac-timeline-marker) / 2); left: 0; right: calc(var(--pac-gap) * -1);
+    height: var(--pac-border); background: var(--pac-rule);
+}
+.pac-timeline--horizontal .pac-timeline__step:last-child::before { right: 0; }
+.pac-timeline__marker {
+    position: absolute; top: 0; left: 0;
+    width: var(--pac-timeline-marker); height: var(--pac-timeline-marker);
+    border-radius: 50%; background: var(--pac-accent);
+}
+.pac-timeline__label { font-weight: var(--pac-strong); font-variant-numeric: tabular-nums; }
+.pac-timeline__body { color: var(--pac-ink-soft); font-size: .92em; }
+
+@media (max-width: 900px) {
+    .pac-timeline--horizontal { grid-auto-flow: row; }
+    .pac-timeline--horizontal .pac-timeline__step::before { display: none; }
+}
+
+@keyframes pac-timeline-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes pac-timeline-marker {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+body[data-present] [data-current] .pac-timeline__step {
+    animation: pac-timeline-in var(--pac-motion) var(--pac-ease) backwards;
+}
+body[data-present] [data-current] .pac-timeline__step:nth-child(2) { animation-delay: calc(var(--pac-motion) * .26); }
+body[data-present] [data-current] .pac-timeline__step:nth-child(3) { animation-delay: calc(var(--pac-motion) * .38); }
+body[data-present] [data-current] .pac-timeline__step:nth-child(n+4) { animation-delay: calc(var(--pac-motion) * .5); }
+body[data-present] [data-current] .pac-timeline__marker {
+    animation: pac-timeline-marker var(--pac-motion) var(--pac-ease) backwards;
+    animation-delay: inherit;
+}

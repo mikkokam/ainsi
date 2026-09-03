@@ -1,0 +1,8 @@
+/*
+ * The escape hatch: what no token should carry. Fonts, a scale ratio, a texture.
+ * It may not reach inside a component; the loader reports it if it tries.
+ */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;680&display=swap");
+
+.pac-page h1 { letter-spacing: -.035em; }
+.pac-page h2 { letter-spacing: -.02em; }

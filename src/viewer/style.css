@@ -1,0 +1,111 @@
+/* Viewer chrome. Not content, not a theme's business, and never printed. */
+.pac-toolbar {
+    position: fixed; top: 1rem; left: 1rem; z-index: 100;
+    display: flex; flex-direction: column; gap: .35rem;
+    padding: .35rem;
+    background: rgb(255 255 255 / 92%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
+    opacity: .28;
+    transition: opacity .18s ease;
+}
+.pac-toolbar:hover,
+.pac-toolbar[data-awake] { opacity: 1; }
+
+.pac-toolbar__button {
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    padding: 0; border: 0; border-radius: 7px;
+    background: transparent; color: #14181d;
+    cursor: pointer;
+    transition: background .12s ease;
+}
+.pac-toolbar__button:hover { background: rgb(0 0 0 / 7%); }
+.pac-toolbar__button:focus-visible { outline: 2px solid #1f6feb; outline-offset: 1px; }
+.pac-toolbar__button svg { width: 20px; height: 20px; }
+
+.pac-toolbar__count {
+    font: 500 11px/1 ui-monospace, monospace;
+    text-align: center; padding: .3rem 0 .15rem; color: #5b6672;
+}
+
+/* presentation mode: one page, filling the viewport, scaled rather than reflowed */
+body[data-present] { overflow: hidden; background: #000; padding: 0; }
+body[data-present] .pac-page { display: none; }
+body[data-present] .pac-page[data-current] {
+    display: block;
+    position: fixed; top: 50%; left: 50%;
+    width: 1280px; margin: 0;
+    border-radius: 0; box-shadow: none;
+    transform: translate(-50%, -50%) scale(var(--pac-present-scale, 1));
+}
+body[data-present] .pac-toolbar { background: rgb(20 24 29 / 82%); border-color: rgb(255 255 255 / 14%); }
+body[data-present] .pac-toolbar__button { color: #f2f5f8; }
+body[data-present] .pac-toolbar__button:hover { background: rgb(255 255 255 / 12%); }
+body[data-present] .pac-toolbar__count { color: #98a4b3; }
+
+/*
+ * Entrance. A page arriving under presentation settles rather than snaps: the blocks rise
+ * and clear, each a little after the one above it. Duration and easing are theme tokens, so
+ * a theme can make it brisk, slow, or nothing at all by setting --pac-motion to 0s.
+ */
+@keyframes pac-rise {
+    from { opacity: 0; transform: translateY(16px) scale(.994); }
+    to { opacity: 1; transform: none; }
+}
+
+body[data-present] .pac-page[data-current] article > * {
+    animation: pac-rise var(--pac-motion) var(--pac-ease) backwards;
+}
+body[data-present] .pac-page[data-current] article > *:nth-child(2) { animation-delay: calc(var(--pac-motion) * .18); }
+body[data-present] .pac-page[data-current] article > *:nth-child(3) { animation-delay: calc(var(--pac-motion) * .32); }
+body[data-present] .pac-page[data-current] article > *:nth-child(4) { animation-delay: calc(var(--pac-motion) * .44); }
+body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--pac-motion) * .54); }
+
+@media (prefers-reduced-motion: reduce) {
+    body[data-present] .pac-page[data-current] *,
+    body[data-present] .pac-page[data-current] { animation: none !important; }
+}
+
+/*
+ * Touch: 40px is a comfortable mouse target and a poor thumb one, and a strip in the top-left
+ * corner sits on the content. On a phone it becomes a bar along the bottom, within reach and
+ * out of the way, and while presenting it hides itself until the screen is tapped.
+ */
+@media (pointer: coarse) {
+    .pac-toolbar {
+        top: auto; left: 50%; right: auto;
+        bottom: calc(.9rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        flex-direction: row; align-items: center;
+        gap: .4rem; padding: .5rem; border-radius: 16px;
+        opacity: 1;
+    }
+    .pac-toolbar__button { width: 52px; height: 52px; border-radius: 12px; }
+    .pac-toolbar__button svg { width: 26px; height: 26px; }
+    .pac-toolbar__count { font-size: 13px; padding: 0 .5rem 0 .2rem; }
+
+    body[data-present] .pac-toolbar { transition: opacity .22s ease; }
+    body[data-present] .pac-toolbar:not([data-awake]) { opacity: 0; pointer-events: none; }
+}
+
+/*
+ * Presenting on a phone. The paged form scaled to a 390pt screen is a letterbox strip, so a
+ * device already in the reading form presents that form instead: one page, filling the
+ * screen, flowing. Fit still governs the paged form, which is the one that gets projected.
+ */
+@media (max-width: 900px) {
+    body[data-present] .pac-page[data-current] {
+        position: fixed; inset: 0;
+        width: 100%; height: 100%; margin: 0;
+        transform: none;
+        overflow-y: auto;
+        border-bottom: 0;
+    }
+    body[data-present] .pac-page[data-current] main { min-height: 100%; }
+}
+
+@media print {
+    .pac-toolbar { display: none; }
+}

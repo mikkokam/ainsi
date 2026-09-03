@@ -1,0 +1,23 @@
+{
+    "name": "presentation-as-code",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "build": "bun run src/cli.ts",
+        "test": "bun test"
+    },
+    "dependencies": {
+        "hast-util-to-html": "^9.0.5",
+        "mdast-util-to-hast": "^13.2.0",
+        "mdast-util-to-string": "^4.0.0",
+        "remark-frontmatter": "^5.0.0",
+        "remark-gfm": "^4.0.1",
+        "remark-parse": "^11.0.0",
+        "unified": "^11.0.5",
+        "yaml": "^2.7.0",
+        "zod": "^3.24.1"
+    },
+    "optionalDependencies": {
+        "playwright-core": "^1.62.1"
+    }
+}

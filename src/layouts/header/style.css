@@ -1,0 +1,39 @@
+/* No index.ts: a layout is a stylesheet, inheriting the default template. */
+[data-layout="header"] { position: relative; color: var(--pac-accent-ink); }
+[data-layout="header"] main {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: flex-end;
+}
+[data-layout="header"] main[data-align="start"] { justify-content: flex-start; }
+[data-layout="header"] main[data-align="center"] { justify-content: center; }
+
+/* the page's own image becomes the ground; the component did not have to know */
+[data-layout="header"] .pac-full { position: absolute; inset: 0; margin: 0; display: block; }
+[data-layout="header"] .pac-full img { width: 100%; height: 100%; object-fit: cover; }
+[data-layout="header"] .pac-full::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(170deg, rgb(0 0 0 / 25%) 0%, rgb(0 0 0 / 78%) 100%);
+}
+
+/*
+ * The image is a positioned sibling of the text, so without this the text paints beneath it
+ * and beneath the gradient. Positioned siblings beat in-flow content whatever the source order.
+ */
+[data-layout="header"] article > *:not(.pac-full) { position: relative; z-index: 1; }
+
+[data-layout="header"] h1 { font-size: 3.6em; margin: 0; }
+[data-layout="header"] p { font-size: 1.15em; opacity: .84; margin: .3em 0 0; max-width: 26em; }
+
+@media (max-width: 900px) {
+    [data-layout="header"] main { min-height: 78vh; }
+    [data-layout="header"] h1 { font-size: 2.6em; }
+}
+
+/* the ground drifts rather than arrives: a slow scale, long enough not to read as motion */
+@keyframes pac-header-drift {
+    from { transform: scale(1); }
+    to { transform: scale(1.06); }
+}
+body[data-present] [data-current][data-layout="header"] .pac-full img {
+    animation: pac-header-drift 18s linear both;
+}

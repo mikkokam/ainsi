@@ -1,0 +1,38 @@
+/*
+ * Also just a stylesheet. The image is taken out of flow with the text rather than sharing
+ * a grid row with it: CSS Grid ties row tracks across every column, so a tight centered text
+ * stack and a full-height image can't share one grid without one distorting the other.
+ * Absolute positioning against `main` sidesteps that; `article`, a single box, is free to
+ * flex-centre its own children without any row-sharing at all.
+ */
+[data-layout="split"] main { position: relative; padding: 0; }
+[data-layout="split"] article {
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: var(--pac-gap);
+    margin-left: 50%;
+    padding: var(--pac-pad) var(--pac-pad) var(--pac-pad) var(--pac-gap);
+}
+[data-layout="split"] article > .pac-full {
+    position: absolute; inset: 0 auto 0 0;
+    width: 50%; height: 100%; margin: 0;
+}
+[data-layout="split"] article > .pac-full img { width: 100%; height: 100%; object-fit: cover; }
+
+[data-layout="split"] main[data-side="right"] article {
+    margin-left: 0; margin-right: 50%;
+    padding: var(--pac-pad) var(--pac-gap) var(--pac-pad) var(--pac-pad);
+}
+[data-layout="split"] main[data-side="right"] article > .pac-full { inset: 0 0 0 auto; }
+
+@media (max-width: 900px) {
+    [data-layout="split"] article,
+    [data-layout="split"] main[data-side="right"] article {
+        margin: 0; padding: 9% 7%;
+        height: auto;
+    }
+    [data-layout="split"] article > .pac-full,
+    [data-layout="split"] main[data-side="right"] article > .pac-full {
+        position: static; width: auto; height: auto; margin-bottom: var(--pac-gap);
+    }
+}

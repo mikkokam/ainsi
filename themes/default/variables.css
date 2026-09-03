@@ -1,0 +1,29 @@
+/* A theme's tokens. It names no component, no layout and no deck. */
+:root {
+    --pac-ink: #14181d;
+    --pac-ink-soft: #5b6672;
+    --pac-ground: #ffffff;
+    --pac-shell: #eef1f4;
+    --pac-accent: #1f6feb;
+    --pac-accent-ink: #ffffff;
+    --pac-rule: #dfe4ea;
+    --pac-surface: #ffffff;
+
+    --pac-font: "Inter", system-ui, -apple-system, sans-serif;
+    --pac-font-display: var(--pac-font);
+    --pac-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --pac-strong: 620;
+    --pac-size: 22px;
+    --pac-leading: 1.45;
+
+    --pac-gap: 1.5rem;
+    --pac-pad: 5.5%;
+    --pac-radius: 4px;
+    --pac-border: 1px;
+
+    --pac-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+    --pac-blur: 0px;
+
+    --pac-motion: 480ms;
+    --pac-ease: cubic-bezier(.2, .8, .2, 1);
+}

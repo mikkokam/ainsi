@@ -1,0 +1,5 @@
+node_modules/
+bun.lock
+*.html
+!samples/*.html
+.DS_Store
