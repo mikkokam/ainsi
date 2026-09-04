@@ -18,6 +18,7 @@
     --pac-strong: 600;
     --pac-size: 22px;
     --pac-leading: 1.55;
+    --pac-step-min: 0.8;
 
     --pac-gap: 1.9rem;
     --pac-pad: 8.5%;

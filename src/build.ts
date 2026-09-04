@@ -66,6 +66,8 @@ export function assemble(source: string, options: Pick<BuildOptions, "registry" 
             blocks: group(entities, doc.directives, registry, diagnostics),
             layout: current.name,
             layoutProps: current.props,
+            scale: 1,
+            overflow: false,
         };
     });
 
@@ -106,7 +108,11 @@ export function render(
         if (content && !rendered.includes(content)) {
             diagnostics.push({ level: "warn", message: `layout "${layout.name}" dropped the content of page ${page.index + 1}` });
         }
-        return `<section class="pac-page" data-page="${page.index + 1}" data-layout="${page.layout}">
+        // the solver's two outputs ride on the section: the type scale it settled on, and
+        // the admission that it ran out of ladder. Both are absent on a page that just fits.
+        const step = page.scale === 1 ? "" : ` style="--pac-step:${page.scale}"`;
+        const overflow = page.overflow ? " data-overflow" : "";
+        return `<section class="pac-page" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
 ${rendered}
 </section>`;
     }).join("\n");

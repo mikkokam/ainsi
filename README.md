@@ -18,6 +18,12 @@ Two things it must do that bespoke per-deck HTML cannot: change the content of a
     bun run src/cli.ts samples/acme.md              # writes samples/acme.html
     bun run src/cli.ts samples/acme.md --watch      # rebuilds and reloads the browser
     bun run src/cli.ts samples/acme.md --no-viewer  # no toolbar, for a headless render
-    bun run src/cli.ts samples/acme.md --fit         # split pages that overflow (needs `bunx playwright install chromium`)
+    bun run src/cli.ts samples/acme.md --fit        # make the pages fit (needs `bunx playwright install chromium`)
+
+`--fit` measures every page in a real browser and, while one overflows, steps its type down
+within the range the theme allows, then splits it at a block boundary, then inside a component
+that says it may be split. A page that exhausts all of that is rendered clipped, marked, and
+reported rather than losing content in silence. `PAC_CHROMIUM=/path/to/chrome` uses a browser
+already on the machine instead of playwright's own copy.
 
 The core is plain TypeScript with no framework. A theme is a token list, a component ships its own CSS written against those tokens, and the engine owns the page box. A component returns an HTML string and may ship its own `css` and `script`; the engine emits those once per deck and marks each root with `data-pac="<name>"`, so interactivity is islands and a component may use any framework inside itself without the engine gaining one.

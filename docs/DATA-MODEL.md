@@ -257,7 +257,10 @@ Frontmatter, once at the top of the file. Theme, aspect ratio, page policy. Noth
 `[invariant]` Pages are an output, not an input. Fixed page height is where markdown-to-slides tools die, so fit is a solver in the pipeline from the first version, not a rendering afterthought.
 
     interface Page {
+        index: number;          // 0-based, reassigned at render so a split renumbers for free
         blocks: Block[];
+        layout: string;
+        layoutProps: Record<string, unknown>;
         scale: number;          // 1.0 unless the solver stepped down
         overflow: boolean;      // true if the ladder ran out; rendered anyway, flagged
     }
@@ -271,7 +274,9 @@ Page candidates come from break entities and the h1 policy, and they resolve bef
 `[decision]` The measuring browser is `playwright-core`, an optional dependency and never a
 hard one. `bun install` must succeed and a plain build must run on a machine that has never
 seen a browser binary; `playwright-core` is the small JS wrapper only, and `chromium.launch()`
-succeeds only once `bunx playwright install chromium` has been run separately. Fit is
+succeeds only once `bunx playwright install chromium` has been run separately, or
+`PAC_CHROMIUM` names a browser binary already on the machine, which is the case on most CI
+images and is the difference between the fit tests running there and silently skipping. Fit is
 requested with `--fit`; a plain build never imports the module that imports it, so importing
 `build.ts` alone can never pull a browser dependency in.
 
@@ -280,12 +285,37 @@ unchanged, never a thrown error. The alternative, a heuristic estimate of text h
 rejected: it would contradict the reason HTML was chosen as the target in the first place, and
 a wrong estimate is worse than an honest skip.
 
-`[decision]` Shipped scope is the block-boundary step of the ladder only: a page that
-overflows loses its last block to a new page under the same layout, repeated until the page
-fits or one block remains. Scale-stepping and density variants are the next steps in the
-ladder and are not built; a page overflowing as a single block is reported rather than
-silently left to clip, which is the correct outcome for what is built so far, not a failure of
-it.
+`[decision]` The scale rung is discrete, `--pac-step` in steps of 0.04 down to the theme's
+`--pac-step-min`, rather than a computed ratio. Height does not shrink in proportion to type
+size, because line wrapping is quantised and the page inset is a percentage of width, so a
+computed ratio would be a guess dressed as arithmetic; and a deck whose pages each land on
+their own size looks unfinished. Discrete rungs make a deck use two or three sizes at most.
+The floor is a theme token, read from the rendered deck rather than the theme file, because
+that is where a cascade is actually resolved.
+
+`[decision]` A split cuts where the page fills at **full** type size, not at the size the page
+shrank to on its way down the ladder. The scale rung exists to save a page from being split at
+all; once a split is happening anyway, packing the head at the smallest type a theme allows
+only guarantees the head has to shrink again, and the deck ends up uniformly cramped. Both
+halves start the ladder over, so each page ends at the size its own content asks for.
+
+`[decision]` A split moves the whole remainder to one following page, which re-enters the
+ladder and is cut again if it has to be. Moving one block at a time and letting the outer loop
+repeat gives every moved block a page of its own, which is a worse deck than the clipping it
+replaces. The cut point is found by bisection over prefixes: fitting is monotone in how much a
+page carries, so the search is sound, and each candidate is measured as a one-page deck rather
+than guessed at.
+
+`[decision]` Density variants, the second rung, are still not built. Every component declares
+`density` and nothing consumes it. It is the rung with the least to offer: the other three
+between them fit every deck written so far, and a variant needs CSS in each component before
+the solver has anything to step to.
+
+`[invariant]` A page that exhausts the ladder renders clipped and says so: `overflow` on the
+page, `data-overflow` on the section, a hairline mark along the bottom edge in the reading
+view, and a diagnostic naming the page. Silently clipping is the one outcome the model does not
+allow, because a deck that quietly loses a paragraph is worse than one that visibly does not
+fit.
 
 `[invariant]` Measuring overflow requires forcing the measured element out of
 `overflow: visible` first. Chromium's `scrollHeight` reports true overflow only once overflow
@@ -304,6 +334,12 @@ A theme is a folder.
 
 `[invariant]` `variables.css` is a token list. It names no component, no page part and no
 deck. Adding a component requires no theme change.
+
+`[decision]` How far the fit solver may shrink type is a token, `--pac-step-min`. It is the
+one thing the solver needs from a theme and cannot work out for itself: whether this type at
+80% is still readable is a typographic judgement, and a theme with a generous inset or a
+large body size can afford more of it than one already set tight. Set it to 1 and the theme
+opts out of the rung entirely, taking a split wherever it would have taken smaller type.
 
 `[decision]` Motion is a token too. `--pac-motion` and `--pac-ease` set how a presented page
 settles, and a theme that wants none sets `--pac-motion: 0s` rather than asking every

@@ -55,7 +55,8 @@ async function render(): Promise<string[]> {
     console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks -> ${output}`);
     for (const page of result.pages) {
         const blocks = page.blocks.map(b => `${b.component}${b.origin === "directive" ? "*" : ""}`).join(", ");
-        console.log(`  page ${page.index + 1} [${page.layout}]: ${blocks}`);
+        const fitted = [page.scale === 1 ? "" : ` x${page.scale}`, page.overflow ? " OVERFLOWS" : ""].join("");
+        console.log(`  page ${page.index + 1} [${page.layout}]${fitted}: ${blocks}`);
     }
 
     return [themeDir, ...componentRoots];

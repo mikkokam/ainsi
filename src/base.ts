@@ -56,6 +56,20 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page strong { font-weight: var(--pac-strong); }
 
 /*
+ * The fit solver ran out of ladder here and the page is clipped. Saying so beats hiding it,
+ * and the mark belongs to the engine rather than a theme: it reports a build fact, it is not
+ * a look a theme is allowed to have an opinion about. Reading view only, so a projected or
+ * printed page carries no trace of it.
+ */
+body.pac:not([data-present]) .pac-page[data-overflow]::before {
+    content: "";
+    position: absolute; inset: auto 0 0 0; height: 3px;
+    background: repeating-linear-gradient(90deg, #d6453c 0 9px, transparent 9px 18px);
+    pointer-events: none;
+}
+@media print { .pac-page[data-overflow]::before { display: none; } }
+
+/*
  * Reading view. A deck has two forms: a fixed-aspect page for projecting and printing, and
  * a fluid one for reading on whatever screen is to hand. Fit governs the first only.
  */
