@@ -79,7 +79,7 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 ![Founding team in a sunlit Nordic workshop studio](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80)
 
-Founded by former payment security and distributed systems leads from Pay Pay Inc and Bank of Tor. We built Acme after managing compliance across 40+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
+Founded by former payment security and distributed systems leads from Pay More Inc and Bank of Tor. We built Acme after managing compliance across 40+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
 
 <!-- pac:layout header align=center -->
 
