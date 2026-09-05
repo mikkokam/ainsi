@@ -27,6 +27,8 @@ export interface ServeOptions {
     roots: string[];
     /** produce the deck's html again. What it throws is reported and the last html kept. */
     rebuild(): Promise<string>;
+    /** extra routes, tried before assets and the deck; undefined falls through */
+    route?(request: Request, url: URL): Promise<Response | undefined>;
 }
 
 export interface Server {
@@ -35,7 +37,7 @@ export interface Server {
 }
 
 export function serve(options: ServeOptions): Server {
-    const { deck, port, roots, rebuild } = options;
+    const { deck, port, roots, rebuild, route } = options;
     let html = options.initial;
 
     const clients = new Set<ReadableStreamDirectController>();
@@ -55,6 +57,11 @@ export function serve(options: ServeOptions): Server {
                         await new Promise(() => {});
                     },
                 }), { headers: { "content-type": "text/event-stream", "cache-control": "no-cache" } });
+            }
+
+            if (route) {
+                const handled = await route(request, url);
+                if (handled) return handled;
             }
 
             if (url.pathname !== "/") {

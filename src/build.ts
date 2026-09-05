@@ -4,7 +4,7 @@ import { group } from "./group";
 import { blockHtml, inlineHtml, plainText } from "./html";
 import { BASE_CSS } from "./base";
 import type { Layouts, Registry } from "./registry";
-import type { Diagnostic, Page, Settings } from "./types";
+import type { Diagnostic, Entity, Page, Settings } from "./types";
 
 export interface BuildResult {
     html: string;
@@ -18,6 +18,8 @@ export interface BuildOptions {
     themeCss?: string;
     /** toolbar and presentation mode; off for a headless render such as a pdf */
     viewer?: { css: string; script: string };
+    /** wrap each entity in a boxless handle the studio can splice against */
+    edit?: boolean;
 }
 
 /** Parse and group only, with no rendering: what the fit pass measures and may reshape. */
@@ -90,14 +92,46 @@ export function render(
     const usedComponents = new Set(numbered.flatMap(p => p.blocks.map(b => b.component)));
     const usedLayouts = new Set(numbered.map(p => p.layout));
 
+    // studio handles ride as attributes on elements the markup already has: a wrapper
+    // element, even a boxless one, changes what child and sibling selectors match
+    const entityHtml = options.edit
+        ? (e: Entity) => handle(blockHtml(e), `data-pac-entity="${e.id}"`)
+        : blockHtml;
+
     const body = numbered.map(page => {
-        const content = page.blocks.map(block => registry.get(block.component)!.render({
-            entities: block.entities,
-            props: block.props,
-            html: blockHtml,
-            inline: inlineHtml,
-            text: plainText,
-        })).join("\n");
+        const content = page.blocks.map(block => {
+            // a component that places an entity's text itself, `inline(head.node)`, still
+            // yields a handle: the node is recognised by identity and the text spanned
+            const inline = options.edit
+                ? (node: any) => {
+                    const owner = block.entities.find(e => e.node === node);
+                    return owner ? `<span data-pac-entity="${owner.id}">${inlineHtml(node)}</span>` : inlineHtml(node);
+                }
+                : inlineHtml;
+            const rendered = registry.get(block.component)!.render({
+                entities: block.entities,
+                props: block.props,
+                html: entityHtml,
+                inline,
+                text: plainText,
+            });
+            // the fallback handle covers only what the component did not render entity by
+            // entity, so the edit unit stays the entity and never grows to the whole block.
+            // An image the component placed itself is found by its src, so the handle sits
+            // on the img rather than on a root that also contains unrelated columns.
+            if (!options.edit) return rendered;
+            let out = rendered;
+            const rest: Entity[] = [];
+            for (const e of block.entities) {
+                if (out.includes(`data-pac-entity="${e.id}"`)) continue;
+                const placed = e.kind === "image" ? placeImage(out, e) : null;
+                if (placed) out = placed;
+                else rest.push(e);
+            }
+            return rest.length
+                ? handle(out, `data-pac-span="${rest[0]!.id} ${rest.at(-1)!.id}"`)
+                : out;
+        }).join("\n");
         const layout = layouts.get(page.layout)!;
         const rendered = layout.render({
             content,
@@ -153,6 +187,23 @@ export function build(source: string, options: BuildOptions): BuildResult {
     const assembled = assemble(source, options);
     const rendered = render(assembled.pages, assembled.title, assembled.settings, options);
     return { html: rendered.html, pages: assembled.pages, diagnostics: [...assembled.diagnostics, ...rendered.diagnostics] };
+}
+
+/** put an attribute on the first element of a fragment; a fragment with none is left alone */
+function handle(html: string, attribute: string): string {
+    return html.replace(/<([a-zA-Z][^\s/>]*)/, (_, tag) => `<${tag} ${attribute}`);
+}
+
+/** hang an image entity's handle on the img tag that carries its url; null when not found */
+function placeImage(html: string, entity: Entity): string | null {
+    const node = entity.node.type === "image" ? entity.node : entity.node.children?.[0];
+    if (node?.type !== "image") return null;
+    const src = `src="${String(node.url).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"`;
+    const at = html.indexOf(src);
+    if (at === -1) return null;
+    const open = html.lastIndexOf("<img", at);
+    if (open === -1) return null;
+    return `${html.slice(0, open + 4)} data-pac-entity="${entity.id}"${html.slice(open + 4)}`;
 }
 
 function coerce(props: Record<string, string>): Record<string, unknown> {

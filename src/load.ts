@@ -213,8 +213,13 @@ function selectors(css: string): string[] {
 }
 
 /** Viewer chrome: a toolbar and presentation mode. Not content, so not a component. */
-export async function loadViewer(diagnostics: Diagnostic[] = []): Promise<{ css: string; script: string }> {
-    const dir = resolve(import.meta.dir, "viewer");
+export const loadViewer = (diagnostics: Diagnostic[] = []) => chrome("viewer", diagnostics);
+
+/** Studio chrome: the editing layer the dev server injects. Never in a deck. */
+export const loadStudio = (diagnostics: Diagnostic[] = []) => chrome("studio", diagnostics);
+
+async function chrome(name: string, diagnostics: Diagnostic[]): Promise<{ css: string; script: string }> {
+    const dir = resolve(import.meta.dir, name);
     const css = (await readIfPresent(join(dir, "style.css"))) ?? "";
 
     const built = await Bun.build({
@@ -224,7 +229,7 @@ export async function loadViewer(diagnostics: Diagnostic[] = []): Promise<{ css:
         minify: true,
     });
     if (!built.success) {
-        diagnostics.push({ level: "warn", message: "viewer failed to build; no chrome emitted" });
+        diagnostics.push({ level: "warn", message: `${name} failed to build; no chrome emitted` });
         return { css, script: "" };
     }
     return { css, script: (await built.outputs[0]!.text()).trim() };

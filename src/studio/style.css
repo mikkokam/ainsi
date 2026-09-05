@@ -1,0 +1,77 @@
+/* Studio chrome: dev server only, never in a deck. Handles are attributes on the deck's own
+   elements, so nothing here may change layout, stacking or what selectors match. */
+
+/* the innermost handle wins the hover: a block stays quiet while an entity inside it is lit */
+body[data-pac-edit]:not([data-present]) [data-pac-entity]:hover:not(:has([data-pac-entity]:hover)),
+body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):hover:not(:has([data-pac-entity]:hover)) {
+    outline: 1.5px dashed rgba(80, 140, 255, 0.7);
+    outline-offset: 3px;
+    cursor: text;
+}
+
+.pac-studio--hidden { display: none !important; }
+.pac-studio--dim { opacity: 0.35; }
+
+.pac-studio__editor {
+    display: block;
+    box-sizing: border-box;
+    border: 1.5px dashed rgba(80, 140, 255, 0.8);
+    border-radius: 6px;
+    resize: none;
+    outline: none;
+    overflow: hidden;
+}
+
+/* wears the hidden element's computed type and margin, set by the script. Zero border and
+   padding so its text wraps where the element's did; the edge is an outline, which costs
+   no layout space. */
+.pac-studio__editor--inplace {
+    width: 100%;
+    padding: 0;
+    border: none;
+    outline: 1.5px dashed rgba(80, 140, 255, 0.8);
+    outline-offset: 3px;
+    background: rgb(127 127 127 / 10%);
+    color: inherit;
+    position: relative;
+    z-index: 5;
+}
+
+.pac-studio__editor--overlay {
+    position: absolute;
+    z-index: 70;
+    font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 0.6em 0.7em;
+    border-style: solid;
+    background: rgba(255, 255, 255, 0.98);
+    color: #111;
+    box-shadow: 0 10px 32px rgb(0 0 0 / 28%);
+}
+
+.pac-studio__editor--insert {
+    width: 100%;
+    font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 0.6em 0.7em;
+    border-style: solid;
+    background: rgba(255, 255, 255, 0.96);
+    color: #111;
+    position: relative;
+    z-index: 5;
+}
+
+.pac-studio__hint {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 60;
+    font: 12px/1 system-ui, sans-serif;
+    color: #fff;
+    background: rgba(20, 24, 32, 0.85);
+    padding: 8px 12px;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.pac-studio__hint--alarm { background: rgba(178, 34, 34, 0.92); }
+
+body[data-present] .pac-studio__hint { display: none; }
