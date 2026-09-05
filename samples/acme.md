@@ -6,7 +6,7 @@ layout: default
 
 <!-- pac:layout header -->
 
-# Acme Gate
+# Acme Gatekeeper
 
 Governance and policy infrastructure for production AI
 
@@ -14,7 +14,7 @@ Governance and policy infrastructure for production AI
 
 # Fast-growing companies adopt AI faster than they can govern it
 
-A fifty-person engineering team now connects eight model providers across product, support, and internal tools—with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
+A fifty-person engineering team might now connect eight model providers across product, support, and internal tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
 
 # What that costs them
 
@@ -27,7 +27,7 @@ A fifty-person engineering team now connects eight model providers across produc
 
 # A single deterministic gateway in front of every model
 
-Every outbound LLM call passes through Acme before reaching upstream providers. Policies evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
+Every outbound LLM call passes through Acme before reaching upstream providers. **Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
 
 Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
 
@@ -42,7 +42,7 @@ Zero changes to existing application code: swap one base URL in your client conf
 - Redact: Real-time PII masking and secret prevention at the wire
 - Comply: Instant audit packages for EU AI Act, SOC 2, and GDPR
 
-# Operating with and without Acme
+# Operating with & without Acme
 
 |                     | Today                    | With Acme                   |
 | ------------------- | ------------------------ | --------------------------- |
@@ -60,7 +60,7 @@ Zero changes to existing application code: swap one base URL in your client conf
 
 VP of Engineering, Series B Fintech (Stockholm)
 
-# Product Roadmap
+# Product roadmap
 
 - Q1: Turnkey OPA policy bundles for EU AI Act Article 12 compliance
 - Q2: Real-time semantic budget limits and anomalous spend throttling
@@ -71,7 +71,7 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 | Tier       | Workspaces | Monthly Requests | Retention & Compliance | Price        |
 | ---------- | ---------- | ---------------- | ---------------------- | ------------ |
-| Team       | 3          | Up to 500k reqs  | 90-day signed logs     | 490 € / mo   |
+| Team       | 4          | Up to 500k reqs  | 90-day signed logs     | 490 € / mo   |
 | Business   | 10         | Up to 5M reqs    | 2-year audit vault     | 1 450 € / mo |
 | Enterprise | Unlimited  | Custom volume    | 7-year vault + VPC     | Custom       |
 
