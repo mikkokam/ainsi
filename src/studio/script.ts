@@ -158,11 +158,14 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         if (done) return;
         done = true;
         const change = options.commit(area.value);
-        close();
         if (!change) {
+            close();
             if (flowTo !== undefined) openAt(flowTo, caret);
             return;
         }
+        // the editor stays, frozen, until the rebuilt page arrives: closing it now would
+        // flash the old rendered value for the length of the commit round trip
+        area.readOnly = true;
         // the write reloads the page, so the flow target survives in sessionStorage
         if (flowTo !== undefined) sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
         await splice(change);
@@ -197,14 +200,22 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
 }
 
 async function splice(change: { start: number; end: number; text: string }): Promise<void> {
-    const response = await fetch("/__edit", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ hash: doc.hash, ...change }),
-    });
-    if (!response.ok) {
+    let failure: string | undefined;
+    try {
+        const response = await fetch("/__edit", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ hash: doc.hash, ...change }),
+        });
+        if (!response.ok) {
+            failure = response.status === 409 ? "the file changed under the studio; reloading" : `edit failed: ${response.status}`;
+        }
+    } catch {
+        failure = "edit failed: server unreachable; reloading";
+    }
+    if (failure) {
         sessionStorage.removeItem(REOPEN);
-        hint(response.status === 409 ? "the file changed under the studio; reloading" : `edit failed: ${response.status}`, true);
+        hint(failure, true);
         setTimeout(() => location.reload(), 900);
     }
     // on success the watcher rebuilds and the reload arrives over the existing SSE channel
