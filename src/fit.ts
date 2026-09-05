@@ -31,16 +31,91 @@ interface Measurer {
     floor(pages: Page[]): Promise<number>;
 }
 
+/**
+ * A measuring browser held open across builds. A one-shot build lets `fit` open and close its
+ * own and never sees this; watch mode opens one at startup and hands it to every rebuild,
+ * because launching chromium costs far more than the build it is measuring.
+ *
+ * `page` is absent when no browser could be launched. That is a settled fact rather than a
+ * failure to retry: the diagnostic is pushed once, here, and a rebuild that is handed a
+ * pageless session degrades quietly instead of warning on every keystroke.
+ */
+export interface FitSession {
+    readonly page: import("playwright-core").Page | undefined;
+    close(): Promise<void>;
+}
+
+export async function openFit(diagnostics: Diagnostic[]): Promise<FitSession> {
+    const browser = await launch(diagnostics);
+    if (!browser) return { page: undefined, close: async () => {} };
+    const page = await browser.newPage({ viewport: VIEWPORT });
+    await hold(page);
+    return { page, close: () => browser.close() };
+}
+
+interface Held {
+    status: number;
+    contentType: string;
+    body: Buffer;
+}
+
+/**
+ * Hold the outcome of every remote request for the life of the session. Measuring is a great
+ * many `setContent` calls — a pass per rung, and a bisection per split — and a deck with
+ * remote images would go to the network again on each one. That is almost all of the wall
+ * clock and none of the work: the image is the same image, and what is being measured is how
+ * tall it makes the page. Held across builds too, so in watch mode an edit pays no network.
+ *
+ * A failure is an outcome worth holding as much as a response is. An unreachable host costs
+ * seconds per attempt while the connection gives up, and a deck whose images are offline
+ * would otherwise pay that on every candidate the solver measures rather than once.
+ *
+ * Only the content type is carried over. Replaying a stored `content-encoding` against a body
+ * playwright has already decoded is how this kind of cache usually breaks.
+ */
+async function hold(page: import("playwright-core").Page): Promise<void> {
+    const held = new Map<string, Held | null>();          // null: tried once, and it failed
+    await page.route(/^https?:/, async route => {
+        const url = route.request().url();
+
+        if (held.has(url)) {
+            const hit = held.get(url);
+            return hit ? route.fulfill(hit) : route.abort().catch(() => {});
+        }
+
+        const response = await route.fetch().catch(() => undefined);
+        if (!response) {
+            held.set(url, null);
+            return route.abort().catch(() => {});
+        }
+
+        const entry: Held = {
+            status: response.status(),
+            contentType: response.headers()["content-type"] ?? "application/octet-stream",
+            body: await response.body(),
+        };
+        held.set(url, entry);
+        return route.fulfill(entry);
+    });
+}
+
+/** The measuring box: the design width of a page, and height enough that nothing else clips. */
+const VIEWPORT = { width: 1280, height: 900 };
+
 export async function fit(
     pages: Page[],
     title: string,
     settings: Settings,
     options: BuildOptions,
     render: typeof renderPages,
+    session?: FitSession,
 ): Promise<{ pages: Page[]; html: string; diagnostics: Diagnostic[] }> {
     const diagnostics: Diagnostic[] = [];
-    const browser = await launch(diagnostics);
-    if (!browser) {
+    // a session handed in is the caller's to close; one opened here is ours
+    const own = session ?? await openFit(diagnostics);
+    const browserPage = own.page;
+    if (!browserPage) {
+        if (!session) await own.close();
         return { pages, html: render(pages, title, settings, options).html, diagnostics };
     }
 
@@ -48,7 +123,6 @@ export async function fit(
     const exhausted = new Set<number>();
 
     try {
-        const browserPage = await browser.newPage({ viewport: { width: 1280, height: 900 } });
         const measurer = measure(browserPage, render, title, settings, options);
         const floor = await measurer.floor(current);
 
@@ -98,7 +172,7 @@ export async function fit(
         const numbered = current.map((page, index) => ({ ...page, index }));
         return { pages: numbered, html: render(numbered, title, settings, options).html, diagnostics };
     } finally {
-        await browser.close();
+        if (!session) await own.close();
     }
 }
 
