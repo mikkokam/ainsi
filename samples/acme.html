@@ -407,8 +407,8 @@ body[data-present] [data-current] .pac-timeline__marker {
 /* Viewer chrome. Not content, not a theme's business, and never printed. */
 .pac-toolbar {
     position: fixed; top: 1rem; left: 1rem; z-index: 100;
-    display: flex; flex-direction: column; gap: .35rem;
-    padding: .35rem;
+    display: flex; flex-direction: row; align-items: center; gap: .2rem;
+    padding: .3rem .35rem;
     background: rgb(255 255 255 / 92%);
     border: 1px solid rgb(0 0 0 / 10%);
     border-radius: 10px;
@@ -418,6 +418,16 @@ body[data-present] [data-current] .pac-timeline__marker {
 }
 .pac-toolbar:hover,
 .pac-toolbar[data-awake] { opacity: 1; }
+
+.pac-menu__brand {
+    font: 600 11px/1 system-ui, sans-serif;
+    letter-spacing: .05em;
+    color: #14181d;
+    padding: .55rem .6rem .45rem;
+    border-bottom: 1px solid rgb(0 0 0 / 8%);
+    margin-bottom: .25rem;
+    user-select: none;
+}
 
 .pac-toolbar__button {
     width: 40px; height: 40px;
@@ -433,8 +443,38 @@ body[data-present] [data-current] .pac-timeline__marker {
 
 .pac-toolbar__count {
     font: 500 11px/1 ui-monospace, monospace;
-    text-align: center; padding: .3rem 0 .15rem; color: #5b6672;
+    text-align: center; color: #5b6672;
 }
+.pac-toolbar__count:not(:empty) { padding: 0 .45rem; }
+
+/* the menu: export stubs and the slide list; the studio prepends its own sections */
+.pac-menu {
+    position: absolute; top: calc(100% + 8px); left: 0;
+    min-width: 230px; max-height: 70vh; overflow-y: auto;
+    padding: .35rem;
+    background: rgb(255 255 255 / 97%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 16%);
+}
+.pac-menu__head {
+    font: 600 10px/1 system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #8a94a0;
+    padding: .55rem .6rem .3rem;
+    user-select: none;
+}
+.pac-menu__item {
+    display: block; width: 100%; text-align: left;
+    font: 400 13px/1.35 system-ui, sans-serif;
+    color: #14181d;
+    padding: .4rem .6rem; border: 0; border-radius: 6px;
+    background: transparent; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pac-menu__item:hover:not(:disabled) { background: rgb(0 0 0 / 7%); }
+.pac-menu__item:disabled { opacity: .38; cursor: default; }
+.pac-menu__item[data-active] { font-weight: 600; }
 
 /* presentation mode: one page, filling the viewport, scaled rather than reflowed */
 body[data-present] { overflow: hidden; background: #000; padding: 0; }
@@ -446,10 +486,20 @@ body[data-present] .pac-page[data-current] {
     border-radius: 0; box-shadow: none;
     transform: translate(-50%, -50%) scale(var(--pac-present-scale, 1));
 }
-body[data-present] .pac-toolbar { background: rgb(20 24 29 / 82%); border-color: rgb(255 255 255 / 14%); }
+/* while presenting the strip all but disappears until asked for */
+body[data-present] .pac-toolbar { background: rgb(20 24 29 / 55%); border-color: rgb(255 255 255 / 10%); opacity: .1; }
+body[data-present] .pac-toolbar:hover,
+body[data-present] .pac-toolbar[data-awake] { opacity: .55; }
+body[data-present] .pac-toolbar:hover { opacity: 1; }
+body[data-present] .pac-toolbar__brand { color: #98a4b3; }
 body[data-present] .pac-toolbar__button { color: #f2f5f8; }
 body[data-present] .pac-toolbar__button:hover { background: rgb(255 255 255 / 12%); }
 body[data-present] .pac-toolbar__count { color: #98a4b3; }
+body[data-present] .pac-menu { background: rgb(20 24 29 / 94%); border-color: rgb(255 255 255 / 12%); }
+body[data-present] .pac-menu__brand { color: #f2f5f8; border-color: rgb(255 255 255 / 10%); }
+body[data-present] .pac-menu__head { color: #7d8894; }
+body[data-present] .pac-menu__item { color: #f2f5f8; }
+body[data-present] .pac-menu__item:hover:not(:disabled) { background: rgb(255 255 255 / 12%); }
 
 /*
  * Entrance. A page arriving under presentation settles rather than snaps: the blocks rise
@@ -594,7 +644,7 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
 body[data-present] .pac-studio__hint { display: none; }
 </style>
 </head>
-<body class="pac" style="--pac-ratio:16 / 9">
+<body class="pac" data-pac-studio style="--pac-ratio:16 / 9">
 <section class="pac-page" data-page="1" data-layout="header">
 <main><article><h1 data-pac-entity="e:ebe8a6:0">Acme Gatekeeper</h1>
 <p data-pac-entity="e:99cf0c:0">Governance and policy infrastructure for production AI</p>
@@ -740,9 +790,14 @@ body[data-present] .pac-studio__hint { display: none; }
 <p data-pac-entity="e:fb7eeb:0">Get in touch for a 30-minute architecture review or deploy a self-hosted trial.</p>
 <figure class="pac-full" data-pac="full"><img data-pac-entity="e:d56012:0" src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&amp;q=80" alt="Warm minimalist architectural interior"></figure></article></main>
 </section>
-<script type="module">(()=>{var $=(f)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${f}</svg>`,q={play:$('<polygon points="6 3 20 12 6 21 6 3"/>'),x:$('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),chevronLeft:$('<path d="m15 18-6-6 6-6"/>'),chevronRight:$('<path d="m9 18 6-6-6-6"/>')};var L=[...document.querySelectorAll(".pac-page")];if(L.length)Q();function Q(){let f=0,y=!1,B=document.createElement("div");B.className="pac-toolbar";let k=D("play","Present",()=>y?M():G()),K=D("chevronLeft","Previous page",()=>d(f-1)),O=D("chevronRight","Next page",()=>d(f+1)),z=document.createElement("div");z.className="pac-toolbar__count",B.append(k,K,O,z),document.body.append(B);let E,A=()=>{B.setAttribute("data-awake",""),clearTimeout(E),E=setTimeout(()=>B.removeAttribute("data-awake"),2600)};addEventListener("mousemove",A,{passive:!0}),addEventListener("pointerdown",A,{passive:!0}),A();function D(h,r,N){let j=document.createElement("button");return j.className="pac-toolbar__button",j.type="button",j.title=r,j.setAttribute("aria-label",r),j.innerHTML=q[h],j.addEventListener("click",(R)=>{R.stopPropagation(),N()}),j}function F(){z.textContent=y?`${f+1}/${L.length}`:""}function G(){y=!0,f=P(),document.body.setAttribute("data-present",""),k.innerHTML=q.x,k.title=k.ariaLabel="Leave presentation",document.documentElement.requestFullscreen?.().catch(()=>{}),J(),H()}function M(){if(y=!1,document.body.removeAttribute("data-present"),k.innerHTML=q.play,k.title=k.ariaLabel="Present",document.fullscreenElement)document.exitFullscreen().catch(()=>{});for(let h of L)h.removeAttribute("data-current");L[f]?.scrollIntoView({block:"start"}),F()}function P(){let h=0,r=1/0;return L.forEach((N,j)=>{let R=Math.abs(N.getBoundingClientRect().top);if(R<r)r=R,h=j}),h}function H(){for(let h of L)h.removeAttribute("data-current");L[f]?.setAttribute("data-current",""),F()}function d(h){let r=Math.max(0,Math.min(L.length-1,h));if(r===f)return;if(f=r,y)H();else L[f]?.scrollIntoView({behavior:"smooth",block:"start"})}function J(){if(!y||innerWidth<=900)return;let[h,r]=(getComputedStyle(document.body).getPropertyValue("--pac-ratio")||"16 / 9").split("/").map((j)=>Number(j.trim())||1),N=1280/(h/r);document.body.style.setProperty("--pac-present-scale",String(Math.min(innerWidth/1280,innerHeight/N)))}addEventListener("resize",J,{passive:!0}),addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&y)M()}),addEventListener("keydown",(h)=>{if(h.key==="Escape"&&y)return M();if(!y&&h.key!=="f")return;switch(h.key){case"ArrowRight":case"ArrowDown":case" ":case"PageDown":return h.preventDefault(),d(f+1);case"ArrowLeft":case"ArrowUp":case"PageUp":return h.preventDefault(),d(f-1);case"Home":return d(0);case"End":return d(L.length-1);case"f":return y?M():G()}}),addEventListener("click",()=>{if(y&&innerWidth>900)d(f+1)});let I;addEventListener("touchstart",(h)=>{let r=h.changedTouches[0];I=r?{x:r.clientX,y:r.clientY}:void 0},{passive:!0}),addEventListener("touchend",(h)=>{let r=h.changedTouches[0];if(!y||!I||!r)return;let N=r.clientX-I.x;if(Math.abs(N)>60&&Math.abs(N)>Math.abs(r.clientY-I.y))d(f+(N<0?1:-1));I=void 0},{passive:!0})}})();
-(()=>{var U={hash:"",source:"",entities:[]},W=!1,Y="pac-scroll",V="pac-reopen";z();async function z(){U=await(await fetch("/__doc")).json(),document.body.setAttribute("data-pac-edit","");let B=sessionStorage.getItem(Y);if(B)scrollTo(0,Number(B));addEventListener("scroll",()=>sessionStorage.setItem(Y,String(scrollY)),{passive:!0}),S("studio: click edits · ⌥click adds below · ↑↓ flow · esc cancels · empty deletes"),document.addEventListener("click",(j)=>{if(W||document.body.hasAttribute("data-present"))return;let F=j.target.closest("[data-pac-entity], [data-pac-span]");if(!F)return;let G=Z(F);if(!G)return;if(j.preventDefault(),j.altKey)A(F,G.end);else H(F,G,"end")});let q=sessionStorage.getItem(V);if(q!==null){sessionStorage.removeItem(V);let[j,F]=q.split("|");$(Number(j),F??"end")}}function Z(B){let q=(J)=>U.entities.find((D)=>D.id===J);if(B.dataset.pacEntity){let J=q(B.dataset.pacEntity);return J&&{start:J.start,end:J.end,md:J.md,kind:J.kind}}let[j,F]=(B.dataset.pacSpan??"").split(" "),G=q(j),Q=q(F);return G&&Q?{start:G.start,end:Q.end,md:U.source.slice(G.start,Q.end),kind:"block"}:void 0}var _=()=>[...document.querySelectorAll("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];function $(B,q){let j=_(),F=j[Math.max(0,Math.min(j.length-1,B))],G=F&&Z(F);if(F&&G)H(F,G,q)}function H(B,q,j){let F=q.kind==="heading"||q.kind==="paragraph"?"inplace":"overlay";C(B,{initial:q.md,caret:j,mode:F,commit:(G)=>G===q.md?void 0:{start:q.start,end:q.end,text:G}})}function A(B,q){C(B,{initial:"",caret:"end",mode:"insert",placeholder:"markdown… a blank line makes two blocks",commit:(j)=>j.trim()?{start:q,end:q,text:`
+<script type="module">(()=>{var O=($)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${$}</svg>`,H={play:O('<polygon points="6 3 20 12 6 21 6 3"/>'),x:O('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),menu:O('<path d="M3 7h18"/><path d="M3 12h14"/><path d="M3 17h14"/>')};var q=[...document.querySelectorAll(".pac-page")];if(q.length)d();function d(){let $=0,j=!1,D=document.createElement("div");D.className="pac-toolbar";let P=R("menu","Menu",()=>I?F():Z()),z=R("play","Present",()=>j?G():V()),J=document.createElement("div");J.className="pac-toolbar__count",D.append(P,z,J),document.body.append(D);let Q,K=()=>{D.setAttribute("data-awake",""),clearTimeout(Q),Q=setTimeout(()=>{if(!I)D.removeAttribute("data-awake")},2600)};addEventListener("mousemove",K,{passive:!0}),addEventListener("pointerdown",K,{passive:!0}),K();function R(h,f,L){let N=document.createElement("button");return N.className="pac-toolbar__button",N.type="button",N.title=f,N.setAttribute("aria-label",f),N.innerHTML=H[h],N.addEventListener("click",(y)=>{y.stopPropagation(),L()}),N}let I;function Z(){I=document.createElement("div"),I.className="pac-menu",I.addEventListener("click",(N)=>N.stopPropagation());let h=document.createElement("div");h.className="pac-menu__brand",h.textContent=document.body.hasAttribute("data-pac-studio")?"PAC Studio":"PAC Player",I.append(h),T("Export…",void 0,"lands with --pdf");let f=document.createElement("div");I.append(f),_("Slides");let L=j?$:W();q.forEach((N,y)=>{let B=N.querySelector("h1, h2, h3")?.textContent?.trim()||`Page ${y+1}`,M=T(`${y+1}  ${B}`,()=>{F(),A(y,!0)});if(y===L)M.setAttribute("data-active","")}),D.append(I),document.dispatchEvent(new CustomEvent("pac:menu",{detail:{panel:I,slot:f}})),addEventListener("pointerdown",S,!0)}function F(){I?.remove(),I=void 0,removeEventListener("pointerdown",S,!0)}function S(h){let f=h.target;if(I&&!I.contains(f)&&!P.contains(f))F()}function _(h){let f=document.createElement("div");f.className="pac-menu__head",f.textContent=h,I.append(f)}function T(h,f,L){let N=document.createElement("button");if(N.className="pac-menu__item",N.type="button",N.textContent=h,f)N.addEventListener("click",f);else if(N.disabled=!0,L)N.title=L;return I.append(N),N}function U(){J.textContent=j?`${$+1}/${q.length}`:""}function V(){j=!0,$=W(),document.body.setAttribute("data-present",""),z.innerHTML=H.x,z.title=z.ariaLabel="Leave presentation",document.documentElement.requestFullscreen?.().catch(()=>{}),Y(),X()}function G(){if(j=!1,document.body.removeAttribute("data-present"),z.innerHTML=H.play,z.title=z.ariaLabel="Present",document.fullscreenElement)document.exitFullscreen().catch(()=>{});for(let h of q)h.removeAttribute("data-current");q[$]?.scrollIntoView({block:"start"}),U()}function W(){let h=0,f=1/0;return q.forEach((L,N)=>{let y=Math.abs(L.getBoundingClientRect().top);if(y<f)f=y,h=N}),h}function X(){for(let h of q)h.removeAttribute("data-current");q[$]?.setAttribute("data-current",""),U()}function A(h,f=!1){let L=Math.max(0,Math.min(q.length-1,h));if(L===$&&!f)return;if($=L,j)X();else q[$]?.scrollIntoView({behavior:"smooth",block:"start"})}function Y(){if(!j||innerWidth<=900)return;let[h,f]=(getComputedStyle(document.body).getPropertyValue("--pac-ratio")||"16 / 9").split("/").map((N)=>Number(N.trim())||1),L=1280/(h/f);document.body.style.setProperty("--pac-present-scale",String(Math.min(innerWidth/1280,innerHeight/L)))}addEventListener("resize",Y,{passive:!0}),addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&j)G()}),addEventListener("keydown",(h)=>{if(h.key==="Escape"&&I)return F();if(h.key==="Escape"&&j)return G();if(!j&&h.key!=="f")return;switch(h.key){case"ArrowRight":case"ArrowDown":case" ":case"PageDown":return h.preventDefault(),A($+1);case"ArrowLeft":case"ArrowUp":case"PageUp":return h.preventDefault(),A($-1);case"Home":return A(0);case"End":return A(q.length-1);case"f":return j?G():V()}}),addEventListener("click",()=>{if(j&&!I&&innerWidth>900)A($+1)});let E;addEventListener("touchstart",(h)=>{let f=h.changedTouches[0];E=f?{x:f.clientX,y:f.clientY}:void 0},{passive:!0}),addEventListener("touchend",(h)=>{let f=h.changedTouches[0];if(!j||!E||!f)return;let L=f.clientX-E.x;if(Math.abs(L)>60&&Math.abs(L)>Math.abs(f.clientY-E.y))A($+(L<0?1:-1));E=void 0},{passive:!0})}})();
+(()=>{var V={hash:"",source:"",entities:[]},X=!1,Z="pac-scroll",W="pac-reopen";C();async function C(){V=await(await fetch("/__doc")).json(),document.body.setAttribute("data-pac-edit","");let q=sessionStorage.getItem(Z);if(q)scrollTo(0,Number(q));addEventListener("scroll",()=>sessionStorage.setItem(Z,String(scrollY)),{passive:!0}),A("studio: click edits · ⌥click adds below · ↑↓ flow · esc cancels · empty deletes"),document.addEventListener("click",(j)=>{if(X||document.body.hasAttribute("data-present"))return;let F=j.target.closest("[data-pac-entity], [data-pac-span]");if(!F)return;let J=_(F);if(!J)return;if(j.preventDefault(),j.altKey)P(F,J.end);else H(F,J,"end")});let B=sessionStorage.getItem(W);if(B!==null){sessionStorage.removeItem(W);let[j,F]=B.split("|");D(Number(j),F??"end")}document.addEventListener("pac:menu",(j)=>{let{panel:F,slot:J}=j.detail,K=document.createElement("button");K.className="pac-menu__item",K.type="button",K.textContent="Theme…",K.addEventListener("click",()=>L(F)),J.append(K)})}async function L(q){let{themes:B,current:j}=await(await fetch("/__themes")).json(),F=document.createElement("div");F.className="pac-menu__head",F.textContent="Theme",q.replaceChildren(F);for(let J of B){let K=document.createElement("button");if(K.className="pac-menu__item",K.type="button",K.textContent=J,J===j)K.setAttribute("data-active","");else K.addEventListener("click",()=>z(N(J)));q.append(K)}}function N(q){let B=/^---\n([\s\S]*?)\n---/.exec(V.source);if(B){let j=/^theme:.*$/m.exec(B[1]);if(j){let F=4+j.index;return{start:F,end:F+j[0].length,text:`theme: ${q}`}}return{start:4,end:4,text:`theme: ${q}
+`}}return{start:0,end:0,text:`---
+theme: ${q}
+---
 
-${j.trim()}`}:void 0})}function C(B,q){let j=document.createElement("textarea");if(j.rows=1,j.className=`pac-studio__editor pac-studio__editor--${q.mode}`,j.value=q.initial,q.placeholder)j.placeholder=q.placeholder;if(q.mode==="inplace"){let D=B.getBoundingClientRect(),K=getComputedStyle(B);for(let M of["font-family","font-size","font-weight","font-style","line-height","letter-spacing","text-align","margin"])j.style.setProperty(M,K.getPropertyValue(M));j.style.minHeight=`${D.height}px`,B.insertAdjacentElement("afterend",j),B.classList.add("pac-studio--hidden")}else if(q.mode==="overlay"){let D=B.getBoundingClientRect();j.style.left=`${D.left+scrollX}px`,j.style.top=`${D.top+scrollY}px`,j.style.width=`${Math.min(D.width,680)}px`,document.body.append(j),B.classList.add("pac-studio--dim")}else B.insertAdjacentElement("afterend",j);W=!0,X(j),j.focus();let F=q.caret==="end"?j.value.length:0;j.setSelectionRange(F,F),j.addEventListener("input",()=>X(j));let G=!1,Q=()=>{W=!1,j.remove(),B.classList.remove("pac-studio--hidden","pac-studio--dim")},J=async(D,K="end")=>{if(G)return;G=!0;let M=q.commit(j.value);if(!M){if(Q(),D!==void 0)$(D,K);return}if(j.readOnly=!0,D!==void 0)sessionStorage.setItem(V,`${D}|${K}`);await L(M)};j.addEventListener("blur",()=>J()),j.addEventListener("keydown",(D)=>{if(D.key==="Escape"){D.preventDefault(),G=!0,Q();return}if(D.key==="Enter"&&(D.metaKey||D.ctrlKey)){D.preventDefault(),J();return}if((D.key==="b"||D.key==="i")&&(D.metaKey||D.ctrlKey)){D.preventDefault(),N(j,D.key==="b"?"**":"*");return}let K=_().indexOf(B);if(K===-1)return;let M=j.selectionStart===j.selectionEnd;if(D.key==="ArrowDown"&&M&&j.selectionStart===j.value.length)D.preventDefault(),J(K+1,"start");if(D.key==="ArrowUp"&&M&&j.selectionStart===0&&K>0)D.preventDefault(),J(K-1,"end")})}async function L(B){let q;try{let j=await fetch("/__edit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({hash:U.hash,...B})});if(!j.ok)q=j.status===409?"the file changed under the studio; reloading":`edit failed: ${j.status}`}catch{q="edit failed: server unreachable; reloading"}if(q)sessionStorage.removeItem(V),S(q,!0),setTimeout(()=>location.reload(),900)}function N(B,q){let{selectionStart:j,selectionEnd:F,value:G}=B;B.setRangeText(`${q}${G.slice(j,F)}${q}`,j,F,"select"),X(B)}function X(B){B.style.height="auto",B.style.height=`${B.scrollHeight+B.offsetHeight-B.clientHeight}px`}function S(B,q=!1){document.querySelector(".pac-studio__hint")?.remove();let j=document.createElement("div");j.className=`pac-studio__hint${q?" pac-studio__hint--alarm":""}`,j.textContent=B,document.body.append(j)}})();</script>
+`}}function _(q){let B=(M)=>V.entities.find((G)=>G.id===M);if(q.dataset.pacEntity){let M=B(q.dataset.pacEntity);return M&&{start:M.start,end:M.end,md:M.md,kind:M.kind}}let[j,F]=(q.dataset.pacSpan??"").split(" "),J=B(j),K=B(F);return J&&K?{start:J.start,end:K.end,md:V.source.slice(J.start,K.end),kind:"block"}:void 0}var $=()=>[...document.querySelectorAll("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];function D(q,B){let j=$(),F=j[Math.max(0,Math.min(j.length-1,q))],J=F&&_(F);if(F&&J)H(F,J,B)}function H(q,B,j){let F=B.kind==="heading"||B.kind==="paragraph"?"inplace":"overlay";S(q,{initial:B.md,caret:j,mode:F,commit:(J)=>J===B.md?void 0:{start:B.start,end:B.end,text:J}})}function P(q,B){S(q,{initial:"",caret:"end",mode:"insert",placeholder:"markdown… a blank line makes two blocks",commit:(j)=>j.trim()?{start:B,end:B,text:`
+
+${j.trim()}`}:void 0})}function S(q,B){let j=document.createElement("textarea");if(j.rows=1,j.className=`pac-studio__editor pac-studio__editor--${B.mode}`,j.value=B.initial,B.placeholder)j.placeholder=B.placeholder;if(B.mode==="inplace"){let G=q.getBoundingClientRect(),Q=getComputedStyle(q);for(let U of["font-family","font-size","font-weight","font-style","line-height","letter-spacing","text-align","margin"])j.style.setProperty(U,Q.getPropertyValue(U));j.style.minHeight=`${G.height}px`,q.insertAdjacentElement("afterend",j),q.classList.add("pac-studio--hidden")}else if(B.mode==="overlay"){let G=q.getBoundingClientRect();j.style.left=`${G.left+scrollX}px`,j.style.top=`${G.top+scrollY}px`,j.style.width=`${Math.min(G.width,680)}px`,document.body.append(j),q.classList.add("pac-studio--dim")}else q.insertAdjacentElement("afterend",j);X=!0,Y(j),j.focus();let F=B.caret==="end"?j.value.length:0;j.setSelectionRange(F,F),j.addEventListener("input",()=>Y(j));let J=!1,K=()=>{X=!1,j.remove(),q.classList.remove("pac-studio--hidden","pac-studio--dim")},M=async(G,Q="end")=>{if(J)return;J=!0;let U=B.commit(j.value);if(!U){if(K(),G!==void 0)D(G,Q);return}if(j.readOnly=!0,G!==void 0)sessionStorage.setItem(W,`${G}|${Q}`);await z(U)};j.addEventListener("blur",()=>M()),j.addEventListener("keydown",(G)=>{if(G.key==="Escape"){G.preventDefault(),J=!0,K();return}if(G.key==="Enter"&&(G.metaKey||G.ctrlKey)){G.preventDefault(),M();return}if((G.key==="b"||G.key==="i")&&(G.metaKey||G.ctrlKey)){G.preventDefault(),k(j,G.key==="b"?"**":"*");return}let Q=$().indexOf(q);if(Q===-1)return;let U=j.selectionStart===j.selectionEnd;if(G.key==="ArrowDown"&&U&&j.selectionStart===j.value.length)G.preventDefault(),M(Q+1,"start");if(G.key==="ArrowUp"&&U&&j.selectionStart===0&&Q>0)G.preventDefault(),M(Q-1,"end")})}async function z(q){let B;try{let j=await fetch("/__edit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({hash:V.hash,...q})});if(!j.ok)B=j.status===409?"the file changed under the studio; reloading":`edit failed: ${j.status}`}catch{B="edit failed: server unreachable; reloading"}if(B)sessionStorage.removeItem(W),A(B,!0),setTimeout(()=>location.reload(),900)}function k(q,B){let{selectionStart:j,selectionEnd:F,value:J}=q;q.setRangeText(`${B}${J.slice(j,F)}${B}`,j,F,"select"),Y(q)}function Y(q){q.style.height="auto",q.style.height=`${q.scrollHeight+q.offsetHeight-q.clientHeight}px`}function A(q,B=!1){document.querySelector(".pac-studio__hint")?.remove();let j=document.createElement("div");j.className=`pac-studio__hint${B?" pac-studio__hint--alarm":""}`,j.textContent=q,document.body.append(j)}})();</script>
 </body>
 </html>

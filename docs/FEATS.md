@@ -1,14 +1,10 @@
 # Walking skeleton
 
-## Three real decks (feat) [invariant]
+## Non-linear navigation (feat)
 
-Two claims rest on the same unmade check, so they are one item. Grouping says zero directives already produce a good deck; fit says a page is an output rather than something the author lays out. Both are implemented, unit-tested, and correct on `samples/acme.md`. Neither has met a deck someone actually had to give.
+Decks are read asynchronously as often as they are presented, and a reader arriving after the meeting wants to jump rather than page through. The viewer needs an overview: a grid of page thumbnails behind a key, click to go, and a way for a deck to name entry points so a page can link to another page.
 
-This is load-bearing twice over. If zero directives do not produce a usable deck, directives become mandatory, become noise in every file, and the format is no better than what exists. If fit produces decks a reader would not accept, the whole solver is machinery in service of a worse result than doing it by hand.
-
-Done: three real decks of Mikko's, rendered with no directives and with `--fit`, read side by side against the bespoke versions. The outcome is a rewritten claim either way — the invariant holds as written, or it is demoted and the reason recorded in one sentence.
-
-Note before trusting the committed sample: `samples/acme.html` was last fitted where images.unsplash.com was unreachable, so its image pages were measured with images at zero height. Re-run `--fit` on a machine with network.
+The toolbar already has the strip to hang it on and the viewer already tracks the current page. What is missing is the overview itself and an addressing scheme: linking to a page needs a stable name for it, which is the anchor question this project decided against for blocks and would have to answer differently here.
 
 ## Local images are not measured (defect)
 
@@ -117,18 +113,6 @@ Done: the four invocations above behave as written, a piped `pac deck.md` refuse
 `playwright-core` is an optional dependency that ships no browser binary, but `bun install` still fetches 14 MB of it against a 27 MB tree, for a wrapper most builds never load. Moving it to a dev dependency, with `--fit` and `--pdf` saying what to install, halves a default install and changes nothing else. The degrade path and its test already exist.
 
 # Later
-
-## Non-linear navigation (feat)
-
-Decks are read asynchronously as often as they are presented, and a reader arriving after the meeting wants to jump rather than page through. The viewer needs an overview: a grid of page thumbnails behind a key, click to go, and a way for a deck to name entry points so a page can link to another page.
-
-The toolbar already has the strip to hang it on and the viewer already tracks the current page. What is missing is the overview itself and an addressing scheme: linking to a page needs a stable name for it, which is the anchor question this project decided against for blocks and would have to answer differently here.
-
-## A 9:16 sample (feat)
-
-`ratio` is a deck setting, so a phone-shaped deck is one line of frontmatter, and the reading form already handles narrow screens. Neither is exercised: every sample is 16:9 read on a laptop, so the claim that this works in three contexts is untested.
-
-Done: a `samples/` deck at 9:16 that reads well on a phone, and the acme deck checked at 900px and below on a real device rather than in a resized window.
 
 # Open
 

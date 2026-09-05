@@ -53,6 +53,50 @@ async function init(): Promise<void> {
         const [index, caret] = reopen.split("|");
         openAt(Number(index), (caret as Caret) ?? "end");
     }
+
+    // the viewer's menu announces itself on open and offers a slot; theme is studio
+    // business, because picking one is a write and the player ships no write path
+    document.addEventListener("pac:menu", event => {
+        const { panel, slot } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement };
+        const themes = document.createElement("button");
+        themes.className = "pac-menu__item";
+        themes.type = "button";
+        themes.textContent = "Theme…";
+        themes.addEventListener("click", () => themeDrill(panel));
+        slot.append(themes);
+    });
+}
+
+/** the menu drills into the theme list in place; the later modal replaces this drill */
+async function themeDrill(panel: HTMLElement): Promise<void> {
+    const { themes, current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
+    const header = document.createElement("div");
+    header.className = "pac-menu__head";
+    header.textContent = "Theme";
+    panel.replaceChildren(header);
+    for (const theme of themes) {
+        const row = document.createElement("button");
+        row.className = "pac-menu__item";
+        row.type = "button";
+        row.textContent = theme;
+        if (theme === current) row.setAttribute("data-active", "");
+        else row.addEventListener("click", () => splice(themeChange(theme)));
+        panel.append(row);
+    }
+}
+
+/** the theme is one frontmatter line; changing it is a splice like any other edit */
+function themeChange(theme: string): { start: number; end: number; text: string } {
+    const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
+    if (matter) {
+        const line = /^theme:.*$/m.exec(matter[1]!);
+        if (line) {
+            const start = 4 + line.index;
+            return { start, end: start + line[0].length, text: `theme: ${theme}` };
+        }
+        return { start: 4, end: 4, text: `theme: ${theme}\n` };
+    }
+    return { start: 0, end: 0, text: `---\ntheme: ${theme}\n---\n\n` };
 }
 
 interface Range { start: number; end: number; md: string; kind: string }

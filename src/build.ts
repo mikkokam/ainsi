@@ -174,7 +174,7 @@ ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="pac" style="--pac-ratio:${settings.ratio.replace(":", " / ")}">
+<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>

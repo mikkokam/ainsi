@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readdir } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { assemble, render as renderPages } from "./build";
 import { fit, openFit, type FitSession } from "./fit";
@@ -43,6 +44,7 @@ if (watching && fitting) {
 
 /** What the studio splices against: offsets from the same parse the deck was built from. */
 let doc = { hash: "", source: "", entities: [] as { id: string; kind: string; start: number; end: number; md: string }[] };
+let currentTheme = "default";
 const studio = editing ? await loadStudio() : undefined;
 
 /** Everything the deck is made of, rebuilt from disk. Returns the html and what to watch. */
@@ -50,6 +52,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     const source = await Bun.file(deck).text();
     const parsed = parse(source);
     const settings = parsed.doc.settings;
+    currentTheme = settings.theme;
     if (editing) {
         doc = {
             hash: Bun.hash(source).toString(16),
@@ -115,6 +118,11 @@ const server = serve({
     rebuild: async () => (await build()).html,
     route: editing ? async (request, url) => {
         if (url.pathname === "/__doc") return Response.json(doc);
+        if (url.pathname === "/__themes") {
+            const dir = resolve(import.meta.dir, "..", "themes");
+            const themes = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+            return Response.json({ themes, current: currentTheme });
+        }
         if (url.pathname === "/__edit" && request.method === "POST") {
             const { hash, start, end, text } = await request.json();
             const source = await Bun.file(deck).text();

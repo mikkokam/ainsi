@@ -10,8 +10,7 @@ const wrap = (body: string): string =>
 export const icons = {
     play: wrap(`<polygon points="6 3 20 12 6 21 6 3"/>`),
     x: wrap(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`),
-    chevronLeft: wrap(`<path d="m15 18-6-6 6-6"/>`),
-    chevronRight: wrap(`<path d="m9 18 6-6-6-6"/>`),
+    menu: wrap(`<path d="M3 7h18"/><path d="M3 12h14"/><path d="M3 17h14"/>`),
 };
 
 export type IconName = keyof typeof icons;

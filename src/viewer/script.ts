@@ -10,13 +10,12 @@ function start(): void {
     const toolbar = document.createElement("div");
     toolbar.className = "pac-toolbar";
 
+    const menuButton = button("menu", "Menu", () => (panel ? closeMenu() : openMenu()));
     const play = button("play", "Present", () => (presenting ? stop() : begin()));
-    const previous = button("chevronLeft", "Previous page", () => go(index - 1));
-    const next = button("chevronRight", "Next page", () => go(index + 1));
     const count = document.createElement("div");
     count.className = "pac-toolbar__count";
 
-    toolbar.append(play, previous, next, count);
+    toolbar.append(menuButton, play, count);
     document.body.append(toolbar);
 
     /* the strip fades out of the way and comes back on movement, or on a tap where there is none */
@@ -24,7 +23,7 @@ function start(): void {
     const awake = () => {
         toolbar.setAttribute("data-awake", "");
         clearTimeout(idle);
-        idle = setTimeout(() => toolbar.removeAttribute("data-awake"), 2600);
+        idle = setTimeout(() => { if (!panel) toolbar.removeAttribute("data-awake"); }, 2600);
     };
     addEventListener("mousemove", awake, { passive: true });
     addEventListener("pointerdown", awake, { passive: true });
@@ -38,6 +37,71 @@ function start(): void {
         element.setAttribute("aria-label", label);
         element.innerHTML = icons[name];
         element.addEventListener("click", event => { event.stopPropagation(); onClick(); });
+        return element;
+    }
+
+    /*
+     * The menu is rebuilt on every open, so the slide list is always the current render.
+     * After the built-in sections it announces itself on the document; the studio, when
+     * present, prepends its own sections. The player ships no editor code.
+     */
+    let panel: HTMLDivElement | undefined;
+
+    function openMenu(): void {
+        panel = document.createElement("div");
+        panel.className = "pac-menu";
+        panel.addEventListener("click", event => event.stopPropagation());
+
+        const brand = document.createElement("div");
+        brand.className = "pac-menu__brand";
+        brand.textContent = document.body.hasAttribute("data-pac-studio") ? "PAC Studio" : "PAC Player";
+        panel.append(brand);
+
+        item("Export…", undefined, "lands with --pdf");
+
+        // the studio, when present, fills this with its own actions
+        const slot = document.createElement("div");
+        panel.append(slot);
+
+        head("Slides");
+        const current = presenting ? index : nearest();
+        pages.forEach((page, i) => {
+            const title = page.querySelector("h1, h2, h3")?.textContent?.trim() || `Page ${i + 1}`;
+            const row = item(`${i + 1}  ${title}`, () => { closeMenu(); go(i, true); });
+            if (i === current) row.setAttribute("data-active", "");
+        });
+
+        toolbar.append(panel);
+        document.dispatchEvent(new CustomEvent("pac:menu", { detail: { panel, slot } }));
+        addEventListener("pointerdown", outside, true);
+    }
+
+    function closeMenu(): void {
+        panel?.remove();
+        panel = undefined;
+        removeEventListener("pointerdown", outside, true);
+    }
+
+    function outside(event: Event): void {
+        const target = event.target as Node;
+        if (panel && !panel.contains(target) && !menuButton.contains(target)) closeMenu();
+    }
+
+    function head(text: string): void {
+        const element = document.createElement("div");
+        element.className = "pac-menu__head";
+        element.textContent = text;
+        panel!.append(element);
+    }
+
+    function item(text: string, onClick?: () => void, why?: string): HTMLButtonElement {
+        const element = document.createElement("button");
+        element.className = "pac-menu__item";
+        element.type = "button";
+        element.textContent = text;
+        if (onClick) element.addEventListener("click", onClick);
+        else { element.disabled = true; if (why) element.title = why; }
+        panel!.append(element);
         return element;
     }
 
@@ -84,9 +148,9 @@ function start(): void {
         label();
     }
 
-    function go(to: number): void {
+    function go(to: number, jump = false): void {
         const clamped = Math.max(0, Math.min(pages.length - 1, to));
-        if (clamped === index) return;
+        if (clamped === index && !jump) return;
         index = clamped;
         if (presenting) show();
         else pages[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -108,6 +172,7 @@ function start(): void {
     addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && presenting) stop(); });
 
     addEventListener("keydown", event => {
+        if (event.key === "Escape" && panel) return closeMenu();
         if (event.key === "Escape" && presenting) return stop();
         if (!presenting && event.key !== "f") return;
         switch (event.key) {
@@ -120,7 +185,7 @@ function start(): void {
     });
 
     /* a wide screen advances on click; a narrow one scrolls its page, so it swipes instead */
-    addEventListener("click", () => { if (presenting && innerWidth > 900) go(index + 1); });
+    addEventListener("click", () => { if (presenting && !panel && innerWidth > 900) go(index + 1); });
 
     let touch: { x: number; y: number } | undefined;
     addEventListener("touchstart", event => {
