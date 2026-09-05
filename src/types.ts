@@ -49,6 +49,10 @@ export interface Page {
     blocks: Block[];
     layout: string;
     layoutProps: Record<string, unknown>;
+    /** the type scale the fit solver settled on; 1 unless it stepped down */
+    scale: number;
+    /** the ladder ran out and this page is clipped; rendered anyway, and flagged */
+    overflow: boolean;
 }
 
 export interface Diagnostic {

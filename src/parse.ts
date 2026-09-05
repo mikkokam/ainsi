@@ -109,6 +109,16 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
     return { doc: { settings, entities, directives }, diagnostics };
 }
 
+/**
+ * FNV-1a, six hex digits. Deliberately not `Bun.hash`: this module is engine, and the engine
+ * has to run wherever a renderer does. Ids are internal — no content file and no output ever
+ * refers to one — so the only property that matters is that the same text yields the same id.
+ */
 function hash(input: string): string {
-    return Bun.hash(input).toString(16).padStart(16, "0").slice(0, 6);
+    let h = 0x811c9dc5;
+    for (let i = 0; i < input.length; i++) {
+        h ^= input.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return (h >>> 8).toString(16).padStart(6, "0");
 }

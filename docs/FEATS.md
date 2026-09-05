@@ -8,38 +8,44 @@ This is load-bearing: if zero directives do not already produce a usable deck, d
 
 Six rules are implemented and unit-tested, and the example deck groups correctly. What is not done is the judgement: three real decks of Mikko's rendering acceptably with no directives at all, compared by eye against the bespoke versions. Until that is checked the invariant is untested in the only way that counts.
 
-## Fit solver (feat)
+## Fit solver (feat) [done, less one rung]
 
-The block-boundary step is built: `src/fit.ts`, behind `--fit`, using `playwright-core` as an
-optional dependency that degrades to one diagnostic and unchanged pages when no browser is
-installed. A page that overflows loses its last block to a new page under the same layout,
-repeated until it fits; a page overflowing as one block is reported, not silently clipped.
+Built: `src/fit.ts`, behind `--fit`, using `playwright-core` as an optional dependency that
+degrades to one diagnostic and unchanged pages when no browser is installed. Three of the
+ladder's four rungs run, in the order `DATA-MODEL.md` sets: step the type scale down within
+`--pac-step-min`; split at a block boundary; split inside a component that declares itself
+`splittable`, which is what lets an absorbed `prose` block break at a paragraph. A page that
+exhausts all of it renders clipped, carries `data-overflow`, and is reported by name.
 
-What remains is the rest of the ladder: step the type scale down before splitting, and offer a
-component's `density` variant as a step in between. Both apply before a block boundary split
-is tried, per the order in `DATA-MODEL.md`, so this is a prerequisite step inserted before the
-existing one, not an alternative to it. Splitting inside a `splittable` component (breaking
-`prose` at a paragraph boundary, say) is the step after: a page overflowing as a single
-absorbed `prose` block currently has nowhere further to go.
+Both splits cut where the page fills at full type size and move the whole remainder to one
+following page, which re-enters the ladder. The cut point is bisected over measured
+candidates rather than guessed.
 
-Done: a page that only needs a smaller type scale to fit does not lose a block it did not
-need to lose, and a `prose` block genuinely too tall for a page splits at a paragraph rather
-than being reported as unsplittable.
+What is not done is the judgement, same as with grouping: three real decks of Mikko's run
+through `--fit` and read as well as the hand-made versions. The acme sample is the only
+evidence so far, and it is evidence — two of its pages used to clip in silence and now step
+their type down instead of orphaning a heading — but it is one deck.
 
 ## Density variants (feat)
 
-Every component declares `density` and nothing consumes it. The fit solver is what will, stepping a block to a tighter variant before splitting a page. Each variant needs a class the component's own CSS implements, `pac-<name>--tight`, so the theme is still not involved.
+Every component declares `density` and nothing consumes it. The fit solver is what will,
+stepping a block to a tighter variant before splitting a page. Each variant needs a class the
+component's own CSS implements, `pac-<name>--tight`, so the theme is still not involved.
 
-Blocked on the fit solver, and worth doing as part of it rather than before it: a variant with nothing measuring it is a guess about what will help.
+Now the only unbuilt rung, and the least urgent one: scale, block boundary and in-block split
+between them fit every deck written so far, and the rung's own case is narrow — a page a
+little too tall where a tighter `boxes` or `comparison` would save it and smaller type would
+not. Worth doing when a real deck produces that case, and not before: a variant with nothing
+asking for it is a guess about what will help.
 
 ## Measurement of islands (defect)
 
-The fit solver will measure static markup, and an island that changes size when it mounts
+The fit solver measures static markup, and an island that changes size when it mounts
 makes that measurement a lie. The invariant is written down and nothing enforces it.
 
-The check is cheap once a headless browser is in the pipeline for fit anyway: measure a
-page, mount, measure again, report any block that moved. Worth doing with the solver rather
-than before it, since it needs the same machinery.
+The check is cheap now that a headless browser is in the pipeline for fit anyway: measure a
+page, mount, measure again, report any block that moved. `src/fit.ts` already renders a single
+page and reads its overflow, which is most of the machinery.
 
 ## Non-linear navigation (feat)
 

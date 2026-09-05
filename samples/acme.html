@@ -26,6 +26,7 @@
     --pac-strong: 600;
     --pac-size: 22px;
     --pac-leading: 1.55;
+    --pac-step-min: 0.8;
 
     --pac-gap: 1.9rem;
     --pac-pad: 8.5%;
@@ -115,6 +116,20 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page code { font-family: var(--pac-font-mono); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
+
+/*
+ * The fit solver ran out of ladder here and the page is clipped. Saying so beats hiding it,
+ * and the mark belongs to the engine rather than a theme: it reports a build fact, it is not
+ * a look a theme is allowed to have an opinion about. Reading view only, so a projected or
+ * printed page carries no trace of it.
+ */
+body.pac:not([data-present]) .pac-page[data-overflow]::before {
+    content: "";
+    position: absolute; inset: auto 0 0 0; height: 3px;
+    background: repeating-linear-gradient(90deg, #d6453c 0 9px, transparent 9px 18px);
+    pointer-events: none;
+}
+@media print { .pac-page[data-overflow]::before { display: none; } }
 
 /*
  * Reading view. A deck has two forms: a fixed-aspect page for projecting and printing, and
@@ -530,7 +545,7 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
 <p>Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.</p>
 <figure class="pac-full" data-pac="full"><img src="https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&amp;q=80" alt="Tactile notebook and fountain pen on warm oak desk"></figure></article></main>
 </section>
-<section class="pac-page" data-page="5" data-layout="default">
+<section class="pac-page" data-page="5" data-layout="default" style="--pac-step:0.84">
 <main><article><h1>How Acme protects your workload</h1>
 
 <ul class="pac-boxes" data-pac="boxes" data-stretch="false">
@@ -540,7 +555,7 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
     <li class="pac-boxes__box"><span class="pac-boxes__title">Comply</span><span class="pac-boxes__body">Instant audit packages for EU AI Act, SOC 2, and GDPR</span></li>
 </ul></article></main>
 </section>
-<section class="pac-page" data-page="6" data-layout="default">
+<section class="pac-page" data-page="6" data-layout="default" style="--pac-step:0.8">
 <main><article><h1>Operating with and without Acme</h1>
 <div class="pac-comparison" data-pac="comparison">
     <div class="pac-comparison__column">

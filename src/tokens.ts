@@ -9,6 +9,8 @@ export const TOKENS = [
     "--pac-accent", "--pac-accent-ink", "--pac-rule", "--pac-surface",
     // type
     "--pac-font", "--pac-font-display", "--pac-font-mono", "--pac-strong", "--pac-size", "--pac-leading",
+    // how far the fit solver may step the type down before it splits a page instead
+    "--pac-step-min",
     // space and shape
     "--pac-gap", "--pac-pad", "--pac-radius", "--pac-border",
     // material: what a surface is made of, so depth is a theme's call and not a component's
