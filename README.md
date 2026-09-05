@@ -14,11 +14,12 @@ Status: design only. `docs/DATA-MODEL.md` is the substance. `docs/FEATS.md` is w
 Two things it must do that bespoke per-deck HTML cannot: change the content of an old deck and rerender it, and restyle every deck at once. If neither is needed, this is not worth building.
 
     bun install
+    bun link                          # puts `pac` on the PATH
     bun test
-    bun run src/cli.ts samples/acme.md              # writes samples/acme.html
-    bun run src/cli.ts samples/acme.md --watch      # rebuilds and reloads the browser
-    bun run src/cli.ts samples/acme.md --no-viewer  # no toolbar, for a headless render
-    bun run src/cli.ts samples/acme.md --fit        # make the pages fit (needs `bunx playwright install chromium`)
+    pac samples/acme.md               # writes samples/acme.html
+    pac samples/acme.md --watch       # serves, rebuilds and reloads the browser
+    pac samples/acme.md --no-viewer   # no toolbar, for a headless render
+    pac samples/acme.md --fit         # make the pages fit (needs `bunx playwright install chromium`)
 
 `--fit` measures every page in a real browser and, while one overflows, steps its type down
 within the range the theme allows, then splits it at a block boundary, then inside a component

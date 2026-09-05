@@ -2,8 +2,10 @@
     "name": "presentation-as-code",
     "type": "module",
     "private": true,
+    "bin": {
+        "pac": "src/cli.ts"
+    },
     "scripts": {
-        "build": "bun run src/cli.ts",
         "test": "bun test"
     },
     "dependencies": {
