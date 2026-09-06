@@ -1,11 +1,5 @@
 # Walking skeleton
 
-## Non-linear navigation (feat)
-
-Decks are read asynchronously as often as they are presented, and a reader arriving after the meeting wants to jump rather than page through. The viewer needs an overview: a grid of page thumbnails behind a key, click to go, and a way for a deck to name entry points so a page can link to another page.
-
-The toolbar already has the strip to hang it on and the viewer already tracks the current page. What is missing is the overview itself and an addressing scheme: linking to a page needs a stable name for it, which is the anchor question this project decided against for blocks and would have to answer differently here.
-
 ## Local images are not measured (defect)
 
 The fit pass measures with `setContent`, which gives the document no base URL, so a relative `![](pic.png)` resolves against `about:blank` and never loads. Measured just now: a local image reports `naturalHeight: 0` and occupies 31.9px, the height of its alt text, instead of its real height.

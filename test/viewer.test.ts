@@ -42,7 +42,20 @@ test("pages are numbered in the scroll view and not while presenting", () => {
 test("chrome never prints", () => {
     expect(viewer.css).toContain("@media print");
     const rule = viewer.css.slice(viewer.css.indexOf("@media print"));
-    expect(rule).toContain(".pac-toolbar { display: none; }");
+    expect(rule).toContain(".pac-toolbar, .pac-overview { display: none; }");
+});
+
+test("a page's address is its first heading, slugged", () => {
+    const { html } = build("# Hyvä Alku\n\na\n\n# Two\n\nb\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('id="hyva-alku"');
+    expect(html).toContain('id="two"');
+});
+
+test("duplicate headings and headingless pages still get distinct addresses", () => {
+    const { html } = build("# Same\n\na\n\n# Same\n\nb\n\n---\n\nno heading here\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('id="same"');
+    expect(html).toContain('id="same-2"');
+    expect(html).toContain('id="page-3"');
 });
 
 test("icons are inlined rather than fetched", () => {

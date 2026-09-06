@@ -98,6 +98,7 @@ export function render(
         ? (e: Entity) => handle(blockHtml(e), `data-pac-entity="${e.id}"`)
         : blockHtml;
 
+    const taken = new Set<string>();
     const body = numbered.map(page => {
         const content = page.blocks.map(block => {
             // a component that places an entity's text itself, `inline(head.node)`, still
@@ -146,7 +147,16 @@ export function render(
         // the admission that it ran out of ladder. Both are absent on a page that just fits.
         const step = page.scale === 1 ? "" : ` style="--pac-step:${page.scale}"`;
         const overflow = page.overflow ? " data-overflow" : "";
-        return `<section class="pac-page" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
+        // the page's stable address: its first heading, slugged. Page numbers move on every
+        // fit split, so a link written as #page-3 would drift; a heading slug survives it.
+        const heading = page.blocks.flatMap(b => b.entities).find(e => e.kind === "heading");
+        const base = (heading?.text ?? "").toLowerCase().normalize("NFKD")
+            .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+            || `page-${page.index + 1}`;
+        let slug = base;
+        for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+        taken.add(slug);
+        return `<section class="pac-page" id="${slug}" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
 ${rendered}
 </section>`;
     }).join("\n");

@@ -11,11 +11,12 @@ function start(): void {
     toolbar.className = "pac-toolbar";
 
     const menuButton = button("menu", "Menu", () => (panel ? closeMenu() : openMenu()));
+    const gridButton = button("grid", "Overview (o)", () => (overview ? closeOverview() : openOverview()));
     const play = button("play", "Present", () => (presenting ? stop() : begin()));
     const count = document.createElement("div");
     count.className = "pac-toolbar__count";
 
-    toolbar.append(menuButton, play, count);
+    toolbar.append(menuButton, gridButton, play, count);
     document.body.append(toolbar);
 
     /* the strip fades out of the way and comes back on movement, or on a tap where there is none */
@@ -66,8 +67,7 @@ function start(): void {
         head("Slides");
         const current = presenting ? index : nearest();
         pages.forEach((page, i) => {
-            const title = page.querySelector("h1, h2, h3")?.textContent?.trim() || `Page ${i + 1}`;
-            const row = item(`${i + 1}  ${title}`, () => { closeMenu(); go(i, true); });
+            const row = item(`${i + 1}  ${titleOf(page, i)}`, () => { closeMenu(); go(i, true); });
             if (i === current) row.setAttribute("data-active", "");
         });
 
@@ -103,6 +103,57 @@ function start(): void {
         else { element.disabled = true; if (why) element.title = why; }
         panel!.append(element);
         return element;
+    }
+
+    function titleOf(page: HTMLElement, i: number): string {
+        return page.querySelector("h1, h2, h3")?.textContent?.trim() || `Page ${i + 1}`;
+    }
+
+    /*
+     * The overview: every page cloned into a grid, click to go. Clones keep the 1280px
+     * design width and are scaled to their cell, the same trick presentation mode uses,
+     * so a thumbnail is the page itself rather than a stale capture.
+     */
+    let overview: HTMLDivElement | undefined;
+
+    function openOverview(): void {
+        closeMenu();
+        overview = document.createElement("div");
+        overview.className = "pac-overview";
+        const current = presenting ? index : nearest();
+        pages.forEach((page, i) => {
+            const cell = document.createElement("button");
+            cell.className = "pac-overview__cell";
+            cell.type = "button";
+            if (i === current) cell.setAttribute("data-active", "");
+            const frame = document.createElement("div");
+            frame.className = "pac-overview__frame";
+            const clone = page.cloneNode(true) as HTMLElement;
+            clone.removeAttribute("id");    // the original keeps the address
+            clone.removeAttribute("data-current");
+            frame.append(clone);
+            const label = document.createElement("div");
+            label.className = "pac-overview__label";
+            label.textContent = `${i + 1}  ${titleOf(page, i)}`;
+            cell.append(frame, label);
+            cell.addEventListener("click", event => { event.stopPropagation(); closeOverview(); go(i, true); });
+            overview!.append(cell);
+        });
+        document.body.append(overview);
+        fitThumbs();
+        overview.querySelector("[data-active]")?.scrollIntoView({ block: "center" });
+    }
+
+    function fitThumbs(): void {
+        if (!overview) return;
+        for (const frame of overview.querySelectorAll<HTMLElement>(".pac-overview__frame")) {
+            frame.style.setProperty("--pac-thumb-scale", String(frame.clientWidth / 1280));
+        }
+    }
+
+    function closeOverview(): void {
+        overview?.remove();
+        overview = undefined;
     }
 
     function label(): void {
@@ -169,11 +220,15 @@ function start(): void {
     }
 
     addEventListener("resize", scale, { passive: true });
+    addEventListener("resize", fitThumbs, { passive: true });
     addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && presenting) stop(); });
 
     addEventListener("keydown", event => {
+        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
         if (event.key === "Escape" && panel) return closeMenu();
+        if (event.key === "Escape" && overview) return closeOverview();
         if (event.key === "Escape" && presenting) return stop();
+        if (event.key === "o") return overview ? closeOverview() : openOverview();
         if (!presenting && event.key !== "f") return;
         switch (event.key) {
             case "ArrowRight": case "ArrowDown": case " ": case "PageDown": event.preventDefault(); return go(index + 1);
@@ -184,8 +239,23 @@ function start(): void {
         }
     });
 
+    /* while presenting a #link is a page turn; the reading form keeps the native anchor */
+    addEventListener("click", event => {
+        if (!presenting) return;
+        const anchor = (event.target as HTMLElement).closest?.<HTMLAnchorElement>('a[href^="#"]');
+        if (!anchor) return;
+        const target = document.getElementById(decodeURIComponent(anchor.hash.slice(1)))?.closest<HTMLElement>(".pac-page");
+        if (!target) return;
+        event.preventDefault();
+        event.stopPropagation();
+        go(pages.indexOf(target), true);
+    }, true);
+
     /* a wide screen advances on click; a narrow one scrolls its page, so it swipes instead */
-    addEventListener("click", () => { if (presenting && !panel && innerWidth > 900) go(index + 1); });
+    addEventListener("click", event => {
+        if ((event.target as HTMLElement).closest?.("a")) return;
+        if (presenting && !panel && !overview && innerWidth > 900) go(index + 1);
+    });
 
     let touch: { x: number; y: number } | undefined;
     addEventListener("touchstart", event => {
