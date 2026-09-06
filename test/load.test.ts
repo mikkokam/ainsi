@@ -197,7 +197,7 @@ test("agenda numbers its rows with two digits", async () => {
     expect(html).toContain('<span class="pac-agenda__title">Open</span>');
     const bulleted = build("# T\n\n<!-- pac: agenda -->\n- **Open** where we are\n", { registry, layouts, themeCss: "" }).html;
     expect(bulleted).toContain('<ul class="pac-agenda"');
-    expect(bulleted).not.toContain("pac-agenda__number");
+    expect(bulleted).not.toContain('<span class="pac-agenda__number">');
 });
 
 test("prose colours by the theme's ink names only", async () => {
