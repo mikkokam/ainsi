@@ -15,7 +15,6 @@ export const icons = {
     alignRight: wrap(`<path d="M21 6H3"/><path d="M21 12H9"/><path d="M21 18H7"/>`),
     horizontal: wrap(`<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>`),
     vertical: wrap(`<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>`),
-    caps: wrap(`<path d="M3 20 9 4l6 16"/><path d="M5.5 14h7"/><path d="M15 20V4h3.5a3.5 3.5 0 0 1 0 7H15"/><path d="M15 11h4a4 4 0 0 1 0 9h-4"/>`),
     stretch: wrap(`<path d="M12 3v18"/><path d="m16 8 4 4-4 4"/><path d="M4 12h16"/><path d="m8 8-4 4 4 4"/>`),
     chevron: wrap(`<path d="m6 9 6 6 6-6"/>`),
     trash: wrap(`<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`),

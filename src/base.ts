@@ -63,15 +63,17 @@ body.pac:not([data-present]) .pac-page::after {
  */
 .pac-page { --pac-em: calc(var(--pac-size) * var(--pac-step, 1)); }
 .pac-page article > * + * { margin-top: var(--pac-gap); }
-.pac-page article > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
-/* a component's root carries data-pac, which is how a timeline's ol is told from a list's */
-.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .55); }
-.pac-page article > :is(h2, h3, h4, h5) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .45); }
+.pac-page :is(article, .pac-prose) > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
+/* a component's root carries data-pac, which is how a timeline's ol is told from a list's.
+   A sized or coloured prose wrapper is looked through: what it ends with sets the space after
+   it, what it starts with the space before, so a heading given a colour does not move. */
+.pac-page :is(article, .pac-prose) > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .55); }
+.pac-page :is(article, .pac-prose) > :is(h2, h3, h4, h5, .pac-prose:has(> :is(h2, h3, h4, h5):last-child)) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .45); }
+.pac-page :is(article, .pac-prose) > :is(p, ul, ol, blockquote, pre, .pac-prose:has(> :is(p, ul, ol, blockquote, pre):last-child)):not([data-pac]) + :is(h2, h3, h4, h5, .pac-prose:has(> :is(h2, h3, h4, h5):first-child)) { margin-top: calc(var(--pac-em) * 1); }
 /* a page title carries more weight than a heading in a document, so the air under it says so */
-.pac-page article > h1 + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .6); }
-.pac-page article > h1 + [data-pac] { margin-top: calc(var(--pac-gap) * 1.5); }
-.pac-page article > :is(h2, h3, h4, h5) + [data-pac] { margin-top: calc(var(--pac-gap) * 1.2); }
-.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
+.pac-page :is(article, .pac-prose) > :is(h1, .pac-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .6); }
+.pac-page article > :is(h1, .pac-prose:has(> h1:last-child)) + [data-pac] { margin-top: calc(var(--pac-gap) * 1.5); }
+.pac-page article > :is(h2, h3, h4, h5, .pac-prose:has(> :is(h2, h3, h4, h5):last-child)) + [data-pac] { margin-top: calc(var(--pac-gap) * 1.2); }
 .pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
 /* inline code as a chat client shows it: a small capsule, the theme's stop colour for the text */

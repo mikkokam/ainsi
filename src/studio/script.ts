@@ -440,8 +440,9 @@ const GLYPH: Record<string, Record<string, IconName>> = {
     align: { left: "alignLeft", center: "alignCenter", right: "alignRight" },
     axis: { horizontal: "horizontal", vertical: "vertical" },
     stretch: { stretch: "stretch" },
-    caps: { caps: "caps" },
 };
+/* an option shown as a short text glyph: the letters themselves say it */
+const LETTERS: Record<string, string> = { caps: "AB" };
 const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
 /* a colour chip is a swatch of the theme's own token, read from the page the studio sits in */
 const SWATCH: Record<string, string> = { ink: "--pac-ink", soft: "--pac-ink-soft", accent: "--pac-accent" };
@@ -449,10 +450,12 @@ const SWATCH: Record<string, string> = { ink: "--pac-ink", soft: "--pac-ink-soft
 function glyph(field: string, option: string, active: boolean, onClick: () => void): HTMLButtonElement {
     const icon = GLYPH[field]?.[option];
     const swatch = field === "color" ? SWATCH[option] : undefined;
-    if (!icon && !SIZES[option] && !swatch) return chip(option, active, onClick);
+    const letters = LETTERS[option];
+    if (!icon && !SIZES[option] && !swatch && !letters) return chip(option, active, onClick);
     const element = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
     if (icon) element.innerHTML = icons[icon];
     else if (swatch) element.append(h("span", { class: "pac-studio__swatch", style: `background:var(${swatch})` }));
+    else if (letters) { element.classList.add("pac-studio__chip--text"); element.append(letters); }
     else element.append(h("span", { style: `font-size:${SIZES[option]};font-weight:600` }, "A"));
     return element;
 }
