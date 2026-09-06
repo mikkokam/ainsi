@@ -12,9 +12,8 @@
  * the neighbouring entity. Escape cancels. Emptying a block deletes it. The viewer's
  * shortcut card lists these; the studio only supplies its rows.
  *
- * Right-click opens the block menu: turn the entity into another kind of block, render it
- * through another component, set that component's options, delete it. Each pick is one
- * splice computed in edits.ts and committed at once; the rebuild closes the menu.
+ * Right-click opens the block toolbar: what the block is, what it can become, how it shows,
+ * delete. Each press is one splice computed in edits.ts and committed at once.
  *
  * Raw mode is the same mechanism at full size: the whole file in CodeMirror, replacing the
  * rendered deck in place, committed as a whole-file splice through the same hash guard.
@@ -24,7 +23,8 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { remove, render as structural, retag, textShaped, TEXT_KINDS, type Target, type TextKind } from "./edits";
+import { markerOf, remove, render as structural, retag, type Target, type TextKind } from "./edits";
+import { icons, type IconName } from "./icons";
 
 interface DocEntity { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }
 interface DocBlock {
@@ -38,7 +38,7 @@ interface DocBlock {
     terminator?: { start: number; end: number };
 }
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
-interface DocComponent { name: string; fields: Field[]; takesList: boolean }
+interface DocComponent { name: string; fields: Field[] }
 interface Doc { hash: string; source: string; file: string; entities: DocEntity[]; blocks: DocBlock[]; components: DocComponent[] }
 
 type Caret = "start" | "end";
@@ -122,7 +122,7 @@ async function init(): Promise<void> {
         const target = (event.target as HTMLElement).closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
         if (!target) return;
         event.preventDefault();
-        openMenu(target, event.clientX, event.clientY);
+        openMenu(target, target.getBoundingClientRect());
     });
 
     const reopen = sessionStorage.getItem(REOPEN);
@@ -162,67 +162,124 @@ async function init(): Promise<void> {
 }
 
 /*
- * The block menu. A kind change is the entity's own slice rewritten. A component change is
- * a directive: before the block's first entity when one already governs it, before the
- * clicked entity otherwise, bounded by an end marker when the heuristic's run would carry
- * on past it. A pick the heuristic would make anyway removes the directive instead.
+ * The block toolbar, above the block it governs. Three groups, left to right: what the
+ * block is (its family, with a level dropdown for text and a bullets/numbered one for a
+ * list), what it can become (the other families), and how it shows (the components that
+ * accept it, then that component's options). Delete at the end. A family change rewrites
+ * the entity's slice; a show-as change is a directive before it, bounded by an end marker
+ * when the heuristic's run would carry on past it; the heuristic's own pick removes the
+ * directive instead. Each press is one splice and the rebuild closes the bar.
  */
-function openMenu(handle: HTMLElement, x: number, y: number): void {
+let menu: HTMLElement | undefined;
+
+type Family = "text" | "list" | "quote" | "code";
+const FAMILY: Record<Family, { label: string; kind: TextKind; icon: IconName }> = {
+    text: { label: "Text", kind: "paragraph", icon: "text" },
+    list: { label: "Bullets", kind: "list", icon: "list" },
+    quote: { label: "Quote", kind: "quote", icon: "quote" },
+    code: { label: "Code", kind: "code", icon: "code" },
+};
+const TEXT_LEVELS: [TextKind, string, string][] = [["paragraph", "Text", "¶"], ["heading1", "Heading 1", "#"], ["heading2", "Heading 2", "##"], ["heading3", "Heading 3", "###"]];
+const LIST_LEVELS: [TextKind, string, string][] = [["list", "Bullets", "-"], ["ordered", "Numbered", "1."]];
+
+function openMenu(handle: HTMLElement, at: DOMRect): void {
+    closeMenu();
     const id = handle.dataset.pacEntity ?? handle.dataset.pacSpan?.split(" ")[0];
     const entity = doc.entities.find(e => e.id === id);
     const block = doc.blocks.find(b => entity && b.ids.includes(entity.id));
     if (!entity || !block) return;
-
-    const element = h("div", { class: "pac-studio__menu", click: (event: Event) => event.stopPropagation() });
-    const section = (title: string, chips: HTMLElement[]) => element.append(h("div", { class: "pac-studio__menurow" },
-        ...(title ? [h("div", { class: "pac-studio__menuhead" }, title)] : []),
-        h("div", { class: "pac-studio__chips" }, ...chips)));
-
-    if (handle.dataset.pacEntity && textShaped(entity.kind)) {
-        const current = kindOf(entity);
-        section("Turn into", TEXT_KINDS.map(kind => chip(KIND_LABEL[kind], kind === current, () =>
-            splice({ start: entity.start, end: entity.end, text: retag(entity.md, entity.kind, kind) }))));
-    }
-
     const target = targetFor(entity, block);
-    section("Render as", doc.components.map(c => chip(c.name === block.heuristic ? `${c.name} · auto` : c.name, c.name === block.component, () => pick(target, block, c))));
 
-    const component = doc.components.find(c => c.name === block.component);
-    if (component?.fields.length) {
-        section("Options", component.fields.map(field => control(field, block.props[field.name], value => {
-            const props = explicit(component, { ...block.props, [field.name]: value });
-            splice(structural(target, block.component === block.heuristic && !Object.keys(props).length ? null : block.component, props));
-        })));
+    menu = document.createElement("div");
+    menu.className = "pac-studio__bar";
+    menu.addEventListener("click", event => event.stopPropagation());
+
+    // what it is: a level dropdown for text and lists, a label for everything else. A span
+    // over one entity is that entity, whichever handle the component left on it.
+    const own = handle.dataset.pacEntity !== undefined || block.ids.length === 1;
+    const current = kindOf(entity);
+    const family = current && familyOf(current);
+    const convert = (to: TextKind) => splice({ start: entity.start, end: entity.end, text: retag(entity.md, entity.kind, to, neighbours(entity)) });
+    if (own && family === "text") menu.append(dropdown(TEXT_LEVELS.find(l => l[0] === current)![1], TEXT_LEVELS.map(([kind, label, hint]) => item(label, hint, kind === current, () => convert(kind)))));
+    else if (own && family === "list") menu.append(dropdown(LIST_LEVELS.find(l => l[0] === current)![1], LIST_LEVELS.map(([kind, label, hint]) => item(label, hint, kind === current, () => convert(kind)))));
+    else menu.append(label(own && family ? FAMILY[family].label : entity.kind));
+
+    // what it can become
+    if (own && family) {
+        menu.append(divider());
+        for (const [name, def] of Object.entries(FAMILY) as [Family, typeof FAMILY[Family]][]) {
+            menu.append(iconButton(def.icon, def.label, name === family, () => { if (name !== family) convert(def.kind); }));
+        }
     }
 
-    section("", [chip("Delete", false, () => splice(remove(doc.source, target)))]);
+    // how it shows: the components that accept the target, the heuristic's own marked auto
+    const accepted = block.origin === "directive" ? block.accepted : entity.accepted;
+    const choices = accepted.filter(name => doc.components.some(c => c.name === name));
+    if (choices.length > 1) {
+        menu.append(divider());
+        const showing = block.component === block.heuristic && !block.directive ? "auto" : block.component;
+        menu.append(dropdown(showing === "auto" ? `auto · ${block.heuristic}` : block.component, [
+            item(`auto · ${block.heuristic}`, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
+            ...choices.filter(name => name !== block.heuristic).map(name => item(name, "", name === showing, () => splice(structural(target, name)))),
+        ]));
+    }
+    const component = doc.components.find(c => c.name === block.component);
+    for (const field of component?.fields ?? []) {
+        menu.append(control(field, block.props[field.name], value => {
+            const props = explicit(component!, { ...block.props, [field.name]: value });
+            splice(structural(target, block.component === block.heuristic && !Object.keys(props).length ? null : block.component, props));
+        }));
+    }
 
-    document.body.append(element);
-    const { width, height } = element.getBoundingClientRect();
-    element.style.left = `${Math.min(x, innerWidth - width - 8)}px`;
-    element.style.top = `${Math.min(y, innerHeight - height - 8)}px`;
-    const onKey = (event: KeyboardEvent) => {
-        if (event.key === "Escape") { event.preventDefault(); shut(); }
-    };
-    addEventListener("keydown", onKey);
-    show({
-        kind: "menu",
-        holds: false,
-        close() {
-            element.remove();
-            removeEventListener("keydown", onKey);
-        },
-    });
+    menu.append(divider(), iconButton("trash", "Delete", false, () => splice(remove(doc.source, target))));
+    document.body.append(menu);
+    place(menu, at);
+    addEventListener("keydown", menuKey);
 }
 
-const KIND_LABEL: Record<TextKind, string> = { heading1: "H1", heading2: "H2", heading3: "H3", paragraph: "Text", list: "List", quote: "Quote" };
+/** above the block's top-left corner, or below it when there is no room above */
+function place(bar: HTMLElement, at: DOMRect): void {
+    const { width, height } = bar.getBoundingClientRect();
+    const left = Math.max(8, Math.min(at.left, innerWidth - width - 8));
+    const top = at.top - height - 8 >= 8 ? at.top - height - 8 : Math.min(at.bottom + 8, innerHeight - height - 8);
+    bar.style.left = `${left}px`;
+    bar.style.top = `${top}px`;
+}
+
+function menuKey(event: KeyboardEvent): void {
+    if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
+}
+
+function closeMenu(): void {
+    menu?.remove();
+    menu = undefined;
+    removeEventListener("keydown", menuKey);
+}
 
 function kindOf(entity: DocEntity): TextKind | undefined {
-    if (entity.kind === "heading") {
-        const depth = /^#+/.exec(entity.md)?.[0].length ?? 1;
-        return depth === 1 ? "heading1" : depth === 2 ? "heading2" : "heading3";
+    switch (entity.kind) {
+        case "heading": {
+            const depth = /^#+/.exec(entity.md)?.[0].length ?? 1;
+            return depth === 1 ? "heading1" : depth === 2 ? "heading2" : "heading3";
+        }
+        case "paragraph": return "paragraph";
+        case "list": return /^\s*\d/.test(entity.md) ? "ordered" : "list";
+        case "quote": return "quote";
+        case "code": return "code";
+        default: return undefined;
     }
-    return entity.kind === "paragraph" ? "paragraph" : entity.kind === "list" ? "list" : entity.kind === "quote" ? "quote" : undefined;
+}
+
+function familyOf(kind: TextKind): Family {
+    if (kind === "list" || kind === "ordered") return "list";
+    if (kind === "quote" || kind === "code") return kind;
+    return "text";
+}
+
+/** the list markers on either side, so a new list does not merge into a neighbour */
+function neighbours(entity: DocEntity): (string | undefined)[] {
+    const i = doc.entities.indexOf(entity);
+    return [doc.entities[i - 1], doc.entities[i + 1]].map(e => (e?.kind === "list" ? markerOf(e.md) : undefined));
 }
 
 /** a governed block is addressed as a whole; a heuristic one at the entity clicked */
@@ -230,7 +287,6 @@ function targetFor(entity: DocEntity, block: DocBlock): Target {
     const governed = block.origin === "directive";
     const first = governed ? doc.entities.find(e => e.id === block.ids[0])! : entity;
     const last = governed ? doc.entities.find(e => e.id === block.ids.at(-1))! : entity;
-    const next = doc.entities[doc.entities.indexOf(last) + 1];
     return {
         start: first.start,
         end: last.end,
@@ -239,24 +295,7 @@ function targetFor(entity: DocEntity, block: DocBlock): Target {
         ...(block.directive ? { directive: block.directive } : {}),
         ...(block.terminator ? { terminator: block.terminator } : {}),
         runsOn: !governed && block.ids.indexOf(entity.id) < block.ids.length - 1,
-        beforeList: next?.kind === "list",
     };
-}
-
-function pick(target: Target, block: DocBlock, component: DocComponent): void {
-    const accepted = block.origin === "directive" ? block.accepted : doc.entities.find(e => e.start === target.start)?.accepted ?? [];
-    if (component.name === block.heuristic) {
-        if (block.directive) splice(structural(target, null));
-        else shut();
-        return;
-    }
-    if (accepted.includes(component.name)) return void splice(structural(target, component.name));
-    // the one reshape there is: a text block becomes a one-item list for a component that reads items
-    const single = block.origin === "heuristic" || block.ids.length === 1;
-    if (component.takesList && single && textShaped(target.kind)) {
-        return void splice(structural(target, component.name, {}, retag(target.md, target.kind, "list")));
-    }
-    hint(`${component.name} cannot render this block`, true);
 }
 
 /** the props worth writing: those that differ from the schema's own defaults */
@@ -269,233 +308,97 @@ function explicit(component: DocComponent, props: Record<string, unknown>): Reco
     return out;
 }
 
-const chip = (text: string, active: boolean, onClick: () => void): HTMLElement =>
-    h("button", { class: "pac-studio__chip", type: "button", "data-active": active, click: onClick }, text);
+function label(text: string): HTMLElement {
+    const element = document.createElement("span");
+    element.className = "pac-studio__barlabel";
+    element.textContent = text;
+    return element;
+}
 
+function divider(): HTMLElement {
+    const element = document.createElement("span");
+    element.className = "pac-studio__bardivider";
+    return element;
+}
+
+function iconButton(icon: IconName, title: string, active: boolean, onClick: () => void): HTMLButtonElement {
+    const element = document.createElement("button");
+    element.className = "pac-studio__barbutton";
+    element.type = "button";
+    element.title = title;
+    element.setAttribute("aria-label", title);
+    element.innerHTML = icons[icon];
+    if (active) element.setAttribute("data-active", "");
+    element.addEventListener("click", onClick);
+    return element;
+}
+
+/** a button that opens its list beneath it; one open at a time */
+function dropdown(text: string, items: HTMLElement[]): HTMLElement {
+    const wrap = document.createElement("span");
+    wrap.className = "pac-studio__drop";
+    const button = document.createElement("button");
+    button.className = "pac-studio__barbutton pac-studio__barbutton--drop";
+    button.type = "button";
+    button.innerHTML = `<span>${text}</span>${icons.chevron}`;
+    const list = document.createElement("div");
+    list.className = "pac-studio__droplist";
+    list.hidden = true;
+    list.append(...items);
+    button.addEventListener("click", () => {
+        const opening = list.hidden;
+        for (const other of menu!.querySelectorAll<HTMLElement>(".pac-studio__droplist")) other.hidden = true;
+        list.hidden = !opening;
+    });
+    wrap.append(button, list);
+    return wrap;
+}
+
+function item(text: string, hint: string, active: boolean, onClick: () => void): HTMLButtonElement {
+    const element = document.createElement("button");
+    element.className = "pac-studio__dropitem";
+    element.type = "button";
+    element.innerHTML = `<span>${text}</span><span class="pac-studio__drophint">${hint}</span>`;
+    if (active) element.setAttribute("data-active", "");
+    element.addEventListener("click", onClick);
+    return element;
+}
+
+function chip(text: string, active: boolean, onClick: () => void): HTMLButtonElement {
+    const element = document.createElement("button");
+    element.className = "pac-studio__chip";
+    element.type = "button";
+    element.textContent = text;
+    if (active) element.setAttribute("data-active", "");
+    element.addEventListener("click", onClick);
+    return element;
+}
+
+/** one option of the showing component: a chip per choice, a toggle, or a field */
 function control(field: Field, value: unknown, onChange: (value: unknown) => void): HTMLElement {
-    const wrap = h("div", { class: "pac-studio__field" }, h("span", { class: "pac-studio__fieldname" }, field.name));
+    const wrap = document.createElement("span");
+    wrap.className = "pac-studio__field";
+    const name = document.createElement("span");
+    name.className = "pac-studio__fieldname";
+    name.textContent = field.name;
+    wrap.append(name);
     if (field.type === "enum") {
         wrap.append(...(field.options ?? []).map(option => chip(option, option === value, () => onChange(option))));
     } else if (field.type === "boolean") {
         wrap.append(chip(value ? "on" : "off", value === true, () => onChange(!value)));
     } else {
-        const input = h("input", {
-            class: "pac-studio__input",
-            type: field.type === "number" ? "number" : "text",
-            value: value === undefined ? "" : String(value),
-            keydown: (event: KeyboardEvent) => {
-                if (event.key === "Enter") onChange(field.type === "number" ? Number((input as HTMLInputElement).value) : (input as HTMLInputElement).value);
-                if (event.key === "Escape") shut();
-                event.stopPropagation();
-            },
+        const input = document.createElement("input");
+        input.className = "pac-studio__input";
+        input.type = field.type === "number" ? "number" : "text";
+        input.value = value === undefined ? "" : String(value);
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter") onChange(field.type === "number" ? Number(input.value) : input.value);
+            if (event.key === "Escape") closeMenu();
+            event.stopPropagation();
         });
         wrap.append(input);
     }
     return wrap;
-}
-
-const menuItem = (text: string, onClick: () => void): HTMLElement =>
-    h("button", { class: "pac-menu__item", type: "button", click: onClick }, text);
-
-/** a drill replaces the menu's panel with one section, in place */
-function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void {
-    panel.replaceChildren(h("div", { class: "pac-menu__head" }, title), ...rows);
-}
-
-async function themeDrill(panel: HTMLElement): Promise<void> {
-    const { themes, current } = (await (await fetch("/__themes")).json()) as { themes: string[]; current: string };
-    drill(panel, "Theme", ...themes.map(theme => {
-        const row = menuItem(theme, () => splice(themeChange(theme)));
-        if (theme === current) row.setAttribute("data-active", "");
-        return row;
-    }));
-}
-
-/*
- * Export writes beside the deck under its own name and replaces what is there; the server
- * fits, prints and opens the file, so the studio only reports how it went.
- */
-function exportDrill(panel: HTMLElement, close: () => void): void {
-    const target = `${doc.file.replace(/\.[^.]+$/, "")}.pdf`;
-    const write = (images: string) => async () => {
-        close();
-        hint(`Writing ${target}…`);
-        try {
-            const response = await fetch(`/__pdf?images=${images}`, { method: "POST" });
-            if (response.ok) hint(`Wrote ${target}`, false, 2500);
-            else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
-        } catch {
-            hint("Export failed: server unreachable", true, 6000);
-        }
-    };
-    drill(panel, "Export",
-        menuItem(`PDF, as ${target}`, write("screen")),
-        menuItem("PDF, compact", write("compact")),
-        menuItem("PDF, full-resolution images", write("full")),
-    );
-}
-
-/** the theme is one frontmatter line; changing it is a splice like any other edit */
-function themeChange(theme: string): { start: number; end: number; text: string } {
-    const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
-    if (matter) {
-        const line = /^theme:.*$/m.exec(matter[1]!);
-        if (line) {
-            const start = 4 + line.index;
-            return { start, end: start + line[0].length, text: `theme: ${theme}` };
-        }
-        return { start: 4, end: 4, text: `theme: ${theme}\n` };
-    }
-    return { start: 0, end: 0, text: `---\ntheme: ${theme}\n---\n\n` };
-}
-
-interface Range { start: number; end: number; md: string; kind: string }
-
-/** an entity handle is one slice; a block handle spans the entities its component inlined */
-function rangeOf(target: HTMLElement): Range | undefined {
-    const byId = (id: string | undefined) => doc.entities.find(e => e.id === id);
-    if (target.dataset.pacEntity) {
-        const entity = byId(target.dataset.pacEntity);
-        return entity && { start: entity.start, end: entity.end, md: entity.md, kind: entity.kind };
-    }
-    const [firstId, lastId] = (target.dataset.pacSpan ?? "").split(" ");
-    const first = byId(firstId);
-    const last = byId(lastId);
-    return first && last
-        ? { start: first.start, end: last.end, md: doc.source.slice(first.start, last.end), kind: "block" }
-        : undefined;
-}
-
-/** every edit target in document order: entity handles and the block handles between them */
-const wrappers = () => [...document.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];
-
-/** ids are content hashes and change on every commit, so flow lands by position */
-function openAt(index: number, caret: Caret): void {
-    const all = wrappers();
-    const target = all[Math.max(0, Math.min(all.length - 1, index))];
-    const range = target && rangeOf(target);
-    if (target && range) edit(target, range, caret);
-}
-
-function edit(target: HTMLElement, range: Range, caret: Caret): void {
-    const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
-    openEditor(target, {
-        initial: range.md,
-        caret,
-        mode,
-        commit: text => (text === range.md ? undefined : { start: range.start, end: range.end, text }),
-    });
-}
-
-function insertAfter(target: HTMLElement, at: number): void {
-    openEditor(target, {
-        initial: "",
-        caret: "end",
-        mode: "insert",
-        placeholder: "markdown… a blank line makes two blocks",
-        commit: text => (text.trim() ? { start: at, end: at, text: `\n\n${text.trim()}` } : undefined),
-    });
-}
-
-interface EditorOptions {
-    initial: string;
-    caret: Caret;
-    mode: Mode;
-    placeholder?: string;
-    /** undefined means nothing changed: close with no write */
-    commit(text: string): { start: number; end: number; text: string } | undefined;
-}
-
-function openEditor(target: HTMLElement, options: EditorOptions): void {
-    const area = document.createElement("textarea");
-    area.rows = 1;                                      // the default of 2 floors scrollHeight a row too high
-    area.className = `pac-studio__editor pac-studio__editor--${options.mode}`;
-    area.value = options.initial;
-    if (options.placeholder) area.placeholder = options.placeholder;
-
-    if (options.mode === "inplace") {
-        // measured and styled before the element hides, so the textarea takes its box
-        const rect = target.getBoundingClientRect();
-        const style = getComputedStyle(target);
-        for (const property of ["font-family", "font-size", "font-weight", "font-style", "line-height", "letter-spacing", "text-align", "margin"] as const) {
-            area.style.setProperty(property, style.getPropertyValue(property));
-        }
-        area.style.minHeight = `${rect.height}px`;
-        target.insertAdjacentElement("afterend", area);
-        target.classList.add("pac-studio--hidden");
-    } else if (options.mode === "overlay") {
-        const rect = target.getBoundingClientRect();
-        area.style.left = `${rect.left + scrollX}px`;
-        area.style.top = `${rect.top + scrollY}px`;
-        area.style.width = `${Math.min(rect.width, 680)}px`;
-        document.body.append(area);
-        target.classList.add("pac-studio--dim");
-    } else {
-        target.insertAdjacentElement("afterend", area);
-    }
-
-    const self: Chrome = {
-        kind: "block",
-        holds: true,
-        close() {
-            area.remove();
-            target.classList.remove("pac-studio--hidden", "pac-studio--dim");
-        },
-    };
-    show(self);
-
-    size(area);
-    area.focus();
-    const at = options.caret === "end" ? area.value.length : 0;
-    area.setSelectionRange(at, at);
-    area.addEventListener("input", () => size(area));
-
-    let done = false;
-
-    const commit = async (flowTo?: number, caret: Caret = "end") => {
-        if (done) return;
-        done = true;
-        const change = options.commit(area.value);
-        if (!change) {
-            shut();
-            if (flowTo !== undefined) openAt(flowTo, caret);
-            return;
-        }
-        // the editor stays, frozen, until the rebuilt page arrives: closing it now would
-        // flash the old rendered value for the length of the commit round trip
-        area.readOnly = true;
-        self.holds = false;     // this write causes the next reload; a stale hash 409s and reloads anyway
-        // the write reloads the page, so the flow target survives in sessionStorage
-        if (flowTo !== undefined) sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
-        await splice(change);
-    };
-
-    area.addEventListener("blur", () => commit());
-    area.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-            event.preventDefault();
-            done = true;
-            shut();
-            return;
-        }
-        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); commit(); return; }
-        if ((event.key === "b" || event.key === "i") && (event.metaKey || event.ctrlKey)) {
-            event.preventDefault();
-            mark(area, event.key === "b" ? "**" : "*");
-            return;
-        }
-        const index = wrappers().indexOf(target);
-        if (index === -1) return;                       // a block handle has no place in the flow
-        const collapsed = area.selectionStart === area.selectionEnd;
-        if (event.key === "ArrowDown" && collapsed && area.selectionStart === area.value.length) {
-            event.preventDefault();
-            commit(index + 1, "start");
-        }
-        if (event.key === "ArrowUp" && collapsed && area.selectionStart === 0 && index > 0) {
-            event.preventDefault();
-            commit(index - 1, "end");
-        }
-    });
 }
 
 /*

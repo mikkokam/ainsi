@@ -72,7 +72,7 @@ interface DocBlock {
     directive?: { start: number; end: number };
     terminator?: { start: number; end: number };
 }
-interface DocComponent { name: string; fields: Field[]; takesList: boolean }
+interface DocComponent { name: string; fields: Field[] }
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
 let doc = {
     hash: "", source: "", file: "",
@@ -165,10 +165,9 @@ function describeBlocks(pages: Page[], entities: Entity[], directives: Directive
     });
 }
 
-/** the palette: each component's fields from its own zod schema, and whether a lone list satisfies it */
+/** the palette: each component's fields from its own zod schema */
 function describeComponents(registry: Registry): DocComponent[] {
-    const list = parse("- a: b\n- c: d\n").doc.entities;
-    return registry.all().map(c => ({ name: c.name, fields: fields(c.props), takesList: c.accepts(list) }));
+    return registry.all().map(c => ({ name: c.name, fields: fields(c.props) }));
 }
 
 function fields(schema: ZodTypeAny): Field[] {

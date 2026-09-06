@@ -13,7 +13,7 @@ Governance and policy infrastructure for production AI
 ---
 
 
-# Fast-growing companies adopt AI faster than they can govern it
+### Fast-growing companies adopt AI faster than they can govern it
 
 <!-- pac: boxes -->
 
