@@ -88,12 +88,13 @@ test("the one script mounts once per instance", async () => {
     expect(script).toContain(`[data-pac="callout"]`);
 });
 
-test("a label keeps its inline marks: the cut is made in the tree, not the rendered string", async () => {
+test("a label is a leading bold run and nothing else is read as structure", async () => {
     const registry = await load([BUILTIN]);
-    const { html } = build("# T\n\n<!-- pac: timeline -->\n- **Q1:** [a](https://x.test) thing\n- Q2: plain\n", { registry, layouts, themeCss: "" });
-    expect(html).toContain('<span class="pac-timeline__label"><strong>Q1</strong></span>');
+    const { html } = build("# T\n\n<!-- pac: timeline -->\n- **Q1** [a](https://x.test) thing\n- Q2: colon stays\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<span class="pac-timeline__label">Q1</span>');
     expect(html).toContain('<span class="pac-timeline__body"><a href="https://x.test">a</a> thing</span>');
-    expect(html).not.toContain("<strong></strong>");
+    expect(html).toContain('<span class="pac-timeline__label"></span>');
+    expect(html).toContain('<span class="pac-timeline__body">Q2: colon stays</span>');
 });
 
 test("prose adds a wrapper only for a size, and the size is a scale step, not a heading", async () => {
@@ -116,7 +117,7 @@ test("boxes over a numbered list is an ol, so the numbers survive", async () => 
 
 test("timeline over a numbered list carries the numbers on its markers", async () => {
     const registry = await load([BUILTIN]);
-    const { html } = build("# T\n\n<!-- pac: timeline -->\n1. Plan: a\n2. Build: b\n", { registry, layouts, themeCss: "" });
+    const { html } = build("# T\n\n<!-- pac: timeline -->\n1. **Plan** a\n2. **Build** b\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<ol class="pac-timeline pac-timeline--horizontal pac-timeline--numbered"');
     expect(build("# T\n\n<!-- pac: timeline -->\n- Q1: a\n- Q2: b\n", { registry, layouts, themeCss: "" }).html).toContain('<ol class="pac-timeline pac-timeline--horizontal"');
 });
@@ -146,7 +147,7 @@ test("a GitHub alert is its own block with the marker lifted into a title", asyn
 
 test("==words== is a highlight, in prose and inside a component's own text", async () => {
     const registry = await load([BUILTIN]);
-    const { html } = build("# T\n\nsay ==this== and a == b stays\n\n<!-- pac: boxes -->\n- One: ==hot==\n", { registry, layouts, themeCss: "" });
+    const { html } = build("# T\n\nsay ==this== and a == b stays\n\n<!-- pac: boxes -->\n- **One** ==hot==\n", { registry, layouts, themeCss: "" });
     expect(html).toContain("say <mark>this</mark> and a == b stays");
     expect(html).toContain('<span class="pac-boxes__body"><mark>hot</mark></span>');
 });

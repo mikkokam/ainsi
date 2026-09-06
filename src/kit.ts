@@ -32,44 +32,14 @@ function escapeAttr(value: string): string {
 export const listOf = (entities: Entity[]): Entity | undefined => entities.find(e => e.kind === "list");
 
 /**
- * Each item as [label, body] inline html, split at the first colon in its text. The cut is
- * made in the tree, not the rendered string, so `**Q1:** shipped` keeps its bold and a link
- * on either side stays a link. No colon: ["", the whole item].
+ * Each item as [label, body] inline html. A label is a leading bold run, `- **Q1** shipped`,
+ * the one markdown idiom for a lead-in that reads the same everywhere; nothing else in the
+ * text is read as structure. No leading bold: ["", the whole item].
  */
 export const labelled = (list: Entity, inline: (node: any) => string): [string, string][] =>
     (list.node.children ?? []).map((li: any) => {
         const para = li.children?.find((c: any) => c.type === "paragraph") ?? li;
-        const [head, tail] = cut(para);
-        return head ? [inline(head).trim(), inline(tail).trim()] : ["", inline(para).trim()];
+        const [first, ...rest] = para.children ?? [];
+        if (first?.type !== "strong") return ["", inline(para).trim()];
+        return [inline(first).trim(), inline({ ...para, children: rest }).trim()];
     });
-
-function cut(node: any): [any | undefined, any] {
-    const children: any[] = node.children ?? [];
-    for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        if (child.type === "text" && child.value.includes(":")) {
-            const at = child.value.indexOf(":");
-            return [
-                prune({ ...node, children: [...children.slice(0, i), { ...child, value: child.value.slice(0, at) }] }),
-                prune({ ...node, children: [{ ...child, value: child.value.slice(at + 1) }, ...children.slice(i + 1)] }),
-            ];
-        }
-        if (child.children) {
-            const [head, tail] = cut(child);
-            if (head) {
-                return [
-                    prune({ ...node, children: [...children.slice(0, i), head] }),
-                    prune({ ...node, children: [tail, ...children.slice(i + 1)] }),
-                ];
-            }
-        }
-    }
-    return [undefined, node];
-}
-
-/** a split leaves empty text and emptied marks behind; they would render as `<strong></strong>` */
-function prune(node: any): any {
-    if (!node.children) return node;
-    const children = node.children.map(prune).filter((c: any) => (c.type === "text" ? c.value !== "" : !(c.children && c.children.length === 0)));
-    return { ...node, children };
-}
