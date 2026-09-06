@@ -1,0 +1,21 @@
+/* GitHub's five kinds on the theme's tokens: note and important take the accent, tip,
+   warning and caution the theme's status colours */
+.pac-alert {
+    --pac-alert-color: var(--pac-accent);
+    margin: 0; padding: .8em 1em .85em 1.1em;
+    max-width: 40em;
+    border-left: 4px solid var(--pac-alert-color);
+    border-radius: 0 var(--pac-radius) var(--pac-radius) 0;
+    background: color-mix(in srgb, var(--pac-alert-color) 7%, var(--pac-surface));
+}
+.pac-alert--tip { --pac-alert-color: var(--pac-ok); }
+.pac-alert--warning { --pac-alert-color: var(--pac-warn); }
+.pac-alert--caution { --pac-alert-color: var(--pac-danger); }
+.pac-alert__title {
+    margin: 0 0 .3em;
+    font-weight: var(--pac-strong); font-size: .85em;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--pac-alert-color);
+}
+.pac-alert p { margin: 0 0 .5em; }
+.pac-alert > :last-child, .pac-alert p:last-child { margin-bottom: 0; }

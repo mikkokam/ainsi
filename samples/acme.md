@@ -30,12 +30,17 @@ A fifty-person engineering team might now connect eight model providers across p
 
 <!-- pac:layout split side=right -->
 
-# A single deterministic gateway in front of every model
-
-Every outbound LLM call passes through Acme before reaching upstream providers. **Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
+<!-- pac: prose size=small -->
+How does it work
 
 <!-- pac: prose size=small -->
-Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
+# A single deterministic gateway in front of every model
+
+Every outbound LLM call passes through Acme before reaching upstream providers.  
+**Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
+
+> [!TIP]
+> Zero changes to existing application code: swap ==one base URL== in your client configuration and enforce policy on day one.
 
 ![Tactile notebook and fountain pen on warm oak desk](https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&q=80)
 

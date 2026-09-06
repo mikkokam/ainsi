@@ -8,6 +8,9 @@
     --pac-accent-ink: #ffffff;
     --pac-rule: #dfe4ea;
     --pac-surface: #ffffff;
+    --pac-ok: #1a7f37;
+    --pac-warn: #b8860b;
+    --pac-danger: #c73a2f;
 
     --pac-font: "Inter", system-ui, -apple-system, sans-serif;
     --pac-font-display: var(--pac-font);

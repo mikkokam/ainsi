@@ -4,13 +4,34 @@ import type { Entity } from "./types";
 
 export function blockHtml(entity: Entity): string {
     // allowDangerousHtml: an html entity is html the author wrote and meant
-    return toHtml(toHast(breaks(entity.node), { allowDangerousHtml: true }) as any, { allowDangerousHtml: true });
+    return toHtml(toHast(marks(breaks(entity.node)), { allowDangerousHtml: true }) as any, { allowDangerousHtml: true });
 }
 
 /** inline html for a node's children, so a component can place the text itself */
 export function inlineHtml(node: any): string {
-    const children = (breaks(node)?.children ?? []).map((c: any) => toHast(c)).filter(Boolean);
-    return toHtml({ type: "root", children } as any);
+    const children = (marks(breaks(node))?.children ?? []).map((c: any) => toHast(c, { allowDangerousHtml: true })).filter(Boolean);
+    return toHtml({ type: "root", children } as any, { allowDangerousHtml: true });
+}
+
+/** `==words==` is a highlight, the one inline mark markdown never got; `<mark>` written by hand is the same thing */
+const HIGHLIGHT = /==(\S(?:[^=]*?\S)?)==/g;
+
+export function marks(node: any): any {
+    if (!node?.children) return node;
+    const children = node.children.flatMap((child: any) => {
+        if (child.type !== "text" || !HIGHLIGHT.test(child.value)) return [marks(child)];
+        HIGHLIGHT.lastIndex = 0;
+        const out: any[] = [];
+        let at = 0;
+        for (const hit of child.value.matchAll(HIGHLIGHT)) {
+            if (hit.index! > at) out.push({ ...child, value: child.value.slice(at, hit.index) });
+            out.push({ type: "html", value: "<mark>" }, { ...child, value: hit[1] }, { type: "html", value: "</mark>" });
+            at = hit.index! + hit[0].length;
+        }
+        if (at < child.value.length) out.push({ ...child, value: child.value.slice(at) });
+        return out;
+    });
+    return { ...node, children };
 }
 
 /**

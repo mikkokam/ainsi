@@ -1,5 +1,6 @@
 import type { Block, Diagnostic, Directive, Entity } from "./types";
 import type { Component, Registry } from "./registry";
+import { alertKind } from "./components/alert/index";
 
 /** a boundary and nothing else; decks written before directives governed one entity carry it */
 export const END = "end";
@@ -94,6 +95,8 @@ function heuristic(
         return ["lead", 2, {}];
     }
 
+    if (alertKind(e)) return ["alert", 1, {}];
+
     if (e.kind === "table") {
         return [isComparison(e) ? "comparison" : "table", 1, {}];
     }
@@ -107,7 +110,7 @@ function heuristic(
     // but never past an entity a directive claims or one another heuristic could match
     const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html", "list"];
     let taken = 1;
-    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id)) taken++;
+    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id) && !alertKind(page[i + taken]!)) taken++;
     return ["prose", taken, {}];
 }
 

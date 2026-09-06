@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["aside", "boxes", "comparison", "full", "lead", "prose", "quote", "table", "timeline"],
+        ["alert", "aside", "boxes", "comparison", "full", "lead", "prose", "quote", "table", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(10);
+    expect(registry.names().length).toBe(11);
 });
 
 test("a later root overrides a builtin of the same name", async () => {
@@ -128,4 +128,25 @@ test("a quote signs itself: a dashed last line inside the blockquote is the attr
     expect(html).not.toContain("— Who");
     expect(html).toContain("<p>after</p>");
     expect(html.indexOf("</figure>")).toBeLessThan(html.indexOf("<p>after</p>"));
+});
+
+test("a GitHub alert is its own block with the marker lifted into a title", async () => {
+    const registry = await load([BUILTIN]);
+    const md = "# T\n\nbefore\n\n> [!WARNING]\n> Mind the ==gap==, and `keep` it.\n>\n> Second paragraph.\n\nafter\n";
+    const { html, pages } = build(md, { registry, layouts, themeCss: "" });
+    expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose", "alert", "prose"]);
+    expect(html).toContain('<aside class="pac-alert pac-alert--warning" data-pac="alert">');
+    expect(html).toContain('<p class="pac-alert__title">Warning</p>');
+    expect(html).toContain("<p>Mind the <mark>gap</mark>, and <code>keep</code> it.</p>");
+    expect(html).toContain("<p>Second paragraph.</p>");
+    expect(html).not.toContain("[!WARNING]");
+    const plain = build("> just a quote\n", { registry, layouts, themeCss: "" });
+    expect(plain.pages[0]!.blocks[0]!.component).toBe("prose");
+});
+
+test("==words== is a highlight, in prose and inside a component's own text", async () => {
+    const registry = await load([BUILTIN]);
+    const { html } = build("# T\n\nsay ==this== and a == b stays\n\n<!-- pac: boxes -->\n- One: ==hot==\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain("say <mark>this</mark> and a == b stays");
+    expect(html).toContain('<span class="pac-boxes__body"><mark>hot</mark></span>');
 });
