@@ -75,18 +75,28 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
-/* the stroke is a shorthand so position and size are set: the draw animation grows background-size from zero */
-.pac-page mark {
-    color: inherit; padding: 0 .15em;
-    border-radius: .5em .2em .55em .25em / .45em .55em .2em .5em;
-    background: linear-gradient(93deg,
-        color-mix(in srgb, var(--pac-accent) 14%, transparent),
-        color-mix(in srgb, var(--pac-accent) 33%, transparent) 6%,
-        color-mix(in srgb, var(--pac-accent) 25%, transparent) 44%,
-        color-mix(in srgb, var(--pac-accent) 34%, transparent) 72%,
-        color-mix(in srgb, var(--pac-accent) 19%, transparent) 96%,
-        color-mix(in srgb, var(--pac-accent) 8%, transparent)
-    ) 0 0 / 100% 100% no-repeat;
+/*
+ * The highlighter stroke lives on a pseudo behind the glyphs, not on a background: a
+ * background cannot tilt or carry a chisel-cut tip without dragging the text with it.
+ * The mark makes itself a stacking context so the stroke stays above whatever surface the
+ * enclosing block painted. An absolutely positioned box on an inline spans the bounding
+ * rect of its line boxes, so a mark that wraps drops one box over both lines: keep a mark
+ * to a few words.
+ */
+.pac-page mark { background: none; color: inherit; padding: 0 .1em; position: relative; z-index: 0; }
+.pac-page mark::before {
+    content: "";
+    position: absolute; inset: .1em -.25em .05em -.15em; z-index: -1;
+    transform: rotate(-.6deg);
+    transform-origin: 0 50%;
+    /* the tip: a slanted cut where the pen lands; the end stays square, the ink fades instead */
+    clip-path: polygon(.18em 0, 100% 0, calc(100% - .12em) 100%, 0 100%);
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--pac-accent) 42%, transparent),
+        color-mix(in srgb, var(--pac-accent) 30%, transparent) 25%,
+        color-mix(in srgb, var(--pac-accent) 36%, transparent) 55%,
+        color-mix(in srgb, var(--pac-accent) 24%, transparent) 80%,
+        color-mix(in srgb, var(--pac-accent) 5%, transparent));
 }
 .pac-page kbd { font: .85em var(--pac-font-mono); padding: .1em .4em; border: 1px solid var(--pac-rule); border-bottom-width: 2px; border-radius: .3em; }
 .pac-page del { opacity: .55; }

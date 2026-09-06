@@ -37,8 +37,7 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
     z-index: 5;
 }
 
-.pac-studio__editor--overlay,
-.pac-studio__editor--float {
+.pac-studio__editor--overlay {
     position: absolute;
     z-index: 70;
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -47,6 +46,17 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
     background: rgba(255, 255, 255, 0.98);
     color: #111;
     box-shadow: 0 10px 32px rgb(0 0 0 / 28%);
+}
+
+/* the deck's frontmatter: a block before page one, the page's width, pushing the deck down */
+.pac-studio__editor--deck {
+    width: min(1280px, 100%);
+    margin: 1.6rem auto calc(var(--pac-gap) * 2);   /* clear of the toolbar strip in the corner */
+    font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 0.6em 0.7em;
+    border-style: solid;
+    background: rgba(255, 255, 255, 0.96);
+    color: #111;
 }
 
 .pac-studio__editor--insert {

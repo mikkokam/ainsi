@@ -201,20 +201,22 @@ body[data-present] .pac-page[data-current] article > *:nth-child(4) { animation-
 body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--pac-motion) * .54); }
 
 /*
- * Highlights draw on rather than arrive painted: once the blocks are settling, each mark
- * sweeps left to right like a highlighter pass. Only background-size moves, so the uneven
- * ink of the stroke leads the sweep like a pen tip.
+ * Highlights draw on rather than arrive painted: once the blocks are settling, each mark's
+ * stroke sweeps left to right like a highlighter pass. The separate scale property, so the
+ * stroke's own rotate in the base styles is untouched; origin at the stroke's start.
  */
 @keyframes pac-mark-draw {
-    from { background-size: 0% 100%; }
+    from { scale: 0 1; }
+    to { scale: 1 1; }
 }
 
-body[data-present] .pac-page[data-current] mark {
+body[data-present] .pac-page[data-current] mark::before {
     animation: pac-mark-draw calc(var(--pac-motion) * .55) var(--pac-ease) calc(var(--pac-motion) * .7) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
     body[data-present] .pac-page[data-current] *,
+    body[data-present] .pac-page[data-current] mark::before,
     body[data-present] .pac-page[data-current] { animation: none !important; }
 }
 

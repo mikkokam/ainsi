@@ -43,7 +43,7 @@ interface DocComponent { name: string; fields: Field[] }
 interface Doc { hash: string; source: string; file: string; entities: DocEntity[]; blocks: DocBlock[]; components: DocComponent[] }
 
 type Caret = "start" | "end";
-type Mode = "inplace" | "overlay" | "insert" | "float";
+type Mode = "inplace" | "overlay" | "insert" | "deck";
 
 let doc: Doc = { hash: "", source: "", file: "", entities: [], blocks: [], components: [] };
 
@@ -502,7 +502,8 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
 
 /*
  * The deck's settings are its frontmatter, and the frontmatter is a slice like any block:
- * the same floating editor, the same splice. Opened from the menu, or by clicking the mark.
+ * the same editor, in flow above the first page, the same splice. Opened from the menu, or
+ * by clicking the mark.
  * The theme keeps its own picker beside it; here it is one more line.
  */
 const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
@@ -516,7 +517,7 @@ function openDeck(): void {
     openEditor(page, {
         initial,
         caret: "end",
-        mode: "float",
+        mode: "deck",
         placeholder: `frontmatter, one key per line\n${KEYS}`,
         commit: text => {
             const body = text.trim();
@@ -630,13 +631,17 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         area.style.minHeight = `${rect.height}px`;
         target.insertAdjacentElement("afterend", area);
         target.classList.add("pac-studio--hidden");
-    } else if (options.mode === "overlay" || options.mode === "float") {
+    } else if (options.mode === "overlay") {
         const rect = target.getBoundingClientRect();
         area.style.left = `${rect.left + scrollX}px`;
         area.style.top = `${rect.top + scrollY}px`;
         area.style.width = `${Math.min(rect.width, 680)}px`;
         document.body.append(area);
-        if (options.mode === "overlay") target.classList.add("pac-studio--dim");
+        target.classList.add("pac-studio--dim");
+    } else if (options.mode === "deck") {
+        // above the first page and outside it: the deck's own settings, not page one's
+        target.insertAdjacentElement("beforebegin", area);
+        scrollTo({ top: 0 });
     } else {
         target.insertAdjacentElement("afterend", area);
     }
