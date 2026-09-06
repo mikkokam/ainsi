@@ -1,6 +1,6 @@
 /* two shared rows, values over captions, one column per figure, so every caption starts on
-   the same line. The value is display type stepped down by its own length to fit its share
-   of the width, so $500 000 and 200 Mtok/s shrink where 5 does not. */
+   the same line. One size for the row: display type stepped down until the longest figure
+   fits its share of the width. */
 .pac-figures {
     list-style: none; margin: 0; padding: 0;
     container-type: inline-size;

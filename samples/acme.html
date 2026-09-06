@@ -496,8 +496,8 @@ body[data-present] [data-current] .pac-comparison__column:nth-child(n+3) { anima
 .pac-matrix:not(.pac-matrix--axes) { grid-template-columns: 1fr; }
 .pac-matrix:not(.pac-matrix--axes) .pac-matrix__grid { grid-column: 1; }
 /* two shared rows, values over captions, one column per figure, so every caption starts on
-   the same line. The value is display type stepped down by its own length to fit its share
-   of the width, so $500 000 and 200 Mtok/s shrink where 5 does not. */
+   the same line. One size for the row: display type stepped down until the longest figure
+   fits its share of the width. */
 .pac-figures {
     list-style: none; margin: 0; padding: 0;
     container-type: inline-size;
@@ -968,20 +968,20 @@ body[data-present] .pac-page[data-current] mark {
 <section class="pac-page" id="acme-by-the-numbers" data-page="10" data-layout="default">
 <main><article><h1>Acme by the numbers</h1>
 
-<ul class="pac-figures" data-pac="figures" style="--pac-figures-count: 4">
-    <li class="pac-figures__item" style="--pac-figures-chars: 1">
+<ul class="pac-figures" data-pac="figures" style="--pac-figures-count: 4; --pac-figures-chars: 10">
+    <li class="pac-figures__item">
         <span class="pac-figures__value">5</span>
         <span class="pac-figures__caption">minutes to first governed call</span>
     </li>
-    <li class="pac-figures__item" style="--pac-figures-chars: 7">
+    <li class="pac-figures__item">
         <span class="pac-figures__value">500 000</span>
         <span class="pac-figures__caption">requests a day through one customer's gateway</span>
     </li>
-    <li class="pac-figures__item" style="--pac-figures-chars: 5">
+    <li class="pac-figures__item">
         <span class="pac-figures__value">$2.4M</span>
         <span class="pac-figures__caption">of token spend attributed to teams last quarter</span>
     </li>
-    <li class="pac-figures__item" style="--pac-figures-chars: 10">
+    <li class="pac-figures__item">
         <span class="pac-figures__value">200 Mtok/s</span>
         <span class="pac-figures__caption">peak throughput, no added latency</span>
     </li>

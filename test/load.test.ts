@@ -171,11 +171,10 @@ test("columns is boxes without the chrome: one column per item, a bold run as it
     expect(numbered).toContain('<ol class="pac-columns pac-columns--ordered" data-pac="columns">');
 });
 
-test("figures: the bold run is the figure, any text, sized to fit by its own length", async () => {
+test("figures: the bold run is the figure, any text; the row takes one size from its longest", async () => {
     const registry = await load([BUILTIN]);
     const { html } = build("# T\n\n<!-- pac: figures -->\n- **5** things\n- **$500 000** a year\n- **200 Mtok/s** peak\n", { registry, layouts, themeCss: "" });
-    expect(html).toContain('<li class="pac-figures__item" style="--pac-figures-chars: 1">');
-    expect(html).toContain('<li class="pac-figures__item" style="--pac-figures-chars: 8">');
+    expect(html).toContain('style="--pac-figures-count: 3; --pac-figures-chars: 10"');
     expect(html).toContain('<span class="pac-figures__value">200 Mtok/s</span>');
     expect(html).toContain('<span class="pac-figures__caption">peak</span>');
 });
