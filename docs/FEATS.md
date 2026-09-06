@@ -32,14 +32,6 @@ The fit solver measures static markup, and an island that changes size when it m
 
 Cheap now that the machinery exists: `openFit` already holds a page open and `measure` already renders one page and reads its overflow. Measure a page, mount, measure again, report any block that moved.
 
-## PDF export (feat)
-
-The model says HTML is the first target because the browser measures for us, and the viewer is a build option so a headless render for a PDF carries no chrome. Both are true, and there is still no way to get a PDF: no `--pdf`, and no `@page` rules, so printing a deck from a browser gives A4 portrait pages that break wherever they like.
-
-A deck you cannot hand to someone who does not want HTML is half a deck, and the dependency is already paid for — `page.pdf()` is the same headless chromium `--fit` uses, on the same session. Note the order matters: a PDF rendered without fitting first is worse than none, because `overflow: hidden` means the pages that do not fit lose their content silently in the export.
-
-Done: `--pdf` writes one page per deck page at the deck's ratio, `@page` rules so a browser's own print gives the same, and the viewer absent from both.
-
 # The Studio
 
 A visual editor over the same markdown, run by the dev server, never shipped in a deck. A player is not an editor: baking editor code into the exported file would bloat it, and chrome that is not in the markup cannot leak into a print, an export or a measurement.
@@ -56,29 +48,19 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## Granular page swap (feat)
-
-A rebuild returns the whole deck, and replacing the body throws away scroll position and anything the reader was doing. At 0.10 ms a section, diff the rendered sections against what is in the DOM and replace only those whose html changed — usually one.
-
-Full re-render on the server, granular replacement in the browser. That pairing is what lets the simple model stay simple without every edit feeling like a page reload. Worth building first because the reload path already exists and this is the smallest thing that makes it feel like an editor.
-
 ## The Studio: structural edits (feat)
 
-Change a block's component, delete it, change the page's layout, change the theme, split a page. No caret is involved, they are infrequent and atomic, and a full re-render is what you want because the structure changed.
+Any block to any block. Change what an entity is, change how a span renders, delete a block, change the page's layout, change the theme, split a page. No caret is involved, they are infrequent and atomic, and a full re-render is what you want because the structure changed. The rigidity to refuse is the one where a heading can only ever be a heading; the file is markdown and every one of these is a splice.
 
-The whole edit is one comment line. Click a block, pick from the components whose `accepts()` passes for that span, fill the props from the component's own zod schema — validation, defaults and coercion are already one declaration — and splice `<!-- pac: timeline -->` in before the entity the block starts at.
+Two edits, kept apart. An entity kind change rewrites the slice's leading syntax: strip `# ` for a paragraph, prefix `- ` for a list item, `> ` for a quote, and back. Deterministic in the markdown direction, no component involved. Free between the text-shaped kinds; table and image are not offered as targets, because a paragraph has no columns and an image has no text, and the studio never invents content. A component change is the directive line. `accepts()` stays as the renderer's contract and stops filtering the palette: show every component, and when the pick does not accept the span, rewrite the shape first (a paragraph becomes a one-item list) and then write the directive. So a heading into boxes is two ranges through the same splice endpoint.
 
-Two handles are needed in the output, emitted in edit mode only and never written into the markdown: a block handle for these edits and an entity handle for the content edits below. Both are derived from ids that already exist. `prose` deliberately emits no wrapper of its own, so there is nothing to hang one on — solving that without changing what a plain build emits is the one real unknown here.
+The directive line has a lifecycle. None before the entity: add one. One there: replace it. The pick equals what the heuristic would choose: delete it, so the file stays clean. The third case needs the doc endpoint to expose the heuristic's choice per block, which is `group()` run once without directives. Props come from the component's own zod schema, so validation, defaults and coercion are already one declaration.
 
-Done: `--edit` on the dev server, handles, a component popover, and a splice endpoint. One directive change, end to end, no content editing. Small enough to throw away if the loop does not feel right, which is the point of doing it first.
+One engine change in the way: a directive runs until the next directive or the end of the page, so retagging a paragraph in the middle of a prose run swallows everything after it. Change the extent to what the heuristic would have taken; an end marker would work too and litters files with closing comments.
 
-## An open editor survives an external change (feat)
+Two handles are needed in the output, emitted in edit mode only and never written into the markdown: a block handle for these edits and an entity handle for the content edits below. Both are derived from ids that already exist. `prose` deliberately emits no wrapper of its own, so there is nothing to hang one on; solving that without changing what a plain build emits is the one real unknown here.
 
-External edits already flow into the studio, per the architecture line on equal writers; this row is only the collision. When the reload arrives while a textarea is open, the half-typed text dies silently. Tolerable solo, wrong the moment an agent works the same file while a person edits, which is the flow the whole design invites.
-
-Cheapest honest version: defer the reload while an editor is open and let the hash guard settle the commit, which still discards the text on a true collision, just visibly. The better version carries the draft across the reload and reopens it on the corresponding entity in the new render. Start with the first; the second is the tool's first real multi-writer UX and should wait for the collision to actually hurt.
-
-Done: an external write while a textarea is open never silently discards typed text, whichever version lands.
+Done: a kind change and a component change on any text-shaped block, end to end, the directive added, replaced or removed as the case demands, and a mid-page retag leaving its neighbours alone.
 
 ## The Studio: content edits (feat)
 
@@ -98,9 +80,11 @@ The cost is that the block being edited shows source rather than its rendered fo
 
 Refused: `--from`, the input is always markdown; multiple inputs; stdin and stdout piping, deferred until something real composes with pac. `--edit` disappears into the default; `--watch` dies with it unless a read-only preview proves worth keeping.
 
-Depends on the studio feats above for the default to open into; the `pdf` extension arrives with the PDF export feat and the sniffing simply routes to it.
+Depends on the studio feats above for the default to open into; `--pdf` already exists and the `pdf` extension simply routes to it.
 
-Done: the four invocations above behave as written, a piped `pac deck.md` refuses with guidance, and the README quickstart is one line: `pac deck.md`.
+Outputs land next to the source file, never in the invoker's cwd: `pac build ~/decks/acme.md` writes `~/decks/acme.html` wherever it was run from.
+
+Done: the four invocations above behave as written, a piped `pac deck.md` refuses with guidance, exports land beside the source, and the README quickstart is one line: `pac deck.md`.
 
 ## Playwright out of the default install (chore)
 
@@ -108,7 +92,37 @@ Done: the four invocations above behave as written, a piped `pac deck.md` refuse
 
 # Later
 
-# Open
+## The file stays the only mutation point (feat) [invariant]
+
+One line for ARCHITECTURE, maintainer's to write: the deck file is the single mutation point; no writer ever gets a second path, not a DOM-patch endpoint, not a database, not a per-block API that bypasses the file. Everything the studio proved rests on it, and it is also what keeps multi-user reachable later: a CRDT retrofits cleanly behind one door and not at all behind several, which is the corner Obsidian is in.
+
+Done: the sentence stands in ARCHITECTURE and this row is deleted.
+
+## Granular page swap (feat)
+
+Every rebuild is a full `location.reload()`, and the studio carries state to make that invisible: scroll position and the reopen target parked in sessionStorage, the hold counter that defers a reload while an editor is open, the read-only textarea that hides the flash. It works, and nothing a person does solo shows a symptom. What does show is narrow: an external writer, an agent working the file while a person watches, drops presenting, the grid or the menu back to the reading view at the same slide.
+
+The build: on the reload event fetch the page, parse it, replace only the `.pac-page` sections whose markup changed, append or remove tail pages when a split changes the count, refetch the doc for fresh offsets. The viewer re-queries its pages instead of capturing them once. Roughly the lines it deletes, so the payoff is the machinery going and presenting surviving a rebuild, not the milliseconds; full re-render on the server stays.
+
+Nice to have. Opens when the agent-writes-while-presenting flow is in daily use and the drop starts to grate, not before.
+
+## Hosted studio (feat)
+
+The studio is already a Bun server driving watch, rebuild, reload over a file, so hosting it is a container, one mounted folder as the root, and the same loop. Remote agents keep their door: git as transport first, or one HTTP pair, GET returns the markdown and PUT replaces it, which is the whole remote API because the write model is already whole-file. An MCP wrapper over that pair is an afternoon whenever it is wanted and not before; building the remote door before there is a remote is the over-engineering to refuse.
+
+Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `pac deck.md` starts it and deep-links into the deck's URL, the container starts at `/`.
+
+Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what bare `pac` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
+
+Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.pac`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
+
+Done: the container serves home and deck URLs off one mounted folder, a remote writer can read and replace a file through one of the doors above, and a cold restart loses nothing because nothing was held.
+
+## Multi-user editing (feat)
+
+Two humans typing in the same deck at once, which nothing today supports and nothing today needs. Deferred deliberately, not dropped: as long as the file stays the only mutation point, a CRDT arrives as a retrofit behind that door. The service holds the document as one CRDT text, a file write from any writer is text-diffed into it, a live client's edits export back to the file. Plain markdown makes the retrofit lossless because a whole-file text diff reconstructs everything; there is no rich schema or live editor state to migrate.
+
+Refused now: picking a library (y.js, Loro, Automerge), because a persisted snapshot format chosen early is the one way deferral could still bind; per-block CRDT containers, because block identity is unstable under markdown edits and one text container merges fine; any CRDT surface for agents, which keep writing markdown through the same door while the service diffs their writes in like anyone else's. Depends on the hosted studio; opens only when simultaneous typing is real, and it flips the truth statement in ARCHITECTURE, so it is a pivot the maintainer opens.
 
 ## What forms a group when nothing matches (question) [guess]
 
