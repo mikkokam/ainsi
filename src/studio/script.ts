@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, alertOf, markerOf, relayout, remove, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, markerOf, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, control, divider, drill, dropdown, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -45,6 +45,7 @@ interface DocPage {
     layout: string;
     props: Record<string, unknown>;
     first: number;
+    last: number;
     held: boolean;
     directive?: { start: number; end: number };
 }
@@ -56,7 +57,8 @@ interface Doc {
     components: DocComponent[]; layouts: DocLayout[];
 }
 
-type Caret = "start" | "end";
+/** select: the text past a heading marker, so typing replaces a placeholder title */
+type Caret = "start" | "end" | "select";
 type Mode = "inplace" | "overlay" | "insert" | "deck";
 
 let doc: Doc = { hash: "", source: "", file: "", layout: "default", entities: [], blocks: [], pages: [], components: [], layouts: [] };
@@ -112,6 +114,7 @@ async function init(): Promise<void> {
         if (!target) {
             if (chrome?.kind === "menu") shut();
             else if (onMark(event)) { event.preventDefault(); openDeck(); }
+            else if (onEmptyGround(event)) event.preventDefault();
             return;
         }
         const range = rangeOf(target);
@@ -136,7 +139,7 @@ async function init(): Promise<void> {
     plus.addEventListener("click", event => {
         event.stopPropagation();
         const range = gripped && rangeOf(gripped);
-        if (range) insertAfter(gripped!, range.end);
+        if (range) openInsertMenu(gripped!, range.end, plus.getBoundingClientRect());
     });
     // the pointer crosses a sliver of page on its way from the block to the rail; hiding
     // waits long enough for that crossing, and arriving on the rail cancels it
@@ -157,35 +160,42 @@ async function init(): Promise<void> {
     });
     addEventListener("scroll", () => (rail.hidden = true), { passive: true });
 
-    // the page's own door, at its top-left corner: the layout and its options govern the
-    // whole page, so the control sits on the page rather than on any block inside it
-    const pageGrip = h("button", { class: "pac-studio__grip pac-studio__pagegrip", type: "button", title: "Page layout", "aria-label": "Page layout" });
+    // the page's own rail, the block rail one scope up, at its top-left corner: the layout
+    // and its options govern the whole page, so the control sits on the page rather than
+    // on any block inside it, and the plus adds a page below
+    const pageGrip = h("button", { class: "pac-studio__grip", type: "button", title: "Page layout (⌥ click adds a page below)", "aria-label": "Page layout" });
     pageGrip.innerHTML = icons.layout;
-    pageGrip.hidden = true;
-    document.body.append(pageGrip);
+    const pagePlus = h("button", { class: "pac-studio__grip", type: "button", title: "Add a page below", "aria-label": "Add a page below" });
+    pagePlus.innerHTML = icons.plus;
+    const pageRail = h("div", { class: "pac-studio__rail" }, pageGrip, pagePlus);
+    pageRail.hidden = true;
+    document.body.append(pageRail);
     let pageAt: HTMLElement | undefined;
     let pageLeaving: ReturnType<typeof setTimeout> | undefined;
     pageGrip.addEventListener("click", event => {
         event.stopPropagation();
-        if (pageAt) openPageMenu(pageAt, pageGrip.getBoundingClientRect());
+        if (!pageAt) return;
+        if (event.altKey) insertPage(pageAt);
+        else openPageMenu(pageAt, pageGrip.getBoundingClientRect());
     });
-    // the grip sits outside the page, so the pointer crosses the shell on its way over;
-    // hiding waits for that crossing, and arriving on the grip cancels it
-    pageGrip.addEventListener("mouseenter", () => clearTimeout(pageLeaving));
+    pagePlus.addEventListener("click", event => { event.stopPropagation(); if (pageAt) insertPage(pageAt); });
+    // the rail sits outside the page, so the pointer crosses the shell on its way over;
+    // hiding waits for that crossing, and arriving on the rail cancels it
+    pageRail.addEventListener("mouseenter", () => clearTimeout(pageLeaving));
     document.addEventListener("mouseover", event => {
-        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return pageGrip.hidden = true;
+        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return pageRail.hidden = true;
         const at = event.target as HTMLElement;
-        if (at === pageGrip || pageGrip.contains(at)) return;
+        if (at === pageRail || pageRail.contains(at)) return;
         const page = at.closest<HTMLElement>(".pac-page");
         clearTimeout(pageLeaving);
-        if (!page) { pageLeaving = setTimeout(() => { pageGrip.hidden = true; pageAt = undefined; }, 400); return; }
+        if (!page) { pageLeaving = setTimeout(() => { pageRail.hidden = true; pageAt = undefined; }, 400); return; }
         pageAt = page;
         const rect = page.getBoundingClientRect();
-        pageGrip.style.left = `${Math.max(4, rect.left - 26)}px`;
-        pageGrip.style.top = `${Math.max(4, rect.top)}px`;
-        pageGrip.hidden = false;
+        pageRail.style.left = `${Math.max(4, rect.left - 26)}px`;
+        pageRail.style.top = `${Math.max(4, rect.top)}px`;
+        pageRail.hidden = false;
     });
-    addEventListener("scroll", () => (pageGrip.hidden = true), { passive: true });
+    addEventListener("scroll", () => (pageRail.hidden = true), { passive: true });
 
     document.addEventListener("contextmenu", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
@@ -409,9 +419,7 @@ function closeMenu(): void {
  * the pick says what the deck already says and the directive is not what breaks the page.
  */
 function openPageMenu(section: HTMLElement, at: DOMRect): void {
-    const handle = section.querySelector<HTMLElement>("[data-pac-entity], [data-pac-span]");
-    const id = handle?.dataset.pacEntity ?? handle?.dataset.pacSpan?.split(" ")[0];
-    const page = doc.pages.find(p => id && p.ids.includes(id));
+    const page = pageOf(section);
     if (!page) return;
 
     menu = document.createElement("div");
@@ -438,6 +446,7 @@ function openPageMenu(section: HTMLElement, at: DOMRect): void {
             change(page.layout, { ...page.props, [field.name]: cleared ? undefined : value });
         }, closeMenu));
     }
+    menu.append(divider(), iconButton("trash", "Delete page", false, () => splice(removePage(doc.source, page))));
 
     document.body.append(menu);
     place(menu, at);
@@ -597,6 +606,13 @@ function themeChange(theme: string): { start: number; end: number; text: string 
 
 interface Range { start: number; end: number; md: string; kind: string }
 
+/** a rendered page is the one owning its first entity */
+function pageOf(section: HTMLElement): DocPage | undefined {
+    const handle = section.querySelector<HTMLElement>("[data-pac-entity], [data-pac-span]");
+    const id = handle?.dataset.pacEntity ?? handle?.dataset.pacSpan?.split(" ")[0];
+    return doc.pages.find(p => id && p.ids.includes(id));
+}
+
 /** an entity handle is one slice; a block handle spans the entities its component inlined */
 function rangeOf(target: HTMLElement): Range | undefined {
     const byId = (id: string | undefined) => doc.entities.find(e => e.id === id);
@@ -639,7 +655,7 @@ function edit(target: HTMLElement, range: Range, caret: Caret): void {
  * replaces the source textarea; markup the pattern does not cover (a link around the image,
  * attributes) falls back to it.
  */
-const IMAGE = /^!\[((?:[^[\]\\]|\\.)*)\]\(\s*(<[^>]*>|[^\s)]+)(?:\s+("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))?\s*\)\s*$/;
+const IMAGE = /^!\[((?:[^[\]\\]|\\.)*)\]\(\s*(<[^>]*>|[^\s)]*)(?:\s+("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))?\s*\)\s*$/;
 
 function openImage(target: HTMLElement, range: Range): boolean {
     const match = IMAGE.exec(range.md);
@@ -657,6 +673,21 @@ function openImage(target: HTMLElement, range: Range): boolean {
     const src = field("url", url, "https://… or a local path");
     panel.append(h("p", { class: "pac-studio__imagehint" },
         "A local file works by path, relative to the deck folder or absolute. It stays linked, not copied: change the file and the deck shows the new one."));
+    panel.append(h("button", { class: "pac-studio__imageok", type: "submit" }, "OK"));
+
+    // delete, top right like the block toolbar's; the whole block goes, directive and all
+    const id = target.dataset.pacEntity ?? target.dataset.pacSpan?.split(" ")[0];
+    const entity = doc.entities.find(e => e.id === id);
+    const block = entity && doc.blocks.find(b => b.ids.includes(entity.id));
+    if (entity && block) {
+        const bin = iconButton("trash", "Delete", false, () => {
+            done = true;
+            editor.holds = false;
+            splice(remove(doc.source, targetFor(entity, block)));
+        });
+        bin.classList.add("pac-studio__imagetrash");
+        panel.append(bin);
+    }
 
     const rect = target.getBoundingClientRect();
     panel.style.left = `${rect.left + scrollX}px`;
@@ -706,6 +737,32 @@ function openImage(target: HTMLElement, range: Range): boolean {
     return true;
 }
 
+/*
+ * The plus button's choice: markdown opens the insert textarea, image splices a placeholder
+ * block, which is clicked into the image form like any image. Alt-click stays the markdown
+ * shortcut past the menu.
+ */
+function openInsertMenu(target: HTMLElement, at: number, from: DOMRect): void {
+    menu = document.createElement("div");
+    menu.className = "pac-studio__bar";
+    menu.addEventListener("click", event => event.stopPropagation());
+    const option = (icon: IconName, text: string, onClick: () => void) => {
+        const button = h("button", { class: "pac-studio__barbutton", type: "button", click: onClick });
+        button.innerHTML = icons[icon];
+        button.append(text);
+        return button;
+    };
+    menu.append(
+        option("text", "Markdown", () => { closeMenu(); insertAfter(target, at); }),
+        option("image", "Image", () => splice({ start: at, end: at, text: "\n\n![]()" })),
+    );
+    document.body.append(menu);
+    place(menu, from);
+    addEventListener("keydown", menuKey);
+    const bar = menu;
+    show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
+}
+
 function insertAfter(target: HTMLElement, at: number): void {
     openEditor(target, {
         initial: "",
@@ -714,6 +771,35 @@ function insertAfter(target: HTMLElement, at: number): void {
         placeholder: "markdown… a blank line makes two blocks",
         commit: text => (text.trim() ? { start: at, end: at, text: `\n\n${text.trim()}` } : undefined),
     });
+}
+
+/*
+ * The layouts whose ground stands in for a missing image invite a click there: it writes the
+ * image block the hint promises and reopens on it, so the form is already up after the
+ * rebuild. Only a click on main itself counts; anything with a handle went to edit instead.
+ */
+function onEmptyGround(event: MouseEvent): boolean {
+    const at = event.target as HTMLElement;
+    if (!(at instanceof HTMLElement) || at.tagName !== "MAIN") return false;
+    const section = at.closest<HTMLElement>("[data-layout=\"header\"], [data-layout=\"split\"]");
+    if (!section || at.querySelector(".pac-full")) return false;
+    const page = pageOf(section);
+    if (!page) return false;
+    const own = section.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])");
+    const last = wrappers().indexOf(own[own.length - 1]!);
+    sessionStorage.setItem(REOPEN, `${last + 1}|end`);
+    splice({ start: page.last, end: page.last, text: "\n\n![]()" });
+    return true;
+}
+
+/** a new page below this one, written at once with a placeholder title that reopens selected */
+function insertPage(section: HTMLElement): void {
+    const page = pageOf(section);
+    if (!page) return;
+    const own = section.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])");
+    const last = wrappers().indexOf(own[own.length - 1]!);
+    sessionStorage.setItem(REOPEN, `${last + 1}|select`);
+    splice(addPage(page, "# New page"));
 }
 
 interface EditorOptions {
@@ -789,8 +875,8 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
 
     size(area);
     area.focus();
-    const at = options.caret === "end" ? area.value.length : 0;
-    area.setSelectionRange(at, at);
+    if (options.caret === "select") area.setSelectionRange(/^#*\s*/.exec(area.value)![0].length, area.value.length);
+    else { const at = options.caret === "end" ? area.value.length : 0; area.setSelectionRange(at, at); }
     area.addEventListener("input", () => size(area));
 
     const commit = async (flowTo?: number, caret: Caret = "end") => {

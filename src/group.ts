@@ -88,14 +88,10 @@ function heuristic(
     starts: Map<string, Directive>,
 ): [string, number, Record<string, unknown>] {
     const e = page[i]!;
-    const next = page[i + 1];
 
     if (alertKind(e)) return ["alert", 1, {}];
 
-    if (e.kind === "image") {
-        if (next?.kind === "paragraph") return ["aside", 2, {}];
-        return ["full", 1, {}];
-    }
+    if (e.kind === "image") return ["full", 1, {}];
 
     // prose absorbs the run of ordinary blocks so a page is not one block per paragraph,
     // but never past an entity a directive claims or one another heuristic could match

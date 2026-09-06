@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["agenda", "alert", "aside", "boxes", "columns", "comparison", "figures", "full", "matrix", "prose", "timeline"],
+        ["agenda", "alert", "boxes", "columns", "comparison", "figures", "full", "matrix", "prose", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(12);
+    expect(registry.names().length).toBe(11);
 });
 
 test("a later root overrides a builtin of the same name", async () => {

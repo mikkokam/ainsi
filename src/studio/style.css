@@ -73,6 +73,18 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
 .pac-studio__imagerow { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: .4rem; }
 .pac-studio__image .pac-studio__input { width: 100%; box-sizing: border-box; }
 .pac-studio__imagehint { margin: .1rem 0 0; font: 11px/1.4 system-ui, sans-serif; color: #5b6672; }
+/* delete at the form's top right corner; the name row stops short of it */
+.pac-studio__imagetrash { position: absolute; top: .45rem; right: .45rem; }
+.pac-studio__imageok {
+    justify-self: end;
+    padding: .35rem .9rem;
+    border: 0; border-radius: 6px;
+    background: #1f6feb; color: #fff;
+    font: 500 12px/1 system-ui, sans-serif;
+    cursor: pointer;
+}
+.pac-studio__imageok:hover { background: #1a5fd0; }
+.pac-studio__image .pac-studio__imagerow:first-child { padding-right: 2.2rem; }
 
 /* the deck's frontmatter: a block before page one, the page's width, pushing the deck down */
 .pac-studio__editor--deck {
@@ -190,7 +202,7 @@ body[data-pac-raw] { overflow: hidden; }
 }
 .pac-studio__mark:hover::after, .pac-studio__mark:focus-visible::after { opacity: 1; }
 
-/* the rail: two visible doors at the hovered block's top-left corner, menu and add-below */
+/* a rail: two visible doors at the hovered block's or page's top-left corner, menu and add-below */
 .pac-studio__rail {
     position: fixed; z-index: 75;
     display: flex; flex-direction: column; gap: 2px;
@@ -205,10 +217,6 @@ body[data-pac-raw] { overflow: hidden; }
 }
 .pac-studio__grip svg { width: 15px; height: 15px; }
 .pac-studio__grip:hover { color: #1f6feb; border-color: #1f6feb; }
-
-/* the page's door: same grip, alone at the page's top-left corner */
-.pac-studio__pagegrip { position: fixed; z-index: 75; }
-.pac-studio__pagegrip[hidden] { display: none; }
 
 /* a photo layout without its photo: where the image goes, said in the studio only */
 body[data-pac-edit]:not([data-present]) [data-layout="header"] main:not(:has(.pac-full))::after,

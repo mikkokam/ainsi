@@ -4,6 +4,7 @@ export type { Entity } from "./types";
 export { escape, plainText, signature } from "./html";
 import type { Entity } from "./types";
 import type { RenderContext } from "./registry";
+import { PLACEHOLDER } from "./placeholder";
 
 /** every entity in the span, rendered as markdown would render it */
 export const flow = (ctx: RenderContext): string => ctx.entities.map(e => ctx.html(e)).join("\n");
@@ -22,7 +23,8 @@ export function imageOf(entity: Entity): Image | undefined {
 
 export function img(image: Image, className?: string): string {
     const cls = className ? ` class="${className}"` : "";
-    return `<img${cls} src="${escapeAttr(image.src)}" alt="${escapeAttr(image.alt)}">`;
+    const mark = image.src ? "" : " data-pac-placeholder";
+    return `<img${cls}${mark} src="${escapeAttr(image.src || PLACEHOLDER)}" alt="${escapeAttr(image.alt)}">`;
 }
 
 function escapeAttr(value: string): string {

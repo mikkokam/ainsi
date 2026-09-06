@@ -1,9 +1,0 @@
-.pac-aside { display: grid; grid-template-columns: 1fr 1fr; gap: var(--pac-gap); align-items: start; }
-.pac-aside--left { direction: rtl; }
-.pac-aside--left > * { direction: ltr; }
-.pac-aside__figure { margin: 0; }
-
-@media screen and (max-width: 900px) {
-    .pac-aside { grid-template-columns: 1fr; }
-    .pac-aside--left { direction: ltr; }
-}

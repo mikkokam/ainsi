@@ -3,8 +3,13 @@
  * Every value that is a look rather than a mechanism comes from a token, so a theme
  * never restates it.
  */
+import { PLACEHOLDER } from "./placeholder";
+
 export const BASE_CSS = `
 * { box-sizing: border-box; }
+
+/* the stand-in for an image not yet chosen; layouts paint it where an image would be their ground */
+.pac-page { --pac-placeholder: url("${PLACEHOLDER}"); }
 
 body.pac {
     margin: 0;
@@ -106,6 +111,16 @@ body.pac:not([data-present]) .pac-page::after {
 /* inline code as a chat client shows it: a small capsule, the theme's stop colour for the text */
 .pac-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--pac-rule); border-radius: .3em; background: var(--pac-surface); color: var(--pac-danger); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
+/*
+ * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9
+ * page whose width tracks min(1280px, viewport), so 31vw approximates it at every desktop
+ * width and 400px matches the 1280px cap and the print page. Max constraints only, so the
+ * browser keeps the ratio. Layouts that make the image their ground lift the cap themselves.
+ */
+.pac-page img { max-height: min(400px, 31vw); }
+/* a placeholder stays modest in flow; a layout that makes the image its ground overrides this,
+   since layout css follows base */
+.pac-page img[data-pac-placeholder] { width: min(45%, 420px); }
 .pac-page strong { font-weight: var(--pac-strong); }
 /* a blockquote as markdown gives it, in the display face; a signed one carries its caption */
 .pac-page blockquote { margin: 0; padding: 0 0 0 calc(var(--pac-gap) * .8); border-left: 3px solid var(--pac-accent); }
@@ -185,6 +200,8 @@ body.pac:not([data-present]) .pac-page[data-overflow]::before {
         font-size: clamp(15px, 4.4vw, var(--pac-size));
     }
     .pac-page main { padding: 9% 7%; min-height: 58vh; }
+    /* the fluid page grows instead of clipping, so the cap only guards against a screenful */
+    .pac-page img { max-height: 70vh; }
     .pac-page h1 { font-size: 2em; }
     body.pac:not([data-present]) .pac-page::after { top: 1rem; right: 1.1rem; font-size: 11px; }
 }

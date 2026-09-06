@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { alertOf, directiveLine, markerOf, relayout, remove, render, retag, withAlert, type Target } from "../src/studio/edits";
+import { addPage, alertOf, directiveLine, markerOf, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
 
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -117,10 +117,14 @@ function pageOf(source: string, index: number) {
     const ids = pages[index]!.blocks.flatMap(b => b.entities.map(e => e.id));
     const directive = doc.directives.filter(d => d.kind === "layout" && d.before && ids.includes(d.before)).at(-1);
     const first = doc.entities.find(e => e.id === ids[0])!;
+    const last = doc.entities.find(e => e.id === ids.at(-1))!;
+    const after = doc.entities[doc.entities.findIndex(e => e.id === ids.at(-1)) + 1];
+    const terminator = after && doc.directives.find(d => d.before === after.id && d.component === "end");
     const at = doc.entities.findIndex(e => e.id === ids[0]);
     const opensAnyway = at === 0 || doc.entities[at - 1]!.kind === "break";
     return {
         first: first.node.position.start.offset as number,
+        last: terminator?.end ?? (last.node.position.end.offset as number),
         held: !!directive && !opensAnyway,
         ...(directive ? { directive: { start: directive.start, end: directive.end } } : {}),
     };
@@ -159,4 +163,28 @@ test("relayout keeps a directive that is itself the page break, as an explicit d
     const after = apply(source, relayout(source, pageOf(source, 1), "default", "default")!);
     expect(after).toBe("# One\n\n<!-- pac: layout default -->\n\n# Two\n");
     expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
+});
+
+test("addPage breaks after the page's last entity, past a closing end marker, and before the next page", () => {
+    const source = "# One\n\n<!-- pac: boxes -->\n- a\n- b\n<!-- /pac -->\n\n---\n\n# Three";
+    const after = apply(source, addPage(pageOf(source, 0), "# Two\n"));
+    const { pages } = assemble(after, { registry, layouts });
+    expect(pages.map(p => p.blocks[0]!.entities[0]!.md)).toEqual(["# One", "# Two", "# Three"]);
+    expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose", "boxes"]);
+
+    const last = apply(source, addPage(pageOf(source, 1), "# Four"));
+    expect(assemble(last, { registry, layouts }).pages.length).toBe(3);
+});
+
+test("removePage takes the page, its directive and the break after it", () => {
+    const source = "# One\n\n---\n\n<!-- pac:layout section -->\n# Two\n\nsaid\n\n---\n\n# Three";
+    const after = apply(source, removePage(source, pageOf(source, 1)));
+    expect(after).toBe("# One\n\n---\n\n# Three");
+});
+
+test("removePage takes the break before a last page, and leaves frontmatter's closing line alone", () => {
+    const two = "# One\n\n---\n\n# Two";
+    expect(apply(two, removePage(two, pageOf(two, 1)))).toBe("# One");
+    const only = "---\ntheme: default\n---\n\n# Only";
+    expect(apply(only, removePage(only, pageOf(only, 0)))).toBe("---\ntheme: default\n---");
 });

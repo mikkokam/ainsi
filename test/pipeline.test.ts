@@ -131,12 +131,13 @@ test("build emits one section per page and only the css of components used", () 
 });
 
 test("a heuristic block carries its component's schema defaults, like a directive's does", () => {
-    const [page] = blocksOf("# T\n\n![a](x.png)\n\nbeside it\n").pages;
-    const aside = page!.find(b => b.component === "aside")!;
-    expect(aside.origin).toBe("heuristic");
-    expect(aside.props).toEqual({ side: "right" });
     const [plain] = blocksOf("words\n").pages;
     expect(plain![0]!.props).toEqual({ size: "normal", align: "left", caps: false, color: "ink" });
+});
+
+test("an image is its own full block; the text after it flows on, never an aside", () => {
+    const [page] = blocksOf("# T\n\n![a](x.png)\n\nafter it\n").pages;
+    expect(page!.map(b => b.component)).toEqual(["prose", "full", "prose"]);
 });
 
 test("a newline inside a paragraph is a line break; a blank line is still a new block", async () => {

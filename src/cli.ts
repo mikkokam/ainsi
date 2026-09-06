@@ -80,6 +80,7 @@ interface DocPage {
     layout: string;
     props: Record<string, unknown>;
     first: number;
+    last: number;
     held: boolean;
     directive?: { start: number; end: number };
 }
@@ -190,6 +191,8 @@ function describePages(pages: Page[], entities: Entity[], directives: Directive[
         const ids = own.map(e => e.id);
         const directive = directives.filter(d => d.kind === "layout" && d.before && ids.includes(d.before)).at(-1);
         const at = entities.findIndex(e => e.id === ids[0]);
+        const after = entities[entities.findIndex(e => e.id === ids.at(-1)) + 1];
+        const terminator = after && directives.find(d => d.before === after.id && d.component === END);
         const opensAnyway = at === 0
             || entities[at - 1]!.kind === "break"
             || (settings.h1StartsPage && own[0]!.kind === "heading" && own[0]!.depth === 1);
@@ -198,6 +201,7 @@ function describePages(pages: Page[], entities: Entity[], directives: Directive[
             layout: page.layout,
             props: page.layoutProps,
             first: own[0]!.node.position.start.offset as number,
+            last: terminator?.end ?? (own.at(-1)!.node.position.end.offset as number),
             held: !!directive && !opensAnyway,
             ...(directive ? { directive: { start: directive.start, end: directive.end } } : {}),
         };

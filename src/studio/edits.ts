@@ -106,6 +106,8 @@ export function remove(source: string, target: Target): Splice {
 export interface PageTarget {
     /** offset of the page's first entity */
     first: number;
+    /** offset just past the page's last entity, or past the end marker closing its last block */
+    last: number;
     /** the layout directive already governing the page, when there is one */
     directive?: { start: number; end: number };
     /** the page starts here only because of that directive; removing it would merge pages */
@@ -125,6 +127,35 @@ export function relayout(source: string, page: PageTarget, deck: string, name: s
     let end = page.directive.end;
     while (end < page.first && /\s/.test(source[end]!)) end++;
     return { start: page.directive.start, end, text: "" };
+}
+
+/** A new page after this one: a break and the text, spliced past the page's last entity so a following break or directive keeps its place. */
+export function addPage(page: PageTarget, text: string): Splice {
+    return { start: page.last, end: page.last, text: `\n\n---\n\n${text.trim()}` };
+}
+
+/**
+ * The page, its directive and the break that separated it: the one after, or for the last
+ * page the one before. A break is `---` on its own line after a blank line; frontmatter's
+ * closing `---` follows a key line and stays.
+ */
+export function removePage(source: string, page: PageTarget): Splice {
+    let start = page.directive?.start ?? page.first;
+    let end = page.last;
+    while (end < source.length && /\s/.test(source[end]!)) end++;
+    const after = /^---[ \t]*(?:\n|$)/.exec(source.slice(end));
+    if (after) {
+        end += after[0].length;
+        while (end < source.length && /\s/.test(source[end]!)) end++;
+        return { start, end, text: "" };
+    }
+    while (start > 0 && /\s/.test(source[start - 1]!)) start--;
+    const before = /(?:^|\n[ \t]*\n)---[ \t]*$/.exec(source.slice(0, start));
+    if (before) {
+        start -= 3;
+        while (start > 0 && /\s/.test(source[start - 1]!)) start--;
+    }
+    return { start, end, text: "" };
 }
 
 /** GitHub's alert kinds; the marker is the quote's first line, so a kind change is a rewrite of that line */

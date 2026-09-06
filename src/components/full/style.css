@@ -1,1 +1,11 @@
-.pac-full { margin: 0; display: grid; place-items: center; }
+/* left like text unless said otherwise */
+.pac-full { margin: 0; display: grid; justify-items: start; }
+.pac-full[data-align="center"] { justify-items: center; }
+.pac-full[data-align="right"] { justify-items: end; }
+
+/* the size prop: max constraints only, so the ratio holds; unset keeps the base cap. The
+   ground layouts outrank these with their own img rules, so a sized ground stays covering. */
+.pac-full[data-size="s"] img { max-width: 34%; max-height: min(220px, 17vw); }
+.pac-full[data-size="m"] img { max-width: 60%; max-height: min(400px, 31vw); }
+.pac-full[data-size="l"] img { max-width: 84%; max-height: min(520px, 40vw); }
+.pac-full[data-size="full"] img { max-height: none; }

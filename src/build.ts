@@ -229,7 +229,10 @@ function handle(html: string, attribute: string): string {
 function placeImage(html: string, entity: Entity): string | null {
     const node = entity.node.type === "image" ? entity.node : entity.node.children?.[0];
     if (node?.type !== "image") return null;
-    const src = `src="${String(node.url).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"`;
+    // an empty url renders as the placeholder, so its marker is what identifies the img
+    const src = node.url
+        ? `src="${String(node.url).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"`
+        : "data-pac-placeholder";
     const at = html.indexOf(src);
     if (at === -1) return null;
     const open = html.lastIndexOf("<img", at);
