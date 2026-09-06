@@ -1,5 +1,6 @@
 ---
 logo: assets/acme-logo.png
+coverLogo: assets/acme-a-logo.png
 ---
 
 <!-- pac:layout header -->

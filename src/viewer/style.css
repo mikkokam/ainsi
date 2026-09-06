@@ -200,6 +200,19 @@ body[data-present] .pac-page[data-current] article > *:nth-child(3) { animation-
 body[data-present] .pac-page[data-current] article > *:nth-child(4) { animation-delay: calc(var(--pac-motion) * .44); }
 body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--pac-motion) * .54); }
 
+/*
+ * Highlights draw on rather than arrive painted: once the blocks are settling, each mark
+ * sweeps left to right like a highlighter pass. Only background-size moves, so the uneven
+ * ink of the stroke leads the sweep like a pen tip.
+ */
+@keyframes pac-mark-draw {
+    from { background-size: 0% 100%; }
+}
+
+body[data-present] .pac-page[data-current] mark {
+    animation: pac-mark-draw calc(var(--pac-motion) * .55) var(--pac-ease) calc(var(--pac-motion) * .7) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
     body[data-present] .pac-page[data-current] *,
     body[data-present] .pac-page[data-current] { animation: none !important; }

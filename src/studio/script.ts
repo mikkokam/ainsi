@@ -43,7 +43,7 @@ interface DocComponent { name: string; fields: Field[] }
 interface Doc { hash: string; source: string; file: string; entities: DocEntity[]; blocks: DocBlock[]; components: DocComponent[] }
 
 type Caret = "start" | "end";
-type Mode = "inplace" | "overlay" | "insert";
+type Mode = "inplace" | "overlay" | "insert" | "float";
 
 let doc: Doc = { hash: "", source: "", file: "", entities: [], blocks: [], components: [] };
 
@@ -109,6 +109,7 @@ async function init(): Promise<void> {
         const target = handleAt(event.target as HTMLElement);
         if (!target) {
             if (chrome?.kind === "menu") shut();
+            else if (onMark(event)) { event.preventDefault(); openDeck(); }
             return;
         }
         const range = rangeOf(target);
@@ -166,6 +167,7 @@ async function init(): Promise<void> {
         const { panel, slot, close } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement; close(): void };
         slot.append(
             menuItem("Edit source (E)", () => openRaw()),
+            menuItem("Deck…", () => { close(); openDeck(); }),
             menuItem("Theme…", () => themeDrill(panel)),
             menuItem("Export…", () => exportDrill(panel, close)),
         );
@@ -498,6 +500,48 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
     }));
 }
 
+/*
+ * The deck's settings are its frontmatter, and the frontmatter is a slice like any block:
+ * the same floating editor, the same splice. Opened from the menu, or by clicking the mark.
+ * The theme keeps its own picker beside it; here it is one more line.
+ */
+const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
+const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\ntheme: acme";
+
+function openDeck(): void {
+    const page = document.querySelector<HTMLElement>(".pac-page");
+    if (!page) return;
+    const matter = MATTER.exec(doc.source);
+    const initial = matter?.[1] ?? "";
+    openEditor(page, {
+        initial,
+        caret: "end",
+        mode: "float",
+        placeholder: `frontmatter, one key per line\n${KEYS}`,
+        commit: text => {
+            const body = text.trim();
+            if (body === initial.trim()) return undefined;
+            const end = matter ? matter[0].length : 0;
+            return { start: 0, end, text: body ? `---\n${body}\n---\n\n` : "" };
+        },
+    });
+}
+
+/** whether a click on a page landed on its mark, whose box is a pseudo-element's computed style */
+function onMark(event: MouseEvent): boolean {
+    const at = event.target as HTMLElement;
+    const page = at.closest?.<HTMLElement>(".pac-page");
+    if (!page || (at !== page && !at.matches("main, article"))) return false;
+    const style = getComputedStyle(page, "::before");
+    if (style.backgroundImage === "none" || style.content === "none") return false;
+    const px = (v: string) => (v === "auto" ? NaN : parseFloat(v));
+    const rect = page.getBoundingClientRect();
+    const w = px(style.width), h = px(style.height);
+    const left = Number.isNaN(px(style.right)) ? rect.left + px(style.left) : rect.right - px(style.right) - w;
+    const top = Number.isNaN(px(style.bottom)) ? rect.top + px(style.top) : rect.bottom - px(style.bottom) - h;
+    return event.clientX >= left && event.clientX <= left + w && event.clientY >= top && event.clientY <= top + h;
+}
+
 /** the theme is one frontmatter line; changing it is a splice like any other edit */
 function themeChange(theme: string): { start: number; end: number; text: string } {
     const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
@@ -586,13 +630,13 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         area.style.minHeight = `${rect.height}px`;
         target.insertAdjacentElement("afterend", area);
         target.classList.add("pac-studio--hidden");
-    } else if (options.mode === "overlay") {
+    } else if (options.mode === "overlay" || options.mode === "float") {
         const rect = target.getBoundingClientRect();
         area.style.left = `${rect.left + scrollX}px`;
         area.style.top = `${rect.top + scrollY}px`;
         area.style.width = `${Math.min(rect.width, 680)}px`;
         document.body.append(area);
-        target.classList.add("pac-studio--dim");
+        if (options.mode === "overlay") target.classList.add("pac-studio--dim");
     } else {
         target.insertAdjacentElement("afterend", area);
     }

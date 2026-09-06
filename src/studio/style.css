@@ -37,7 +37,8 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
     z-index: 5;
 }
 
-.pac-studio__editor--overlay {
+.pac-studio__editor--overlay,
+.pac-studio__editor--float {
     position: absolute;
     z-index: 70;
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
