@@ -99,7 +99,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
             script: [viewer?.script, studio.script].filter(Boolean).join("\n"),
         };
     }
-    const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing };
+    const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics) };
 
     const assembled = assemble(source, buildOptions);
     diagnostics.push(...assembled.diagnostics);
@@ -185,6 +185,18 @@ function fields(schema: ZodTypeAny): Field[] {
     });
 }
 
+/** the deck's mark as a data url, read beside the deck; a remote url passes through */
+async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Promise<string | undefined> {
+    if (!logo) return undefined;
+    if (/^(https?:|data:)/.test(logo)) return logo;
+    const file = Bun.file(resolve(dirname(deck), logo));
+    if (!(await file.exists())) {
+        diagnostics.push({ level: "warn", message: `logo not found beside the deck: ${logo}` });
+        return undefined;
+    }
+    return `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`;
+}
+
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = resolve(import.meta.dir, "..", "themes", themeName);
@@ -204,8 +216,9 @@ async function print(pages: Page[], title: string, settings: Settings, options: 
 async function exportPdf(images: PdfImages): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
     const source = await Bun.file(deck).text();
     const diagnostics: Diagnostic[] = [];
-    const { theme, registry, layouts } = await stack(parse(source).doc.settings.theme, diagnostics);
-    const options = { registry, layouts, themeCss: theme.css };
+    const settings = parse(source).doc.settings;
+    const { theme, registry, layouts } = await stack(settings.theme, diagnostics);
+    const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics) };
     const assembled = assemble(source, options);
     const fitted = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
     diagnostics.push(...assembled.diagnostics, ...fitted.diagnostics);

@@ -1,13 +1,16 @@
-/* A theme's tokens. It names no component, no layout and no deck. */
+/*
+ * The default: warm ground rather than sterile white, editorial serif for display, real
+ * depth instead of flatness. Every other theme layers on these tokens. Still nothing but tokens.
+ */
 :root {
-    --pac-ink: #14181d;
-    --pac-ink-soft: #5b6672;
-    --pac-ground: #ffffff;
-    --pac-shell: #eef1f4;
-    --pac-accent: #1f6feb;
-    --pac-accent-ink: #ffffff;
-    --pac-rule: #dfe4ea;
-    --pac-surface: #ffffff;
+    --pac-ink: #241f1b;
+    --pac-ink-soft: #6b6058;
+    --pac-ground: #faf6f0;
+    --pac-shell: #ebe4da;
+    --pac-accent: #c1553a;
+    --pac-accent-ink: #fdfaf6;
+    --pac-rule: #ded4c7;
+    --pac-surface: rgb(255 253 250 / 72%);
     --pac-info: #0969da;
     --pac-ok: #1a7f37;
     --pac-notice: #8250df;
@@ -15,21 +18,22 @@
     --pac-danger: #cf222e;
 
     --pac-font: "Inter", system-ui, -apple-system, sans-serif;
-    --pac-font-display: var(--pac-font);
+    --pac-font-display: "Fraunces", Georgia, "Times New Roman", serif;
     --pac-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --pac-strong: 620;
+    --pac-strong: 600;
     --pac-size: 22px;
-    --pac-leading: 1.45;
+    --pac-leading: 1.55;
     --pac-step-min: 0.8;
 
-    --pac-gap: 1.5rem;
-    --pac-pad: 5.5%;
-    --pac-radius: 4px;
+    --pac-gap: 1.9rem;
+    --pac-pad: 8.5%;
+    --pac-radius: 14px;
     --pac-border: 1px;
 
-    --pac-shadow: 0 1px 3px rgb(0 0 0 / 12%);
-    --pac-blur: 0px;
+    --pac-shadow: 0 1px 2px rgb(60 44 30 / 6%), 0 8px 24px -6px rgb(60 44 30 / 14%);
+    --pac-blur: 14px;
+    --pac-logo: none;   /* the deck names its mark in frontmatter; the theme only places it */
 
-    --pac-motion: 480ms;
-    --pac-ease: cubic-bezier(.2, .8, .2, 1);
+    --pac-motion: 700ms;
+    --pac-ease: cubic-bezier(.22, .68, 0, 1);
 }

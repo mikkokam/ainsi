@@ -20,6 +20,8 @@ export interface BuildOptions {
     viewer?: { css: string; script: string };
     /** wrap each entity in a boxless handle the studio can splice against */
     edit?: boolean;
+    /** the deck's mark as a url the browser can load; the cli inlines a local file here */
+    logo?: string;
 }
 
 /** Parse and group only, with no rendering: what the fit pass measures and may reshape. */
@@ -185,7 +187,7 @@ ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}">
+<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${options.logo ? `;--pac-logo:url(${JSON.stringify(options.logo)})` : ""}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>

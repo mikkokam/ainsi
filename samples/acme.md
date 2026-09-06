@@ -1,12 +1,12 @@
 ---
-theme: paper
+logo: acme-logo.png
 ---
 
 <!-- pac:layout header -->
 
-# Acme *Gatekeeper*
+# Acme ==Gatekeeper==
 
-Governance and policy infrastructure for production AI
+Governance and policy solution for production AI
 
 ![Architectural timber workspace with natural sunlight](https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80)
 
@@ -37,11 +37,11 @@ How does it work
 <!-- pac: prose size=small -->
 # A single deterministic gateway in front of every model
 
-Every outbound LLM call passes through Acme before reaching upstream providers.  
+Every outbound LLM call passes through Acme before reaching upstream providers.
 **Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
 
 > [!NOTE]
-> Zero changes to existing application code: swap ==one base URL== in your client configuration and enforce policy on day one.
+> Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
 
 ![Tactile notebook and fountain pen on warm oak desk](https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&q=80)
 

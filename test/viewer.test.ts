@@ -82,3 +82,9 @@ test("the reading view is a screen affair: a print laid out on narrow paper must
     const { html } = build(md, { registry, layouts, themeCss: "", viewer });
     expect(html).not.toMatch(/@media \(max-width/);
 });
+
+test("the deck's mark rides on the body as a token; a deck without one sets nothing", () => {
+    const marked = build("---\nlogo: x.png\n---\n\n# T\n\na\n", { registry, layouts, themeCss: "", logo: "data:image/png;base64,AAAA" }).html;
+    expect(marked).toContain('--pac-logo:url("data:image/png;base64,AAAA")');
+    expect(build(md, { registry, layouts, themeCss: "" }).html).not.toContain("--pac-logo");
+});

@@ -11,11 +11,11 @@ const theme = await loadTheme(resolve(import.meta.dir, "../themes", settings.the
 const layouts = await loadLayouts([LAYOUTS, theme.layouts]);
 const result = build(source, { registry, layouts, themeCss: theme.css });
 
-test("the deck declares its theme and nothing the defaults already say, and the theme exists", async () => {
+test("the deck declares its mark and nothing the defaults already say, and its theme exists", async () => {
     expect(source.startsWith("---\n")).toBe(true);
     const frontmatter = source.slice(0, source.indexOf("\n---", 3));
-    expect(frontmatter).toContain("theme:");
-    for (const key of ["ratio:", "layout:"]) expect(frontmatter).not.toContain(key);
+    expect(frontmatter).toContain("logo:");
+    for (const key of ["theme:", "ratio:", "layout:"]) expect(frontmatter).not.toContain(key);
     const variables = resolve(import.meta.dir, "../themes", settings.theme, "variables.css");
     expect(await Bun.file(variables).exists()).toBe(true);
 });

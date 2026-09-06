@@ -30,6 +30,8 @@ export interface Settings {
     h1StartsPage: boolean;
     /** the deck's house layout; a page directive is an exception lasting one page */
     layout: string;
+    /** the deck's mark, a path beside the deck or a url; the theme places it */
+    logo?: string;
 }
 
 export interface Source {
