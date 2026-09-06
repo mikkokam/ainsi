@@ -191,9 +191,13 @@ test("matrix takes exactly four items and names its axes from props", async () =
 
 test("agenda numbers its rows with two digits", async () => {
     const registry = await load([BUILTIN]);
-    const { html } = build("# T\n\n<!-- pac: agenda -->\n- **Open** where we are\n- **Plan** where next\n", { registry, layouts, themeCss: "" });
+    const { html } = build("# T\n\n<!-- pac: agenda -->\n1. **Open** where we are\n2. **Plan** where next\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<ol class="pac-agenda"');
     expect(html).toContain('<span class="pac-agenda__number">01</span>');
     expect(html).toContain('<span class="pac-agenda__title">Open</span>');
+    const bulleted = build("# T\n\n<!-- pac: agenda -->\n- **Open** where we are\n", { registry, layouts, themeCss: "" }).html;
+    expect(bulleted).toContain('<ul class="pac-agenda"');
+    expect(bulleted).not.toContain("pac-agenda__number");
 });
 
 test("prose colours by the theme's ink names only", async () => {

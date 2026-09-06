@@ -14,13 +14,14 @@ Governance and policy solution for production AI
 
 ---
 
+<!-- pac: prose color=accent -->
 # What we will cover
 
 <!-- pac: agenda -->
-- **The problem** governance lags adoption
-- **The gateway** one deterministic door in front of every model
-- **Proof** what a customer got in under an hour
-- **Roadmap and pricing** where this goes and what it costs
+1. **The problem** governance lags adoption
+2. **The gateway** one deterministic door in front of every model
+3. **Proof** what a customer got in under an hour
+4. **Roadmap and pricing** where this goes and what it costs
 
 ---
 

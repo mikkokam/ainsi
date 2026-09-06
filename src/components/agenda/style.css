@@ -1,7 +1,7 @@
 /* numerals in the display face, in the accent, a rule under each row */
 .pac-agenda { list-style: none; margin: 0; padding: 0; }
 .pac-agenda__row {
-    display: grid; grid-template-columns: auto 1fr; column-gap: 1.2em; align-items: baseline;
+    display: grid; grid-auto-flow: column; grid-auto-columns: auto 1fr; column-gap: 1.2em; align-items: baseline;
     padding: .55em 0;
     border-bottom: var(--pac-border) solid var(--pac-rule);
 }
