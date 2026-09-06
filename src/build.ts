@@ -187,7 +187,7 @@ ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${options.logo ? `;--pac-logo:url(${JSON.stringify(options.logo)})` : ""}">
+<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${options.logo ? `;--pac-logo:url('${options.logo.replace(/'/g, "%27")}')` : ""}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>
