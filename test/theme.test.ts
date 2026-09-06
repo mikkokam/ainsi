@@ -64,7 +64,7 @@ test("a theme swap changes no markup", () => {
 });
 
 test("only the css of components actually used is emitted", () => {
-    const { html } = build("# T\n\nlead\n", { registry: defaults, layouts, themeCss: "" });
-    expect(html).toContain(".pac-lead__title");
+    const { html } = build("# T\n\n<!-- pac: boxes -->\n- a\n", { registry: defaults, layouts, themeCss: "" });
+    expect(html).toContain(".pac-boxes__box");
     expect(html).not.toContain(".pac-timeline__step");
 });

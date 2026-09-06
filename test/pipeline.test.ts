@@ -123,10 +123,10 @@ test("blocks partition the page with no gaps or overlap", () => {
 });
 
 test("build emits one section per page and only the css of components used", () => {
-    const { html, pages } = build("# One\n\nlead text\n", { registry: defaults, layouts, themeCss: "" });
+    const { html, pages } = build("# One\n\n<!-- pac: boxes -->\n- a\n- b\n", { registry: defaults, layouts, themeCss: "" });
     expect(pages.length).toBe(1);
     expect(html.match(/class="pac-page"/g)?.length).toBe(1);
-    expect(html).toContain('data-pac="lead"');
+    expect(html).toContain('data-pac="boxes"');
     expect(html).not.toContain('data-pac="timeline"');
 });
 

@@ -226,7 +226,7 @@ const CONVERT: [TextKind, string, IconName][] = [["paragraph", "Text", "text"], 
 const TEXT_LEVELS: [TextKind, string, string][] = [["paragraph", "Text", "¶"], ["heading1", "Heading 1", "#"], ["heading2", "Heading 2", "##"], ["heading3", "Heading 3", "###"], ["heading4", "Heading 4", "####"], ["heading5", "Heading 5", "#####"]];
 /** components that are a family in disguise; the convert buttons already cover them. Plain
  * rendering is a look for a list, a table or an image, and only a family for text. */
-const NOT_A_LOOK = ["alert", "lead"];
+const NOT_A_LOOK = ["alert"];
 const notALook = (family: Family | undefined) => (family && family !== "list" ? [...NOT_A_LOOK, "prose"] : NOT_A_LOOK);
 /** what the heuristic's plain rendering is called, by what it renders */
 const PLAIN: Record<string, string> = { list: "bullets", ordered: "numbered", quote: "quote", code: "code", table: "table" };

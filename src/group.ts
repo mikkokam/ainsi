@@ -45,7 +45,7 @@ export function group(
             }
         }
 
-        const [component, taken, props] = heuristic(page, i, blocks.length === 0, starts);
+        const [component, taken, props] = heuristic(page, i, starts);
         // through the schema, so a heuristic block carries the same defaults a directive's does
         const parsed = registry.get(component)?.props.safeParse(props);
         blocks.push(make(page.slice(i, i + taken), component, parsed?.success ? parsed.data : props, "heuristic"));
@@ -78,22 +78,17 @@ function make(entities: Entity[], component: string, props: Record<string, unkno
 }
 
 /**
- * Returns [component, entities consumed, props]. A list is a list and a table a table, as
- * written, until a directive names a component. Images still pick a form, because a bare
- * image rarely fits a page, and a heading with one paragraph at the top of a page is a lead.
+ * Returns [component, entities consumed, props]. A list is a list, a table a table and a
+ * heading a heading, as written, until a directive names a component. Images still pick a
+ * form, because a bare image rarely fits a page.
  */
 function heuristic(
     page: Entity[],
     i: number,
-    atPageTop: boolean,
     starts: Map<string, Directive>,
 ): [string, number, Record<string, unknown>] {
     const e = page[i]!;
     const next = page[i + 1];
-
-    if (e.kind === "heading" && atPageTop && next?.kind === "paragraph" && !page[i + 2] && !starts.has(next.id)) {
-        return ["lead", 2, {}];
-    }
 
     if (alertKind(e)) return ["alert", 1, {}];
 
