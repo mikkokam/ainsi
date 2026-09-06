@@ -5,6 +5,7 @@
     margin: 0; padding: .9em 1.1em .95em 1em;
     max-width: 40em;
     font-size: .83em;   /* an aside speaks a step below the body, the same step as small text */
+    color: var(--pac-ink-soft);
     display: grid; grid-template-columns: auto 1fr; column-gap: .8em; align-items: start;
     border: var(--pac-border) solid color-mix(in srgb, var(--pac-alert-color) 30%, var(--pac-rule));
     border-radius: var(--pac-radius);
