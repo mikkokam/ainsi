@@ -7,7 +7,7 @@ const ALT = mac ? "⌥" : "Alt";
 const modKey = mac ? "Meta" : "Control";
 const chord = (event: KeyboardEvent): boolean => (mac ? event.metaKey : event.ctrlKey);
 
-const pages = [...document.querySelectorAll<HTMLElement>(".pac-page")];
+const pages = [...document.querySelectorAll<HTMLElement>(".ainsi-page")];
 if (pages.length) start();
 
 function start(): void {
@@ -15,13 +15,13 @@ function start(): void {
     let presenting = false;
 
     const toolbar = document.createElement("div");
-    toolbar.className = "pac-toolbar";
+    toolbar.className = "ainsi-toolbar";
 
     const menuButton = button("menu", "Menu", () => (panel ? closeMenu() : openMenu()));
     const gridButton = button("grid", `Grid (${MOD}G)`, () => (overview ? closeOverview() : openOverview()));
     const play = button("play", `Present (${MOD}⏎)`, () => (presenting ? stop() : begin()));
     const count = document.createElement("div");
-    count.className = "pac-toolbar__count";
+    count.className = "ainsi-toolbar__count";
 
     toolbar.append(menuButton, gridButton, play, count);
     document.body.append(toolbar);
@@ -39,7 +39,7 @@ function start(): void {
 
     function button(name: IconName, label: string, onClick: () => void): HTMLButtonElement {
         const element = document.createElement("button");
-        element.className = "pac-toolbar__button";
+        element.className = "ainsi-toolbar__button";
         element.type = "button";
         element.title = label;
         element.setAttribute("aria-label", label);
@@ -57,12 +57,12 @@ function start(): void {
 
     function openMenu(): void {
         panel = document.createElement("div");
-        panel.className = "pac-menu";
+        panel.className = "ainsi-menu";
         panel.addEventListener("click", event => event.stopPropagation());
 
         const brand = document.createElement("div");
-        brand.className = "pac-menu__brand";
-        brand.textContent = document.body.hasAttribute("data-pac-studio") ? "PAC Studio" : "PAC Player";
+        brand.className = "ainsi-menu__brand";
+        brand.textContent = document.body.hasAttribute("data-ainsi-studio") ? "Ainsi Studio" : "Ainsi Player";
         panel.append(brand);
 
         // the studio, when present, fills this with its own actions
@@ -77,7 +77,7 @@ function start(): void {
         });
 
         toolbar.append(panel);
-        document.dispatchEvent(new CustomEvent("pac:menu", { detail: { panel, slot, close: closeMenu } }));
+        document.dispatchEvent(new CustomEvent("ainsi:menu", { detail: { panel, slot, close: closeMenu } }));
         addEventListener("pointerdown", outside, true);
     }
 
@@ -94,14 +94,14 @@ function start(): void {
 
     function head(text: string): void {
         const element = document.createElement("div");
-        element.className = "pac-menu__head";
+        element.className = "ainsi-menu__head";
         element.textContent = text;
         panel!.append(element);
     }
 
     function item(text: string, onClick: () => void): HTMLButtonElement {
         const element = document.createElement("button");
-        element.className = "pac-menu__item";
+        element.className = "ainsi-menu__item";
         element.type = "button";
         element.textContent = text;
         element.addEventListener("click", onClick);
@@ -124,20 +124,20 @@ function start(): void {
     function openOverview(): void {
         closeMenu();
         overview = document.createElement("div");
-        overview.className = "pac-overview";
+        overview.className = "ainsi-overview";
         cursor = presenting ? index : nearest();
         pages.forEach((page, i) => {
             const cell = document.createElement("button");
-            cell.className = "pac-overview__cell";
+            cell.className = "ainsi-overview__cell";
             cell.type = "button";
             const frame = document.createElement("div");
-            frame.className = "pac-overview__frame";
+            frame.className = "ainsi-overview__frame";
             const clone = page.cloneNode(true) as HTMLElement;
             clone.removeAttribute("id");    // the original keeps the address
             clone.removeAttribute("data-current");
             frame.append(clone);
             const label = document.createElement("div");
-            label.className = "pac-overview__label";
+            label.className = "ainsi-overview__label";
             label.textContent = `${i + 1}  ${titleOf(page, i)}`;
             cell.append(frame, label);
             cell.addEventListener("click", event => { event.stopPropagation(); closeOverview(); go(i, true); });
@@ -148,7 +148,7 @@ function start(): void {
         focusCell(cursor, "center");
     }
 
-    const cells = () => [...overview!.querySelectorAll<HTMLElement>(".pac-overview__cell")];
+    const cells = () => [...overview!.querySelectorAll<HTMLElement>(".ainsi-overview__cell")];
 
     /** the cursor is the focused cell, so Enter and Space are the button's own activation */
     function focusCell(to: number, block: ScrollLogicalPosition = "nearest"): void {
@@ -180,8 +180,8 @@ function start(): void {
 
     function fitThumbs(): void {
         if (!overview) return;
-        for (const frame of overview.querySelectorAll<HTMLElement>(".pac-overview__frame")) {
-            frame.style.setProperty("--pac-thumb-scale", String(frame.clientWidth / 1280));
+        for (const frame of overview.querySelectorAll<HTMLElement>(".ainsi-overview__frame")) {
+            frame.style.setProperty("--ainsi-thumb-scale", String(frame.clientWidth / 1280));
         }
     }
 
@@ -247,10 +247,10 @@ function start(): void {
      */
     function scale(): void {
         if (!presenting || innerWidth <= 900) return;   // the reading form fills the screen instead
-        const [w, h] = (getComputedStyle(document.body).getPropertyValue("--pac-ratio") || "16 / 9")
+        const [w, h] = (getComputedStyle(document.body).getPropertyValue("--ainsi-ratio") || "16 / 9")
             .split("/").map(part => Number(part.trim()) || 1);
         const height = 1280 / (w! / h!);
-        document.body.style.setProperty("--pac-present-scale", String(Math.min(innerWidth / 1280, innerHeight / height)));
+        document.body.style.setProperty("--ainsi-present-scale", String(Math.min(innerWidth / 1280, innerHeight / height)));
     }
 
     addEventListener("resize", scale, { passive: true });
@@ -267,7 +267,7 @@ function start(): void {
     type Row = [key: string, label: string];
 
     function shortcuts(): { mode: string; rows: Row[] } {
-        const studio = document.body.hasAttribute("data-pac-studio");
+        const studio = document.body.hasAttribute("data-ainsi-studio");
         if ((document.activeElement as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) return { mode: "Editing", rows: [] };
         if (overview) return { mode: "Grid", rows: [["← → ↑ ↓", "move"], ["⏎", "open slide"], ["esc", "close"]] };
         if (presenting) return { mode: "Presenting", rows: [["← →", "previous / next"], [`${MOD} ← →`, "first / last"], [`${MOD} G`, "grid"], ["esc", "leave"]] };
@@ -275,13 +275,13 @@ function start(): void {
     }
 
     function openKeys(): void {
-        for (const fading of document.querySelectorAll(".pac-keys")) fading.remove();
+        for (const fading of document.querySelectorAll(".ainsi-keys")) fading.remove();
         const { mode, rows } = shortcuts();
-        document.dispatchEvent(new CustomEvent("pac:keys", { detail: { mode, rows, mod: MOD, alt: ALT } }));
+        document.dispatchEvent(new CustomEvent("ainsi:keys", { detail: { mode, rows, mod: MOD, alt: ALT } }));
         keys = document.createElement("div");
-        keys.className = "pac-keys";
+        keys.className = "ainsi-keys";
         const head = document.createElement("div");
-        head.className = "pac-keys__head";
+        head.className = "ainsi-keys__head";
         head.textContent = mode;
         keys.append(head);
         for (const [key, text] of rows) {
@@ -334,7 +334,7 @@ function start(): void {
         if (!presenting) return;
         const anchor = (event.target as HTMLElement).closest?.<HTMLAnchorElement>('a[href^="#"]');
         if (!anchor) return;
-        const target = document.getElementById(decodeURIComponent(anchor.hash.slice(1)))?.closest<HTMLElement>(".pac-page");
+        const target = document.getElementById(decodeURIComponent(anchor.hash.slice(1)))?.closest<HTMLElement>(".ainsi-page");
         if (!target) return;
         event.preventDefault();
         event.stopPropagation();

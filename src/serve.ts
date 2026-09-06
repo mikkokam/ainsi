@@ -15,8 +15,8 @@ import { basename, dirname, join } from "node:path";
 /** editors fire several events for one save; one rebuild is enough */
 const SETTLE = 40;
 
-// the studio, when present, installs __pacReload to hold a reload while an editor is open
-const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=window.__pacReload;h?h():location.reload()}</script>`;
+// the studio, when present, installs __ainsiReload to hold a reload while an editor is open
+const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=window.__ainsiReload;h?h():location.reload()}</script>`;
 
 const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
 
@@ -38,11 +38,14 @@ export interface Server {
     readonly url: string;
     /** a change a route made itself; a watcher event for the same write coalesces into it */
     changed(what: string): void;
+    /** the deck moved: assets resolve beside the new path and the watcher follows it */
+    retarget(deck: string): void;
     stop(): Promise<void>;
 }
 
 export function serve(options: ServeOptions): Server {
-    const { deck, port, roots, rebuild, route } = options;
+    const { port, roots, rebuild, route } = options;
+    let deck = options.deck;
     let html = options.initial;
 
     const clients = new Set<ReadableStreamDirectController>();
@@ -104,9 +107,11 @@ export function serve(options: ServeOptions): Server {
     }
 
     // an image beside the deck is linked, not copied, so a change to it shows like a source edit
-    const watchers = [watch(dirname(deck), (_, file) => {
+    const folder = () => watch(dirname(deck), (_, file) => {
         if (file && (file === basename(deck) || IMAGE.test(file))) schedule(file);
-    })];
+    });
+    let deckWatcher = folder();
+    const watchers: ReturnType<typeof watch>[] = [];
 
     for (const root of roots) {
         try {
@@ -119,8 +124,16 @@ export function serve(options: ServeOptions): Server {
     return {
         url: `http://localhost:${server.port}`,
         changed: schedule,
+        retarget(next) {
+            const moved = dirname(next) !== dirname(deck);
+            deck = next;
+            if (!moved) return;
+            deckWatcher.close();
+            deckWatcher = folder();
+        },
         async stop() {
             clearTimeout(pending);
+            deckWatcher.close();
             for (const watcher of watchers) watcher.close();
             clients.clear();
             await server.stop(true);

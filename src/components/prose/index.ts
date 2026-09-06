@@ -24,7 +24,7 @@ export default {
         const size = ctx.props.size as string;
         const align = ctx.props.align as string;
         const color = ctx.props.color as string;
-        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`, ctx.props.caps === true && "pac-prose--caps", color !== "ink" && `pac-prose--${color}`].filter(Boolean);
-        return classes.length ? `<div class="pac-prose ${classes.join(" ")}">\n${flow(ctx)}\n</div>` : flow(ctx);
+        const classes = [size !== "normal" && `ainsi-prose--${size}`, align !== "left" && `ainsi-prose--${align}`, ctx.props.caps === true && "ainsi-prose--caps", color !== "ink" && `ainsi-prose--${color}`].filter(Boolean);
+        return classes.length ? `<div class="ainsi-prose ${classes.join(" ")}">\n${flow(ctx)}\n</div>` : flow(ctx);
     },
 } satisfies ComponentDefinition;

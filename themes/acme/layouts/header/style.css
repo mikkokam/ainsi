@@ -3,6 +3,6 @@
     content: ""; display: block;
     position: relative; z-index: 1;
     width: 4rem; height: 5px; margin-bottom: 1.2rem;
-    background: var(--pac-accent);
+    background: var(--ainsi-accent);
 }
 [data-layout="header"] h1 { text-transform: uppercase; letter-spacing: -.02em; }

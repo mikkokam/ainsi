@@ -1,29 +1,29 @@
 /* GitHub's five kinds on the theme's status tokens: the icon a disc on the left, on the first
    line, and the text a column beside it, so the box is as tall as its words */
-.pac-alert {
-    --pac-alert-color: var(--pac-info);
+.ainsi-alert {
+    --ainsi-alert-color: var(--ainsi-info);
     margin: 0; padding: .9em 1.1em .95em 1em;
     max-width: 40em;
     font-size: .83em;   /* an aside speaks a step below the body, the same step as small text */
-    color: var(--pac-ink-soft);
+    color: var(--ainsi-ink-soft);
     display: grid; grid-template-columns: auto 1fr; column-gap: .8em; align-items: start;
-    border: var(--pac-border) solid color-mix(in srgb, var(--pac-alert-color) 30%, var(--pac-rule));
-    border-radius: var(--pac-radius);
-    background: color-mix(in srgb, var(--pac-alert-color) 7%, var(--pac-surface));
+    border: var(--ainsi-border) solid color-mix(in srgb, var(--ainsi-alert-color) 30%, var(--ainsi-rule));
+    border-radius: var(--ainsi-radius);
+    background: color-mix(in srgb, var(--ainsi-alert-color) 7%, var(--ainsi-surface));
 }
-.pac-alert--tip { --pac-alert-color: var(--pac-ok); }
-.pac-alert--important { --pac-alert-color: var(--pac-notice); }
-.pac-alert--warning { --pac-alert-color: var(--pac-warn); }
-.pac-alert--caution { --pac-alert-color: var(--pac-danger); }
-.pac-alert__tag {
+.ainsi-alert--tip { --ainsi-alert-color: var(--ainsi-ok); }
+.ainsi-alert--important { --ainsi-alert-color: var(--ainsi-notice); }
+.ainsi-alert--warning { --ainsi-alert-color: var(--ainsi-warn); }
+.ainsi-alert--caution { --ainsi-alert-color: var(--ainsi-danger); }
+.ainsi-alert__tag {
     grid-row: 1 / span 99;
     width: 1.5em; height: 1.5em;
-    margin-top: calc((var(--pac-leading) * 1em - 1.5em) / 2);   /* centred on the first line */
+    margin-top: calc((var(--ainsi-leading) * 1em - 1.5em) / 2);   /* centred on the first line */
     display: grid; place-items: center;
-    color: var(--pac-accent-ink);
-    background: var(--pac-alert-color);
+    color: var(--ainsi-accent-ink);
+    background: var(--ainsi-alert-color);
     border-radius: 50%;
 }
-.pac-alert__tag svg { width: .95em; height: .95em; }
-.pac-alert p { margin: 0 0 .5em; }
-.pac-alert > :last-child, .pac-alert p:last-child { margin-bottom: 0; }
+.ainsi-alert__tag svg { width: .95em; height: .95em; }
+.ainsi-alert p { margin: 0 0 .5em; }
+.ainsi-alert > :last-child, .ainsi-alert p:last-child { margin-bottom: 0; }

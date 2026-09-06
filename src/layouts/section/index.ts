@@ -6,5 +6,5 @@ import type { LayoutDefinition } from "../../registry";
  * unless told otherwise, so "ground" is in the enum where the other layouts leave it absent.
  */
 export default {
-    props: z.object({ tone: z.enum(["ground", "accent", "inverse"]).default("accent") }).passthrough(),
+    props: z.object({ tone: z.enum(["ground", "accent", "inverse", "soft"]).default("accent") }).passthrough(),
 } satisfies Pick<LayoutDefinition, "props">;

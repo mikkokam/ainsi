@@ -83,6 +83,9 @@ export function assemble(source: string, options: Pick<BuildOptions, "registry" 
 }
 
 /** Render an already-assembled page list. Fit calls this again after reshaping `pages`. */
+/* the url may carry semicolons, as a Google Fonts weight list does, so the rule ends after it */
+const IMPORT = /@import\s+(?:url\([^)]*\)|"[^"]*"|'[^']*')[^;]*;/g;
+
 export function render(
     pages: Page[],
     title: string,
@@ -101,18 +104,18 @@ export function render(
     // studio handles ride as attributes on elements the markup already has: a wrapper
     // element, even a boxless one, changes what child and sibling selectors match
     const entityHtml = options.edit
-        ? (e: Entity) => handle(blockHtml(e), `data-pac-entity="${e.id}"`)
+        ? (e: Entity) => handle(blockHtml(e), `data-ainsi-entity="${e.id}"`)
         : blockHtml;
 
     const taken = new Set<string>();
     const body = numbered.map(page => {
-        const content = page.blocks.map(block => {
+        const blocksHtml = page.blocks.map(block => {
             // a component that places an entity's text itself, `inline(head.node)`, still
             // yields a handle: the node is recognised by identity and the text spanned
             const inline = options.edit
                 ? (node: any) => {
                     const owner = block.entities.find(e => e.node === node);
-                    return owner ? `<span data-pac-entity="${owner.id}">${inlineHtml(node)}</span>` : inlineHtml(node);
+                    return owner ? `<span data-ainsi-entity="${owner.id}">${inlineHtml(node)}</span>` : inlineHtml(node);
                 }
                 : inlineHtml;
             const rendered = registry.get(block.component)!.render({
@@ -130,15 +133,16 @@ export function render(
             let out = rendered;
             const rest: Entity[] = [];
             for (const e of block.entities) {
-                if (out.includes(`data-pac-entity="${e.id}"`)) continue;
+                if (out.includes(`data-ainsi-entity="${e.id}"`)) continue;
                 const placed = e.kind === "image" ? placeImage(out, e) : null;
                 if (placed) out = placed;
                 else rest.push(e);
             }
             return rest.length
-                ? handle(out, `data-pac-span="${rest[0]!.id} ${rest.at(-1)!.id}"`)
+                ? handle(out, `data-ainsi-span="${rest[0]!.id} ${rest.at(-1)!.id}"`)
                 : out;
-        }).join("\n");
+        });
+        const content = blocksHtml.join("\n");
         const layout = layouts.get(page.layout)!;
         const rendered = layout.render({
             content,
@@ -146,12 +150,14 @@ export function render(
             index: page.index + 1,
             total: numbered.length,
         });
-        if (content && !rendered.includes(content)) {
+        // per block, not the joined string: a layout may reorder blocks (split hoists the
+        // figure), but every block must survive the template
+        if (!blocksHtml.every(b => rendered.includes(b))) {
             diagnostics.push({ level: "warn", message: `layout "${layout.name}" dropped the content of page ${page.index + 1}` });
         }
         // the solver's two outputs ride on the section: the type scale it settled on, and
         // the admission that it ran out of ladder. Both are absent on a page that just fits.
-        const step = page.scale === 1 ? "" : ` style="--pac-step:${page.scale}"`;
+        const step = page.scale === 1 ? "" : ` style="--ainsi-step:${page.scale}"`;
         const overflow = page.overflow ? " data-overflow" : "";
         // the page's stable address: its first heading, slugged. Page numbers move on every
         // fit split, so a link written as #page-3 would drift; a heading slug survives it.
@@ -162,7 +168,7 @@ export function render(
         let slug = base;
         for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
         taken.add(slug);
-        return `<section class="pac-page" id="${slug}" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
+        return `<section class="ainsi-page" id="${slug}" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
 ${rendered}
 </section>`;
     }).join("\n");
@@ -174,6 +180,9 @@ ${rendered}
     ].filter(Boolean).join("\n");
     const scripts = [...usedComponents].map(n => registry.get(n)?.script).filter(Boolean).join("\n");
 
+    // a stylesheet honours @import only ahead of every rule, so a theme's font imports move to the top
+    const imports = [...(options.themeCss ?? "").matchAll(IMPORT)].map(m => m[0]).join("\n");
+    const theme = (options.themeCss ?? "").replace(IMPORT, "");
     const html = `<!doctype html>
 <html lang="fi">
 <head>
@@ -181,17 +190,18 @@ ${rendered}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
 <style>
-/* theme: tokens, and whatever no token should carry */
-${options.themeCss ?? ""}
+${imports}
 /* engine: page structure, and the paper a print lands on */
 ${BASE_CSS}
 @page { size: ${paper(settings.ratio)}; margin: 0; }
+/* theme: tokens, and whatever no token should carry; after the engine so its element rules win */
+${theme}
 /* layouts and components, styled through the tokens above */
 ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">
+<body class="ainsi"${options.edit ? " data-ainsi-studio" : ""} style="--ainsi-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>
@@ -204,7 +214,7 @@ ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="modu
 function logoVars(options: BuildOptions): string {
     const url = (u: string) => `url('${u.replace(/'/g, "%27")}')`;
     const cover = options.coverLogo ?? options.logo;
-    return `${options.logo ? `;--pac-logo:${url(options.logo)}` : ""}${cover ? `;--pac-logo-cover:${url(cover)}` : ""}`;
+    return `${options.logo ? `;--ainsi-logo:${url(options.logo)}` : ""}${cover ? `;--ainsi-logo-cover:${url(cover)}` : ""}`;
 }
 
 /** the sheet a page prints on: the design width at the deck's ratio, so one page is one sheet */
@@ -232,12 +242,12 @@ function placeImage(html: string, entity: Entity): string | null {
     // an empty url renders as the placeholder, so its marker is what identifies the img
     const src = node.url
         ? `src="${String(node.url).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")}"`
-        : "data-pac-placeholder";
+        : "data-ainsi-placeholder";
     const at = html.indexOf(src);
     if (at === -1) return null;
     const open = html.lastIndexOf("<img", at);
     if (open === -1) return null;
-    return `${html.slice(0, open + 4)} data-pac-entity="${entity.id}"${html.slice(open + 4)}`;
+    return `${html.slice(0, open + 4)} data-ainsi-entity="${entity.id}"${html.slice(open + 4)}`;
 }
 
 function coerce(props: Record<string, string>): Record<string, unknown> {

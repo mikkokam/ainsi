@@ -1,56 +1,56 @@
-.pac-timeline {
-    --pac-timeline-marker: .9em;
+.ainsi-timeline {
+    --ainsi-timeline-marker: .9em;
     list-style: none; margin: 0; padding: 0;
-    display: grid; gap: var(--pac-gap);
+    display: grid; gap: var(--ainsi-gap);
 }
-.pac-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
-.pac-timeline__step {
+.ainsi-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
+.ainsi-timeline__step {
     display: flex; flex-direction: column; gap: .3em;
-    padding-top: calc(var(--pac-timeline-marker) + .6em); position: relative;
+    padding-top: calc(var(--ainsi-timeline-marker) + .6em); position: relative;
 }
-.pac-timeline--horizontal .pac-timeline__step::before {
+.ainsi-timeline--horizontal .ainsi-timeline__step::before {
     content: ""; position: absolute;
-    top: calc(var(--pac-timeline-marker) / 2); left: 0; right: calc(var(--pac-gap) * -1);
-    height: var(--pac-border); background: var(--pac-rule);
+    top: calc(var(--ainsi-timeline-marker) / 2); left: 0; right: calc(var(--ainsi-gap) * -1);
+    height: var(--ainsi-border); background: var(--ainsi-rule);
 }
-.pac-timeline--horizontal .pac-timeline__step:last-child::before { right: 0; }
-.pac-timeline__marker {
+.ainsi-timeline--horizontal .ainsi-timeline__step:last-child::before { right: 0; }
+.ainsi-timeline__marker {
     position: absolute; top: 0; left: 0;
-    width: var(--pac-timeline-marker); height: var(--pac-timeline-marker);
-    border-radius: 50%; background: var(--pac-accent);
+    width: var(--ainsi-timeline-marker); height: var(--ainsi-timeline-marker);
+    border-radius: 50%; background: var(--ainsi-accent);
 }
 /* a numbered source list keeps its numbers: the dot grows into a disc that carries one */
-.pac-timeline--numbered { --pac-timeline-marker: 1.7em; counter-reset: pac-step; }
-.pac-timeline--numbered .pac-timeline__marker {
-    counter-increment: pac-step;
+.ainsi-timeline--numbered { --ainsi-timeline-marker: 1.7em; counter-reset: ainsi-step; }
+.ainsi-timeline--numbered .ainsi-timeline__marker {
+    counter-increment: ainsi-step;
     display: grid; place-items: center;
-    font: var(--pac-strong) .7em/1 var(--pac-font-mono);
-    color: var(--pac-accent-ink);
+    font: var(--ainsi-strong) .7em/1 var(--ainsi-font-mono);
+    color: var(--ainsi-accent-ink);
 }
-.pac-timeline--numbered .pac-timeline__marker::before { content: counter(pac-step); }
-.pac-timeline__label { font-weight: var(--pac-strong); font-variant-numeric: tabular-nums; }
-.pac-timeline__body { color: var(--pac-ink-soft); font-size: .92em; }
+.ainsi-timeline--numbered .ainsi-timeline__marker::before { content: counter(ainsi-step); }
+.ainsi-timeline__label { font-weight: var(--ainsi-strong); font-variant-numeric: tabular-nums; }
+.ainsi-timeline__body { color: var(--ainsi-ink-soft); font-size: .92em; }
 
 @media screen and (max-width: 900px) {
-    .pac-timeline--horizontal { grid-auto-flow: row; }
-    .pac-timeline--horizontal .pac-timeline__step::before { display: none; }
+    .ainsi-timeline--horizontal { grid-auto-flow: row; }
+    .ainsi-timeline--horizontal .ainsi-timeline__step::before { display: none; }
 }
 
-@keyframes pac-timeline-in {
+@keyframes ainsi-timeline-in {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }
 }
-@keyframes pac-timeline-marker {
+@keyframes ainsi-timeline-marker {
     from { transform: scale(0); }
     to { transform: scale(1); }
 }
-body[data-present] [data-current] .pac-timeline__step {
-    animation: pac-timeline-in var(--pac-motion) var(--pac-ease) backwards;
+body[data-present] [data-current] .ainsi-timeline__step {
+    animation: ainsi-timeline-in var(--ainsi-motion) var(--ainsi-ease) backwards;
 }
-body[data-present] [data-current] .pac-timeline__step:nth-child(2) { animation-delay: calc(var(--pac-motion) * .26); }
-body[data-present] [data-current] .pac-timeline__step:nth-child(3) { animation-delay: calc(var(--pac-motion) * .38); }
-body[data-present] [data-current] .pac-timeline__step:nth-child(n+4) { animation-delay: calc(var(--pac-motion) * .5); }
-body[data-present] [data-current] .pac-timeline__marker {
-    animation: pac-timeline-marker var(--pac-motion) var(--pac-ease) backwards;
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .26); }
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .38); }
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(n+4) { animation-delay: calc(var(--ainsi-motion) * .5); }
+body[data-present] [data-current] .ainsi-timeline__marker {
+    animation: ainsi-timeline-marker var(--ainsi-motion) var(--ainsi-ease) backwards;
     animation-delay: inherit;
 }

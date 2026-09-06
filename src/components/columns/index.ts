@@ -12,12 +12,12 @@ export default {
         const list = listOf(ctx.entities)!;
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
         const columns = labelled(list, ctx.inline).map(([title, body]) => {
-            const head = title ? `<span class="pac-columns__title">${title}</span>` : "";
-            return `<li class="pac-columns__column">${head}<span class="pac-columns__body">${body}</span></li>`;
+            const head = title ? `<span class="ainsi-columns__title">${title}</span>` : "";
+            return `<li class="ainsi-columns__column">${head}<span class="ainsi-columns__body">${body}</span></li>`;
         });
         const tag = list.ordered ? "ol" : "ul";
         return `${before}
-<${tag} class="pac-columns${list.ordered ? " pac-columns--ordered" : ""}" data-pac="columns">
+<${tag} class="ainsi-columns${list.ordered ? " ainsi-columns--ordered" : ""}" data-ainsi="columns">
     ${columns.join("\n    ")}
 </${tag}>`;
     },

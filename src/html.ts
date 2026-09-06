@@ -7,7 +7,7 @@ export function blockHtml(entity: Entity): string {
     if (signed) {
         // `> — Name` as the last paragraph: the quote's attribution, lifted into a caption
         const [body, author] = signed;
-        return `<figure class="pac-quote">${render(body)}<figcaption>${inlineHtml(author).replace(DASH, "")}</figcaption></figure>`;
+        return `<figure class="ainsi-quote">${render(body)}<figcaption>${inlineHtml(author).replace(DASH, "")}</figcaption></figure>`;
     }
     return render(entity.node);
 }

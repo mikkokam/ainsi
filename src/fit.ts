@@ -11,7 +11,7 @@ import type { Block, Diagnostic, Entity, Page, Settings } from "./types";
  * Requires a real browser: overflow is a layout fact, and no heuristic replaces measuring it.
  * This must never be a hard dependency. `playwright-core` is a small wrapper with no browser
  * binary; `chromium.launch()` only succeeds if `playwright install chromium` has been run
- * separately, or `PAC_CHROMIUM` points at an existing binary. Any failure to import or launch
+ * separately, or `AINSI_CHROMIUM` points at an existing binary. Any failure to import or launch
  * degrades to one diagnostic and the pages are returned unchanged, never thrown. A plain
  * build never calls this at all.
  */
@@ -281,7 +281,7 @@ function measure(
      */
     const read = (skip: number[]) => browserPage.evaluate((skipped: number[]) => {
         const found: number[] = [];
-        const sections = [...document.querySelectorAll<HTMLElement>(".pac-page")];
+        const sections = [...document.querySelectorAll<HTMLElement>(".ainsi-page")];
         for (let i = 0; i < sections.length; i++) {
             if (skipped.includes(i)) continue;
             const main = sections[i]!.querySelector("main");
@@ -313,7 +313,7 @@ function measure(
         async floor(pages) {
             await show(pages);
             return browserPage.evaluate((fallback: number) => {
-                const declared = Number.parseFloat(getComputedStyle(document.body).getPropertyValue("--pac-step-min"));
+                const declared = Number.parseFloat(getComputedStyle(document.body).getPropertyValue("--ainsi-step-min"));
                 return Number.isFinite(declared) && declared > 0 && declared <= 1 ? declared : fallback;
             }, FLOOR);
         },
@@ -325,7 +325,7 @@ async function launch(diagnostics: Diagnostic[]): Promise<import("playwright-cor
         const { chromium } = await import("playwright-core");
         // an escape hatch for a machine that has a browser but not playwright's own copy of
         // one, which is every CI image with chromium already installed
-        const executablePath = process.env.PAC_CHROMIUM;
+        const executablePath = process.env.AINSI_CHROMIUM;
         // pdf export redraws cross-origin images onto a canvas to downscale them; with web
         // security on, that taints the canvas and the pixels cannot be read back. Every page
         // this browser ever renders is our own build, never foreign content.
@@ -334,7 +334,7 @@ async function launch(diagnostics: Diagnostic[]): Promise<import("playwright-cor
         diagnostics.push({
             level: "warn",
             message: "no browser available for fit checking; run `bunx playwright install chromium`, or set "
-                + "PAC_CHROMIUM to an existing binary, to enable it. Pages are unchanged.",
+                + "AINSI_CHROMIUM to an existing binary, to enable it. Pages are unchanged.",
         });
         return undefined;
     }

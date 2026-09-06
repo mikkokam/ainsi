@@ -69,13 +69,13 @@ async function readIfPresent(path: string): Promise<string | undefined> {
 /**
  * Scoping is by convention and checked here rather than left to hope: every selector names
  * this component's class and nobody else's, so two components cannot collide. Ambient state
- * a component reacts to, such as `body[data-present] [data-current] .pac-boxes__box`, is
+ * a component reacts to, such as `body[data-present] [data-current] .ainsi-boxes__box`, is
  * fine; another component's class is not.
  */
 function checkScope(name: string, css: string, diagnostics: Diagnostic[]): void {
-    const own = `.pac-${name}`;
+    const own = `.ainsi-${name}`;
     for (const selector of selectors(css)) {
-        const classes = [...selector.matchAll(/\.pac-[a-z0-9_-]+/g)].map(m => m[0]);
+        const classes = [...selector.matchAll(/\.ainsi-[a-z0-9_-]+/g)].map(m => m[0]);
         const foreign = classes.filter(c => c !== own && !c.startsWith(`${own}__`) && !c.startsWith(`${own}--`));
         if (!classes.length || foreign.length) {
             const why = classes.length ? `names ${foreign[0]}` : `names no ${own}`;
@@ -96,9 +96,9 @@ async function bundle(folder: string, name: string, diagnostics: Diagnostic[]): 
         const path = join(folder, candidate);
         if (!(await Bun.file(path).exists())) continue;
 
-        const entry = join(folder, `.pac-entry-${name}.ts`);
+        const entry = join(folder, `.ainsi-entry-${name}.ts`);
         await Bun.write(entry, `import { mount } from "./${candidate}";
-for (const root of document.querySelectorAll('[data-pac="${name}"]')) mount(root as HTMLElement);
+for (const root of document.querySelectorAll('[data-ainsi="${name}"]')) mount(root as HTMLElement);
 `);
         try {
             const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "iife", minify: true });

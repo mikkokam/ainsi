@@ -1,0 +1,26 @@
+/*
+ * The cover: a wash from the top left to the bottom right, dark type on it, the round mark
+ * top right. An image, when the page carries one, covers the wash and the engine's scrim and
+ * light type take over unchanged.
+ */
+[data-layout="header"]:not(:has(.ainsi-full)) { color: var(--ainsi-ink); }
+[data-layout="header"] main:not(:has(.ainsi-full)) {
+    background: linear-gradient(135deg, #f7e7ee 0%, #e9e2f6 42%, #cfd8fb 100%);
+}
+/* the title block stops short of the foot, as the brand's own covers do; a percentage resolves against width */
+[data-layout="header"] main { padding-bottom: 11%; }
+[data-layout="header"] h1 { font-size: 3.4em; line-height: 1.05; }
+[data-layout="header"] h2 { font-size: 2.2em; font-weight: 400; margin: .1em 0 0; }
+[data-layout="header"] p { font-size: 1em; opacity: .9; margin: 1.6em 0 0; }
+[data-layout="header"] p + p { margin-top: .4em; }
+
+.ainsi-page[data-layout="header"]::before {
+    top: 2.2rem; right: 2.2rem; bottom: auto;
+    width: 64px; height: 64px;
+    background-image: var(--ainsi-logo-cover);
+    background-position: center;
+}
+@media screen and (max-width: 900px) {
+    [data-layout="header"] h1 { font-size: 2.4em; }
+    .ainsi-page[data-layout="header"]::before { top: 1.2rem; right: 1.2rem; width: 44px; height: 44px; }
+}

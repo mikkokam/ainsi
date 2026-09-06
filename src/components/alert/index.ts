@@ -26,8 +26,8 @@ export default {
         if (children[0]?.type === "break") children.shift();
         const body = [...(children.length ? [{ ...first, children }] : []), ...rest];
         const name = `${kind[0]!.toUpperCase()}${kind.slice(1)}`;
-        return `<aside class="pac-alert pac-alert--${kind}" data-pac="alert" role="note" aria-label="${name}" title="${name}">
-    <span class="pac-alert__tag">${ALERT_ICONS[kind]}</span>
+        return `<aside class="ainsi-alert ainsi-alert--${kind}" data-ainsi="alert" role="note" aria-label="${name}" title="${name}">
+    <span class="ainsi-alert__tag">${ALERT_ICONS[kind]}</span>
     ${ctx.html({ ...quote, node: { type: "root", children: body } })}
 </aside>`;
     },

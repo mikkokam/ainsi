@@ -14,6 +14,6 @@ export default {
         const image = ctx.entities.map(imageOf).find(Boolean)!;
         const size = ctx.props.size as string | undefined;
         const align = ctx.props.align as string;
-        return `<figure class="pac-full"${size ? ` data-size="${size}"` : ""}${align !== "left" ? ` data-align="${align}"` : ""} data-pac="full">${img(image)}</figure>`;
+        return `<figure class="ainsi-full"${size ? ` data-size="${size}"` : ""}${align !== "left" ? ` data-align="${align}"` : ""} data-ainsi="full">${img(image)}</figure>`;
     },
 } satisfies ComponentDefinition;

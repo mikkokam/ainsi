@@ -1,26 +1,28 @@
 /**
- * The theme contract. A component may reference these and its own `--pac-<name>-*`
+ * The theme contract. A component may reference these and its own `--ainsi-<name>-*`
  * variables, nothing else. Capped like the component vocabulary: a token per decision
  * a theme is allowed to make, not one per property a component happens to set.
  */
 export const TOKENS = [
     // colour
-    "--pac-ink", "--pac-ink-soft", "--pac-ground", "--pac-shell",
-    "--pac-accent", "--pac-accent-ink", "--pac-rule", "--pac-surface",
+    "--ainsi-ink", "--ainsi-ink-soft", "--ainsi-ground", "--ainsi-shell",
+    "--ainsi-accent", "--ainsi-accent-ink", "--ainsi-rule", "--ainsi-surface",
+    // a light wash of the accent: the soft tone's ground, where the ink and the accent stay as they are
+    "--ainsi-tint",
     // status: what informative, good, notable, careful and stop look like; alerts are the first to ask
-    "--pac-info", "--pac-ok", "--pac-notice", "--pac-warn", "--pac-danger",
+    "--ainsi-info", "--ainsi-ok", "--ainsi-notice", "--ainsi-warn", "--ainsi-danger",
     // identity: the deck's mark and the cover's, from its frontmatter; a theme decides where they sit and how large
-    "--pac-logo", "--pac-logo-cover",
+    "--ainsi-logo", "--ainsi-logo-cover",
     // type
-    "--pac-font", "--pac-font-display", "--pac-font-mono", "--pac-strong", "--pac-size", "--pac-leading",
+    "--ainsi-font", "--ainsi-font-display", "--ainsi-font-mono", "--ainsi-strong", "--ainsi-size", "--ainsi-leading",
     // how far the fit solver may step the type down before it splits a page instead
-    "--pac-step-min",
+    "--ainsi-step-min",
     // space and shape
-    "--pac-gap", "--pac-pad", "--pac-radius", "--pac-border",
+    "--ainsi-gap", "--ainsi-pad", "--ainsi-radius", "--ainsi-border",
     // material: what a surface is made of, so depth is a theme's call and not a component's
-    "--pac-shadow", "--pac-blur",
+    "--ainsi-shadow", "--ainsi-blur",
     // motion: how the deck moves when presented, down to not at all
-    "--pac-motion", "--pac-ease",
+    "--ainsi-motion", "--ainsi-ease",
 ] as const;
 
 export type Token = (typeof TOKENS)[number];

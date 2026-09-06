@@ -1,22 +1,22 @@
 /* What no token should carry: the faces, their optical sizing, and the grain of the paper. */
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500&display=swap");
+@import url("family=Inter:wght@400;500&display=swap");
 
-.pac-page {
+.ainsi-page {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
 }
 
-.pac-page h1 { font-variation-settings: "opsz" 120; font-weight: 600; letter-spacing: -.015em; }
-.pac-page h2, .pac-page h3 { font-variation-settings: "opsz" 40; font-weight: 600; }
+.ainsi-page h1 { font-variation-settings: "opsz" 120; font-weight: 600; letter-spacing: -.015em; }
+.ainsi-page h2, .ainsi-page h3 { font-variation-settings: "opsz" 40; font-weight: 600; }
 
 /* brand mark: small in the corner everywhere; the header layout below scales it up */
-.pac-page::before {
+.ainsi-page::before {
     content: "";
     position: absolute; z-index: 2;
     right: 1.6rem; bottom: 1.4rem;
     width: 90px; height: 27px;
-    background: var(--pac-logo) no-repeat center / contain;
+    background: var(--ainsi-logo) no-repeat center / contain;
     pointer-events: none;
 }
 @media screen and (max-width: 900px) {
-    .pac-page::before { right: 1.1rem; bottom: 1rem; width: 64px; height: 19px; }
+    .ainsi-page::before { right: 1.1rem; bottom: 1rem; width: 64px; height: 19px; }
 }

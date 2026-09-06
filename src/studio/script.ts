@@ -85,7 +85,7 @@ function shut(): void {
     if (pendingReload) location.reload();
 }
 
-(window as unknown as { __pacReload(): void }).__pacReload = () => {
+(window as unknown as { __ainsiReload(): void }).__ainsiReload = () => {
     if (chrome?.holds) {
         pendingReload = true;
         hint("the file changed elsewhere; reloads when this editor closes");
@@ -94,15 +94,51 @@ function shut(): void {
     location.reload();
 };
 
-const SCROLL = "pac-scroll";
-const REOPEN = "pac-reopen";
+/*
+ * The file name in the toolbar, editable: blur or Enter renames the deck on disk, the same
+ * write-through the content gets, applied to the path. The server retargets its watcher and
+ * the reload that follows brings the new name back through /__doc.
+ */
+function mountFileField(): void {
+    const field = h("input", {
+        class: "ainsi-studio__file", type: "text", value: doc.file, spellcheck: "false", "aria-label": "File name",
+        title: "Rename the deck",
+    }) as HTMLInputElement;
+    let renaming = false;
+    async function commit(): Promise<void> {
+        const name = field.value.trim();
+        if (renaming || !name || name === doc.file) { field.value = doc.file; return; }
+        renaming = true;
+        const response = await fetch("/__rename", { method: "POST", body: JSON.stringify({ name }) });
+        renaming = false;
+        if (!response.ok) {
+            hint(await response.text(), true, 3000);
+            field.value = doc.file;
+            return;
+        }
+        doc.file = (await response.json() as { file: string }).file;
+        field.value = doc.file;
+        hint(`renamed to ${doc.file}`, false, 2000);
+    }
+    field.addEventListener("blur", () => void commit());
+    field.addEventListener("keydown", event => {
+        if (event.key === "Enter") { event.preventDefault(); field.blur(); }
+        if (event.key === "Escape") { event.preventDefault(); field.value = doc.file; field.blur(); }
+        event.stopPropagation();
+    });
+    (document.querySelector(".ainsi-toolbar") ?? document.body).append(field);
+}
+
+const SCROLL = "ainsi-scroll";
+const REOPEN = "ainsi-reopen";
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
 init();
 
 async function init(): Promise<void> {
     doc = await (await fetch("/__doc")).json();
-    document.body.setAttribute("data-pac-edit", "");
+    document.body.setAttribute("data-ainsi-edit", "");
+    mountFileField();
 
     const scrolled = sessionStorage.getItem(SCROLL);
     if (scrolled) scrollTo(0, Number(scrolled));
@@ -127,11 +163,11 @@ async function init(): Promise<void> {
     // the toolbar and insertion from a visible door: a rail at the block's top-left corner
     // while the pointer is over it, the grip for the menu and a plus for a block below, so
     // right-click and alt-click are shortcuts rather than the only way in
-    const grip = h("button", { class: "pac-studio__grip", type: "button", title: "Block menu", "aria-label": "Block menu" });
+    const grip = h("button", { class: "ainsi-studio__grip", type: "button", title: "Block menu", "aria-label": "Block menu" });
     grip.innerHTML = icons.grip;
-    const plus = h("button", { class: "pac-studio__grip", type: "button", title: "Add a block below (⌥ click)", "aria-label": "Add a block below" });
+    const plus = h("button", { class: "ainsi-studio__grip", type: "button", title: "Add a block below (⌥ click)", "aria-label": "Add a block below" });
     plus.innerHTML = icons.plus;
-    const rail = h("div", { class: "pac-studio__rail" }, grip, plus);
+    const rail = h("div", { class: "ainsi-studio__rail" }, grip, plus);
     rail.hidden = true;
     let gripped: HTMLElement | undefined;
     let leaving: ReturnType<typeof setTimeout> | undefined;
@@ -163,11 +199,11 @@ async function init(): Promise<void> {
     // the page's own rail, the block rail one scope up, at its top-left corner: the layout
     // and its options govern the whole page, so the control sits on the page rather than
     // on any block inside it, and the plus adds a page below
-    const pageGrip = h("button", { class: "pac-studio__grip", type: "button", title: "Page layout (⌥ click adds a page below)", "aria-label": "Page layout" });
+    const pageGrip = h("button", { class: "ainsi-studio__grip", type: "button", title: "Page layout (⌥ click adds a page below)", "aria-label": "Page layout" });
     pageGrip.innerHTML = icons.layout;
-    const pagePlus = h("button", { class: "pac-studio__grip", type: "button", title: "Add a page below", "aria-label": "Add a page below" });
+    const pagePlus = h("button", { class: "ainsi-studio__grip", type: "button", title: "Add a page below", "aria-label": "Add a page below" });
     pagePlus.innerHTML = icons.plus;
-    const pageRail = h("div", { class: "pac-studio__rail" }, pageGrip, pagePlus);
+    const pageRail = h("div", { class: "ainsi-studio__rail" }, pageGrip, pagePlus);
     pageRail.hidden = true;
     document.body.append(pageRail);
     let pageAt: HTMLElement | undefined;
@@ -186,7 +222,7 @@ async function init(): Promise<void> {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return pageRail.hidden = true;
         const at = event.target as HTMLElement;
         if (at === pageRail || pageRail.contains(at)) return;
-        const page = at.closest<HTMLElement>(".pac-page");
+        const page = at.closest<HTMLElement>(".ainsi-page");
         clearTimeout(pageLeaving);
         if (!page) { pageLeaving = setTimeout(() => { pageRail.hidden = true; pageAt = undefined; }, 400); return; }
         pageAt = page;
@@ -214,18 +250,18 @@ async function init(): Promise<void> {
 
     // the viewer's menu announces itself on open and offers a slot; theme and export are
     // studio business, because both need the server and the player ships without one
-    document.addEventListener("pac:menu", event => {
+    document.addEventListener("ainsi:menu", event => {
         const { panel, slot, close } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement; close(): void };
         slot.append(
             menuItem("Edit source (E)", () => openRaw()),
             menuItem("Deck settings…", () => { close(); openDeck(); }),
             menuItem("Theme…", () => themeDrill(panel)),
             menuItem("Export…", () => exportDrill(panel, close)),
-            h("div", { class: "pac-menu__rule" }),
+            h("div", { class: "ainsi-menu__rule" }),
         );
     });
 
-    document.addEventListener("pac:keys", event => {
+    document.addEventListener("ainsi:keys", event => {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
         else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["select", "marks bar"], ["empty", "deletes the block"]);
@@ -268,8 +304,8 @@ async function init(): Promise<void> {
  */
 interface Splice { start: number; end: number; text: string }
 interface Entry extends Splice { was: string }   // what the range holds now; a mismatch means the file moved
-const UNDO = "pac-undo";
-const REDO = "pac-redo";
+const UNDO = "ainsi-undo";
+const REDO = "ainsi-redo";
 const DEPTH = 50;
 
 function stack(key: string): Entry[] {
@@ -297,10 +333,10 @@ function step(direction: "undo" | "redo"): void {
 
 /** the handle at an element, or the one handle inside the component root it sits in */
 function handleAt(at: HTMLElement): HTMLElement | null {
-    const own = at.closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+    const own = at.closest<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]");
     if (own) return own;
-    const root = at.closest<HTMLElement>("[data-pac]");
-    const inside = root ? root.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]") : [];
+    const root = at.closest<HTMLElement>("[data-ainsi]");
+    const inside = root ? root.querySelectorAll<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]") : [];
     return inside.length === 1 ? inside[0]! : null;
 }
 
@@ -327,19 +363,19 @@ const notALook = (family: Family | undefined) => (family && family !== "list" ? 
 const PLAIN: Record<string, string> = { list: "bullets", ordered: "numbered", quote: "quote", code: "code", table: "table" };
 
 function openMenu(handle: HTMLElement, at: DOMRect): void {
-    const id = handle.dataset.pacEntity ?? handle.dataset.pacSpan?.split(" ")[0];
+    const id = handle.dataset.ainsiEntity ?? handle.dataset.ainsiSpan?.split(" ")[0];
     const entity = doc.entities.find(e => e.id === id);
     const block = doc.blocks.find(b => entity && b.ids.includes(entity.id));
     if (!entity || !block) return;
     const target = targetFor(entity, block);
 
     menu = document.createElement("div");
-    menu.className = "pac-studio__bar";
+    menu.className = "ainsi-studio__bar";
     menu.addEventListener("click", event => event.stopPropagation());
 
     // what it is: a level dropdown for text and lists, a label for everything else. A span
     // over one entity is that entity, whichever handle the component left on it.
-    const own = handle.dataset.pacEntity !== undefined || block.ids.length === 1;
+    const own = handle.dataset.ainsiEntity !== undefined || block.ids.length === 1;
     const current = kindOf(entity);
     const family = current && familyOf(current);
     // an alert is what the engine picks for a marked quote; a directive on the entity would
@@ -380,9 +416,9 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     // an alert's kind is its marker line; the chips rewrite that line
     if (own && family === "alert") {
         const kind = alertOf(entity.md);
-        const row = h("span", { class: "pac-studio__field" });
+        const row = h("span", { class: "ainsi-studio__field" });
         for (const k of ALERT_KINDS) {
-            const chip = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: k, "aria-label": k, "data-active": k === kind, click: () => splice({ start: entity.start, end: entity.end, text: withAlert(entity.md, entity.kind, k) }) });
+            const chip = h("button", { class: "ainsi-studio__chip ainsi-studio__chip--icon", type: "button", title: k, "aria-label": k, "data-active": k === kind, click: () => splice({ start: entity.start, end: entity.end, text: withAlert(entity.md, entity.kind, k) }) });
             chip.innerHTML = ALERT_ICONS[k]!;
             row.append(chip);
         }
@@ -423,7 +459,7 @@ function openPageMenu(section: HTMLElement, at: DOMRect): void {
     if (!page) return;
 
     menu = document.createElement("div");
-    menu.className = "pac-studio__bar";
+    menu.className = "ainsi-studio__bar";
     menu.addEventListener("click", event => event.stopPropagation());
 
     const change = (name: string, props: Record<string, unknown>) => {
@@ -518,15 +554,16 @@ async function themeDrill(panel: HTMLElement): Promise<void> {
 /*
  * Export writes beside the deck under its own name and replaces what is there; the server
  * fits, prints and opens the file, so the studio only reports how it went. Three image
- * levels: screen density, compact for attachments, full for print.
+ * levels: screen density, compact for attachments, full for print. Beneath the rule, the
+ * same deck as an editable pptx.
  */
 function exportDrill(panel: HTMLElement, close: () => void): void {
-    const target = `${doc.file.replace(/\.[^.]+$/, "")}.pdf`;
-    const write = (images: string) => async () => {
+    const base = doc.file.replace(/\.[^.]+$/, "");
+    const write = (path: string, target: string) => async () => {
         close();
         hint(`Writing ${target}…`);
         try {
-            const response = await fetch(`/__pdf?images=${images}`, { method: "POST" });
+            const response = await fetch(path, { method: "POST" });
             if (response.ok) hint(`Wrote ${target}`, false, 2500);
             else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
         } catch {
@@ -534,9 +571,11 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
         }
     };
     drill(panel, "Export",
-        menuItem(`PDF, as ${target}`, write("screen")),
-        menuItem("PDF, compact", write("compact")),
-        menuItem("PDF, full-resolution images", write("full")),
+        menuItem(`PDF, as ${base}.pdf`, write("/__pdf?images=screen", `${base}.pdf`)),
+        menuItem("PDF, compact", write("/__pdf?images=compact", `${base}.pdf`)),
+        menuItem("PDF, full-resolution images", write("/__pdf?images=full", `${base}.pdf`)),
+        h("div", { class: "ainsi-menu__rule" }),
+        menuItem(`PPTX, editable, as ${base}.pptx`, write("/__pptx", `${base}.pptx`)),
     );
 }
 
@@ -550,7 +589,7 @@ const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with
 const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\ntheme: acme";
 
 function openDeck(): void {
-    const page = document.querySelector<HTMLElement>(".pac-page");
+    const page = document.querySelector<HTMLElement>(".ainsi-page");
     if (!page) return;
     const matter = MATTER.exec(doc.source);
     const initial = matter?.[1] ?? "";
@@ -571,7 +610,7 @@ function openDeck(): void {
 /** whether a click on a page landed on its mark, whose box is a pseudo-element's computed style */
 function onMark(event: MouseEvent): boolean {
     const at = event.target as HTMLElement;
-    const page = at.closest?.<HTMLElement>(".pac-page");
+    const page = at.closest?.<HTMLElement>(".ainsi-page");
     if (!page || (at !== page && !at.matches("main, article"))) return false;
     const style = getComputedStyle(page, "::before");
     if (style.backgroundImage === "none" || style.content === "none") return false;
@@ -608,19 +647,19 @@ interface Range { start: number; end: number; md: string; kind: string }
 
 /** a rendered page is the one owning its first entity */
 function pageOf(section: HTMLElement): DocPage | undefined {
-    const handle = section.querySelector<HTMLElement>("[data-pac-entity], [data-pac-span]");
-    const id = handle?.dataset.pacEntity ?? handle?.dataset.pacSpan?.split(" ")[0];
+    const handle = section.querySelector<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]");
+    const id = handle?.dataset.ainsiEntity ?? handle?.dataset.ainsiSpan?.split(" ")[0];
     return doc.pages.find(p => id && p.ids.includes(id));
 }
 
 /** an entity handle is one slice; a block handle spans the entities its component inlined */
 function rangeOf(target: HTMLElement): Range | undefined {
     const byId = (id: string | undefined) => doc.entities.find(e => e.id === id);
-    if (target.dataset.pacEntity) {
-        const entity = byId(target.dataset.pacEntity);
+    if (target.dataset.ainsiEntity) {
+        const entity = byId(target.dataset.ainsiEntity);
         return entity && { start: entity.start, end: entity.end, md: entity.md, kind: entity.kind };
     }
-    const [firstId, lastId] = (target.dataset.pacSpan ?? "").split(" ");
+    const [firstId, lastId] = (target.dataset.ainsiSpan ?? "").split(" ");
     const first = byId(firstId);
     const last = byId(lastId);
     return first && last
@@ -629,7 +668,7 @@ function rangeOf(target: HTMLElement): Range | undefined {
 }
 
 /** every edit target in document order: entity handles and the block handles between them */
-const wrappers = () => [...document.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];
+const wrappers = () => [...document.querySelectorAll<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]:not([data-ainsi-entity])")];
 
 /** ids are content hashes and change on every commit, so flow lands by position */
 function openAt(index: number, caret: Caret): void {
@@ -663,20 +702,20 @@ function openImage(target: HTMLElement, range: Range): boolean {
     const [, altText = "", rawUrl = "", title = ""] = match;
     const url = rawUrl.startsWith("<") ? rawUrl.slice(1, -1) : rawUrl;
 
-    const panel = h("form", { class: "pac-studio__image" });
+    const panel = h("form", { class: "ainsi-studio__image" });
     const field = (name: string, value: string, placeholder: string): HTMLInputElement => {
-        const input = h("input", { class: "pac-studio__input", value, placeholder, spellcheck: "false", autocomplete: "off" }) as HTMLInputElement;
-        panel.append(h("label", { class: "pac-studio__imagerow" }, h("span", { class: "pac-studio__fieldname" }, name), input));
+        const input = h("input", { class: "ainsi-studio__input", value, placeholder, spellcheck: "false", autocomplete: "off" }) as HTMLInputElement;
+        panel.append(h("label", { class: "ainsi-studio__imagerow" }, h("span", { class: "ainsi-studio__fieldname" }, name), input));
         return input;
     };
     const alt = field("name", altText, "what the picture shows");
     const src = field("url", url, "https://… or a local path");
-    panel.append(h("p", { class: "pac-studio__imagehint" },
+    panel.append(h("p", { class: "ainsi-studio__imagehint" },
         "A local file works by path, relative to the deck folder or absolute. It stays linked, not copied: change the file and the deck shows the new one."));
-    panel.append(h("button", { class: "pac-studio__imageok", type: "submit" }, "OK"));
+    panel.append(h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
 
     // delete, top right like the block toolbar's; the whole block goes, directive and all
-    const id = target.dataset.pacEntity ?? target.dataset.pacSpan?.split(" ")[0];
+    const id = target.dataset.ainsiEntity ?? target.dataset.ainsiSpan?.split(" ")[0];
     const entity = doc.entities.find(e => e.id === id);
     const block = entity && doc.blocks.find(b => b.ids.includes(entity.id));
     if (entity && block) {
@@ -685,7 +724,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
             editor.holds = false;
             splice(remove(doc.source, targetFor(entity, block)));
         });
-        bin.classList.add("pac-studio__imagetrash");
+        bin.classList.add("ainsi-studio__imagetrash");
         panel.append(bin);
     }
 
@@ -694,7 +733,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
     panel.style.top = `${rect.top + scrollY}px`;
     panel.style.width = `${Math.min(Math.max(rect.width, 320), 560)}px`;
     document.body.append(panel);
-    target.classList.add("pac-studio--dim");
+    target.classList.add("ainsi-studio--dim");
 
     let done = false;
     const editor: Chrome = {
@@ -703,7 +742,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
         close() {
             done = true;
             panel.remove();
-            target.classList.remove("pac-studio--dim");
+            target.classList.remove("ainsi-studio--dim");
         },
     };
     show(editor);
@@ -744,10 +783,10 @@ function openImage(target: HTMLElement, range: Range): boolean {
  */
 function openInsertMenu(target: HTMLElement, at: number, from: DOMRect): void {
     menu = document.createElement("div");
-    menu.className = "pac-studio__bar";
+    menu.className = "ainsi-studio__bar";
     menu.addEventListener("click", event => event.stopPropagation());
     const option = (icon: IconName, text: string, onClick: () => void) => {
-        const button = h("button", { class: "pac-studio__barbutton", type: "button", click: onClick });
+        const button = h("button", { class: "ainsi-studio__barbutton", type: "button", click: onClick });
         button.innerHTML = icons[icon];
         button.append(text);
         return button;
@@ -782,10 +821,10 @@ function onEmptyGround(event: MouseEvent): boolean {
     const at = event.target as HTMLElement;
     if (!(at instanceof HTMLElement) || at.tagName !== "MAIN") return false;
     const section = at.closest<HTMLElement>("[data-layout=\"header\"], [data-layout=\"split\"]");
-    if (!section || at.querySelector(".pac-full")) return false;
+    if (!section || at.querySelector(".ainsi-full")) return false;
     const page = pageOf(section);
     if (!page) return false;
-    const own = section.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])");
+    const own = section.querySelectorAll<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]:not([data-ainsi-entity])");
     const last = wrappers().indexOf(own[own.length - 1]!);
     sessionStorage.setItem(REOPEN, `${last + 1}|end`);
     splice({ start: page.last, end: page.last, text: "\n\n![]()" });
@@ -796,7 +835,7 @@ function onEmptyGround(event: MouseEvent): boolean {
 function insertPage(section: HTMLElement): void {
     const page = pageOf(section);
     if (!page) return;
-    const own = section.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])");
+    const own = section.querySelectorAll<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]:not([data-ainsi-entity])");
     const last = wrappers().indexOf(own[own.length - 1]!);
     sessionStorage.setItem(REOPEN, `${last + 1}|select`);
     splice(addPage(page, "# New page"));
@@ -814,7 +853,7 @@ interface EditorOptions {
 function openEditor(target: HTMLElement, options: EditorOptions): void {
     const area = document.createElement("textarea");
     area.rows = 1;                                      // the default of 2 floors scrollHeight a row too high
-    area.className = `pac-studio__editor pac-studio__editor--${options.mode}`;
+    area.className = `ainsi-studio__editor ainsi-studio__editor--${options.mode}`;
     area.value = options.initial;
     if (options.placeholder) area.placeholder = options.placeholder;
 
@@ -827,14 +866,14 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         }
         area.style.minHeight = `${rect.height}px`;
         target.insertAdjacentElement("afterend", area);
-        target.classList.add("pac-studio--hidden");
+        target.classList.add("ainsi-studio--hidden");
     } else if (options.mode === "overlay") {
         const rect = target.getBoundingClientRect();
         area.style.left = `${rect.left + scrollX}px`;
         area.style.top = `${rect.top + scrollY}px`;
         area.style.width = `${Math.min(rect.width, 680)}px`;
         document.body.append(area);
-        target.classList.add("pac-studio--dim");
+        target.classList.add("ainsi-studio--dim");
     } else if (options.mode === "deck") {
         // above the first page and outside it: the deck's own settings, not page one's
         target.insertAdjacentElement("beforebegin", area);
@@ -845,9 +884,9 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
 
     // the marks bar: the same wraps as the chords, shown above the textarea while a selection
     // is live, so the syntax is a click away and still visible in the text it lands in
-    const marks = h("div", { class: "pac-studio__marks" },
+    const marks = h("div", { class: "ainsi-studio__marks" },
         ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"], ["==", "==", "Highlight"]] as const).map(([marker, text, tip]) =>
-            h("button", { class: "pac-studio__mark", type: "button", "data-tip": tip, "aria-label": tip, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
+            h("button", { class: "ainsi-studio__mark", type: "button", "data-tip": tip, "aria-label": tip, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
     marks.hidden = true;
     document.body.append(marks);
     const selected = () => {
@@ -868,7 +907,7 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
             document.removeEventListener("selectionchange", selected);
             marks.remove();
             area.remove();
-            target.classList.remove("pac-studio--hidden", "pac-studio--dim");
+            target.classList.remove("ainsi-studio--hidden", "ainsi-studio--dim");
         },
     };
     show(editor);
@@ -955,24 +994,24 @@ async function openRaw(): Promise<void> {
 
     const save = barButton("Save", `${MOD}⏎`, () => commitRaw());
     save.setAttribute("data-primary", "");
-    const container = h("div", { class: "pac-studio__raw" },
-        h("div", { class: "pac-studio__rawbar" },
-            h("span", { class: "pac-studio__rawname" }, doc.file),
-            h("span", { class: "pac-studio__rawgap" }),
+    const container = h("div", { class: "ainsi-studio__raw" },
+        h("div", { class: "ainsi-studio__rawbar" },
+            h("span", { class: "ainsi-studio__rawname" }, doc.file),
+            h("span", { class: "ainsi-studio__rawgap" }),
             barButton("Cancel", "esc", () => cancelRaw()),
             save),
         view.dom);
 
     document.body.append(container);
-    document.body.setAttribute("data-pac-raw", "");
+    document.body.setAttribute("data-ainsi-raw", "");
     show({
         kind: "raw",
         holds: true,
         close() {
             view.destroy();
             container.remove();
-            document.body.removeAttribute("data-pac-raw");
-            document.querySelector(".pac-studio__hint")?.remove();
+            document.body.removeAttribute("data-ainsi-raw");
+            document.querySelector(".ainsi-studio__hint")?.remove();
         },
     });
     view.focus();

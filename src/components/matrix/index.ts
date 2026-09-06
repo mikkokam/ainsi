@@ -15,16 +15,16 @@ export default {
         const list = listOf(ctx.entities)!;
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
         const cells = labelled(list, ctx.inline).map(([title, body]) => {
-            const head = title ? `<span class="pac-matrix__title">${title}</span>` : "";
-            return `<li class="pac-matrix__cell">${head}<span class="pac-matrix__body">${body}</span></li>`;
+            const head = title ? `<span class="ainsi-matrix__title">${title}</span>` : "";
+            return `<li class="ainsi-matrix__cell">${head}<span class="ainsi-matrix__body">${body}</span></li>`;
         });
         const x = ctx.props.x as string, y = ctx.props.y as string;
         const axes = x || y
-            ? `<span class="pac-matrix__x">${escape(x)}</span><span class="pac-matrix__y">${escape(y)}</span>`
+            ? `<span class="ainsi-matrix__x">${escape(x)}</span><span class="ainsi-matrix__y">${escape(y)}</span>`
             : "";
         return `${before}
-<div class="pac-matrix${axes ? " pac-matrix--axes" : ""}" data-pac="matrix">
-    <ul class="pac-matrix__grid">
+<div class="ainsi-matrix${axes ? " ainsi-matrix--axes" : ""}" data-ainsi="matrix">
+    <ul class="ainsi-matrix__grid">
     ${cells.join("\n    ")}
     </ul>${axes}
 </div>`;

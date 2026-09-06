@@ -62,14 +62,14 @@ export function retag(md: string, kind: string, to: TextKind, neighbours: (strin
     }
 }
 
-/** `boxes` + {stretch: true, axis: "two words"} -> `<!-- pac: boxes stretch axis="two words" -->` */
+/** `boxes` + {stretch: true, axis: "two words"} -> `<!-- ainsi: boxes stretch axis="two words" -->` */
 export function directiveLine(component: string, props: Record<string, unknown> = {}): string {
     const tokens = Object.entries(props).map(([key, value]) => {
         if (value === true) return key;
         const text = String(value);
         return /[\s"]/.test(text) ? `${key}="${text.replace(/"/g, "")}"` : `${key}=${text}`;
     });
-    return `<!-- pac: ${[component, ...tokens].join(" ")} -->`;
+    return `<!-- ainsi: ${[component, ...tokens].join(" ")} -->`;
 }
 
 export interface Target {

@@ -8,13 +8,13 @@ import { TOKENS } from "../src/tokens";
 import { BASE_CSS } from "../src/base";
 import { build } from "../src/build";
 
-const ENGINE_VARS = ["--pac-ratio", "--pac-step"];
+const ENGINE_VARS = ["--ainsi-ratio", "--ainsi-step"];
 
 test("a component references only theme tokens and its own namespaced variables", () => {
     const offences: string[] = [];
     for (const c of defaults.all()) {
         for (const [, name] of (c.css ?? "").matchAll(/var\((--[a-z0-9-]+)/g)) {
-            const own = name!.startsWith(`--pac-${c.name}-`);
+            const own = name!.startsWith(`--ainsi-${c.name}-`);
             if (!own && !TOKENS.includes(name as any) && !ENGINE_VARS.includes(name!)) {
                 offences.push(`${c.name}: ${name}`);
             }
@@ -27,7 +27,7 @@ test("a component declares only its own namespaced variables", () => {
     const offences: string[] = [];
     for (const c of defaults.all()) {
         for (const [, name] of (c.css ?? "").matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)) {
-            if (!name!.startsWith(`--pac-${c.name}-`)) offences.push(`${c.name}: ${name}`);
+            if (!name!.startsWith(`--ainsi-${c.name}-`)) offences.push(`${c.name}: ${name}`);
         }
     }
     expect(offences).toEqual([]);
@@ -52,9 +52,22 @@ test("every token the engine, components and layouts use is declared by the defa
     expect([...used].filter(t => !base.includes(`${t}:`))).toEqual([]);
     for (const theme of (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory() && e.name !== "default")) {
         const { css } = await loadTheme(`${dir}/${theme.name}`);
-        expect(css.indexOf("--pac-info:")).toBeGreaterThanOrEqual(0);           // inherited
-        expect(css.indexOf("--pac-accent:")).toBeLessThan(css.lastIndexOf("--pac-accent:"));   // the theme's own comes after and wins
+        expect(css.indexOf("--ainsi-info:")).toBeGreaterThanOrEqual(0);           // inherited
+        expect(css.indexOf("--ainsi-accent:")).toBeLessThan(css.lastIndexOf("--ainsi-accent:"));   // the theme's own comes after and wins
     }
+});
+
+test("a theme's @import comes before every rule in the style block, where a browser honours it", () => {
+    const theme = ':root { --ainsi-ink: #000; }\n@import url("https://fonts.example/x.css");';
+    const { html } = build("# T\n", { registry: defaults, layouts, themeCss: theme });
+    const style = html.slice(html.indexOf("<style>") + 7);
+    expect(style.trimStart().startsWith("@import")).toBe(true);
+    expect(style.match(/@import/g)).toHaveLength(1);
+});
+
+test("a theme's styles come after the engine's element defaults, so a same-specificity rule wins", () => {
+    const { html } = build("# T\n", { registry: defaults, layouts, themeCss: ".ainsi-page h1 { letter-spacing: .03em; }" });
+    expect(html.indexOf("letter-spacing: .03em")).toBeGreaterThan(html.indexOf(".ainsi-page h1 { font-size"));
 });
 
 test("a theme swap changes no markup", () => {
@@ -64,7 +77,7 @@ test("a theme swap changes no markup", () => {
 });
 
 test("only the css of components actually used is emitted", () => {
-    const { html } = build("# T\n\n<!-- pac: boxes -->\n- a\n", { registry: defaults, layouts, themeCss: "" });
-    expect(html).toContain(".pac-boxes__box");
-    expect(html).not.toContain(".pac-timeline__step");
+    const { html } = build("# T\n\n<!-- ainsi: boxes -->\n- a\n", { registry: defaults, layouts, themeCss: "" });
+    expect(html).toContain(".ainsi-boxes__box");
+    expect(html).not.toContain(".ainsi-timeline__step");
 });

@@ -1,11 +1,12 @@
 #!/usr/bin/env bun
-import { readdir } from "node:fs/promises";
+import { readdir, rename } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
 import { END, group } from "./group";
 import { fit, openFit, type FitSession } from "./fit";
 import { parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
+import { pptx } from "./pptx";
 import { serve } from "./serve";
 import { BUILTIN, LAYOUTS, load, loadLayouts, loadStudio, loadTheme, loadViewer } from "./load";
 import type { Registry } from "./registry";
@@ -13,40 +14,68 @@ import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./typ
 import type { ZodTypeAny } from "zod";
 
 const argv = process.argv.slice(2);
-const input = argv.find(a => !a.startsWith("-") && argv[argv.indexOf(a) - 1] !== "-o" && argv[argv.indexOf(a) - 1] !== "--port" && argv[argv.indexOf(a) - 1] !== "--components");
+const building = argv[0] === "build";
+const args = building ? argv.slice(1) : argv;
+const VALUED = new Set(["-o", "--to", "--port", "--components"]);
+const inputs = args.filter((a, i) => !a.startsWith("-") && !VALUED.has(args[i - 1] ?? ""));
+const input = inputs[0];
 
-if (!input) {
-    console.error("usage: pac <deck.md> [-o out.html] [--watch] [--edit] [--no-viewer] [--fit] [--pdf[=screen|compact|full]] [--port 4321] [--components <dir>]");
+const USAGE = [
+    "usage: ainsi [deck.md] [--port 4321] [--components <dir>]",
+    "           opens the studio; without a deck, on a new untitled.md in the current directory",
+    "       ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer] [--components <dir>]",
+    "           writes the file beside the deck and exits",
+].join("\n");
+const fail = (message: string): never => {
+    console.error(message);
     process.exit(1);
-}
-
-const flag = (name: string): string | undefined => {
-    const i = argv.indexOf(name);
-    return i === -1 ? undefined : argv[i + 1];
 };
 
-const deck = resolve(input);
-const output = resolve(flag("-o") ?? join(dirname(deck), `${basename(deck, extname(deck))}.html`));
-const pdfOutput = join(dirname(deck), `${basename(deck, extname(deck))}.pdf`);
-const componentRoots = argv.flatMap((a, i) => (a === "--components" && argv[i + 1] ? [resolve(argv[i + 1]!)] : []));
-const editing = argv.includes("--edit");
-const watching = argv.includes("--watch") || editing;
-const pdfFlag = argv.find(a => a === "--pdf" || a.startsWith("--pdf="));
-const printing = pdfFlag !== undefined;
-const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
-if (printing && !PDF_IMAGES.includes(pdfImages)) {
-    console.error(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
-    process.exit(1);
+if (inputs.length > 1) fail(`one deck at a time; got ${inputs.length}\n${USAGE}`);
+if (building && !input) fail(USAGE);
+// an agent or a pipe wants a file, never a server it cannot see; the answer is the command that gives one
+if (!building && !process.stdout.isTTY) fail(`ainsi ${input ?? ""} opens the studio, which needs a terminal.\nTo write a file: ainsi build ${input ?? "deck.md"}`);
+
+const flag = (name: string): string | undefined => {
+    const i = args.indexOf(name);
+    return i === -1 ? undefined : args[i + 1];
+};
+
+/** a fresh deck to open on: untitled.md, or the first untitled-N.md the directory does not hold */
+async function untitled(): Promise<string> {
+    for (let n = 1; ; n++) {
+        const candidate = resolve(n === 1 ? "untitled.md" : `untitled-${n}.md`);
+        if (await Bun.file(candidate).exists()) continue;
+        await Bun.write(candidate, "# Untitled\n");
+        return candidate;
+    }
 }
+
+let deck = input ? resolve(input) : await untitled();
+const editing = !building;
+const sibling = (ext: string): string => join(dirname(deck), `${basename(deck, extname(deck))}${ext}`);
+const target = flag("-o");
+const to = flag("--to");
+if (to && !["html", "pdf"].includes(to)) fail(`--to takes html or pdf; got "${to}"`);
+if (target && to && extname(target).slice(1) !== to) fail(`-o ${target} and --to ${to} disagree`);
+const pdfFlag = args.find(a => a === "--pdf" || a.startsWith("--pdf="));
+const format: "html" | "pdf" = building && (to === "pdf" || extname(target ?? "").toLowerCase() === ".pdf" || pdfFlag) ? "pdf" : "html";
+const printing = format === "pdf";
+let output = target && format === "html" ? resolve(target) : sibling(".html");
+let pdfOutput = target && format === "pdf" ? resolve(target) : sibling(".pdf");
+let pptxOutput = sibling(".pptx");
+const componentRoots = args.flatMap((a, i) => (a === "--components" && args[i + 1] ? [resolve(args[i + 1]!)] : []));
+const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
+if (printing && !PDF_IMAGES.includes(pdfImages)) fail(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
 // a pdf of unfitted pages loses their overflow silently, so printing always fits first
-const fitting = argv.includes("--fit") || printing;
+const fitting = args.includes("--fit") || printing;
 const port = Number(flag("--port") ?? 4321);
 
 /*
- * In watch mode the measuring browser is opened once and handed to every rebuild. A launch
- * costs hundreds of milliseconds against a build that takes single-digit ones, so a browser
- * per keystroke would be the whole cost of editing. The studio opens it the first time it
- * exports, and keeps it.
+ * The measuring browser is opened once and handed to every rebuild. A launch costs hundreds
+ * of milliseconds against a build that takes single-digit ones, so a browser per keystroke
+ * would be the whole cost of editing. The studio opens it the first time it exports, and
+ * keeps it.
  */
 let session: FitSession | undefined;
 async function measuring(): Promise<FitSession> {
@@ -57,7 +86,6 @@ async function measuring(): Promise<FitSession> {
     for (const d of opening) console.warn(`${d.level}: ${d.message}`);
     return session;
 }
-if (watching && fitting) await measuring();
 
 /** What the studio splices against: offsets from the same parse the deck was built from. */
 interface DocBlock {
@@ -106,7 +134,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     const diagnostics: Diagnostic[] = [];
     const { themeDir, theme, registry, layouts } = await stack(settings.theme, diagnostics);
 
-    let viewer = argv.includes("--no-viewer") ? undefined : await loadViewer(diagnostics);
+    let viewer = args.includes("--no-viewer") ? undefined : await loadViewer(diagnostics);
     if (studio) {
         viewer = {
             css: [viewer?.css, studio.css].filter(Boolean).join("\n"),
@@ -145,11 +173,11 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         : { ...renderPages(assembled.pages, assembled.title, assembled.settings, buildOptions), pages: assembled.pages };
     diagnostics.push(...result.diagnostics);
 
-    await Bun.write(output, result.html);
     if (printing) diagnostics.push(...(await print(result.pages, assembled.title, assembled.settings, buildOptions)).diagnostics);
+    else await Bun.write(output, result.html);
 
     for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
-    console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks -> ${output}${printing ? `, ${pdfOutput}` : ""}`);
+    console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks -> ${printing ? pdfOutput : output}`);
     for (const page of result.pages) {
         const blocks = page.blocks.map(b => `${b.component}${b.origin === "directive" ? "*" : ""}`).join(", ");
         const fitted = [page.scale === 1 ? "" : ` x${page.scale}`, page.overflow ? " OVERFLOWS" : ""].join("");
@@ -244,8 +272,8 @@ async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Prom
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = resolve(import.meta.dir, "..", "themes", themeName);
     const theme = await loadTheme(themeDir, diagnostics);
-    const registry = await load([BUILTIN, ...componentRoots], diagnostics, { fresh: watching });
-    const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: watching });
+    const registry = await load([BUILTIN, ...componentRoots], diagnostics, { fresh: editing });
+    const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: editing });
     return { themeDir, theme, registry, layouts };
 }
 
@@ -255,24 +283,40 @@ async function print(pages: Page[], title: string, settings: Settings, options: 
     return pdf(html, pdfOutput, await measuring(), images);
 }
 
-/** what the studio's export runs: the deck as it is on disk, fitted, printed, and opened */
-async function exportPdf(images: PdfImages): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
+/** what every export starts from: the deck as it is on disk, fitted */
+async function fitted(diagnostics: Diagnostic[]) {
     const source = await Bun.file(deck).text();
-    const diagnostics: Diagnostic[] = [];
     const settings = parse(source).doc.settings;
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics);
     const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
     const assembled = assemble(source, options);
-    const fitted = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
-    diagnostics.push(...assembled.diagnostics, ...fitted.diagnostics);
-    const printed = await print(fitted.pages, assembled.title, assembled.settings, options, images);
+    const result = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
+    diagnostics.push(...assembled.diagnostics, ...result.diagnostics);
+    return { pages: result.pages, title: assembled.title, settings: assembled.settings, options };
+}
+
+/** what the studio's export runs: the deck as it is on disk, fitted, printed, and opened */
+async function exportPdf(images: PdfImages): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
+    const diagnostics: Diagnostic[] = [];
+    const built = await fitted(diagnostics);
+    const printed = await print(built.pages, built.title, built.settings, built.options, images);
     diagnostics.push(...printed.diagnostics);
     return { written: printed.written, diagnostics };
 }
 
+/** the same deck as an editable pptx: raster ground per page, native text boxes above it */
+async function exportPptx(): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
+    const diagnostics: Diagnostic[] = [];
+    const built = await fitted(diagnostics);
+    const { html } = renderPages(built.pages, built.title, built.settings, { ...built.options, viewer: undefined, edit: false });
+    const written = await pptx(html, pptxOutput, await measuring());
+    diagnostics.push(...written.diagnostics);
+    return { written: written.written, diagnostics };
+}
+
 const first = await build();
 
-if (!watching) {
+if (!editing) {
     await session?.close();
     process.exit(0);
 }
@@ -302,6 +346,15 @@ const server = serve({
             Bun.spawn([...opener, pdfOutput], { stdout: "ignore", stderr: "ignore" }).unref();
             return Response.json({ path: pdfOutput });
         }
+        if (url.pathname === "/__pptx" && request.method === "POST") {
+            const { written, diagnostics } = await exportPptx();
+            for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
+            if (!written) return new Response(diagnostics.map(d => d.message).join("\n") || "pptx failed", { status: 500 });
+            console.log(`-> ${pptxOutput}`);
+            const opener = process.platform === "darwin" ? ["open"] : process.platform === "win32" ? ["cmd", "/c", "start", ""] : ["xdg-open"];
+            Bun.spawn([...opener, pptxOutput], { stdout: "ignore", stderr: "ignore" }).unref();
+            return Response.json({ path: pptxOutput });
+        }
         if (url.pathname === "/__edit" && request.method === "POST") {
             const { hash, start, end, text } = await request.json();
             const source = await Bun.file(deck).text();
@@ -316,11 +369,31 @@ const server = serve({
             server.changed(basename(deck));
             return new Response("ok");
         }
+        if (url.pathname === "/__rename" && request.method === "POST") {
+            const { name } = await request.json();
+            const wanted = typeof name === "string" ? name.trim() : "";
+            if (!wanted || /[\\/]/.test(wanted)) return new Response("a file name, without a path", { status: 400 });
+            const next = join(dirname(deck), extname(wanted) ? wanted : `${wanted}.md`);
+            if (next !== deck) {
+                if (await Bun.file(next).exists()) return new Response(`${basename(next)} exists`, { status: 409 });
+                // the html written beside the deck follows it, so no orphan is left under the old name
+                const html = sibling(".html");
+                await rename(deck, next);
+                deck = next;
+                if (await Bun.file(html).exists() && !(await Bun.file(sibling(".html")).exists())) await rename(html, sibling(".html"));
+                output = sibling(".html");
+                pdfOutput = sibling(".pdf");
+                pptxOutput = sibling(".pptx");
+                server.retarget(deck);
+                server.changed(basename(deck));
+            }
+            return Response.json({ file: basename(deck) });
+        }
         return undefined;
     } : undefined,
 });
 
-console.log(`watching, serving ${server.url}`);
+console.log(`studio on ${server.url}`);
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, async () => {

@@ -38,7 +38,7 @@ test("duplicate text gets distinct ordinals", () => {
 });
 
 test("a directive is lifted out of the entity stream", () => {
-    const { doc } = parse("<!-- pac: timeline axis=horizontal -->\n\n- Q1: a\n- Q2: b\n");
+    const { doc } = parse("<!-- ainsi: timeline axis=horizontal -->\n\n- Q1: a\n- Q2: b\n");
     expect(doc.entities.map(e => e.kind)).toEqual(["list"]);
     expect(doc.directives[0]).toMatchObject({ component: "timeline", props: { axis: "horizontal" } });
 });
@@ -49,47 +49,47 @@ test("an unnamespaced comment is not a directive", () => {
 });
 
 test("a directive governing nothing warns rather than failing", () => {
-    const { diagnostics } = parse("text\n\n<!-- pac: timeline -->\n");
+    const { diagnostics } = parse("text\n\n<!-- ainsi: timeline -->\n");
     expect(diagnostics.some(d => d.message.includes("governs nothing"))).toBe(true);
 });
 
 test("a directive governs the one entity it precedes", () => {
-    const md = "<!-- pac: prose size=large -->\n\na\n\nb\n\n<!-- pac: boxes -->\n\n- x\n- y\n";
+    const md = "<!-- ainsi: prose size=large -->\n\na\n\nb\n\n<!-- ainsi: boxes -->\n\n- x\n- y\n";
     const [page] = blocksOf(md).pages;
     expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "directive"], ["prose", 1, "heuristic"], ["boxes", 1, "directive"]]);
 });
 
 test("a directive does not swallow what the heuristic would have grouped apart", () => {
-    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n![p](x.png)\n").pages;
+    const [page] = blocksOf("<!-- ainsi: prose -->\n\na\n\n![p](x.png)\n").pages;
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["full", 1]]);
 });
 
 test("a directive grows its span until the component accepts it", () => {
-    const [page] = blocksOf("<!-- pac: timeline -->\n\n## Plan\n\n- Q1: a\n- Q2: b\n").pages;
+    const [page] = blocksOf("<!-- ainsi: timeline -->\n\n## Plan\n\n- Q1: a\n- Q2: b\n").pages;
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["timeline", 2]]);
 });
 
 test("an end marker from an older deck is still honoured", () => {
-    const md = "a\n\n<!-- pac: prose size=large -->\n\nb\n\n<!-- pac: end -->\n\nc\n";
+    const md = "a\n\n<!-- ainsi: prose size=large -->\n\nb\n\n<!-- ainsi: end -->\n\nc\n";
     const [page] = blocksOf(md).pages;
     expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "heuristic"], ["prose", 1, "directive"], ["prose", 1, "heuristic"]]);
 });
 
 test("a directive carries its source offsets", () => {
-    const md = "x\n\n<!-- pac: boxes -->\n\n- a\n- b\n";
+    const md = "x\n\n<!-- ainsi: boxes -->\n\n- a\n- b\n";
     const { doc } = parse(md);
     const [d] = doc.directives;
-    expect(md.slice(d!.start, d!.end)).toBe("<!-- pac: boxes -->");
+    expect(md.slice(d!.start, d!.end)).toBe("<!-- ainsi: boxes -->");
 });
 
 test("an unknown component degrades to the heuristic", () => {
-    const { pages, diagnostics } = blocksOf("<!-- pac: nonesuch -->\n\n- Q1: a\n- Q2: b\n");
+    const { pages, diagnostics } = blocksOf("<!-- ainsi: nonesuch -->\n\n- Q1: a\n- Q2: b\n");
     expect(pages[0]![0]).toMatchObject({ component: "prose", origin: "heuristic" });
     expect(diagnostics.some(d => d.message.includes("unknown component"))).toBe(true);
 });
 
 test("a component that rejects the span degrades to the heuristic", () => {
-    const { pages, diagnostics } = blocksOf("<!-- pac: comparison -->\n\n- a\n- b\n");
+    const { pages, diagnostics } = blocksOf("<!-- ainsi: comparison -->\n\n- a\n- b\n");
     expect(pages[0]![0]!.origin).toBe("heuristic");
     expect(diagnostics.some(d => d.message.includes("does not accept"))).toBe(true);
 });
@@ -102,7 +102,7 @@ test("a list is a list until a directive says otherwise", () => {
 test("a table is a table until a directive names comparison", () => {
     const plain = blocksOf("| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
     expect(plain.pages[0]![0]!.component).toBe("prose");
-    const named = blocksOf("<!-- pac: comparison -->\n| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
+    const named = blocksOf("<!-- ainsi: comparison -->\n| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
     expect(named.pages[0]![0]!).toMatchObject({ component: "comparison", origin: "directive" });
 });
 
@@ -114,7 +114,7 @@ test("a thematic break starts a page; an h1 only when the deck opts in", () => {
 });
 
 test("blocks partition the page with no gaps or overlap", () => {
-    const md = "# T\n\nintro\n\n<!-- pac: boxes -->\n\n- a\n- b\n\ntail\n";
+    const md = "# T\n\nintro\n\n<!-- ainsi: boxes -->\n\n- a\n- b\n\ntail\n";
     const { doc } = parse(md);
     const [page] = paginate(doc.entities, doc.settings);
     const diagnostics: Diagnostic[] = [];
@@ -123,11 +123,11 @@ test("blocks partition the page with no gaps or overlap", () => {
 });
 
 test("build emits one section per page and only the css of components used", () => {
-    const { html, pages } = build("# One\n\n<!-- pac: boxes -->\n- a\n- b\n", { registry: defaults, layouts, themeCss: "" });
+    const { html, pages } = build("# One\n\n<!-- ainsi: boxes -->\n- a\n- b\n", { registry: defaults, layouts, themeCss: "" });
     expect(pages.length).toBe(1);
-    expect(html.match(/class="pac-page"/g)?.length).toBe(1);
-    expect(html).toContain('data-pac="boxes"');
-    expect(html).not.toContain('data-pac="timeline"');
+    expect(html.match(/class="ainsi-page"/g)?.length).toBe(1);
+    expect(html).toContain('data-ainsi="boxes"');
+    expect(html).not.toContain('data-ainsi="timeline"');
 });
 
 test("a heuristic block carries its component's schema defaults, like a directive's does", () => {

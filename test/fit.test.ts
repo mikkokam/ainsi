@@ -8,13 +8,13 @@ import type { Page } from "../src/types";
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
 const theme = await loadTheme(resolve(import.meta.dir, "../themes/default"));
-// real theme tokens, not "": with none, --pac-size and --pac-pad are invalid var() calls
+// real theme tokens, not "": with none, --ainsi-size and --ainsi-pad are invalid var() calls
 // that fall back to the property's initial value, and nothing can ever overflow a page
 // sized by 16px text and zero padding
 const options = { registry, layouts, themeCss: theme.css };
 
 /** the same deck under a theme that allows the fit solver a different amount of shrinking */
-const withFloor = (floor: number) => ({ ...options, themeCss: `${theme.css}\n:root { --pac-step-min: ${floor}; }` });
+const withFloor = (floor: number) => ({ ...options, themeCss: `${theme.css}\n:root { --ainsi-step-min: ${floor}; }` });
 
 const run = (md: string, opts = options) => {
     const assembled = assemble(md, opts);
@@ -33,13 +33,13 @@ const OVERFLOWING = `# T
 
 intro
 
-<!-- pac: timeline -->
+<!-- ainsi: timeline -->
 - **Q1** a real sentence here about q1
 - **Q2** a real sentence here about q2
 - **Q3** a real sentence here about q3
 - **Q4** a real sentence here about q4
 
-<!-- pac: comparison -->
+<!-- ainsi: comparison -->
 | | A | B |
 | --- | --- | --- |
 | Row one | 1 | 2 |
@@ -54,12 +54,12 @@ closing
 /**
  * A real browser is required to prove overflow is actually detected and split, so these are
  * skipped rather than failed when neither `bunx playwright install chromium` has been run nor
- * PAC_CHROMIUM points at a binary. A skip here is exactly the degrade a real build gives: fit
+ * AINSI_CHROMIUM points at a binary. A skip here is exactly the degrade a real build gives: fit
  * is optional everywhere, including in the test suite that checks it.
  */
 const chromium: boolean = await import("playwright-core")
     .then(({ chromium }) => chromium
-        .launch(process.env.PAC_CHROMIUM ? { executablePath: process.env.PAC_CHROMIUM } : {})
+        .launch(process.env.AINSI_CHROMIUM ? { executablePath: process.env.AINSI_CHROMIUM } : {})
         .then(b => b.close().then(() => true)).catch(() => false))
     .catch(() => false);
 
@@ -155,18 +155,18 @@ test.skipIf(!chromium)("a page that no rung can rescue is flagged, not silently 
 const SETTINGS = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default" };
 const markup = (page: Page) => {
     const { html } = render([page], "T", SETTINGS, options);
-    return html.slice(html.indexOf("<body"));           // the stylesheet declares --pac-step too
+    return html.slice(html.indexOf("<body"));           // the stylesheet declares --ainsi-step too
 };
 
 test("a page the solver did not touch carries no trace of it", () => {
     const html = markup({ index: 0, blocks: [], layout: "default", layoutProps: {}, scale: 1, overflow: false });
-    expect(html).not.toContain("--pac-step");
+    expect(html).not.toContain("--ainsi-step");
     expect(html).not.toContain("data-overflow");
 });
 
 test("a scaled page carries its scale, and a clipped one admits it", () => {
     const html = markup({ index: 0, blocks: [], layout: "default", layoutProps: {}, scale: 0.88, overflow: true });
-    expect(html).toContain('style="--pac-step:0.88"');
+    expect(html).toContain('style="--ainsi-step:0.88"');
     expect(html).toContain("data-overflow");
 });
 

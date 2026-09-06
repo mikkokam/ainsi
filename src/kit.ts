@@ -23,7 +23,7 @@ export function imageOf(entity: Entity): Image | undefined {
 
 export function img(image: Image, className?: string): string {
     const cls = className ? ` class="${className}"` : "";
-    const mark = image.src ? "" : " data-pac-placeholder";
+    const mark = image.src ? "" : " data-ainsi-placeholder";
     return `<img${cls}${mark} src="${escapeAttr(image.src || PLACEHOLDER)}" alt="${escapeAttr(image.alt)}">`;
 }
 

@@ -1,0 +1,28 @@
+/*
+ * The cover as the site's hero: a deep-to-bright blue ground with soft light spots, white
+ * serif type. An image on the page covers it and the engine's scrim takes over unchanged.
+ */
+[data-layout="header"] main:not(:has(.ainsi-full)) {
+    background:
+        radial-gradient(60% 80% at 82% 18%, rgb(120 220 255 / 55%) 0%, transparent 70%),
+        radial-gradient(50% 60% at 20% 90%, rgb(60 170 255 / 45%) 0%, transparent 70%),
+        linear-gradient(135deg, #0a3bd6 0%, #1275e6 55%, #1fb0ec 100%);
+}
+[data-layout="header"] main { padding-bottom: 11%; }
+[data-layout="header"] h1 { font-size: 3.4em; line-height: 1.1; letter-spacing: .04em; }
+/* outranks the theme's softened bare-heading ink: the cover's colour is the layout's */
+[data-layout="header"] article > h1 { color: inherit; }
+[data-layout="header"] h2 { font-family: var(--ainsi-font-display); font-size: 2.1em; font-weight: 300; margin: .15em 0 0; }
+[data-layout="header"] p { font-size: 1em; opacity: .92; margin: 1.6em 0 0; }
+[data-layout="header"] p + p { margin-top: .4em; }
+
+/* the round mark is blue on blue here, so the wordmark takes the corner in white instead */
+.ainsi-page[data-layout="header"]::before {
+    top: 2.2rem; right: 2.2rem; bottom: auto;
+    width: 110px; height: 32px;
+    filter: brightness(0) invert(1);
+}
+@media screen and (max-width: 900px) {
+    [data-layout="header"] h1 { font-size: 2.5em; }
+    .ainsi-page[data-layout="header"]::before { top: 1.2rem; right: 1.2rem; width: 80px; height: 24px; }
+}

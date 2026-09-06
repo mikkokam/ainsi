@@ -1,27 +1,27 @@
 /* two shared rows, values over captions, one column per figure, so every caption starts on
    the same line. One size for the row: display type stepped down until the longest figure
    fits its share of the width. */
-.pac-figures {
+.ainsi-figures {
     list-style: none; margin: 0; padding: 0;
     container-type: inline-size;
     display: grid; grid-auto-flow: column; grid-template-rows: auto auto;
     grid-auto-columns: 1fr;
     column-gap: 1.4em; row-gap: .3em;
 }
-.pac-figures__item { display: contents; }
-.pac-figures__value {
+.ainsi-figures__item { display: contents; }
+.ainsi-figures__value {
     align-self: end; min-width: 0;
-    font-family: var(--pac-font-display);
-    font-weight: var(--pac-strong);
-    font-size: min(3.4em, calc(100cqw / var(--pac-figures-count, 3) / (var(--pac-figures-chars, 3) * .62)));
+    font-family: var(--ainsi-font-display);
+    font-weight: var(--ainsi-strong);
+    font-size: min(3.4em, calc(100cqw / var(--ainsi-figures-count, 3) / (var(--ainsi-figures-chars, 3) * .62)));
     line-height: 1.05; letter-spacing: -.02em;
-    color: var(--pac-accent);
+    color: var(--ainsi-accent);
     white-space: nowrap;
 }
-.pac-figures__caption { align-self: start; color: var(--pac-ink-soft); }
+.ainsi-figures__caption { align-self: start; color: var(--ainsi-ink-soft); }
 
 @media screen and (max-width: 900px) {
-    .pac-figures { grid-auto-flow: row; grid-template-columns: 1fr 1fr; grid-template-rows: none; }
-    .pac-figures__item { display: flex; flex-direction: column; gap: .25em; }
-    .pac-figures__value { font-size: 2.4em; }
+    .ainsi-figures { grid-auto-flow: row; grid-template-columns: 1fr 1fr; grid-template-rows: none; }
+    .ainsi-figures__item { display: flex; flex-direction: column; gap: .25em; }
+    .ainsi-figures__value { font-size: 2.4em; }
 }

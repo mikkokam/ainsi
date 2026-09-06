@@ -7,5 +7,5 @@ export default {
     props: z.object({}).passthrough(),
     splittable: false,
     density: ["regular"],
-    render: ctx => `<div class="pac-leaky" data-pac="leaky">${flow(ctx)}</div>`,
+    render: ctx => `<div class="ainsi-leaky" data-ainsi="leaky">${flow(ctx)}</div>`,
 } satisfies ComponentDefinition;

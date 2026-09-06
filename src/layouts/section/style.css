@@ -4,12 +4,12 @@
  * Sections count themselves: an increment with no reset scopes the counter to the page and
  * its following siblings, so the third section page says 03 wherever it sits in the deck.
  */
-[data-layout="section"] { counter-increment: pac-section; }
+[data-layout="section"] { counter-increment: ainsi-section; }
 [data-layout="section"] main { display: flex; }
 [data-layout="section"] article { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
 [data-layout="section"] article::before {
-    content: counter(pac-section, decimal-leading-zero);
-    font-family: var(--pac-font-display);
+    content: counter(ainsi-section, decimal-leading-zero);
+    font-family: var(--ainsi-font-display);
     font-size: 6em; line-height: 1; font-weight: 700; letter-spacing: -.02em;
     opacity: .22;
     margin-bottom: auto;

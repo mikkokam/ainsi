@@ -5,43 +5,79 @@
  * Absolute positioning against `main` sidesteps that; `article`, a single box, is free to
  * flex-centre its own children without any row-sharing at all.
  */
-[data-layout="split"] main { position: relative; padding: 0; }
+[data-layout="split"] main { position: relative; padding: 0; --ainsi-split: 50%; }
+[data-layout="split"] main[data-size="third"] { --ainsi-split: 33.333%; }
+[data-layout="split"] main[data-size="two-thirds"] { --ainsi-split: 66.667%; }
 [data-layout="split"] article {
     height: 100%;
     display: flex; flex-direction: column; justify-content: center;
-    margin-left: 50%;
-    padding: var(--pac-pad) var(--pac-pad) var(--pac-pad) var(--pac-gap);
+    margin-left: var(--ainsi-split);
+    padding: var(--ainsi-pad) var(--ainsi-pad) var(--ainsi-pad) var(--ainsi-gap);
 }
-[data-layout="split"] article > .pac-full {
+[data-layout="split"] article > .ainsi-full {
     position: absolute; inset: 0 auto 0 0;
-    width: 50%; height: 100%; margin: 0;
+    width: var(--ainsi-split); height: 100%; margin: 0;
 }
-[data-layout="split"] article > .pac-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+[data-layout="split"] article > .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
 /* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
-[data-layout="split"] article > .pac-full { margin: 0 !important; }
+[data-layout="split"] article > .ainsi-full { margin: 0 !important; }
 
 [data-layout="split"] main[data-side="right"] article {
-    margin-left: 0; margin-right: 50%;
-    padding: var(--pac-pad) var(--pac-gap) var(--pac-pad) var(--pac-pad);
+    margin-left: 0; margin-right: var(--ainsi-split);
+    padding: var(--ainsi-pad) var(--ainsi-gap) var(--ainsi-pad) var(--ainsi-pad);
 }
-[data-layout="split"] main[data-side="right"] article > .pac-full { inset: 0 0 0 auto; }
+[data-layout="split"] main[data-side="right"] article > .ainsi-full { inset: 0 0 0 auto; }
+
+/*
+ * size=image: the picture dictates the pane. The figure sits before the article (the layout
+ * hoists it) and, absolutely positioned with auto width, shrinks to the image's own ratio at
+ * full page height, so nothing is cropped; the text column is anchored to the figure's edge.
+ * A browser without anchor positioning keeps the half split. Capped at 70% so a page-wide
+ * diagram still leaves the words a column; a capped image letterboxes rather than crops.
+ */
+[data-layout="split"] main[data-size="image"] > .ainsi-full {
+    position: absolute; inset: 0 auto 0 0;
+    width: auto; max-width: 70%; height: 100%;
+    margin: 0 !important;
+    display: block;
+    anchor-name: --ainsi-split-image;
+}
+[data-layout="split"] main[data-size="image"] > .ainsi-full img {
+    width: auto; height: 100%; max-width: 100%; max-height: none; object-fit: contain;
+}
+[data-layout="split"] main[data-size="image"] article {
+    position: absolute; inset: 0 0 0 50%;
+    left: anchor(--ainsi-split-image right);
+    margin: 0; height: auto;
+}
+[data-layout="split"] main[data-size="image"][data-side="right"] > .ainsi-full { inset: 0 0 0 auto; }
+[data-layout="split"] main[data-size="image"][data-side="right"] article {
+    inset: 0 50% 0 0;
+    left: 0; right: anchor(--ainsi-split-image left);
+}
 
 /* no image yet: the empty half wears the placeholder instead of a hole, gone once an image lands */
-[data-layout="split"] main:not(:has(.pac-full))::before {
-    content: ""; position: absolute; inset: 0 auto 0 0; width: 50%;
-    background: var(--pac-placeholder) center / cover, var(--pac-surface);
+[data-layout="split"] main:not(:has(.ainsi-full))::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: var(--ainsi-split);
+    background: var(--ainsi-placeholder) center / cover, var(--ainsi-surface);
 }
-[data-layout="split"] main[data-side="right"]:not(:has(.pac-full))::before { inset: 0 0 0 auto; }
+[data-layout="split"] main[data-side="right"]:not(:has(.ainsi-full))::before { inset: 0 0 0 auto; }
 
 @media screen and (max-width: 900px) {
-    [data-layout="split"] main:not(:has(.pac-full))::before { display: none; }
+    [data-layout="split"] main:not(:has(.ainsi-full))::before { display: none; }
     [data-layout="split"] article,
     [data-layout="split"] main[data-side="right"] article {
         margin: 0; padding: 9% 7%;
         height: auto;
     }
-    [data-layout="split"] article > .pac-full,
-    [data-layout="split"] main[data-side="right"] article > .pac-full {
-        position: static; width: auto; height: auto; margin-bottom: var(--pac-gap);
+    [data-layout="split"] article > .ainsi-full,
+    [data-layout="split"] main[data-side="right"] article > .ainsi-full {
+        position: static; width: auto; height: auto; margin-bottom: var(--ainsi-gap);
     }
+    [data-layout="split"] main[data-size="image"] article { position: static; }
+    [data-layout="split"] main[data-size="image"] > .ainsi-full {
+        position: static; width: auto; height: auto;
+        margin: 9% 7% 0 !important;
+    }
+    [data-layout="split"] main[data-size="image"] > .ainsi-full img { width: 100%; height: auto; }
 }

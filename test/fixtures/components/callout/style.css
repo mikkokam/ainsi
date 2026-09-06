@@ -1,5 +1,5 @@
-.pac-callout { padding: 1em; border-left: 3px solid var(--pac-accent); background: var(--pac-surface); }
-.pac-callout--alert { border-color: var(--pac-ink); }
+.ainsi-callout { padding: 1em; border-left: 3px solid var(--ainsi-accent); background: var(--ainsi-surface); }
+.ainsi-callout--alert { border-color: var(--ainsi-ink); }
 
 /* a component may react to ambient state as long as it styles only its own parts */
-body[data-present] [data-current] .pac-callout { transform: none; }
+body[data-present] [data-current] .ainsi-callout { transform: none; }

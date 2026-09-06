@@ -5,7 +5,7 @@ import { build } from "../src/build";
 import { parse } from "../src/parse";
 
 const registry = await load([BUILTIN]);
-const source = await Bun.file(resolve(import.meta.dir, "../samples/acme.md")).text();
+const source = await Bun.file(resolve(import.meta.dir, "../samples/acme/acme.md")).text();
 const settings = parse(source).doc.settings;
 const theme = await loadTheme(resolve(import.meta.dir, "../themes", settings.theme));
 const layouts = await loadLayouts([LAYOUTS, theme.layouts]);

@@ -7,5 +7,5 @@ export default {
     props: z.object({ tone: z.enum(["note", "alert"]).default("note") }).passthrough(),
     splittable: false,
     density: ["regular"],
-    render: ctx => `<div class="pac-callout pac-callout--${ctx.props.tone ?? "note"}" data-pac="callout">${flow(ctx)}</div>`,
+    render: ctx => `<div class="ainsi-callout ainsi-callout--${ctx.props.tone ?? "note"}" data-ainsi="callout">${flow(ctx)}</div>`,
 } satisfies ComponentDefinition;

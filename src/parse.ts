@@ -8,7 +8,7 @@ import type { Diagnostic, Directive, Entity, EntityKind, Settings, Source } from
 
 const DEFAULTS: Settings = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default" };
 
-const DIRECTIVE = /^<!--\s*pac\s*:\s*([\s\S]*?)\s*-->$/;
+const DIRECTIVE = /^<!--\s*ainsi\s*:\s*([\s\S]*?)\s*-->$/;
 const LAYOUT = "layout";
 
 const processor = unified()

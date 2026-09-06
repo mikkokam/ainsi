@@ -18,12 +18,12 @@ export default {
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
         const items = (list.node.children ?? []) as any[];
         const longest = Math.max(1, ...items.map(li => plainText(li?.children?.[0]?.children?.[0]).trim().length));
-        const figures = labelled(list, ctx.inline).map(([value, caption]) => `<li class="pac-figures__item">
-        <span class="pac-figures__value">${value || caption}</span>
-        ${value ? `<span class="pac-figures__caption">${caption}</span>` : ""}
+        const figures = labelled(list, ctx.inline).map(([value, caption]) => `<li class="ainsi-figures__item">
+        <span class="ainsi-figures__value">${value || caption}</span>
+        ${value ? `<span class="ainsi-figures__caption">${caption}</span>` : ""}
     </li>`);
         return `${before}
-<ul class="pac-figures" data-pac="figures" style="--pac-figures-count: ${figures.length}; --pac-figures-chars: ${longest}">
+<ul class="ainsi-figures" data-ainsi="figures" style="--ainsi-figures-count: ${figures.length}; --ainsi-figures-chars: ${longest}">
     ${figures.join("\n    ")}
 </ul>`;
     },

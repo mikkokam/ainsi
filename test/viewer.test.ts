@@ -10,45 +10,46 @@ const md = "# One\n\na\n\n---\n\n# Two\n\nb\n";
 test("the viewer bundles to one self-contained script", () => {
     expect(viewer.script).toBeTruthy();
     expect(viewer.script).not.toContain("import ");
-    expect(viewer.script).toContain("pac-toolbar");
+    expect(viewer.script).toContain("ainsi-toolbar");
 });
 
 test("the deck carries the toolbar and presentation styles", () => {
     const { html } = build(md, { registry, layouts, themeCss: "", viewer });
-    expect(html).toContain(".pac-toolbar");
+    expect(html).toContain(".ainsi-toolbar");
     expect(html).toContain("[data-present]");
 });
 
 test("chrome is injected at runtime, never written into the markup", () => {
     const { html } = build(md, { registry, layouts, themeCss: "", viewer });
     const body = html.slice(html.indexOf("<body"), html.indexOf("<script"));
-    expect(body).not.toContain("pac-toolbar");
+    expect(body).not.toContain("ainsi-toolbar");
 });
 
 test("the viewer is omitted entirely when it is not wanted", () => {
     const { html } = build(md, { registry, layouts, themeCss: "" });
-    expect(html).not.toContain("pac-toolbar");
-    expect(html).not.toContain("body[data-present] .pac-page");   // present-mode rules
+    expect(html).not.toContain("ainsi-toolbar");
+    expect(html).not.toContain("body[data-present] .ainsi-page");   // present-mode rules
     expect(html).not.toContain("<script");
 });
 
 test("pages are numbered in the scroll view and not while presenting", () => {
     const { html } = build(md, { registry, layouts, themeCss: "" });
-    expect(html).toContain('body.pac:not([data-present]) .pac-page::after');
+    expect(html).toContain('body.ainsi:not([data-present]) .ainsi-page::after');
     expect(html).toContain("content: attr(data-page)");
     expect(html).toContain('data-page="2"');
+    expect(html).toContain('.ainsi-page[data-layout="header"]::after { content: none; }');
 });
 
 test("chrome never prints", () => {
     expect(viewer.css).toContain("@media print");
     const rule = viewer.css.slice(viewer.css.indexOf("@media print"));
-    expect(rule).toContain(".pac-toolbar, .pac-overview, .pac-keys { display: none; }");
+    expect(rule).toContain(".ainsi-toolbar, .ainsi-overview, .ainsi-keys { display: none; }");
 });
 
 test("the viewer carries the shortcut card and the grid answers the keyboard", () => {
-    expect(viewer.script).toContain("pac:keys");
-    expect(viewer.script).toContain("pac-keys");
-    expect(viewer.css).toContain(".pac-keys");
+    expect(viewer.script).toContain("ainsi:keys");
+    expect(viewer.script).toContain("ainsi-keys");
+    expect(viewer.css).toContain(".ainsi-keys");
     for (const key of ["ArrowRight", "ArrowDown", "Home", "End", "Enter"]) expect(viewer.script).toContain(`"${key}"`);
 });
 
@@ -75,7 +76,7 @@ test("the deck prints one page per sheet, sized to its ratio, with no chrome or 
     expect(html).toContain("@page { size: 1280px 960px; margin: 0; }");
     const print = html.slice(html.indexOf("@media print {"), html.indexOf("@media screen"));
     expect(print).toContain("break-after: page");
-    expect(print).toContain(".pac-page::after { display: none; }");
+    expect(print).toContain(".ainsi-page::after { display: none; }");
 });
 
 test("the reading view is a screen affair: a print laid out on narrow paper must not reflow", () => {
@@ -85,8 +86,8 @@ test("the reading view is a screen affair: a print laid out on narrow paper must
 
 test("the deck's mark rides on the body as a token; a deck without one sets nothing", () => {
     const marked = build("---\nlogo: x.png\n---\n\n# T\n\na\n", { registry, layouts, themeCss: "", logo: "data:image/png;base64,AAAA" }).html;
-    expect(marked).toContain("--pac-logo:url('data:image/png;base64,AAAA');--pac-logo-cover:url('data:image/png;base64,AAAA')");
+    expect(marked).toContain("--ainsi-logo:url('data:image/png;base64,AAAA');--ainsi-logo-cover:url('data:image/png;base64,AAAA')");
     const two = build("# T\n\na\n", { registry, layouts, themeCss: "", logo: "data:a", coverLogo: "data:b" }).html;
-    expect(two).toContain("--pac-logo:url('data:a');--pac-logo-cover:url('data:b')");
-    expect(build(md, { registry, layouts, themeCss: "" }).html).not.toContain("--pac-logo");
+    expect(two).toContain("--ainsi-logo:url('data:a');--ainsi-logo-cover:url('data:b')");
+    expect(build(md, { registry, layouts, themeCss: "" }).html).not.toContain("--ainsi-logo");
 });

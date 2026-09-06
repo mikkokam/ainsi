@@ -54,41 +54,41 @@ test("a new list beside a list takes a marker of its own, so the two stay apart"
 });
 
 test("a directive line carries only the props it is given, quoted when needed", () => {
-    expect(directiveLine("boxes")).toBe("<!-- pac: boxes -->");
-    expect(directiveLine("boxes", { stretch: true })).toBe("<!-- pac: boxes stretch -->");
-    expect(directiveLine("timeline", { axis: "vertical", note: "two words" })).toBe('<!-- pac: timeline axis=vertical note="two words" -->');
+    expect(directiveLine("boxes")).toBe("<!-- ainsi: boxes -->");
+    expect(directiveLine("boxes", { stretch: true })).toBe("<!-- ainsi: boxes stretch -->");
+    expect(directiveLine("timeline", { axis: "vertical", note: "two words" })).toBe('<!-- ainsi: timeline axis=vertical note="two words" -->');
 });
 
 test("adding a directive before a lone entity is one line, and the engine reads it back", () => {
     const source = "# Page\n\n- a\n- b\n";
     const after = apply(source, render(targetOf(source, 1), "timeline", { axis: "vertical" }));
-    expect(after).toBe("# Page\n\n<!-- pac: timeline axis=vertical -->\n- a\n- b\n");
+    expect(after).toBe("# Page\n\n<!-- ainsi: timeline axis=vertical -->\n- a\n- b\n");
     expect(blocksOf(after)).toEqual([["prose", 1], ["timeline", 1]]);
 });
 
 test("replacing a directive rewrites the line in place", () => {
-    const source = "<!-- pac: timeline -->\n\n- a\n- b\n";
+    const source = "<!-- ainsi: timeline -->\n\n- a\n- b\n";
     const after = apply(source, render(targetOf(source, 0), "boxes"));
-    expect(after).toBe("<!-- pac: boxes -->\n- a\n- b\n");
+    expect(after).toBe("<!-- ainsi: boxes -->\n- a\n- b\n");
     expect(blocksOf(after)).toEqual([["boxes", 1]]);
 });
 
 test("a directive inside a run governs one entity and needs no marker", () => {
     const source = "a\n\nb\n\nc\n";
     const tagged = apply(source, render(targetOf(source, 1), "prose", { size: "large" }));
-    expect(tagged).toBe("a\n\n<!-- pac: prose size=large -->\nb\n\nc\n");
+    expect(tagged).toBe("a\n\n<!-- ainsi: prose size=large -->\nb\n\nc\n");
     expect(blocksOf(tagged)).toEqual([["prose", 1], ["prose", 1], ["prose", 1]]);
     const untagged = apply(tagged, render(targetOf(tagged, 1), null));
     expect(untagged).toBe("a\n\nb\n\nc\n");
 });
 
 test("a marker left by an older studio goes with its directive", () => {
-    const source = "a\n\n<!-- pac: prose size=large -->\nb\n\n<!-- pac: end -->\n\nc\n";
+    const source = "a\n\n<!-- ainsi: prose size=large -->\nb\n\n<!-- ainsi: end -->\n\nc\n";
     expect(apply(source, render(targetOf(source, 1), null))).toBe("a\n\nb\n\nc\n");
 });
 
 test("removing a block takes its directive, its marker and the gap after it", () => {
-    const source = "a\n\n<!-- pac: prose size=large -->\nb\n\n<!-- pac: end -->\n\nc\n";
+    const source = "a\n\n<!-- ainsi: prose size=large -->\nb\n\n<!-- ainsi: end -->\n\nc\n";
     expect(apply(source, remove(source, targetOf(source, 1)))).toBe("a\n\nc\n");
 });
 
@@ -133,7 +133,7 @@ function pageOf(source: string, index: number) {
 test("relayout writes one directive line before the page's first entity", () => {
     const source = "# One\n\na\n\n---\n\n# Two\n\nb\n";
     const after = apply(source, relayout(source, pageOf(source, 1), "default", "section", { tone: "inverse" })!);
-    expect(after).toBe("# One\n\na\n\n---\n\n<!-- pac: layout section tone=inverse -->\n# Two\n\nb\n");
+    expect(after).toBe("# One\n\na\n\n---\n\n<!-- ainsi: layout section tone=inverse -->\n# Two\n\nb\n");
     const { pages } = assemble(after, { registry, layouts });
     expect(pages.map(p => p.layout)).toEqual(["default", "section"]);
     expect(pages[1]!.layoutProps).toMatchObject({ tone: "inverse" });
@@ -145,28 +145,28 @@ test("relayout says nothing when the file already says it", () => {
 });
 
 test("relayout rewrites an existing directive in place", () => {
-    const source = "---\n\n<!-- pac: layout header -->\n\n# Two\n\nb\n".replace("---\n\n", "# One\n\n---\n\n");
+    const source = "---\n\n<!-- ainsi: layout header -->\n\n# Two\n\nb\n".replace("---\n\n", "# One\n\n---\n\n");
     const after = apply(source, relayout(source, pageOf(source, 1), "default", "split", { side: "right" })!);
-    expect(after).toContain("<!-- pac: layout split side=right -->");
+    expect(after).toContain("<!-- ainsi: layout split side=right -->");
     expect(after).not.toContain("layout header");
 });
 
 test("relayout removes a directive the deck's own layout makes redundant, when a break holds the page", () => {
-    const source = "# One\n\n---\n\n<!-- pac: layout header -->\n\n# Two\n";
+    const source = "# One\n\n---\n\n<!-- ainsi: layout header -->\n\n# Two\n";
     const after = apply(source, relayout(source, pageOf(source, 1), "default", "default")!);
     expect(after).toBe("# One\n\n---\n\n# Two\n");
     expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
 });
 
 test("relayout keeps a directive that is itself the page break, as an explicit default", () => {
-    const source = "# One\n\n<!-- pac: layout header -->\n\n# Two\n";
+    const source = "# One\n\n<!-- ainsi: layout header -->\n\n# Two\n";
     const after = apply(source, relayout(source, pageOf(source, 1), "default", "default")!);
-    expect(after).toBe("# One\n\n<!-- pac: layout default -->\n\n# Two\n");
+    expect(after).toBe("# One\n\n<!-- ainsi: layout default -->\n\n# Two\n");
     expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
 });
 
 test("addPage breaks after the page's last entity, past a closing end marker, and before the next page", () => {
-    const source = "# One\n\n<!-- pac: boxes -->\n- a\n- b\n<!-- /pac -->\n\n---\n\n# Three";
+    const source = "# One\n\n<!-- ainsi: boxes -->\n- a\n- b\n<!-- /ainsi -->\n\n---\n\n# Three";
     const after = apply(source, addPage(pageOf(source, 0), "# Two\n"));
     const { pages } = assemble(after, { registry, layouts });
     expect(pages.map(p => p.blocks[0]!.entities[0]!.md)).toEqual(["# One", "# Two", "# Three"]);
@@ -177,7 +177,7 @@ test("addPage breaks after the page's last entity, past a closing end marker, an
 });
 
 test("removePage takes the page, its directive and the break after it", () => {
-    const source = "# One\n\n---\n\n<!-- pac:layout section -->\n# Two\n\nsaid\n\n---\n\n# Three";
+    const source = "# One\n\n---\n\n<!-- ainsi:layout section -->\n# Two\n\nsaid\n\n---\n\n# Three";
     const after = apply(source, removePage(source, pageOf(source, 1)));
     expect(after).toBe("# One\n\n---\n\n# Three");
 });

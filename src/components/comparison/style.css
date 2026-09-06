@@ -1,20 +1,20 @@
-.pac-comparison { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--pac-gap); }
-.pac-comparison__head { margin: 0 0 .6em; padding-bottom: .4em; border-bottom: 2px solid var(--pac-accent); }
-.pac-comparison__rows { margin: 0; display: grid; gap: .7em; }
-.pac-comparison__row { display: grid; gap: .1em; }
-.pac-comparison__row dt { font-size: .78em; text-transform: uppercase; letter-spacing: .06em; color: var(--pac-ink-soft); }
-.pac-comparison__row dd { margin: 0; }
+.ainsi-comparison { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--ainsi-gap); }
+.ainsi-comparison__head { margin: 0 0 .6em; padding-bottom: .4em; border-bottom: 2px solid var(--ainsi-accent); }
+.ainsi-comparison__rows { margin: 0; display: grid; gap: .7em; }
+.ainsi-comparison__row { display: grid; gap: .1em; }
+.ainsi-comparison__row dt { font-size: .78em; text-transform: uppercase; letter-spacing: .06em; color: var(--ainsi-ink-soft); }
+.ainsi-comparison__row dd { margin: 0; }
 
 @media screen and (max-width: 900px) {
-    .pac-comparison { grid-auto-flow: row; }
+    .ainsi-comparison { grid-auto-flow: row; }
 }
 
-@keyframes pac-comparison-in {
+@keyframes ainsi-comparison-in {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }
 }
-body[data-present] [data-current] .pac-comparison__column {
-    animation: pac-comparison-in var(--pac-motion) var(--pac-ease) backwards;
+body[data-present] [data-current] .ainsi-comparison__column {
+    animation: ainsi-comparison-in var(--ainsi-motion) var(--ainsi-ease) backwards;
 }
-body[data-present] [data-current] .pac-comparison__column:nth-child(2) { animation-delay: calc(var(--pac-motion) * .3); }
-body[data-present] [data-current] .pac-comparison__column:nth-child(n+3) { animation-delay: calc(var(--pac-motion) * .42); }
+body[data-present] [data-current] .ainsi-comparison__column:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .3); }
+body[data-present] [data-current] .ainsi-comparison__column:nth-child(n+3) { animation-delay: calc(var(--ainsi-motion) * .42); }

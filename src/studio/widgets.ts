@@ -19,20 +19,20 @@ export function h(tag: string, props: Record<string, unknown> = {}, ...children:
 
 export function label(text: string): HTMLElement {
     const element = document.createElement("span");
-    element.className = "pac-studio__barlabel";
+    element.className = "ainsi-studio__barlabel";
     element.textContent = text;
     return element;
 }
 
 export function divider(): HTMLElement {
     const element = document.createElement("span");
-    element.className = "pac-studio__bardivider";
+    element.className = "ainsi-studio__bardivider";
     return element;
 }
 
 export function iconButton(icon: IconName, title: string, active: boolean, onClick: () => void): HTMLButtonElement {
     const element = document.createElement("button");
-    element.className = "pac-studio__barbutton";
+    element.className = "ainsi-studio__barbutton";
     element.type = "button";
     element.title = title;
     element.setAttribute("aria-label", title);
@@ -45,18 +45,18 @@ export function iconButton(icon: IconName, title: string, active: boolean, onCli
 /** a button that opens its list beneath it; one open at a time across the page's one bar */
 export function dropdown(text: string, items: HTMLElement[]): HTMLElement {
     const wrap = document.createElement("span");
-    wrap.className = "pac-studio__drop";
+    wrap.className = "ainsi-studio__drop";
     const button = document.createElement("button");
-    button.className = "pac-studio__barbutton pac-studio__barbutton--drop";
+    button.className = "ainsi-studio__barbutton ainsi-studio__barbutton--drop";
     button.type = "button";
     button.innerHTML = `<span>${text}</span>${icons.chevron}`;
     const list = document.createElement("div");
-    list.className = "pac-studio__droplist";
+    list.className = "ainsi-studio__droplist";
     list.hidden = true;
     list.append(...items);
     button.addEventListener("click", () => {
         const opening = list.hidden;
-        for (const other of document.querySelectorAll<HTMLElement>(".pac-studio__droplist")) other.hidden = true;
+        for (const other of document.querySelectorAll<HTMLElement>(".ainsi-studio__droplist")) other.hidden = true;
         list.hidden = !opening;
     });
     wrap.append(button, list);
@@ -65,10 +65,10 @@ export function dropdown(text: string, items: HTMLElement[]): HTMLElement {
 
 export function item(text: string, hint: string, active: boolean, onClick: () => void): HTMLButtonElement {
     const element = document.createElement("button");
-    element.className = "pac-studio__dropitem";
+    element.className = "ainsi-studio__dropitem";
     element.type = "button";
     const about = hint.length > 8;   // a syntax cue like `##` sits beside the name; a sentence goes beneath it
-    element.innerHTML = `<span>${text}</span><span class="pac-studio__drophint${about ? " pac-studio__drophint--about" : ""}">${hint}</span>`;
+    element.innerHTML = `<span>${text}</span><span class="ainsi-studio__drophint${about ? " ainsi-studio__drophint--about" : ""}">${hint}</span>`;
     if (active) element.setAttribute("data-active", "");
     element.addEventListener("click", onClick);
     return element;
@@ -86,8 +86,8 @@ const LETTERS: Record<string, string> = { caps: "AB" };
 const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
 /* a colour chip is a swatch of the theme's own token, read from the page the studio sits in */
 const SWATCH: Record<string, Record<string, string>> = {
-    color: { ink: "--pac-ink", soft: "--pac-ink-soft", accent: "--pac-accent" },
-    tone: { ground: "--pac-ground", accent: "--pac-accent", inverse: "--pac-ink" },
+    color: { ink: "--ainsi-ink", soft: "--ainsi-ink-soft", accent: "--ainsi-accent" },
+    tone: { ground: "--ainsi-ground", accent: "--ainsi-accent", inverse: "--ainsi-ink", soft: "--ainsi-tint" },
 };
 
 function glyph(field: string, option: string, active: boolean, onClick: () => void): HTMLButtonElement {
@@ -95,17 +95,17 @@ function glyph(field: string, option: string, active: boolean, onClick: () => vo
     const swatch = SWATCH[field]?.[option];
     const letters = LETTERS[option];
     if (!icon && !SIZES[option] && !swatch && !letters) return chip(option, active, onClick);
-    const element = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
+    const element = h("button", { class: "ainsi-studio__chip ainsi-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
     if (icon) element.innerHTML = icons[icon];
-    else if (swatch) element.append(h("span", { class: "pac-studio__swatch", style: `background:var(${swatch})` }));
-    else if (letters) { element.classList.add("pac-studio__chip--text"); element.append(letters); }
+    else if (swatch) element.append(h("span", { class: "ainsi-studio__swatch", style: `background:var(${swatch})` }));
+    else if (letters) { element.classList.add("ainsi-studio__chip--text"); element.append(letters); }
     else element.append(h("span", { style: `font-size:${SIZES[option]};font-weight:600` }, "A"));
     return element;
 }
 
 function chip(text: string, active: boolean, onClick: () => void): HTMLButtonElement {
     const element = document.createElement("button");
-    element.className = "pac-studio__chip";
+    element.className = "ainsi-studio__chip";
     element.type = "button";
     element.textContent = text;
     if (active) element.setAttribute("data-active", "");
@@ -118,9 +118,9 @@ export interface Field { name: string; type: "enum" | "boolean" | "number" | "st
 /** one option of the showing component: a chip per choice, a toggle, or a field */
 export function control(field: Field, value: unknown, onChange: (value: unknown) => void, onDismiss: () => void): HTMLElement {
     const wrap = document.createElement("span");
-    wrap.className = "pac-studio__field";
+    wrap.className = "ainsi-studio__field";
     const name = document.createElement("span");
-    name.className = "pac-studio__fieldname";
+    name.className = "ainsi-studio__fieldname";
     name.textContent = field.name;
     wrap.append(name);
     if (field.type === "enum") {
@@ -129,7 +129,7 @@ export function control(field: Field, value: unknown, onChange: (value: unknown)
         wrap.append(glyph(field.name, field.name, value === true, () => onChange(!value)));
     } else {
         const input = document.createElement("input");
-        input.className = "pac-studio__input";
+        input.className = "ainsi-studio__input";
         input.type = field.type === "number" ? "number" : "text";
         input.value = value === undefined ? "" : String(value);
         input.addEventListener("keydown", event => {
@@ -143,16 +143,16 @@ export function control(field: Field, value: unknown, onChange: (value: unknown)
 }
 
 export function menuItem(text: string, onClick: () => void): HTMLElement {
-    return h("button", { class: "pac-menu__item", type: "button", click: onClick }, text);
+    return h("button", { class: "ainsi-menu__item", type: "button", click: onClick }, text);
 }
 
 /** a drill replaces the menu's panel with one section, in place */
 export function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void {
-    panel.replaceChildren(h("div", { class: "pac-menu__head" }, title), ...rows);
+    panel.replaceChildren(h("div", { class: "ainsi-menu__head" }, title), ...rows);
 }
 
 export const barButton = (text: string, key: string, onClick: () => void): HTMLElement =>
-    h("button", { class: "pac-studio__rawbutton", type: "button", title: key, click: onClick }, text);
+    h("button", { class: "ainsi-studio__rawbutton", type: "button", title: key, click: onClick }, text);
 
 /** above the block's top-left corner, or below it when there is no room above */
 export function place(bar: HTMLElement, at: DOMRect): void {
@@ -177,8 +177,8 @@ export function size(area: HTMLTextAreaElement): void {
 
 /** a hint stays until replaced; one given a lifetime fades out on its own after that many ms */
 export function hint(text: string, alarm = false, lifetime?: number): void {
-    document.querySelector(".pac-studio__hint")?.remove();
-    const bar = h("div", { class: `pac-studio__hint${alarm ? " pac-studio__hint--alarm" : ""}` }, text);
+    document.querySelector(".ainsi-studio__hint")?.remove();
+    const bar = h("div", { class: `ainsi-studio__hint${alarm ? " ainsi-studio__hint--alarm" : ""}` }, text);
     document.body.append(bar);
     if (lifetime === undefined) return;
     setTimeout(() => {

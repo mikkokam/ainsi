@@ -1,5 +1,5 @@
 {
-    "name": "presentation-as-code",
+    "name": "ainsi",
     "dependencies": {
         "@codemirror/lang-markdown": "^6.5.2",
         "@codemirror/search": "^6.7.2",
@@ -9,6 +9,7 @@
         "hast-util-to-html": "^9.0.5",
         "mdast-util-to-hast": "^13.2.0",
         "mdast-util-to-string": "^4.0.0",
+        "pptxgenjs": "^4.0.1",
         "remark-frontmatter": "^5.0.0",
         "remark-gfm": "^4.0.1",
         "remark-parse": "^11.0.0",
@@ -20,7 +21,7 @@
         "playwright-core": "^1.62.1"
     },
     "bin": {
-        "pac": "src/cli.ts"
+        "ainsi": "src/cli.ts"
     },
     "private": true,
     "scripts": {

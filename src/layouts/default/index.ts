@@ -6,7 +6,7 @@ import type { LayoutDefinition } from "../../registry";
  * that inherits this one, so its props arrive as data attributes for its CSS to select on.
  */
 /** every layout's ground: absent is the theme's, the others remap the page's tokens in base css */
-export const tone = z.enum(["accent", "inverse"]).optional();
+export const tone = z.enum(["accent", "inverse", "soft"]).optional();
 
 export default {
     props: z.object({ tone }).passthrough(),

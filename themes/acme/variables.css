@@ -1,29 +1,29 @@
 :root {
-    --pac-ink: #0d1b2a;
-    --pac-ink-soft: #5c6b7a;
-    --pac-ground: #ffffff;
-    --pac-shell: #0d1b2a;
-    --pac-accent: #e63946;
-    --pac-accent-ink: #ffffff;
-    --pac-rule: #d8dee5;
-    --pac-surface: #f6f8fa;
+    --ainsi-ink: #0d1b2a;
+    --ainsi-ink-soft: #5c6b7a;
+    --ainsi-ground: #ffffff;
+    --ainsi-shell: #0d1b2a;
+    --ainsi-accent: #e63946;
+    --ainsi-accent-ink: #ffffff;
+    --ainsi-rule: #d8dee5;
+    --ainsi-surface: #f6f8fa;
 
-    --pac-font: "Inter", system-ui, -apple-system, sans-serif;
-    --pac-font-display: var(--pac-font);
-    --pac-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --pac-strong: 680;
-    --pac-size: 23px;
-    --pac-leading: 1.4;
-    --pac-step-min: 0.8;
+    --ainsi-font: "Inter", system-ui, -apple-system, sans-serif;
+    --ainsi-font-display: var(--ainsi-font);
+    --ainsi-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 680;
+    --ainsi-size: 23px;
+    --ainsi-leading: 1.4;
+    --ainsi-step-min: 0.8;
 
-    --pac-gap: 1.75rem;
-    --pac-pad: 6%;
-    --pac-radius: 0;
-    --pac-border: 1px;
+    --ainsi-gap: 1.75rem;
+    --ainsi-pad: 6%;
+    --ainsi-radius: 0;
+    --ainsi-border: 1px;
 
-    --pac-shadow: 0 1px 3px rgb(0 0 0 / 12%);
-    --pac-blur: 0px;
+    --ainsi-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+    --ainsi-blur: 0px;
 
-    --pac-motion: 360ms;
-    --pac-ease: cubic-bezier(.16, 1, .3, 1);
+    --ainsi-motion: 360ms;
+    --ainsi-ease: cubic-bezier(.16, 1, .3, 1);
 }

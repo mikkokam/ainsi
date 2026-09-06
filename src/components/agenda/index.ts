@@ -12,13 +12,13 @@ export default {
         const list = listOf(ctx.entities)!;
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
         const rows = labelled(list, ctx.inline).map(([title, body], i) => {
-            const head = title ? `<span class="pac-agenda__title">${title}</span>` : "";
-            const number = list.ordered ? `<span class="pac-agenda__number">${String(i + 1).padStart(2, "0")}</span>` : "";
-            return `<li class="pac-agenda__row">${number}<span class="pac-agenda__text">${head}<span class="pac-agenda__body">${body}</span></span></li>`;
+            const head = title ? `<span class="ainsi-agenda__title">${title}</span>` : "";
+            const number = list.ordered ? `<span class="ainsi-agenda__number">${String(i + 1).padStart(2, "0")}</span>` : "";
+            return `<li class="ainsi-agenda__row">${number}<span class="ainsi-agenda__text">${head}<span class="ainsi-agenda__body">${body}</span></span></li>`;
         });
         const tag = list.ordered ? "ol" : "ul";
         return `${before}
-<${tag} class="pac-agenda" data-pac="agenda">
+<${tag} class="ainsi-agenda" data-ainsi="agenda">
     ${rows.join("\n    ")}
 </${tag}>`;
     },

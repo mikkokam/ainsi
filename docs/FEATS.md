@@ -22,7 +22,7 @@ Done: a deck referencing a local image renders, fits and opens correctly from an
 
 ## Density variants (feat)
 
-Every component declares `density` and nothing consumes it. The fit solver is what will, stepping a block to a tighter variant before splitting a page. Each variant needs a class the component's own CSS implements, `pac-<name>--tight`, so the theme is still not involved.
+Every component declares `density` and nothing consumes it. The fit solver is what will, stepping a block to a tighter variant before splitting a page. Each variant needs a class the component's own CSS implements, `ainsi-<name>--tight`, so the theme is still not involved.
 
 The last unbuilt rung of the ladder, and the least urgent. Scale, block boundary and in-block split between them fit every deck written so far, and this rung's case is narrow: a page a little too tall where a tighter `boxes` or `comparison` saves it and smaller type does not. Worth building when a real deck produces that case, and not before — a variant with nothing asking for it is a guess about what will help.
 
@@ -48,30 +48,6 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## The Studio: content edits (feat)
-
-Typing, which is where every editor of this shape goes wrong. The move that avoids it: edit the entity's markdown slice, not the rendered HTML. Clicking a paragraph replaces that one block's rendered output with a plain textarea holding its markdown, usually one to five lines. On blur, splice it back by offset and rebuild.
-
-Markdown stays the only truth, so there is no HTML-to-markdown direction, no second parser and no serializer. There is no caret to preserve across a re-render, because nothing re-renders while you type — the textarea sits outside the rendered tree and the swap happens on commit. The only browser state is which entity is open and what is in it, and it dies on commit.
-
-The cost is that the block being edited shows source rather than its rendered form. For slide content that is small: blocks are short, `- item` and `**bold**` are legible, every other block on the page stays rendered, and the render returns the instant you blur.
-
-`[decision]` No ProseMirror, no Lexical, no editor whose own document model is the truth. That is the only other way to get true WYSIWYG and it reintroduces exactly the state this design exists to avoid. It is also the point where a framework becomes necessary, which is the signal that the line has been crossed rather than a reason to cross it.
-
-## The bare invocation belongs to the human (feat)
-
-`pac deck.md` writes an html file and exits, which is the rarer intent for a person at a terminal once the studio exists, and the wrong door for the daily loop. The identity decision: pac is an editor first and a converter on request. The bare invocation cannot serve both.
-
-`pac deck.md` opens the studio. `pac` alone opens it on a new `untitled.md` in the current directory, `untitled-2.md` if taken; no filename prompt. The filename sits at the top of the studio as an editable field, blur renames the file and retargets the watcher, the same write-through philosophy applied to the path. `pac build deck.md` is the headless door and takes the conversion ergonomics: `-o out.html` or `-o out.pdf` with the format sniffed from the extension, `--to pdf` for a default-named sibling, `--no-viewer` and the rest of the build flags under it. The guard that keeps the flip safe for agents: when stdout is not a TTY the bare form refuses to start a server and answers with the build command instead of blocking.
-
-Refused: `--from`, the input is always markdown; multiple inputs; stdin and stdout piping, deferred until something real composes with pac. `--edit` disappears into the default; `--watch` dies with it unless a read-only preview proves worth keeping.
-
-Depends on the studio feats above for the default to open into; `--pdf` already exists and the `pdf` extension simply routes to it.
-
-Outputs land next to the source file, never in the invoker's cwd: `pac build ~/decks/acme.md` writes `~/decks/acme.html` wherever it was run from.
-
-Done: the four invocations above behave as written, a piped `pac deck.md` refuses with guidance, exports land beside the source, and the README quickstart is one line: `pac deck.md`.
-
 ## Playwright out of the default install (chore)
 
 `playwright-core` is an optional dependency that ships no browser binary, but `bun install` still fetches 14 MB of it against a 27 MB tree, for a wrapper most builds never load. Moving it to a dev dependency, with `--fit` and `--pdf` saying what to install, halves a default install and changes nothing else. The degrade path and its test already exist.
@@ -88,7 +64,7 @@ Done: the sentence stands in ARCHITECTURE and this row is deleted.
 
 Every rebuild is a full `location.reload()`, and the studio carries state to make that invisible: scroll position and the reopen target parked in sessionStorage, the hold counter that defers a reload while an editor is open, the read-only textarea that hides the flash. It works, and nothing a person does solo shows a symptom. What does show is narrow: an external writer, an agent working the file while a person watches, drops presenting, the grid or the menu back to the reading view at the same slide.
 
-The build: on the reload event fetch the page, parse it, replace only the `.pac-page` sections whose markup changed, append or remove tail pages when a split changes the count, refetch the doc for fresh offsets. The viewer re-queries its pages instead of capturing them once. Roughly the lines it deletes, so the payoff is the machinery going and presenting surviving a rebuild, not the milliseconds; full re-render on the server stays.
+The build: on the reload event fetch the page, parse it, replace only the `.ainsi-page` sections whose markup changed, append or remove tail pages when a split changes the count, refetch the doc for fresh offsets. The viewer re-queries its pages instead of capturing them once. Roughly the lines it deletes, so the payoff is the machinery going and presenting surviving a rebuild, not the milliseconds; full re-render on the server stays.
 
 Nice to have. Opens when the agent-writes-while-presenting flow is in daily use and the drop starts to grate, not before.
 
@@ -96,11 +72,11 @@ Nice to have. Opens when the agent-writes-while-presenting flow is in daily use 
 
 The studio is already a Bun server driving watch, rebuild, reload over a file, so hosting it is a container, one mounted folder as the root, and the same loop. Remote agents keep their door: git as transport first, or one HTTP pair, GET returns the markdown and PUT replaces it, which is the whole remote API because the write model is already whole-file. An MCP wrapper over that pair is an afternoon whenever it is wanted and not before; building the remote door before there is a remote is the over-engineering to refuse.
 
-Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `pac deck.md` starts it and deep-links into the deck's URL, the container starts at `/`.
+Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `ainsi deck.md` starts it and deep-links into the deck's URL, the container starts at `/`.
 
-Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what bare `pac` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
+Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what bare `ainsi` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
 
-Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.pac`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
+Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.ainsi`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
 
 Done: the container serves home and deck URLs off one mounted folder, a remote writer can read and replace a file through one of the doors above, and a cold restart loses nothing because nothing was held.
 
@@ -118,7 +94,7 @@ A list renders as written, bullets or numbers, until a directive names timeline 
 
 A memo and a deck from the same markdown. A directive naming a deck component means nothing in a document vocabulary, and the file cannot hold two answers. The overlay design that was cut would solve it, at the cost of reintroducing block naming.
 
-Cheaper answers exist and should be tried first: a shared component vocabulary across both output kinds, or a directive that carries a target, `<!-- pac deck: timeline -->`. Not worth deciding until a second projection is actually wanted.
+Cheaper answers exist and should be tried first: a shared component vocabulary across both output kinds, or a directive that carries a target, `<!-- ainsi deck: timeline -->`. Not worth deciding until a second projection is actually wanted.
 
 ## Do themes and components need a manifest (question)
 
