@@ -11,13 +11,14 @@ export default {
     accepts: () => true,
     props: z.object({
         size: z.enum(["small", "normal", "large", "huge"]).default("normal"),
+        align: z.enum(["left", "center", "right"]).default("left"),
     }).passthrough(),
     splittable: true,
     density: ["regular", "tight"],
     render: ctx => {
         const size = ctx.props.size as string;
-        return size === "normal" ? flow(ctx) : `<div class="pac-prose pac-prose--${size}">
-${flow(ctx)}
-</div>`;
+        const align = ctx.props.align as string;
+        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`].filter(Boolean);
+        return classes.length ? `<div class="pac-prose ${classes.join(" ")}">\n${flow(ctx)}\n</div>` : flow(ctx);
     },
 } satisfies ComponentDefinition;
