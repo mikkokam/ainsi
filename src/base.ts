@@ -70,6 +70,8 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
 .pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
+/* inline code as a chat client shows it: a small capsule, the theme's stop colour for the text */
+.pac-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--pac-rule); border-radius: .3em; background: var(--pac-surface); color: var(--pac-danger); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */

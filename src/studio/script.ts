@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { markerOf, remove, render as structural, retag, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, alertOf, markerOf, remove, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 
 interface DocEntity { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }
@@ -105,7 +105,7 @@ async function init(): Promise<void> {
 
     document.addEventListener("click", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
-        const target = (event.target as HTMLElement).closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+        const target = handleAt(event.target as HTMLElement);
         if (!target) {
             if (chrome?.kind === "menu") shut();
             return;
@@ -133,7 +133,7 @@ async function init(): Promise<void> {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return grip.hidden = true;
         const at = event.target as HTMLElement;
         if (at === grip || grip.contains(at)) return;
-        const target = at.closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+        const target = handleAt(at);
         clearTimeout(leaving);
         if (!target) { leaving = setTimeout(() => { grip.hidden = true; gripped = undefined; }, 400); return; }
         gripped = target;
@@ -146,7 +146,7 @@ async function init(): Promise<void> {
 
     document.addEventListener("contextmenu", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
-        const target = (event.target as HTMLElement).closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+        const target = handleAt(event.target as HTMLElement);
         if (!target) return;
         event.preventDefault();
         openMenu(target, target.getBoundingClientRect());
@@ -186,6 +186,15 @@ async function init(): Promise<void> {
         event.preventDefault();
         openRaw();
     });
+}
+
+/** the handle at an element, or the one handle inside the component root it sits in */
+function handleAt(at: HTMLElement): HTMLElement | null {
+    const own = at.closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+    if (own) return own;
+    const root = at.closest<HTMLElement>("[data-pac]");
+    const inside = root ? root.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]") : [];
+    return inside.length === 1 ? inside[0]! : null;
 }
 
 /*
@@ -243,18 +252,27 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     // how it shows: the looks that accept the target, the heuristic's own marked auto. A text
     // block has looks only when a component beyond plain rendering takes it.
     const accepted = block.origin === "directive" ? block.accepted : entity.accepted;
-    const looks = accepted.filter(name => !notALook(family).includes(name) && doc.components.some(c => c.name === name));
-    const showLooks = looks.length > 0 || (!!block.directive && !notALook(family).includes(block.component));
+    const looks = accepted.filter(name => !notALook(family).includes(name) && name !== "alert" && doc.components.some(c => c.name === name));
+    // an alert is a marker on the quote rather than a directive, so it is offered to text and
+    // quotes as a look and its kind as the option beneath it
+    const alerting = own && (family === "quote" || family === "text");
+    const isAlert = block.component === "alert";
+    const setAlert = (to: string | null) => splice({ start: entity.start, end: entity.end, text: withAlert(entity.md, entity.kind, to) });
+    const showLooks = looks.length > 0 || alerting || (!!block.directive && !notALook(family).includes(block.component));
     if (showLooks) {
         menu.append(divider());
         const showing = block.component === block.heuristic && !block.directive ? "auto" : block.component;
         const plain = (name: string) => (name === "prose" ? PLAIN[current ?? entity.kind] ?? "text" : name);
         const auto = `auto · ${plain(block.heuristic)}`;
-        menu.append(dropdown(showing === "auto" ? auto : plain(block.component), [
-            item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
-            ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
-        ]));
+        menu.append(isAlert
+            ? dropdown("alert", [item("quote", "", false, () => setAlert(null)), item("alert", "", true, closeMenu)])
+            : dropdown(showing === "auto" ? auto : plain(block.component), [
+                item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
+                ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
+                ...(alerting ? [item("alert", "", false, () => setAlert("note"))] : []),
+            ]));
     }
+    if (isAlert) menu.append(control({ name: "kind", type: "enum", options: [...ALERT_KINDS] }, alertOf(entity.md), value => setAlert(value as string)));
     const component = doc.components.find(c => c.name === block.component);
     if (component?.fields.length && !showLooks) menu.append(divider());
     for (const field of component?.fields ?? []) {
@@ -572,7 +590,7 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
     // the marks bar: the same wraps as the chords, shown above the textarea while a selection
     // is live, so the syntax is a click away and still visible in the text it lands in
     const marks = h("div", { class: "pac-studio__marks" },
-        ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"]] as const).map(([marker, text, title]) =>
+        ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"], ["==", "==", "Highlight"]] as const).map(([marker, text, title]) =>
             h("button", { class: "pac-studio__mark", type: "button", title, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
     marks.hidden = true;
     document.body.append(marks);

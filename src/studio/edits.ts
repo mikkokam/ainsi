@@ -100,3 +100,16 @@ export function remove(source: string, target: Target): Splice {
     while (end < source.length && /\s/.test(source[end]!)) end++;
     return { start, end, text: "" };
 }
+
+/** GitHub's alert kinds; the marker is the quote's first line, so a kind change is a rewrite of that line */
+export const ALERT_KINDS = ["note", "tip", "important", "warning", "caution"] as const;
+const ALERT = /^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][^\S\n]*\n?/;
+
+export const alertOf = (md: string): string | undefined => ALERT.exec(md)?.[1]?.toLowerCase();
+
+/** the same words as an alert of `to`, or as a plain quote when `to` is null; text becomes a quote first */
+export function withAlert(md: string, kind: string, to: string | null): string {
+    const quote = kind === "quote" ? md.replace(ALERT, "") : retag(md, kind, "quote");
+    const body = quote.trim() ? quote : ">";
+    return to ? `> [!${to.toUpperCase()}]\n${body}` : body;
+}

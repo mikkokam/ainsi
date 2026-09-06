@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { directiveLine, markerOf, remove, render, retag, type Target } from "../src/studio/edits";
+import { alertOf, directiveLine, markerOf, remove, render, retag, withAlert, type Target } from "../src/studio/edits";
 
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -90,4 +90,14 @@ test("a marker left by an older studio goes with its directive", () => {
 test("removing a block takes its directive, its marker and the gap after it", () => {
     const source = "a\n\n<!-- pac: quote -->\nb\n\n<!-- pac: end -->\n\nc\n";
     expect(apply(source, remove(source, targetOf(source, 1)))).toBe("a\n\nc\n");
+});
+
+test("an alert is a marker line on a quote: set, changed, removed, and text becomes a quote first", () => {
+    expect(withAlert("> said", "quote", "tip")).toBe("> [!TIP]\n> said");
+    expect(withAlert("> [!TIP]\n> said", "quote", "caution")).toBe("> [!CAUTION]\n> said");
+    expect(withAlert("> [!TIP]\n> said", "quote", null)).toBe("> said");
+    expect(withAlert("plain words", "paragraph", "note")).toBe("> [!NOTE]\n> plain words");
+    expect(alertOf("> [!WARNING]\n> x")).toBe("warning");
+    expect(alertOf("> x")).toBeUndefined();
+    expect(parse(withAlert("plain words", "paragraph", "note")).doc.entities.map(e => e.kind)).toEqual(["quote"]);
 });
