@@ -195,3 +195,11 @@ test("agenda numbers its rows with two digits", async () => {
     expect(html).toContain('<span class="pac-agenda__number">01</span>');
     expect(html).toContain('<span class="pac-agenda__title">Open</span>');
 });
+
+test("prose colours by the theme's ink names only", async () => {
+    const registry = await load([BUILTIN]);
+    const html = build("# T\n\n<!-- pac: prose color=accent caps -->\nlabel\n", { registry, layouts, themeCss: "" }).html;
+    expect(html).toContain('<div class="pac-prose pac-prose--caps pac-prose--accent">');
+    const bad = build("# T\n\n<!-- pac: prose color=#ff0000 -->\nwords\n", { registry, layouts, themeCss: "" });
+    expect(bad.diagnostics.some(d => d.message.includes("bad props"))).toBe(true);
+});

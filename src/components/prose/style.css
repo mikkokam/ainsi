@@ -4,6 +4,9 @@
 .pac-prose--huge { font-size: 2.07em; line-height: 1.15; letter-spacing: -.01em; }
 /* capitals are tracked, or they read as shouting; the strong weight so a label holds its line */
 .pac-prose--caps { text-transform: uppercase; letter-spacing: .06em; font-weight: var(--pac-strong); }
+/* the theme's inks by name */
+.pac-prose--soft { color: var(--pac-ink-soft); }
+.pac-prose--accent { color: var(--pac-accent); }
 /* alignment is the block's, and a list keeps its markers inside the box */
 .pac-prose--center { text-align: center; }
 .pac-prose--right { text-align: right; }

@@ -15,13 +15,16 @@ export default {
         align: z.enum(["left", "center", "right"]).default("left"),
         /** tracked capitals: a label or an eyebrow above a title; the source keeps its case */
         caps: z.boolean().default(false),
+        /** the theme's inks, never a value of the deck's own, so a theme swap carries it */
+        color: z.enum(["ink", "soft", "accent"]).default("ink"),
     }).passthrough(),
     splittable: true,
     density: ["regular", "tight"],
     render: ctx => {
         const size = ctx.props.size as string;
         const align = ctx.props.align as string;
-        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`, ctx.props.caps === true && "pac-prose--caps"].filter(Boolean);
+        const color = ctx.props.color as string;
+        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`, ctx.props.caps === true && "pac-prose--caps", color !== "ink" && `pac-prose--${color}`].filter(Boolean);
         return classes.length ? `<div class="pac-prose ${classes.join(" ")}">\n${flow(ctx)}\n</div>` : flow(ctx);
     },
 } satisfies ComponentDefinition;

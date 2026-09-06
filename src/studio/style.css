@@ -236,6 +236,7 @@ body[data-pac-raw] { overflow: hidden; }
 .pac-studio__chip[data-active] { background: #1f6feb; border-color: #1f6feb; color: #fff; }
 .pac-studio__chip--icon { display: inline-grid; place-items: center; width: 28px; height: 24px; padding: 0; }
 .pac-studio__chip--icon svg { width: 14px; height: 14px; }
+.pac-studio__swatch { display: block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgb(0 0 0 / 15%); }
 .pac-studio__input {
     font: 12px/1.3 ui-monospace, monospace;
     padding: .25rem .45rem; width: 7rem;
