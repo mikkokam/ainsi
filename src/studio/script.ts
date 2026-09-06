@@ -247,7 +247,13 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     const own = handle.dataset.pacEntity !== undefined || block.ids.length === 1;
     const current = kindOf(entity);
     const family = current && familyOf(current);
-    const convert = (to: TextKind) => splice({ start: entity.start, end: entity.end, text: retag(entity.md, entity.kind, to, neighbours(entity)) });
+    // an alert is what the engine picks for a marked quote; a directive on the entity would
+    // only fight it, so converting into one takes the directive along
+    const convert = (to: TextKind) => splice({
+        start: to === "alert" && block.directive && block.ids.length === 1 ? block.directive.start : entity.start,
+        end: entity.end,
+        text: retag(entity.md, entity.kind, to, neighbours(entity)),
+    });
     if (own && family === "text") menu.append(dropdown(TEXT_LEVELS.find(l => l[0] === current)![1], TEXT_LEVELS.map(([kind, label, hint]) => item(label, hint, kind === current, () => convert(kind)))));
     else if (own && family === "list") menu.append(label(current === "ordered" ? "Numbered" : "Bullets"));
     else menu.append(label(own && family ? FAMILY[family] : entity.kind));
