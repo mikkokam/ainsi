@@ -428,7 +428,8 @@ function item(text: string, hint: string, active: boolean, onClick: () => void):
     const element = document.createElement("button");
     element.className = "pac-studio__dropitem";
     element.type = "button";
-    element.innerHTML = `<span>${text}</span><span class="pac-studio__drophint">${hint}</span>`;
+    const about = hint.length > 8;   // a syntax cue like `##` sits beside the name; a sentence goes beneath it
+    element.innerHTML = `<span>${text}</span><span class="pac-studio__drophint${about ? " pac-studio__drophint--about" : ""}">${hint}</span>`;
     if (active) element.setAttribute("data-active", "");
     element.addEventListener("click", onClick);
     return element;
