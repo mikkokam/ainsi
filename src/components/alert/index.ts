@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type ComponentDefinition, type Entity } from "../../kit";
+import { signature, type ComponentDefinition, type Entity } from "../../kit";
 import { ALERT_ICONS } from "./icons";
 
 /** GitHub's alert syntax: a blockquote whose first line is `[!NOTE]` or one of its four siblings */
@@ -18,7 +18,7 @@ export default {
         const quote = ctx.entities[0]!;
         const kind = alertKind(quote)!;
         // the marker is the first text of the first paragraph; the line break after it goes too
-        const [first, ...rest] = quote.node.children as any[];
+        const [first, ...rest] = (signature(quote.node)?.[0] ?? quote.node).children as any[];
         const children = first?.children?.slice() ?? [];
         if (children[0]?.type === "text") children[0] = { ...children[0], value: children[0].value.replace(MARKER, "") };
         if (children[0]?.type === "text" && children[0].value === "") children.shift();

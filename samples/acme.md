@@ -16,7 +16,7 @@ Governance and policy solution for production AI
 
 # Fast-growing companies adopt AI faster than they can govern it
 
-A fifty-person engineering team might now connect eight model <kbd>providers</kbd> across product, support, and `internal` tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
+A fifty-person ==engineering team== might now connect eight model <kbd>providers</kbd> across product, support, and `internal` tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
 
 ---
 
@@ -39,7 +39,7 @@ How does it work
 # A single deterministic gateway in front of every model
 
 Every outbound LLM call passes through Acme before reaching upstream providers.
-**Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
+**Policies** evaluate through Open Policy Agent `(OPA)`, keeping rules declarative, version-controlled, and testable in CI/CD.
 
 > [!NOTE]
 > Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
@@ -69,8 +69,6 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 | Data residency      | Unknown routing          | Guaranteed EU-only egress   |
 
 ---
-
-<!-- pac: quote -->
 
 > When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.
 >

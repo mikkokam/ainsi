@@ -3,8 +3,27 @@ import { toHtml } from "hast-util-to-html";
 import type { Entity } from "./types";
 
 export function blockHtml(entity: Entity): string {
+    const signed = entity.kind === "quote" ? signature(entity.node) : undefined;
+    if (signed) {
+        // `> — Name` as the last paragraph: the quote's attribution, lifted into a caption
+        const [body, author] = signed;
+        return `<figure class="pac-quote">${render(body)}<figcaption>${inlineHtml(author).replace(DASH, "")}</figcaption></figure>`;
+    }
+    return render(entity.node);
+}
+
+const render = (node: any): string =>
     // allowDangerousHtml: an html entity is html the author wrote and meant
-    return toHtml(toHast(marks(breaks(entity.node)), { allowDangerousHtml: true }) as any, { allowDangerousHtml: true });
+    toHtml(toHast(marks(breaks(node)), { allowDangerousHtml: true }) as any, { allowDangerousHtml: true });
+
+const DASH = /^\s*(—|–|--)\s*/;
+
+/** [the blockquote without its last paragraph, that paragraph] when it opens with a dash */
+export function signature(node: any): [any, any] | undefined {
+    const paragraphs: any[] = node.children ?? [];
+    const last = paragraphs.at(-1);
+    if (paragraphs.length < 2 || last?.type !== "paragraph" || !DASH.test(plainText(last))) return undefined;
+    return [{ ...node, children: paragraphs.slice(0, -1) }, last];
 }
 
 /** inline html for a node's children, so a component can place the text itself */

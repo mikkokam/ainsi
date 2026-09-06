@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["alert", "aside", "boxes", "comparison", "full", "lead", "prose", "quote", "table", "timeline"],
+        ["alert", "aside", "boxes", "comparison", "full", "lead", "prose", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(11);
+    expect(registry.names().length).toBe(9);
 });
 
 test("a later root overrides a builtin of the same name", async () => {
@@ -122,10 +122,12 @@ test("timeline over a numbered list carries the numbers on its markers", async (
     expect(build("# T\n\n<!-- pac: timeline -->\n- Q1: a\n- Q2: b\n", { registry, layouts, themeCss: "" }).html).toContain('<ol class="pac-timeline pac-timeline--horizontal"');
 });
 
-test("a quote signs itself: a dashed last line inside the blockquote is the attribution", async () => {
+test("a quote signs itself: a dashed last line inside the blockquote is the attribution, with no component", async () => {
     const registry = await load([BUILTIN]);
-    const { html } = build("# T\n\n<!-- pac: quote -->\n> said\n>\n> — Who\n\nafter\n", { registry, layouts, themeCss: "" });
-    expect(html).toContain('<figcaption class="pac-quote__author">Who</figcaption>');
+    const { html, pages } = build("# T\n\n> said\n>\n> — Who\n\nafter\n", { registry, layouts, themeCss: "" });
+    expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose"]);
+    expect(html).toContain('<figure class="pac-quote"><blockquote>');
+    expect(html).toContain("<figcaption>Who</figcaption>");
     expect(html).not.toContain("— Who");
     expect(html).toContain("<p>after</p>");
     expect(html.indexOf("</figure>")).toBeLessThan(html.indexOf("<p>after</p>"));

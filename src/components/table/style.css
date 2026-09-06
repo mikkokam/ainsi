@@ -1,3 +1,0 @@
-.pac-table table { border-collapse: collapse; width: 100%; }
-.pac-table th, .pac-table td { text-align: left; padding: .5em .8em; border-bottom: var(--pac-border) solid var(--pac-rule); }
-.pac-table th { font-weight: var(--pac-strong); }

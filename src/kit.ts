@@ -1,7 +1,7 @@
 /** What a component author imports. Everything else is theirs. */
 export type { Component, ComponentDefinition, RenderContext } from "./registry";
 export type { Entity } from "./types";
-export { escape, plainText } from "./html";
+export { escape, plainText, signature } from "./html";
 import type { Entity } from "./types";
 import type { RenderContext } from "./registry";
 

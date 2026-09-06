@@ -83,12 +83,12 @@ test("a directive inside a run governs one entity and needs no marker", () => {
 });
 
 test("a marker left by an older studio goes with its directive", () => {
-    const source = "a\n\n<!-- pac: quote -->\nb\n\n<!-- pac: end -->\n\nc\n";
+    const source = "a\n\n<!-- pac: prose size=large -->\nb\n\n<!-- pac: end -->\n\nc\n";
     expect(apply(source, render(targetOf(source, 1), null))).toBe("a\n\nb\n\nc\n");
 });
 
 test("removing a block takes its directive, its marker and the gap after it", () => {
-    const source = "a\n\n<!-- pac: quote -->\nb\n\n<!-- pac: end -->\n\nc\n";
+    const source = "a\n\n<!-- pac: prose size=large -->\nb\n\n<!-- pac: end -->\n\nc\n";
     expect(apply(source, remove(source, targetOf(source, 1)))).toBe("a\n\nc\n");
 });
 

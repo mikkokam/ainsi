@@ -74,6 +74,16 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--pac-rule); border-radius: .3em; background: var(--pac-surface); color: var(--pac-danger); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
+/* a blockquote as markdown gives it, in the display face; a signed one carries its caption */
+.pac-page blockquote { margin: 0; padding: 0 0 0 calc(var(--pac-gap) * .8); border-left: 3px solid var(--pac-accent); }
+.pac-page blockquote p { font-family: var(--pac-font-display); font-size: 1.45em; line-height: 1.38; letter-spacing: -.01em; margin: 0 0 .5em; }
+.pac-page blockquote p:last-child { margin-bottom: 0; }
+.pac-page .pac-quote { margin: 0; display: flex; flex-direction: column; gap: calc(var(--pac-gap) * .85); }
+.pac-page .pac-quote figcaption { padding-left: calc(var(--pac-gap) * .8 + 3px); font-size: .9em; font-weight: 500; color: var(--pac-ink-soft); }
+/* a table as markdown gives it */
+.pac-page table { border-collapse: collapse; width: 100%; }
+.pac-page th, .pac-page td { text-align: left; padding: .5em .8em; border-bottom: var(--pac-border) solid var(--pac-rule); }
+.pac-page th { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
 /*
  * The highlighter stroke is a background, not a pseudo: a pseudo box on an inline spans

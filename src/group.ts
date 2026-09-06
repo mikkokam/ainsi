@@ -97,9 +97,7 @@ function heuristic(
 
     if (alertKind(e)) return ["alert", 1, {}];
 
-    if (e.kind === "table") {
-        return [isComparison(e) ? "comparison" : "table", 1, {}];
-    }
+    if (e.kind === "table" && isComparison(e)) return ["comparison", 1, {}];
 
     if (e.kind === "image") {
         if (next?.kind === "paragraph") return ["aside", 2, {}];
@@ -108,9 +106,9 @@ function heuristic(
 
     // prose absorbs the run of ordinary blocks so a page is not one block per paragraph,
     // but never past an entity a directive claims or one another heuristic could match
-    const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html", "list"];
+    const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html", "list", "table"];
     let taken = 1;
-    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id) && !alertKind(page[i + taken]!)) taken++;
+    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id) && !alertKind(page[i + taken]!) && !(page[i + taken]!.kind === "table" && isComparison(page[i + taken]!))) taken++;
     return ["prose", taken, {}];
 }
 

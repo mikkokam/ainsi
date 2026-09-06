@@ -141,6 +141,16 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--pac-rule); border-radius: .3em; background: var(--pac-surface); color: var(--pac-danger); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
+/* a blockquote as markdown gives it, in the display face; a signed one carries its caption */
+.pac-page blockquote { margin: 0; padding: 0 0 0 calc(var(--pac-gap) * .8); border-left: 3px solid var(--pac-accent); }
+.pac-page blockquote p { font-family: var(--pac-font-display); font-size: 1.45em; line-height: 1.38; letter-spacing: -.01em; margin: 0 0 .5em; }
+.pac-page blockquote p:last-child { margin-bottom: 0; }
+.pac-page .pac-quote { margin: 0; display: flex; flex-direction: column; gap: calc(var(--pac-gap) * .85); }
+.pac-page .pac-quote figcaption { padding-left: calc(var(--pac-gap) * .8 + 3px); font-size: .9em; font-weight: 500; color: var(--pac-ink-soft); }
+/* a table as markdown gives it */
+.pac-page table { border-collapse: collapse; width: 100%; }
+.pac-page th, .pac-page td { text-align: left; padding: .5em .8em; border-bottom: var(--pac-border) solid var(--pac-rule); }
+.pac-page th { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
 /*
  * The highlighter stroke is a background, not a pseudo: a pseudo box on an inline spans
@@ -418,45 +428,6 @@ body[data-present] [data-current] .pac-comparison__column {
 }
 body[data-present] [data-current] .pac-comparison__column:nth-child(2) { animation-delay: calc(var(--pac-motion) * .3); }
 body[data-present] [data-current] .pac-comparison__column:nth-child(n+3) { animation-delay: calc(var(--pac-motion) * .42); }
-.pac-quote {
-    margin: 0;
-    max-width: 36em;
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--pac-gap) * 0.85);
-}
-
-.pac-quote blockquote {
-    margin: 0;
-    padding: 0 0 0 calc(var(--pac-gap) * 0.8);
-    border-left: 3px solid var(--pac-accent);
-}
-
-.pac-quote blockquote p {
-    font-family: var(--pac-font-display);
-    font-size: 1.45em;
-    line-height: 1.38;
-    letter-spacing: -0.01em;
-    color: var(--pac-ink);
-    margin: 0 0 0.5em;
-}
-
-.pac-quote blockquote p:last-child {
-    margin-bottom: 0;
-}
-
-.pac-quote__author {
-    padding-left: calc(var(--pac-gap) * 0.8 + 3px);
-    font-family: var(--pac-font);
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--pac-ink-soft);
-    line-height: var(--pac-leading);
-}
-
-.pac-quote__author p {
-    margin: 0;
-}
 .pac-timeline {
     --pac-timeline-marker: .9em;
     list-style: none; margin: 0; padding: 0;
@@ -513,9 +484,6 @@ body[data-present] [data-current] .pac-timeline__marker {
     animation: pac-timeline-marker var(--pac-motion) var(--pac-ease) backwards;
     animation-delay: inherit;
 }
-.pac-table table { border-collapse: collapse; width: 100%; }
-.pac-table th, .pac-table td { text-align: left; padding: .5em .8em; border-bottom: var(--pac-border) solid var(--pac-rule); }
-.pac-table th { font-weight: var(--pac-strong); }
 .pac-aside { display: grid; grid-template-columns: 1fr 1fr; gap: var(--pac-gap); align-items: start; }
 .pac-aside--left { direction: rtl; }
 .pac-aside--left > * { direction: ltr; }
@@ -819,7 +787,7 @@ body[data-present] .pac-page[data-current] mark {
 <h1>A single deterministic gateway in front of every model</h1>
 </div>
 <p>Every outbound LLM call passes through Acme before reaching upstream providers.<br>
-<strong>Policies</strong> evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.</p>
+<strong>Policies</strong> evaluate through Open Policy Agent <code>(OPA)</code>, keeping rules declarative, version-controlled, and testable in CI/CD.</p>
 <aside class="pac-alert pac-alert--note" data-pac="alert" role="note" aria-label="Note" title="Note">
     <span class="pac-alert__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
     <p>Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.</p>
@@ -862,12 +830,9 @@ body[data-present] .pac-page[data-current] mark {
 </div></article></main>
 </section>
 <section class="pac-page" id="page-7" data-page="7" data-layout="default">
-<main><article><figure class="pac-quote" data-pac="quote">
-    <blockquote>
+<main><article><figure class="pac-quote"><blockquote>
 <p>When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.</p>
-</blockquote>
-    <figcaption class="pac-quote__author">VP of Engineering, Series B Fintech (Stockholm)</figcaption>
-</figure></article></main>
+</blockquote><figcaption>VP of Engineering, Series B Fintech (Stockholm)</figcaption></figure></article></main>
 </section>
 <section class="pac-page" id="product-roadmap" data-page="8" data-layout="default">
 <main><article><h1>Product roadmap</h1>
@@ -897,7 +862,7 @@ body[data-present] .pac-page[data-current] mark {
 </section>
 <section class="pac-page" id="transparent-usage-based-pricing" data-page="9" data-layout="default">
 <main><article><h1>Transparent, usage-based pricing</h1>
-<div class="pac-table" data-pac="table"><table>
+<table>
 <thead>
 <tr>
 <th>Tier</th>
@@ -930,7 +895,7 @@ body[data-present] .pac-page[data-current] mark {
 <td>Custom</td>
 </tr>
 </tbody>
-</table></div></article></main>
+</table></article></main>
 </section>
 <section class="pac-page" id="built-by-infrastructure-engineers" data-page="10" data-layout="default">
 <main><article><h1>Built by infrastructure engineers</h1>

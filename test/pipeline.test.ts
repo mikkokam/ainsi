@@ -70,9 +70,9 @@ test("a directive grows its span until the component accepts it", () => {
 });
 
 test("an end marker from an older deck is still honoured", () => {
-    const md = "a\n\n<!-- pac: quote -->\n\nb\n\n<!-- pac: end -->\n\nc\n";
+    const md = "a\n\n<!-- pac: prose size=large -->\n\nb\n\n<!-- pac: end -->\n\nc\n";
     const [page] = blocksOf(md).pages;
-    expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "heuristic"], ["quote", 1, "directive"], ["prose", 1, "heuristic"]]);
+    expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "heuristic"], ["prose", 1, "directive"], ["prose", 1, "heuristic"]]);
 });
 
 test("a directive carries its source offsets", () => {
@@ -99,11 +99,11 @@ test("a list is a list until a directive says otherwise", () => {
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 3]]);
 });
 
-test("a label column plus two is a comparison, wider stays a table", () => {
+test("a label column plus two is a comparison, wider stays a plain table", () => {
     const two = blocksOf("| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
     expect(two.pages[0]![0]!.component).toBe("comparison");
     const wide = blocksOf("| a | b | c | d |\n| --- | --- | --- | --- |\n| 1 | 2 | 3 | 4 |\n");
-    expect(wide.pages[0]![0]!.component).toBe("table");
+    expect(wide.pages[0]![0]!.component).toBe("prose");
 });
 
 test("a thematic break starts a page; an h1 only when the deck opts in", () => {
