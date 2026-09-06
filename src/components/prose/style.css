@@ -5,4 +5,4 @@
 /* alignment is the block's, and a list keeps its markers inside the box */
 .pac-prose--center { text-align: center; }
 .pac-prose--right { text-align: right; }
-.pac-prose--center :is(ul, ol), .pac-prose--right :is(ul, ol) { list-style-position: inside; padding-left: 0; }
+.pac-prose--center ul, .pac-prose--center ol, .pac-prose--right ul, .pac-prose--right ol { list-style-position: inside; padding-left: 0; }
