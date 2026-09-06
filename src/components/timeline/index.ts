@@ -11,7 +11,7 @@ export default {
     render: ctx => {
         const list = listOf(ctx.entities)!;
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
-        const axis = (ctx.props.axis as string) ?? "horizontal";
+        const axis = ctx.props.axis as string;
         const steps = labelled(list, ctx.inline).map(([label, body]) => `<li class="pac-timeline__step">
         <span class="pac-timeline__marker" aria-hidden="true"></span>
         <span class="pac-timeline__label">${label}</span>

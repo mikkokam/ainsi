@@ -11,7 +11,7 @@ export default {
     render: ctx => {
         const carrier = ctx.entities.find(e => !!imageOf(e))!;
         const rest = ctx.entities.filter(e => e !== carrier);
-        const side = (ctx.props.side as string) ?? "right";
+        const side = ctx.props.side as string;
         return `<div class="pac-aside pac-aside--${side}" data-pac="aside">
     <figure class="pac-aside__figure">${img(imageOf(carrier)!)}</figure>
     <div class="pac-aside__body">${rest.map(e => ctx.html(e)).join("\n")}</div>

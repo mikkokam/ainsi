@@ -45,7 +45,9 @@ export function group(
         }
 
         const [component, taken, props] = heuristic(page, i, blocks.length === 0, starts);
-        blocks.push(make(page.slice(i, i + taken), component, props, "heuristic"));
+        // through the schema, so a heuristic block carries the same defaults a directive's does
+        const parsed = registry.get(component)?.props.safeParse(props);
+        blocks.push(make(page.slice(i, i + taken), component, parsed?.success ? parsed.data : props, "heuristic"));
         i += taken;
     }
 

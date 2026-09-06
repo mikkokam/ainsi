@@ -129,3 +129,12 @@ test("build emits one section per page and only the css of components used", () 
     expect(html).toContain('data-pac="lead"');
     expect(html).not.toContain('data-pac="timeline"');
 });
+
+test("a heuristic block carries its component's schema defaults, like a directive's does", () => {
+    const [page] = blocksOf("# T\n\n![a](x.png)\n\nbeside it\n").pages;
+    const aside = page!.find(b => b.component === "aside")!;
+    expect(aside.origin).toBe("heuristic");
+    expect(aside.props).toEqual({ side: "right" });
+    const [plain] = blocksOf("words\n").pages;
+    expect(plain![0]!.props).toEqual({ size: "normal" });
+});

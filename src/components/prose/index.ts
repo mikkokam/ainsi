@@ -15,7 +15,7 @@ export default {
     splittable: true,
     density: ["regular", "tight"],
     render: ctx => {
-        const size = (ctx.props.size as string | undefined) ?? "normal";   // a heuristic block carries no defaults
+        const size = ctx.props.size as string;
         return size === "normal" ? flow(ctx) : `<div class="pac-prose pac-prose--${size}">
 ${flow(ctx)}
 </div>`;
