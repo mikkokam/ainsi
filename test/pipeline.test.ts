@@ -138,3 +138,12 @@ test("a heuristic block carries its component's schema defaults, like a directiv
     const [plain] = blocksOf("words\n").pages;
     expect(plain![0]!.props).toEqual({ size: "normal" });
 });
+
+test("a newline inside a paragraph is a line break; a blank line is still a new block", async () => {
+    const registry = await load([BUILTIN]);
+    const layouts = await loadLayouts([LAYOUTS]);
+    const { html } = build("one\nline two\n\nnext block\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain("<p>one<br>\nline two</p>");
+    expect(html).toContain("<p>next block</p>");
+    expect(build("`a\nb`\n", { registry, layouts, themeCss: "" }).html).not.toContain("<br>");
+});
