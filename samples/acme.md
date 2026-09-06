@@ -60,6 +60,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 # Operating with & without Acme
 
+<!-- pac: comparison -->
 |                     | Today                    | With Acme                   |
 | ------------------- | ------------------------ | --------------------------- |
 | Audit trail         | Ad-hoc log queries       | Signed event stream (7 yrs) |
@@ -71,8 +72,9 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 ---
 
 > When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.
->
-> — VP of Engineering, Series B Fintech (Stockholm)
+
+<!-- pac: prose size=small -->
+VP of Engineering, Series B Fintech (Stockholm)
 
 ---
 
@@ -106,8 +108,10 @@ Founded by former payment security and distributed systems leads from Pay More I
 
 <!-- pac:layout header align=center -->
 
+<!-- pac: prose align=center -->
 # Start governing AI in production today
 
+<!-- pac: prose size=small align=center -->
 Get in touch for a 30-minute architecture review or deploy a self-hosted trial.
 
 ![Warm minimalist architectural interior](https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80)

@@ -60,8 +60,8 @@ test("a directive governs the one entity it precedes", () => {
 });
 
 test("a directive does not swallow what the heuristic would have grouped apart", () => {
-    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n").pages;
-    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["comparison", 1]]);
+    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n![p](x.png)\n").pages;
+    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["full", 1]]);
 });
 
 test("a directive grows its span until the component accepts it", () => {
@@ -99,11 +99,11 @@ test("a list is a list until a directive says otherwise", () => {
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 3]]);
 });
 
-test("a label column plus two is a comparison, wider stays a plain table", () => {
-    const two = blocksOf("| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
-    expect(two.pages[0]![0]!.component).toBe("comparison");
-    const wide = blocksOf("| a | b | c | d |\n| --- | --- | --- | --- |\n| 1 | 2 | 3 | 4 |\n");
-    expect(wide.pages[0]![0]!.component).toBe("prose");
+test("a table is a table until a directive names comparison", () => {
+    const plain = blocksOf("| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
+    expect(plain.pages[0]![0]!.component).toBe("prose");
+    const named = blocksOf("<!-- pac: comparison -->\n| | A | B |\n| --- | --- | --- |\n| x | 1 | 2 |\n");
+    expect(named.pages[0]![0]!).toMatchObject({ component: "comparison", origin: "directive" });
 });
 
 test("a thematic break starts a page; an h1 only when the deck opts in", () => {

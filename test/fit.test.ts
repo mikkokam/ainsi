@@ -33,11 +33,13 @@ const OVERFLOWING = `# T
 
 intro
 
-- Q1: a real sentence here about q1
-- Q2: a real sentence here about q2
-- Q3: a real sentence here about q3
-- Q4: a real sentence here about q4
+<!-- pac: timeline -->
+- **Q1** a real sentence here about q1
+- **Q2** a real sentence here about q2
+- **Q3** a real sentence here about q3
+- **Q4** a real sentence here about q4
 
+<!-- pac: comparison -->
 | | A | B |
 | --- | --- | --- |
 | Row one | 1 | 2 |

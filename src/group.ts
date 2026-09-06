@@ -78,9 +78,9 @@ function make(entities: Entity[], component: string, props: Record<string, unkno
 }
 
 /**
- * Returns [component, entities consumed, props]. A list is a list: bullets or numbers as
- * written, until a directive names a component. Tables and images still pick a form,
- * because plain rendering of those rarely fits a page.
+ * Returns [component, entities consumed, props]. A list is a list and a table a table, as
+ * written, until a directive names a component. Images still pick a form, because a bare
+ * image rarely fits a page, and a heading with one paragraph at the top of a page is a lead.
  */
 function heuristic(
     page: Entity[],
@@ -97,8 +97,6 @@ function heuristic(
 
     if (alertKind(e)) return ["alert", 1, {}];
 
-    if (e.kind === "table" && isComparison(e)) return ["comparison", 1, {}];
-
     if (e.kind === "image") {
         if (next?.kind === "paragraph") return ["aside", 2, {}];
         return ["full", 1, {}];
@@ -108,21 +106,10 @@ function heuristic(
     // but never past an entity a directive claims or one another heuristic could match
     const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html", "list", "table"];
     let taken = 1;
-    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id) && !alertKind(page[i + taken]!) && !(page[i + taken]!.kind === "table" && isComparison(page[i + taken]!))) taken++;
+    while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id) && !alertKind(page[i + taken]!)) taken++;
     return ["prose", taken, {}];
 }
 
-function text(node: any): string {
-    if (node.type === "text" || node.type === "inlineCode") return node.value;
-    return (node.children ?? []).map(text).join("");
-}
-
-/** two columns, or a label column plus two, is a comparison; anything wider stays a table */
-function isComparison(entity: Entity): boolean {
-    const head: any[] = entity.node.children?.[0]?.children ?? [];
-    if (head.length === 2) return true;
-    return head.length === 3 && text(head[0]).trim() === "";
-}
 
 function coerce(props: Record<string, string>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
