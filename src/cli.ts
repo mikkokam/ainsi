@@ -99,7 +99,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
             script: [viewer?.script, studio.script].filter(Boolean).join("\n"),
         };
     }
-    const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics) };
+    const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
 
     const assembled = assemble(source, buildOptions);
     diagnostics.push(...assembled.diagnostics);
@@ -218,7 +218,7 @@ async function exportPdf(images: PdfImages): Promise<{ written: boolean; diagnos
     const diagnostics: Diagnostic[] = [];
     const settings = parse(source).doc.settings;
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics);
-    const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics) };
+    const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
     const assembled = assemble(source, options);
     const fitted = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
     diagnostics.push(...assembled.diagnostics, ...fitted.diagnostics);

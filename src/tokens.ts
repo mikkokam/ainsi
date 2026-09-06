@@ -9,8 +9,8 @@ export const TOKENS = [
     "--pac-accent", "--pac-accent-ink", "--pac-rule", "--pac-surface",
     // status: what informative, good, notable, careful and stop look like; alerts are the first to ask
     "--pac-info", "--pac-ok", "--pac-notice", "--pac-warn", "--pac-danger",
-    // identity: the deck's mark, from its frontmatter; a theme decides where it sits and how large
-    "--pac-logo",
+    // identity: the deck's mark and the cover's, from its frontmatter; a theme decides where they sit and how large
+    "--pac-logo", "--pac-logo-cover",
     // type
     "--pac-font", "--pac-font-display", "--pac-font-mono", "--pac-strong", "--pac-size", "--pac-leading",
     // how far the fit solver may step the type down before it splits a page instead

@@ -20,8 +20,9 @@ export interface BuildOptions {
     viewer?: { css: string; script: string };
     /** wrap each entity in a boxless handle the studio can splice against */
     edit?: boolean;
-    /** the deck's mark as a url the browser can load; the cli inlines a local file here */
+    /** the deck's marks as urls the browser can load; the cli inlines local files here */
     logo?: string;
+    coverLogo?: string;
 }
 
 /** Parse and group only, with no rendering: what the fit pass measures and may reshape. */
@@ -187,13 +188,20 @@ ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${options.logo ? `;--pac-logo:url('${options.logo.replace(/'/g, "%27")}')` : ""}">
+<body class="pac"${options.edit ? " data-pac-studio" : ""} style="--pac-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>
 </html>`;
 
     return { html, diagnostics };
+}
+
+/** the marks as body tokens; the cover's falls back to the deck's, so a theme reads one token per place */
+function logoVars(options: BuildOptions): string {
+    const url = (u: string) => `url('${u.replace(/'/g, "%27")}')`;
+    const cover = options.coverLogo ?? options.logo;
+    return `${options.logo ? `;--pac-logo:${url(options.logo)}` : ""}${cover ? `;--pac-logo-cover:${url(cover)}` : ""}`;
 }
 
 /** the sheet a page prints on: the design width at the deck's ratio, so one page is one sheet */

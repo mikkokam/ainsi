@@ -75,7 +75,19 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
-.pac-page mark { background: color-mix(in srgb, var(--pac-accent) 28%, transparent); color: inherit; padding: 0 .12em; border-radius: .15em; }
+/* the stroke is a shorthand so position and size are set: the draw animation grows background-size from zero */
+.pac-page mark {
+    color: inherit; padding: 0 .15em;
+    border-radius: .5em .2em .55em .25em / .45em .55em .2em .5em;
+    background: linear-gradient(93deg,
+        color-mix(in srgb, var(--pac-accent) 14%, transparent),
+        color-mix(in srgb, var(--pac-accent) 33%, transparent) 6%,
+        color-mix(in srgb, var(--pac-accent) 25%, transparent) 44%,
+        color-mix(in srgb, var(--pac-accent) 34%, transparent) 72%,
+        color-mix(in srgb, var(--pac-accent) 19%, transparent) 96%,
+        color-mix(in srgb, var(--pac-accent) 8%, transparent)
+    ) 0 0 / 100% 100% no-repeat;
+}
 .pac-page kbd { font: .85em var(--pac-font-mono); padding: .1em .4em; border: 1px solid var(--pac-rule); border-bottom-width: 2px; border-radius: .3em; }
 .pac-page del { opacity: .55; }
 .pac-page li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.3em; }

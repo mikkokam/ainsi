@@ -32,6 +32,8 @@ export interface Settings {
     layout: string;
     /** the deck's mark, a path beside the deck or a url; the theme places it */
     logo?: string;
+    /** the mark the cover wears instead, when a brand has one; falls back to the mark */
+    coverLogo?: string;
 }
 
 export interface Source {
