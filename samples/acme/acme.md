@@ -7,9 +7,10 @@ coverLogo: assets/acme-a-logo.png
 
 # Acme ==Gatekeeper==
 
-Governance and policy solution for production AI
+Enforcement and policy solution for production AI
 
 
+<!-- pac: full size=full -->
 ![Architectural timber workspace with natural sunlight](https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80)
 
 ---
@@ -18,7 +19,7 @@ Governance and policy solution for production AI
 # What we will cover
 
 <!-- pac: agenda -->
-1. **The problem** governance lags adoption
+1. **The problem** governance lags adoption in enforcement
 2. **The gateway** one deterministic door in front of every model
 3. **Proof** what a customer got in under an hour
 4. **Roadmap and pricing** where this goes and what it costs
@@ -27,12 +28,13 @@ Governance and policy solution for production AI
 ---
 
 <!-- pac: layout split -->
-# Fast-growing companies adopt AI faster than they can govern it
+# Fast-growing companies adopt AI faster than they can control it
 
  
 
 A fifty-person ==engineering team== might now connect eight model <kbd>providers</kbd> across product, support, and `internal` tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
 
+<!-- pac: full size=full -->
 ![](assets/acme-logo.png)
 
 ---
@@ -62,6 +64,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 > [!NOTE]
 > Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
 
+<!-- pac: full align=right -->
 ![Tactile notebook and fountain pen on warm oak desk](https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&q=80)
 
 ---
@@ -69,10 +72,10 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 # How Acme protects your workload
 
 <!-- pac: columns -->
-1. **Enforce** OPA inspects and validates requests before egress
-2. **Record** Immutable event stream of prompt hashes, latency, and tokens
-3. **Redact** Real-time PII masking and secret prevention at the wire
-4. **Comply** Instant audit packages for EU AI Act, SOC 2, and GDPR
+1. **Enforce** OPA inspects and validates requests before egress.
+2. **Record** Immutable event stream of prompt hashes, latency, and tokens.
+3. **Redact** Real-time PII masking and secret prevention at the wire.
+4. **Comply** Instant audit packages for ISO 27001, SOC 2, and GDPR.
 
 ---
 
@@ -100,7 +103,7 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 <!-- pac: matrix x="effort to adopt" y="impact on risk" -->
 - **Prompt guidelines** cheap, and nobody follows them
-- **Gateway policy** one URL swap, every call governed
+- **ACME: Gateway policy** one URL swap, every call governed
 - **Manual audits** weeks of work per review
 - **Model retraining** months, and the risk moves elsewhere
 
@@ -116,13 +119,13 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 ---
 
-# Product roadmap
+# Product roadmap \ 2027
 
 <!-- pac: timeline -->
-- **Q1** Turnkey OPA policy bundles for EU AI Act Article 12 compliance
-- **Q2** Real-time semantic budget limits and anomalous spend throttling
-- **Q3** Air-gapped on-premise appliances and self-hosted VPC agents
-- **Q4** Native zero-trust egress connectors for sovereign European LLMs
+- **Q1** Turnkey OPA policy bundles for basic compliance.
+- **Q2** Real-time semantic budget limits and anomalous spend throttling.
+- **Q3** Air-gapped on-premise appliances and self-hosted VPC agents.
+- **Q4** Native zero-trust egress connectors for sovereign European LLMs.
 
 ---
 
@@ -136,11 +139,15 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 ---
 
+<!-- pac: layout split -->
+<!-- pac: prose size=small -->
 # Built by infrastructure engineers
 
+<!-- pac: full size=full align=right -->
 ![Founding team in a sunlit Nordic workshop studio](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80)
 
-Founded by former payment security and distributed systems leads from Pay More Inc and Bank of Tor. We built Acme after managing compliance across 40+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
+<!-- pac: prose size=small -->
+Founded by former payment security and distributed systems leads from More Inc and Bank of Tor. We built Acme after managing compliance across 400+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
 
 <!-- pac: columns -->
 - **40+** LLM services governed internally before Acme
@@ -152,9 +159,10 @@ Founded by former payment security and distributed systems leads from Pay More I
 <!-- pac:layout header align=center -->
 
 <!-- pac: prose align=center -->
-# Start governing AI in production today
+# Start enforcing AI in production today
 
 <!-- pac: prose size=small align=center -->
 Get in touch for a 30-minute architecture review or deploy a self-hosted trial.
 
+<!-- pac: full size=full -->
 ![Warm minimalist architectural interior](https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80)

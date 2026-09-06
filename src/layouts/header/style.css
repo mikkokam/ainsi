@@ -9,6 +9,8 @@
 
 /* the page's own image becomes the ground; the component did not have to know */
 [data-layout="header"] .pac-full { position: absolute; inset: 0; margin: 0; display: block; }
+/* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
+[data-layout="header"] .pac-full { margin: 0 !important; }
 /* main in the selector outranks the full component's size rules, which are emitted later */
 [data-layout="header"] main .pac-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
 [data-layout="header"] .pac-full::after {
