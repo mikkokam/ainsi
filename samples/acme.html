@@ -341,7 +341,7 @@ body[data-present] [data-current][data-layout="header"] .pac-full img {
 .pac-columns {
     list-style: none; margin: 0; padding: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-    column-gap: 2.2em; row-gap: var(--pac-gap);
+    column-gap: 1.4em; row-gap: var(--pac-gap);
 }
 .pac-columns__column { display: flex; flex-direction: column; gap: .35em; }
 .pac-columns__title { font-weight: var(--pac-strong); }
@@ -797,12 +797,12 @@ body[data-present] .pac-page[data-current] mark {
 <section class="pac-page" id="what-that-costs-them" data-page="3" data-layout="default">
 <main><article><h1>What that costs them</h1>
 
-<ul class="pac-columns" data-pac="columns">
+<ol class="pac-columns pac-columns--ordered" data-pac="columns">
     <li class="pac-columns__column"><span class="pac-columns__body">Customer audit failures when enterprise clients ask</span></li>
     <li class="pac-columns__column"><span class="pac-columns__body">Surprise token spikes discovered only at billing</span></li>
     <li class="pac-columns__column"><span class="pac-columns__body">Fragmented policies written in ad-hoc prompt code</span></li>
     <li class="pac-columns__column"><span class="pac-columns__body">Unchecked PII and secret leaks across <mark>shadow tools</mark></span></li>
-</ul></article></main>
+</ol></article></main>
 </section>
 <section class="pac-page" id="a-single-deterministic-gateway-in-front-of-every-model" data-page="4" data-layout="split">
 <main data-side="right"><article><div class="pac-prose pac-prose--small">

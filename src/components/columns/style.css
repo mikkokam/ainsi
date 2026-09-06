@@ -2,7 +2,7 @@
 .pac-columns {
     list-style: none; margin: 0; padding: 0;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-    column-gap: 2.2em; row-gap: var(--pac-gap);
+    column-gap: 1.4em; row-gap: var(--pac-gap);
 }
 .pac-columns__column { display: flex; flex-direction: column; gap: .35em; }
 .pac-columns__title { font-weight: var(--pac-strong); }
