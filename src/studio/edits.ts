@@ -6,7 +6,7 @@
 
 export interface Splice { start: number; end: number; text: string }
 
-export type TextKind = "heading1" | "heading2" | "heading3" | "heading4" | "heading5" | "paragraph" | "list" | "ordered" | "quote" | "code";
+export type TextKind = "heading1" | "heading2" | "heading3" | "heading4" | "heading5" | "paragraph" | "list" | "ordered" | "quote" | "alert" | "code";
 
 /** the entity kinds that are words with syntax around them; table and image carry what text cannot */
 export const textShaped = (kind: string): boolean => ["heading", "paragraph", "list", "quote", "code"].includes(kind);
@@ -44,6 +44,8 @@ export function markerOf(md: string): string | undefined {
  * either side, so a new list takes one they do not use and stays a list of its own.
  */
 export function retag(md: string, kind: string, to: TextKind, neighbours: (string | undefined)[] = []): string {
+    if (to === "alert") return withAlert(md, kind, alertOf(md) ?? "note");
+    if (kind === "quote" && alertOf(md)) md = withAlert(md, kind, null);   // out of an alert: the marker goes first
     const body = lines(md, kind).map(line => line.trim()).filter(Boolean);
     const free = (choices: string[]) => choices.find(c => !neighbours.includes(c)) ?? choices[0]!;
     switch (to) {

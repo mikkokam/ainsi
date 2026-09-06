@@ -101,3 +101,11 @@ test("an alert is a marker line on a quote: set, changed, removed, and text beco
     expect(alertOf("> x")).toBeUndefined();
     expect(parse(withAlert("plain words", "paragraph", "note")).doc.entities.map(e => e.kind)).toEqual(["quote"]);
 });
+
+test("alert is a kind of its own: in from any text, out through the marker", () => {
+    expect(retag("plain", "paragraph", "alert")).toBe("> [!NOTE]\n> plain");
+    expect(retag("> [!TIP]\n> said", "quote", "alert")).toBe("> [!TIP]\n> said");
+    expect(retag("> [!TIP]\n> said", "quote", "paragraph")).toBe("said");
+    expect(retag("> [!TIP]\n> said\n> twice", "quote", "list")).toBe("- said\n- twice");
+    expect(retag("> [!TIP]\n> said", "quote", "quote")).toBe("> said");
+});

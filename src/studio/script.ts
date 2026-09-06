@@ -219,14 +219,14 @@ function handleAt(at: HTMLElement): HTMLElement | null {
  */
 let menu: HTMLElement | undefined;
 
-type Family = "text" | "list" | "quote" | "code";
-const FAMILY: Record<Family, string> = { text: "Text", list: "Bullets", quote: "Quote", code: "Code" };
+type Family = "text" | "list" | "quote" | "alert" | "code";
+const FAMILY: Record<Family, string> = { text: "Text", list: "Bullets", quote: "Quote", alert: "Alert", code: "Code" };
 /** the convert buttons: a family each, lists twice because the marker is the whole difference */
-const CONVERT: [TextKind, string, IconName][] = [["paragraph", "Text", "text"], ["list", "Bullets", "list"], ["ordered", "Numbered", "ordered"], ["quote", "Quote", "quote"], ["code", "Code", "code"]];
+const CONVERT: [TextKind, string, IconName][] = [["paragraph", "Text", "text"], ["list", "Bullets", "list"], ["ordered", "Numbered", "ordered"], ["quote", "Quote", "quote"], ["alert", "Alert", "alert"], ["code", "Code", "code"]];
 const TEXT_LEVELS: [TextKind, string, string][] = [["paragraph", "Text", "¶"], ["heading1", "Heading 1", "#"], ["heading2", "Heading 2", "##"], ["heading3", "Heading 3", "###"], ["heading4", "Heading 4", "####"], ["heading5", "Heading 5", "#####"]];
 /** components that are a family in disguise; the convert buttons already cover them. Plain
  * rendering is a look for a list, a table or an image, and only a family for text. */
-const NOT_A_LOOK = ["quote", "lead"];
+const NOT_A_LOOK = ["quote", "alert", "lead"];
 const notALook = (family: Family | undefined) => (family && family !== "list" ? [...NOT_A_LOOK, "prose"] : NOT_A_LOOK);
 /** what the heuristic's plain rendering is called, by what it renders */
 const PLAIN: Record<string, string> = { list: "bullets", ordered: "numbered", quote: "quote", code: "code" };
@@ -264,35 +264,28 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     // how it shows: the looks that accept the target, the heuristic's own marked auto. A text
     // block has looks only when a component beyond plain rendering takes it.
     const accepted = block.origin === "directive" ? block.accepted : entity.accepted;
-    const looks = accepted.filter(name => !notALook(family).includes(name) && name !== "alert" && doc.components.some(c => c.name === name));
-    // an alert is a marker on the quote rather than a directive, so it is offered to text and
-    // quotes as a look and its kind as the option beneath it
-    const alerting = own && (family === "quote" || family === "text");
-    const isAlert = block.component === "alert";
-    const setAlert = (to: string | null) => splice({ start: entity.start, end: entity.end, text: withAlert(entity.md, entity.kind, to) });
-    const showLooks = looks.length > 0 || alerting || (!!block.directive && !notALook(family).includes(block.component));
+    const looks = accepted.filter(name => !notALook(family).includes(name) && doc.components.some(c => c.name === name));
+    const showLooks = looks.length > 0 || (!!block.directive && !notALook(family).includes(block.component));
     if (showLooks) {
         menu.append(divider());
         const showing = block.component === block.heuristic && !block.directive ? "auto" : block.component;
         const plain = (name: string) => (name === "prose" ? PLAIN[current ?? entity.kind] ?? "text" : name);
         const auto = `auto · ${plain(block.heuristic)}`;
-        menu.append(isAlert
-            ? dropdown("alert", [item("quote", "", false, () => setAlert(null)), item("alert", "", true, closeMenu)])
-            : dropdown(showing === "auto" ? auto : plain(block.component), [
-                item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
-                ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
-                ...(alerting ? [item("alert", "", false, () => setAlert("note"))] : []),
-            ]));
+        menu.append(dropdown(showing === "auto" ? auto : plain(block.component), [
+            item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
+            ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
+        ]));
     }
-    if (isAlert) {
+    // an alert's kind is its marker line; the chips rewrite that line
+    if (own && family === "alert") {
         const kind = alertOf(entity.md);
         const row = h("span", { class: "pac-studio__field" });
         for (const k of ALERT_KINDS) {
-            const chip = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: k, "aria-label": k, "data-active": k === kind, click: () => setAlert(k) });
+            const chip = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: k, "aria-label": k, "data-active": k === kind, click: () => splice({ start: entity.start, end: entity.end, text: withAlert(entity.md, entity.kind, k) }) });
             chip.innerHTML = ALERT_ICONS[k]!;
             row.append(chip);
         }
-        menu.append(row);
+        menu.append(divider(), row);
     }
     const component = doc.components.find(c => c.name === block.component);
     if (component?.fields.length && !showLooks) menu.append(divider());
@@ -336,7 +329,7 @@ function kindOf(entity: DocEntity): TextKind | undefined {
         }
         case "paragraph": return "paragraph";
         case "list": return /^\s*\d/.test(entity.md) ? "ordered" : "list";
-        case "quote": return "quote";
+        case "quote": return alertOf(entity.md) ? "alert" : "quote";
         case "code": return "code";
         default: return undefined;
     }
@@ -344,7 +337,7 @@ function kindOf(entity: DocEntity): TextKind | undefined {
 
 function familyOf(kind: TextKind): Family {
     if (kind === "list" || kind === "ordered") return "list";
-    if (kind === "quote" || kind === "code") return kind;
+    if (kind === "quote" || kind === "alert" || kind === "code") return kind;
     return "text";
 }
 
