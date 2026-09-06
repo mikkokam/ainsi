@@ -21,8 +21,19 @@ import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 
-interface DocEntity { id: string; kind: string; start: number; end: number; md: string }
-interface Doc { hash: string; source: string; file: string; entities: DocEntity[] }
+interface DocEntity {
+    id: string;
+    kind: string;
+    start: number;
+    end: number;
+    md: string;
+}
+interface Doc {
+    hash: string;
+    source: string;
+    file: string;
+    entities: DocEntity[];
+}
 
 type Caret = "start" | "end";
 type Mode = "inplace" | "overlay" | "insert";
@@ -62,7 +73,8 @@ const REOPEN = "pac-reopen";
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
 /** raw mode, when open: the whole file in one CodeMirror view over the rendered deck */
-let raw: { view: EditorView; container: HTMLElement; release(): void } | undefined;
+let raw:
+    { view: EditorView; container: HTMLElement; release(): void } | undefined;
 let discardArmed: ReturnType<typeof setTimeout> | undefined;
 
 init();
@@ -73,11 +85,17 @@ async function init(): Promise<void> {
 
     const scrolled = sessionStorage.getItem(SCROLL);
     if (scrolled) scrollTo(0, Number(scrolled));
-    addEventListener("scroll", () => sessionStorage.setItem(SCROLL, String(scrollY)), { passive: true });
+    addEventListener(
+        "scroll",
+        () => sessionStorage.setItem(SCROLL, String(scrollY)),
+        { passive: true },
+    );
 
-    document.addEventListener("click", event => {
+    document.addEventListener("click", (event) => {
         if (open || document.body.hasAttribute("data-present")) return;
-        const target = (event.target as HTMLElement).closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+        const target = (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-pac-entity], [data-pac-span]",
+        );
         if (!target) return;
         const range = rangeOf(target);
         if (!range) return;
@@ -95,8 +113,11 @@ async function init(): Promise<void> {
 
     // the viewer's menu announces itself on open and offers a slot; theme and export are
     // studio business, because both need the server and the player ships without one
-    document.addEventListener("pac:menu", event => {
-        const { panel, slot } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement };
+    document.addEventListener("pac:menu", (event) => {
+        const { panel, slot } = (event as CustomEvent).detail as {
+            panel: HTMLElement;
+            slot: HTMLElement;
+        };
         slot.append(
             menuItem("Edit source (E)", () => openRaw()),
             menuItem("Theme…", () => themeDrill(panel)),
@@ -104,18 +125,47 @@ async function init(): Promise<void> {
         );
     });
 
-    document.addEventListener("pac:keys", event => {
-        const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
-        if (mode === "Editing" && raw) rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
-        else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["empty", "deletes the block"]);
-        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"]);
+    document.addEventListener("pac:keys", (event) => {
+        const { mode, rows, mod, alt } = (event as CustomEvent).detail as {
+            mode: string;
+            rows: [string, string][];
+            mod: string;
+            alt: string;
+        };
+        if (mode === "Editing" && raw)
+            rows.push(
+                [`${mod} ⏎`, "save"],
+                [`${mod} F`, "find"],
+                ["esc", "cancel"],
+            );
+        else if (mode === "Editing")
+            rows.push(
+                [`${mod} ⏎`, "commit"],
+                ["esc", "cancel"],
+                ["↑ ↓ at the edge", "previous / next block"],
+                [`${mod} B`, "bold"],
+                [`${mod} I`, "italic"],
+                ["empty", "deletes the block"],
+            );
+        if (mode === "Studio")
+            rows.unshift(
+                ["click", "edit"],
+                [`${alt} click`, "add a block below"],
+                ["E", "edit the whole file"],
+            );
     });
 
     // a bare key, not a chord: ⌘E belongs to the browser's own Edit menu in Chromium, and a
     // single key can only fire in the one state the toggle is valid in, nothing focused
-    document.addEventListener("keydown", event => {
-        if (event.key !== "e" || event.metaKey || event.ctrlKey || event.altKey) return;
-        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "e" || event.metaKey || event.ctrlKey || event.altKey)
+            return;
+        if (
+            (event.target as HTMLElement).closest?.(
+                "input, textarea, [contenteditable]",
+            )
+        )
+            return;
         if (raw || open || document.body.hasAttribute("data-present")) return;
         event.preventDefault();
         openRaw();
@@ -132,7 +182,11 @@ function menuItem(text: string, onClick: () => void): HTMLButtonElement {
 }
 
 /** a drill replaces the menu's panel with one section, in place */
-function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void {
+function drill(
+    panel: HTMLElement,
+    title: string,
+    ...rows: HTMLElement[]
+): void {
     const header = document.createElement("div");
     header.className = "pac-menu__head";
     header.textContent = title;
@@ -140,12 +194,19 @@ function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void 
 }
 
 async function themeDrill(panel: HTMLElement): Promise<void> {
-    const { themes, current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
-    drill(panel, "Theme", ...themes.map(theme => {
-        const row = menuItem(theme, () => splice(themeChange(theme)));
-        if (theme === current) row.setAttribute("data-active", "");
-        return row;
-    }));
+    const { themes, current } = (await (await fetch("/__themes")).json()) as {
+        themes: string[];
+        current: string;
+    };
+    drill(
+        panel,
+        "Theme",
+        ...themes.map((theme) => {
+            const row = menuItem(theme, () => splice(themeChange(theme)));
+            if (theme === current) row.setAttribute("data-active", "");
+            return row;
+        }),
+    );
 }
 
 /*
@@ -154,51 +215,91 @@ async function themeDrill(panel: HTMLElement): Promise<void> {
  */
 function exportDrill(panel: HTMLElement): void {
     const target = `${doc.file.replace(/\.[^.]+$/, "")}.pdf`;
-    drill(panel, "Export", menuItem(`PDF, as ${target}`, async () => {
-        hint(`writing ${target}…`);
-        try {
-            const response = await fetch("/__pdf", { method: "POST" });
-            if (response.ok) hint(`wrote ${target}`);
-            else hint(await response.text() || `export failed: ${response.status}`, true);
-        } catch {
-            hint("export failed: server unreachable", true);
-        }
-    }));
+    drill(
+        panel,
+        "Export",
+        menuItem(`PDF, as ${target}`, async () => {
+            hint(`Writing ${target}…`);
+            try {
+                const response = await fetch("/__pdf", { method: "POST" });
+                if (response.ok) hint(`Wrote ${target}`, false, 2500);
+                else
+                    hint(
+                        (await response.text()) ||
+                            `export failed: ${response.status}`,
+                        true,
+                        6000,
+                    );
+            } catch {
+                hint("Export failed: server unreachable", true, 6000);
+            }
+        }),
+    );
 }
 
 /** the theme is one frontmatter line; changing it is a splice like any other edit */
-function themeChange(theme: string): { start: number; end: number; text: string } {
+function themeChange(theme: string): {
+    start: number;
+    end: number;
+    text: string;
+} {
     const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
     if (matter) {
         const line = /^theme:.*$/m.exec(matter[1]!);
         if (line) {
             const start = 4 + line.index;
-            return { start, end: start + line[0].length, text: `theme: ${theme}` };
+            return {
+                start,
+                end: start + line[0].length,
+                text: `theme: ${theme}`,
+            };
         }
         return { start: 4, end: 4, text: `theme: ${theme}\n` };
     }
     return { start: 0, end: 0, text: `---\ntheme: ${theme}\n---\n\n` };
 }
 
-interface Range { start: number; end: number; md: string; kind: string }
+interface Range {
+    start: number;
+    end: number;
+    md: string;
+    kind: string;
+}
 
 /** an entity handle is one slice; a block handle spans the entities its component inlined */
 function rangeOf(target: HTMLElement): Range | undefined {
-    const byId = (id: string | undefined) => doc.entities.find(e => e.id === id);
+    const byId = (id: string | undefined) =>
+        doc.entities.find((e) => e.id === id);
     if (target.dataset.pacEntity) {
         const entity = byId(target.dataset.pacEntity);
-        return entity && { start: entity.start, end: entity.end, md: entity.md, kind: entity.kind };
+        return (
+            entity && {
+                start: entity.start,
+                end: entity.end,
+                md: entity.md,
+                kind: entity.kind,
+            }
+        );
     }
     const [firstId, lastId] = (target.dataset.pacSpan ?? "").split(" ");
     const first = byId(firstId);
     const last = byId(lastId);
     return first && last
-        ? { start: first.start, end: last.end, md: doc.source.slice(first.start, last.end), kind: "block" }
+        ? {
+              start: first.start,
+              end: last.end,
+              md: doc.source.slice(first.start, last.end),
+              kind: "block",
+          }
         : undefined;
 }
 
 /** every edit target in document order: entity handles and the block handles between them */
-const wrappers = () => [...document.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];
+const wrappers = () => [
+    ...document.querySelectorAll<HTMLElement>(
+        "[data-pac-entity], [data-pac-span]:not([data-pac-entity])",
+    ),
+];
 
 /** ids are content hashes and change on every commit, so flow lands by position */
 function openAt(index: number, caret: Caret): void {
@@ -209,12 +310,18 @@ function openAt(index: number, caret: Caret): void {
 }
 
 function edit(target: HTMLElement, range: Range, caret: Caret): void {
-    const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
+    const mode: Mode =
+        range.kind === "heading" || range.kind === "paragraph"
+            ? "inplace"
+            : "overlay";
     openEditor(target, {
         initial: range.md,
         caret,
         mode,
-        commit: text => (text === range.md ? undefined : { start: range.start, end: range.end, text }),
+        commit: (text) =>
+            text === range.md
+                ? undefined
+                : { start: range.start, end: range.end, text },
     });
 }
 
@@ -224,7 +331,10 @@ function insertAfter(target: HTMLElement, at: number): void {
         caret: "end",
         mode: "insert",
         placeholder: "markdown… a blank line makes two blocks",
-        commit: text => (text.trim() ? { start: at, end: at, text: `\n\n${text.trim()}` } : undefined),
+        commit: (text) =>
+            text.trim()
+                ? { start: at, end: at, text: `\n\n${text.trim()}` }
+                : undefined,
     });
 }
 
@@ -234,12 +344,14 @@ interface EditorOptions {
     mode: Mode;
     placeholder?: string;
     /** undefined means nothing changed: close with no write */
-    commit(text: string): { start: number; end: number; text: string } | undefined;
+    commit(
+        text: string,
+    ): { start: number; end: number; text: string } | undefined;
 }
 
 function openEditor(target: HTMLElement, options: EditorOptions): void {
     const area = document.createElement("textarea");
-    area.rows = 1;                                      // the default of 2 floors scrollHeight a row too high
+    area.rows = 1; // the default of 2 floors scrollHeight a row too high
     area.className = `pac-studio__editor pac-studio__editor--${options.mode}`;
     area.value = options.initial;
     if (options.placeholder) area.placeholder = options.placeholder;
@@ -248,7 +360,16 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         // measured and styled before the element hides, so the textarea takes its box
         const rect = target.getBoundingClientRect();
         const style = getComputedStyle(target);
-        for (const property of ["font-family", "font-size", "font-weight", "font-style", "line-height", "letter-spacing", "text-align", "margin"] as const) {
+        for (const property of [
+            "font-family",
+            "font-size",
+            "font-weight",
+            "font-style",
+            "line-height",
+            "letter-spacing",
+            "text-align",
+            "margin",
+        ] as const) {
             area.style.setProperty(property, style.getPropertyValue(property));
         }
         area.style.minHeight = `${rect.height}px`;
@@ -294,34 +415,51 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         // the editor stays, frozen, until the rebuilt page arrives: closing it now would
         // flash the old rendered value for the length of the commit round trip
         area.readOnly = true;
-        release();      // this write causes the next reload; a stale hash 409s and reloads anyway
+        release(); // this write causes the next reload; a stale hash 409s and reloads anyway
         // the write reloads the page, so the flow target survives in sessionStorage
-        if (flowTo !== undefined) sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
+        if (flowTo !== undefined)
+            sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
         await splice(change);
     };
 
     area.addEventListener("blur", () => commit());
-    area.addEventListener("keydown", event => {
+    area.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
             event.preventDefault();
             done = true;
             close();
             return;
         }
-        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); commit(); return; }
-        if ((event.key === "b" || event.key === "i") && (event.metaKey || event.ctrlKey)) {
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+            event.preventDefault();
+            commit();
+            return;
+        }
+        if (
+            (event.key === "b" || event.key === "i") &&
+            (event.metaKey || event.ctrlKey)
+        ) {
             event.preventDefault();
             mark(area, event.key === "b" ? "**" : "*");
             return;
         }
         const index = wrappers().indexOf(target);
-        if (index === -1) return;                       // a block handle has no place in the flow
+        if (index === -1) return; // a block handle has no place in the flow
         const collapsed = area.selectionStart === area.selectionEnd;
-        if (event.key === "ArrowDown" && collapsed && area.selectionStart === area.value.length) {
+        if (
+            event.key === "ArrowDown" &&
+            collapsed &&
+            area.selectionStart === area.value.length
+        ) {
             event.preventDefault();
             commit(index + 1, "start");
         }
-        if (event.key === "ArrowUp" && collapsed && area.selectionStart === 0 && index > 0) {
+        if (
+            event.key === "ArrowUp" &&
+            collapsed &&
+            area.selectionStart === 0 &&
+            index > 0
+        ) {
             event.preventDefault();
             commit(index - 1, "end");
         }
@@ -361,7 +499,7 @@ async function openRaw(): Promise<void> {
             EditorView.lineWrapping,
             highlightSelectionMatches(),
             keymap.of([
-                ...searchKeymap,            // before ours, so Escape closes an open search first
+                ...searchKeymap, // before ours, so Escape closes an open search first
                 { key: "Mod-Enter", run: () => (commitRaw(), true) },
                 { key: "Mod-s", run: () => (commitRaw(), true) },
                 { key: "Escape", run: () => (cancelRaw(), true) },
@@ -376,7 +514,11 @@ async function openRaw(): Promise<void> {
     view.focus();
 }
 
-function barButton(text: string, key: string, onClick: () => void): HTMLButtonElement {
+function barButton(
+    text: string,
+    key: string,
+    onClick: () => void,
+): HTMLButtonElement {
     const element = document.createElement("button");
     element.className = "pac-studio__rawbutton";
     element.type = "button";
@@ -420,7 +562,11 @@ function closeRaw(): void {
     if (pendingReload && holding === 0) location.reload();
 }
 
-async function splice(change: { start: number; end: number; text: string }): Promise<void> {
+async function splice(change: {
+    start: number;
+    end: number;
+    text: string;
+}): Promise<void> {
     let failure: string | undefined;
     try {
         const response = await fetch("/__edit", {
@@ -429,7 +575,10 @@ async function splice(change: { start: number; end: number; text: string }): Pro
             body: JSON.stringify({ hash: doc.hash, ...change }),
         });
         if (!response.ok) {
-            failure = response.status === 409 ? "the file changed under the studio; reloading" : `edit failed: ${response.status}`;
+            failure =
+                response.status === 409
+                    ? "the file changed under the studio; reloading"
+                    : `edit failed: ${response.status}`;
         }
     } catch {
         failure = "edit failed: server unreachable; reloading";
@@ -454,10 +603,19 @@ function size(area: HTMLTextAreaElement): void {
     area.style.height = `${area.scrollHeight + area.offsetHeight - area.clientHeight}px`;
 }
 
-function hint(text: string, alarm = false): void {
+/** a hint stays until replaced; one given a lifetime fades out on its own after that many ms */
+function hint(text: string, alarm = false, lifetime?: number): void {
     document.querySelector(".pac-studio__hint")?.remove();
     const bar = document.createElement("div");
     bar.className = `pac-studio__hint${alarm ? " pac-studio__hint--alarm" : ""}`;
     bar.textContent = text;
     document.body.append(bar);
+    if (lifetime === undefined) return;
+    setTimeout(() => {
+        if (!bar.isConnected) return;
+        bar.setAttribute("data-fading", "");
+        bar.addEventListener("transitionend", () => bar.remove(), {
+            once: true,
+        });
+    }, lifetime);
 }

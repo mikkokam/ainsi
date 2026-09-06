@@ -131,6 +131,8 @@ body[data-pac-raw] { overflow: hidden; }
     pointer-events: none;
 }
 
+.pac-studio__hint { transition: opacity .6s ease; }
+.pac-studio__hint[data-fading] { opacity: 0; }
 .pac-studio__hint--alarm { background: rgba(178, 34, 34, 0.92); }
 
 body[data-present] .pac-studio__hint { display: none; }
