@@ -2,6 +2,7 @@ import { z } from "zod";
 import { img, imageOf, type ComponentDefinition } from "../../kit";
 
 export default {
+    about: "an image beside its text; the text is what follows the image",
     accepts: entities => entities.some(e => !!imageOf(e)),
     props: z.object({
         side: z.enum(["left", "right"]).default("right"),

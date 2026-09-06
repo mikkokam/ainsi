@@ -2,6 +2,7 @@ import { z } from "zod";
 import { labelled, listOf, type ComponentDefinition } from "../../kit";
 
 export default {
+    about: "a list, one step per item; a leading **bold** run is the step label",
     accepts: entities => !!listOf(entities),
     props: z.object({
         axis: z.enum(["horizontal", "vertical"]).default("horizontal"),

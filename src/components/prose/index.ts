@@ -8,6 +8,7 @@ import { flow, type ComponentDefinition } from "../../kit";
  * still text, so it stays out of the outline and the PDF's bookmarks.
  */
 export default {
+    about: "markdown as written, with a size and an alignment",
     accepts: () => true,
     props: z.object({
         size: z.enum(["small", "normal", "large", "huge"]).default("normal"),

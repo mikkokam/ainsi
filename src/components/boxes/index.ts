@@ -2,6 +2,7 @@ import { z } from "zod";
 import { labelled, listOf, type ComponentDefinition } from "../../kit";
 
 export default {
+    about: "a list, one card per item; a leading **bold** run is the card title",
     accepts: entities => !!listOf(entities),
     props: z.object({
         /** false: boxes take a shared width and wrap. true: they grow to fill the row. */

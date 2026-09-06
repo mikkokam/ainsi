@@ -2,6 +2,7 @@ import { z } from "zod";
 import { type ComponentDefinition } from "../../kit";
 
 export default {
+    about: "a heading and one paragraph, as a page opener",
     accepts: entities => entities[0]?.kind === "heading",
     props: z.object({}).passthrough(),
     splittable: false,

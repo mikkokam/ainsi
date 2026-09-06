@@ -14,6 +14,8 @@ export interface RenderContext {
 
 /** what a component folder's index.ts default-exports; the name comes from the folder */
 export interface ComponentDefinition {
+    /** one line on what the component takes and does with it; the studio shows it where the component is picked */
+    about: string;
     accepts: (entities: Entity[]) => boolean;
     props: ZodTypeAny;
     splittable: boolean;

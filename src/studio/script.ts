@@ -39,7 +39,7 @@ interface DocBlock {
     terminator?: { start: number; end: number };
 }
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
-interface DocComponent { name: string; fields: Field[] }
+interface DocComponent { name: string; about: string; fields: Field[] }
 interface Doc { hash: string; source: string; file: string; entities: DocEntity[]; blocks: DocBlock[]; components: DocComponent[] }
 
 type Caret = "start" | "end";
@@ -279,7 +279,7 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
         const auto = `auto · ${plain(block.heuristic)}`;
         menu.append(dropdown(showing === "auto" ? auto : plain(block.component), [
             item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
-            ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
+            ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), doc.components.find(c => c.name === name)?.about ?? "", name === showing, () => splice(structural(target, name)))),
         ]));
     }
     // an alert's kind is its marker line; the chips rewrite that line

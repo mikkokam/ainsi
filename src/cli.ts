@@ -72,7 +72,7 @@ interface DocBlock {
     directive?: { start: number; end: number };
     terminator?: { start: number; end: number };
 }
-interface DocComponent { name: string; fields: Field[] }
+interface DocComponent { name: string; about: string; fields: Field[] }
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
 let doc = {
     hash: "", source: "", file: "",
@@ -167,7 +167,7 @@ function describeBlocks(pages: Page[], entities: Entity[], directives: Directive
 
 /** the palette: each component's fields from its own zod schema */
 function describeComponents(registry: Registry): DocComponent[] {
-    return registry.all().map(c => ({ name: c.name, fields: fields(c.props) }));
+    return registry.all().map(c => ({ name: c.name, about: c.about, fields: fields(c.props) }));
 }
 
 function fields(schema: ZodTypeAny): Field[] {

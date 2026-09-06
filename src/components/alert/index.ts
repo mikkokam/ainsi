@@ -10,6 +10,7 @@ export const alertKind = (entity: Entity): string | undefined =>
     entity.kind === "quote" ? MARKER.exec(entity.text)?.[1]?.toLowerCase() : undefined;
 
 export default {
+    about: "a blockquote opening with [!NOTE], [!TIP], [!IMPORTANT], [!WARNING] or [!CAUTION]",
     accepts: entities => entities.length === 1 && !!alertKind(entities[0]!),
     props: z.object({}).passthrough(),
     splittable: false,
