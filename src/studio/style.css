@@ -22,6 +22,14 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
     overflow: hidden;
 }
 
+/* frozen mid-commit: the pulse says the round trip is running, not stuck */
+@keyframes pac-studio-committing {
+    50% { opacity: .45; }
+}
+.pac-studio__editor[readonly] {
+    animation: pac-studio-committing 1.2s ease-in-out .3s infinite;
+}
+
 /* wears the hidden element's computed type and margin, set by the script. Zero border and
    padding so its text wraps where the element's did; the edge is an outline, which costs
    no layout space. */

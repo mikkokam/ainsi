@@ -268,6 +268,9 @@ const server = serve({
                 && start >= 0 && end >= start && end <= source.length && typeof text === "string";
             if (!sane) return new Response("bad splice", { status: 400 });
             await Bun.write(deck, source.slice(0, start) + text + source.slice(end));
+            // the rebuild is scheduled here rather than left to the watcher: a missed or
+            // misnamed watch event would leave the studio's editor waiting for a reload forever
+            server.changed(basename(deck));
             return new Response("ok");
         }
         return undefined;

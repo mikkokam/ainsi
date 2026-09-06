@@ -34,6 +34,8 @@ export interface ServeOptions {
 
 export interface Server {
     readonly url: string;
+    /** a change a route made itself; a watcher event for the same write coalesces into it */
+    changed(what: string): void;
     stop(): Promise<void>;
 }
 
@@ -109,6 +111,7 @@ export function serve(options: ServeOptions): Server {
 
     return {
         url: `http://localhost:${server.port}`,
+        changed: schedule,
         async stop() {
             clearTimeout(pending);
             for (const watcher of watchers) watcher.close();

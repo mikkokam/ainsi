@@ -142,17 +142,23 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
-/* the stroke is a shorthand so position and size are set: the draw animation grows background-size from zero */
+/*
+ * The highlighter stroke is a background, not a pseudo: a pseudo box on an inline spans
+ * the bounding rect of its line boxes and breaks the moment a mark wraps. The gradient's
+ * slight angle cuts the start edge like a chisel tip; the ink is uneven along the run and
+ * fades out to nothing at the end. The shorthand sets position and size, so the draw
+ * animation can grow background-size from zero.
+ */
 .pac-page mark {
-    color: inherit; padding: 0 .15em;
-    border-radius: .5em .2em .55em .25em / .45em .55em .2em .5em;
-    background: linear-gradient(93deg,
-        color-mix(in srgb, var(--pac-accent) 14%, transparent),
-        color-mix(in srgb, var(--pac-accent) 33%, transparent) 6%,
-        color-mix(in srgb, var(--pac-accent) 25%, transparent) 44%,
-        color-mix(in srgb, var(--pac-accent) 34%, transparent) 72%,
-        color-mix(in srgb, var(--pac-accent) 19%, transparent) 96%,
-        color-mix(in srgb, var(--pac-accent) 8%, transparent)
+    color: inherit; padding: .05em .25em .05em .15em;
+    border-radius: .15em;
+    background: linear-gradient(100deg,
+        transparent .12em,
+        color-mix(in srgb, var(--pac-accent) 38%, transparent) .2em,
+        color-mix(in srgb, var(--pac-accent) 28%, transparent) 30%,
+        color-mix(in srgb, var(--pac-accent) 33%, transparent) 60%,
+        color-mix(in srgb, var(--pac-accent) 22%, transparent) 85%,
+        color-mix(in srgb, var(--pac-accent) 4%, transparent)
     ) 0 0 / 100% 100% no-repeat;
 }
 .pac-page kbd { font: .85em var(--pac-font-mono); padding: .1em .4em; border: 1px solid var(--pac-rule); border-bottom-width: 2px; border-radius: .3em; }
@@ -596,7 +602,7 @@ body[data-present] [data-current] .pac-timeline__marker {
     position: fixed; inset: 0; z-index: 90;
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 1.25rem; align-content: start;
     padding: 4.5rem 1.5rem 1.5rem;
     background: rgb(240 243 246 / 97%);
@@ -728,10 +734,11 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
  */
 @keyframes pac-mark-draw {
     from { background-size: 0% 100%; }
+    to { background-size: 100% 100%; }
 }
 
 body[data-present] .pac-page[data-current] mark {
-    animation: pac-mark-draw calc(var(--pac-motion) * .55) var(--pac-ease) calc(var(--pac-motion) * .7) backwards;
+    animation: pac-mark-draw calc(var(--pac-motion) * .85) var(--pac-ease) calc(var(--pac-motion) * 1.15) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -791,7 +798,7 @@ body[data-present] .pac-page[data-current] mark {
 <section class="pac-page" id="fast-growing-companies-adopt-ai-faster-than-they-can-govern-it" data-page="2" data-layout="default">
 <main><article><div class="pac-lead" data-pac="lead">
     <h1 class="pac-lead__title">Fast-growing companies adopt AI faster than they can govern it</h1>
-    <div class="pac-lead__body"><p>A fifty-person engineering team might now connect eight model <kbd>providers</kbd> across product, support, and <code>internal</code> tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.</p></div>
+    <div class="pac-lead__body"><p>A fifty-person <mark>engineering team</mark> might now connect eight model <kbd>providers</kbd> across product, support, and <code>internal</code> tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.</p></div>
 </div></article></main>
 </section>
 <section class="pac-page" id="what-that-costs-them" data-page="3" data-layout="default">

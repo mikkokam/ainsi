@@ -694,6 +694,7 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
         // the editor stays, frozen, until the rebuilt page arrives: closing it now would
         // flash the old rendered value for the length of the commit round trip
         area.readOnly = true;
+        hint("saving…");
         editor.holds = false;   // this write causes the next reload; a stale hash 409s and reloads anyway
         // the write reloads the page, so the flow target survives in sessionStorage
         if (flowTo !== undefined) sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
@@ -786,6 +787,7 @@ async function openRaw(): Promise<void> {
         // frozen, not closed, until the rebuilt page arrives; same reasoning as the block editor
         container.setAttribute("data-committing", "");
         view.contentDOM.setAttribute("contenteditable", "false");
+        hint("saving…");
         if (chrome?.kind === "raw") chrome.holds = false;
         await splice({ start: 0, end: doc.source.length, text });
     }
@@ -824,8 +826,12 @@ async function splice(change: { start: number; end: number; text: string }): Pro
         sessionStorage.removeItem(REOPEN);
         hint(failure, true);
         setTimeout(() => location.reload(), 900);
+        return;
     }
-    // on success the watcher rebuilds and the reload arrives over the existing SSE channel
+    // on success the server rebuilds and the reload arrives over the SSE channel; if it
+    // never does (the rebuild threw, the channel dropped), the page frees itself rather
+    // than leave a frozen editor. Generous, so a slow fit pass is not cut short.
+    setTimeout(() => location.reload(), 5000);
 }
 
 function mark(area: HTMLTextAreaElement, marker: string): void {
