@@ -9,7 +9,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 const THEMES = resolve(import.meta.dir, "../themes");
 
 test("layouts are discovered by folder and default is always present", () => {
-    expect(layouts.names().sort()).toEqual(["default", "header", "split"]);
+    expect(layouts.names().sort()).toEqual(["default", "header", "section", "split"]);
     expect(layouts.get("default")).toBeDefined();
 });
 
@@ -69,12 +69,30 @@ test("a layout that drops the content is reported", async () => {
     expect(diagnostics.some(d => d.message.includes("dropped the content"))).toBe(true);
 });
 
-test("only default ships a template; the rest are stylesheets that inherit it", async () => {
-    for (const name of ["header", "split"]) {
-        expect(await Bun.file(resolve(LAYOUTS, name, "index.ts")).exists()).toBe(false);
-        expect(layouts.get(name)!.css).toBeTruthy();
+test("only default ships a template; the rest declare props at most and inherit its render", () => {
+    for (const name of ["header", "split", "section"]) {
+        expect(layouts.get(name)!.render).toBe(layouts.get("default")!.render);
     }
-    expect(await Bun.file(resolve(LAYOUTS, "default/index.ts")).exists()).toBe(true);
+    for (const name of ["header", "split"]) expect(layouts.get(name)!.css).toBeTruthy();
+});
+
+test("a tone prop lands on main and the engine paints the ground from it", () => {
+    const { html } = build("<!-- pac:layout default tone=accent -->\n\n# T\n\na\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<main data-tone="accent">');
+    expect(html).toContain('main[data-tone="accent"]');
+});
+
+test("a section is on the accent ground unless its tone says otherwise", () => {
+    const { html, pages } = build("<!-- pac:layout section -->\n\n# One\n", { registry, layouts, themeCss: "" });
+    expect(pages[0]!.layoutProps).toMatchObject({ tone: "accent" });
+    expect(html).toContain('<main data-tone="accent">');
+    const grounded = build("<!-- pac:layout section tone=ground -->\n\n# One\n", { registry, layouts, themeCss: "" });
+    expect(grounded.pages[0]!.layoutProps).toMatchObject({ tone: "ground" });
+});
+
+test("a frontmatter layout gets its schema's defaults too", () => {
+    const { pages } = build("---\nlayout: section\n---\n\n# One\n", { registry, layouts, themeCss: "" });
+    expect(pages[0]!.layoutProps).toMatchObject({ tone: "accent" });
 });
 
 test("a css-only layout renders the default markup and reaches its css", () => {

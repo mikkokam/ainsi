@@ -74,11 +74,24 @@ interface DocBlock {
 }
 interface DocComponent { name: string; about: string; fields: Field[] }
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
+/** a page as the studio addresses it: its entities, its layout, and the directive that set it */
+interface DocPage {
+    ids: string[];
+    layout: string;
+    props: Record<string, unknown>;
+    first: number;
+    held: boolean;
+    directive?: { start: number; end: number };
+}
+interface DocLayout { name: string; fields: Field[] }
 let doc = {
     hash: "", source: "", file: "",
+    layout: "default",
     entities: [] as { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }[],
     blocks: [] as DocBlock[],
+    pages: [] as DocPage[],
     components: [] as DocComponent[],
+    layouts: [] as DocLayout[],
 };
 let currentTheme = "default";
 const studio = editing ? await loadStudio() : undefined;
@@ -108,6 +121,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
             hash: Bun.hash(source).toString(16),
             source,
             file: basename(deck),
+            layout: settings.layout,
             entities: parsed.doc.entities.map(e => ({
                 id: e.id,
                 kind: e.kind,
@@ -117,7 +131,11 @@ async function build(): Promise<{ html: string; roots: string[] }> {
                 accepted: registry.all().filter(c => c.accepts([e])).map(c => c.name),
             })),
             blocks: describeBlocks(assembled.pages, parsed.doc.entities, parsed.doc.directives, registry),
+            pages: describePages(assembled.pages, parsed.doc.entities, parsed.doc.directives, settings),
             components: describeComponents(registry),
+            layouts: layouts.all()
+                .sort((a, b) => Number(b.name === "default") - Number(a.name === "default") || a.name.localeCompare(b.name))
+                .map(l => ({ name: l.name, fields: fields(l.props) })),
         };
     }
 
@@ -162,6 +180,27 @@ function describeBlocks(pages: Page[], entities: Entity[], directives: Directive
                 ...(terminator ? { terminator: { start: terminator.start, end: terminator.end } } : {}),
             };
         });
+    });
+}
+
+/** every page with its layout, the directive that set it, and whether that directive is the page break */
+function describePages(pages: Page[], entities: Entity[], directives: Directive[], settings: Settings): DocPage[] {
+    return pages.map(page => {
+        const own = page.blocks.flatMap(b => b.entities);
+        const ids = own.map(e => e.id);
+        const directive = directives.filter(d => d.kind === "layout" && d.before && ids.includes(d.before)).at(-1);
+        const at = entities.findIndex(e => e.id === ids[0]);
+        const opensAnyway = at === 0
+            || entities[at - 1]!.kind === "break"
+            || (settings.h1StartsPage && own[0]!.kind === "heading" && own[0]!.depth === 1);
+        return {
+            ids,
+            layout: page.layout,
+            props: page.layoutProps,
+            first: own[0]!.node.position.start.offset as number,
+            held: !!directive && !opensAnyway,
+            ...(directive ? { directive: { start: directive.start, end: directive.end } } : {}),
+        };
     });
 }
 

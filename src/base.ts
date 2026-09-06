@@ -28,6 +28,33 @@ body.pac {
 }
 
 /*
+ * Tone: a page's ground, flipped to the accent or to the ink, set by the layout's tone prop
+ * landing on main as a data attribute. The theme's values are stashed on the page first,
+ * because a var() reads the value on its own element: remapping --pac-accent and building
+ * the ground from --pac-accent on the same element would read the remap, not the theme.
+ * The remap is what keeps every component legible on the new ground without knowing about it.
+ */
+.pac-page {
+    --pac-page-ink: var(--pac-ink);
+    --pac-page-ground: var(--pac-ground);
+    --pac-page-accent: var(--pac-accent);
+    --pac-page-accent-ink: var(--pac-accent-ink);
+}
+.pac-page main[data-tone="accent"] { --pac-tone-bg: var(--pac-page-accent); --pac-tone-ink: var(--pac-page-accent-ink); }
+.pac-page main[data-tone="inverse"] { --pac-tone-bg: var(--pac-page-ink); --pac-tone-ink: var(--pac-page-ground); }
+.pac-page main[data-tone="accent"], .pac-page main[data-tone="inverse"] {
+    background: var(--pac-tone-bg);
+    color: var(--pac-tone-ink);
+    --pac-ink: var(--pac-tone-ink);
+    --pac-ink-soft: color-mix(in srgb, var(--pac-tone-ink) 72%, transparent);
+    --pac-accent: var(--pac-tone-ink);
+    --pac-accent-ink: var(--pac-tone-bg);
+    --pac-ground: var(--pac-tone-bg);
+    --pac-surface: color-mix(in srgb, var(--pac-tone-ink) 8%, transparent);
+    --pac-rule: color-mix(in srgb, var(--pac-tone-ink) 30%, transparent);
+}
+
+/*
  * Page number, in the scroll view only. It takes currentColor, so it reads correctly over a
  * header page's image without the layout having to say anything.
  */

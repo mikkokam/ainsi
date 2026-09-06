@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { alertOf, directiveLine, markerOf, remove, render, retag, withAlert, type Target } from "../src/studio/edits";
+import { alertOf, directiveLine, markerOf, relayout, remove, render, retag, withAlert, type Target } from "../src/studio/edits";
 
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -11,7 +11,7 @@ const apply = (source: string, splice: { start: number; end: number; text: strin
     source.slice(0, splice.start) + splice.text + source.slice(splice.end);
 
 const blocksOf = (md: string) =>
-    assemble(md, { registry, layouts, themeCss: "" }).pages.flatMap(p => p.blocks.map(b => [b.component, b.entities.length]));
+    assemble(md, { registry, layouts }).pages.flatMap(p => p.blocks.map(b => [b.component, b.entities.length]));
 
 /** the target the studio builds for an entity: its slice plus what governs and bounds it */
 function targetOf(source: string, index: number): Target {
@@ -108,4 +108,55 @@ test("alert is a kind of its own: in from any text, out through the marker", () 
     expect(retag("> [!TIP]\n> said", "quote", "paragraph")).toBe("said");
     expect(retag("> [!TIP]\n> said\n> twice", "quote", "list")).toBe("- said\n- twice");
     expect(retag("> [!TIP]\n> said", "quote", "quote")).toBe("> said");
+});
+
+/** the page target the studio builds: the first entity's offset plus the governing directive */
+function pageOf(source: string, index: number) {
+    const { doc } = parse(source);
+    const { pages } = assemble(source, { registry, layouts });
+    const ids = pages[index]!.blocks.flatMap(b => b.entities.map(e => e.id));
+    const directive = doc.directives.filter(d => d.kind === "layout" && d.before && ids.includes(d.before)).at(-1);
+    const first = doc.entities.find(e => e.id === ids[0])!;
+    const at = doc.entities.findIndex(e => e.id === ids[0]);
+    const opensAnyway = at === 0 || doc.entities[at - 1]!.kind === "break";
+    return {
+        first: first.node.position.start.offset as number,
+        held: !!directive && !opensAnyway,
+        ...(directive ? { directive: { start: directive.start, end: directive.end } } : {}),
+    };
+}
+
+test("relayout writes one directive line before the page's first entity", () => {
+    const source = "# One\n\na\n\n---\n\n# Two\n\nb\n";
+    const after = apply(source, relayout(source, pageOf(source, 1), "default", "section", { tone: "inverse" })!);
+    expect(after).toBe("# One\n\na\n\n---\n\n<!-- pac: layout section tone=inverse -->\n# Two\n\nb\n");
+    const { pages } = assemble(after, { registry, layouts });
+    expect(pages.map(p => p.layout)).toEqual(["default", "section"]);
+    expect(pages[1]!.layoutProps).toMatchObject({ tone: "inverse" });
+});
+
+test("relayout says nothing when the file already says it", () => {
+    const source = "# One\n\na\n";
+    expect(relayout(source, pageOf(source, 0), "default", "default")).toBeUndefined();
+});
+
+test("relayout rewrites an existing directive in place", () => {
+    const source = "---\n\n<!-- pac: layout header -->\n\n# Two\n\nb\n".replace("---\n\n", "# One\n\n---\n\n");
+    const after = apply(source, relayout(source, pageOf(source, 1), "default", "split", { side: "right" })!);
+    expect(after).toContain("<!-- pac: layout split side=right -->");
+    expect(after).not.toContain("layout header");
+});
+
+test("relayout removes a directive the deck's own layout makes redundant, when a break holds the page", () => {
+    const source = "# One\n\n---\n\n<!-- pac: layout header -->\n\n# Two\n";
+    const after = apply(source, relayout(source, pageOf(source, 1), "default", "default")!);
+    expect(after).toBe("# One\n\n---\n\n# Two\n");
+    expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
+});
+
+test("relayout keeps a directive that is itself the page break, as an explicit default", () => {
+    const source = "# One\n\n<!-- pac: layout header -->\n\n# Two\n";
+    const after = apply(source, relayout(source, pageOf(source, 1), "default", "default")!);
+    expect(after).toBe("# One\n\n<!-- pac: layout default -->\n\n# Two\n");
+    expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
 });

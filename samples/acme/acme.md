@@ -23,6 +23,7 @@ Governance and policy solution for production AI
 3. **Proof** what a customer got in under an hour
 4. **Roadmap and pricing** where this goes and what it costs
 
+
 ---
 
 # Fast-growing companies adopt AI faster than they can govern it
@@ -43,9 +44,8 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 
 ---
 
-<!-- pac:layout split side=right -->
-
 <!-- pac: prose size=small caps -->
+<!-- pac: layout split side=right -->
 How does it work
 
 <!-- pac: prose size=small -->

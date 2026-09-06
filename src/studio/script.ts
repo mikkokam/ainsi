@@ -23,9 +23,10 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, alertOf, markerOf, remove, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, alertOf, markerOf, relayout, remove, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
+import { barButton, control, divider, drill, dropdown, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
 
 interface DocEntity { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }
 interface DocBlock {
@@ -38,14 +39,27 @@ interface DocBlock {
     directive?: { start: number; end: number };
     terminator?: { start: number; end: number };
 }
-interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
 interface DocComponent { name: string; about: string; fields: Field[] }
-interface Doc { hash: string; source: string; file: string; entities: DocEntity[]; blocks: DocBlock[]; components: DocComponent[] }
+interface DocPage {
+    ids: string[];
+    layout: string;
+    props: Record<string, unknown>;
+    first: number;
+    held: boolean;
+    directive?: { start: number; end: number };
+}
+interface DocLayout { name: string; fields: Field[] }
+interface Doc {
+    hash: string; source: string; file: string;
+    layout: string;
+    entities: DocEntity[]; blocks: DocBlock[]; pages: DocPage[];
+    components: DocComponent[]; layouts: DocLayout[];
+}
 
 type Caret = "start" | "end";
 type Mode = "inplace" | "overlay" | "insert" | "deck";
 
-let doc: Doc = { hash: "", source: "", file: "", entities: [], blocks: [], components: [] };
+let doc: Doc = { hash: "", source: "", file: "", layout: "default", entities: [], blocks: [], pages: [], components: [], layouts: [] };
 
 /*
  * One piece of chrome at a time: a block editor, raw mode, or the block menu. Opening one
@@ -78,18 +92,6 @@ function shut(): void {
     location.reload();
 };
 
-/** hyperscript: element, attributes (true = bare attribute, function = listener), children */
-function h(tag: string, props: Record<string, unknown> = {}, ...children: (Node | string)[]): HTMLElement {
-    const element = document.createElement(tag);
-    for (const [key, value] of Object.entries(props)) {
-        if (typeof value === "function") element.addEventListener(key, value as EventListener);
-        else if (value === true) element.setAttribute(key, "");
-        else if (value !== false && value !== undefined) element.setAttribute(key, String(value));
-    }
-    element.append(...children);
-    return element;
-}
-
 const SCROLL = "pac-scroll";
 const REOPEN = "pac-reopen";
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
@@ -119,32 +121,71 @@ async function init(): Promise<void> {
         else edit(target, range, "end");
     });
 
-    // the same toolbar from a visible door: a grip at the block's top-left corner while the
-    // pointer is over it, so right-click is a shortcut rather than the only way in
+    // the toolbar and insertion from a visible door: a rail at the block's top-left corner
+    // while the pointer is over it, the grip for the menu and a plus for a block below, so
+    // right-click and alt-click are shortcuts rather than the only way in
     const grip = h("button", { class: "pac-studio__grip", type: "button", title: "Block menu", "aria-label": "Block menu" });
     grip.innerHTML = icons.grip;
-    grip.hidden = true;
+    const plus = h("button", { class: "pac-studio__grip", type: "button", title: "Add a block below (⌥ click)", "aria-label": "Add a block below" });
+    plus.innerHTML = icons.plus;
+    const rail = h("div", { class: "pac-studio__rail" }, grip, plus);
+    rail.hidden = true;
     let gripped: HTMLElement | undefined;
     let leaving: ReturnType<typeof setTimeout> | undefined;
     grip.addEventListener("click", event => { event.stopPropagation(); if (gripped) openMenu(gripped, gripped.getBoundingClientRect()); });
-    // the pointer crosses a sliver of page on its way from the block to the grip; hiding
-    // waits long enough for that crossing, and arriving on the grip cancels it
-    grip.addEventListener("mouseenter", () => clearTimeout(leaving));
-    document.body.append(grip);
+    plus.addEventListener("click", event => {
+        event.stopPropagation();
+        const range = gripped && rangeOf(gripped);
+        if (range) insertAfter(gripped!, range.end);
+    });
+    // the pointer crosses a sliver of page on its way from the block to the rail; hiding
+    // waits long enough for that crossing, and arriving on the rail cancels it
+    rail.addEventListener("mouseenter", () => clearTimeout(leaving));
+    document.body.append(rail);
     document.addEventListener("mouseover", event => {
-        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return grip.hidden = true;
+        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return rail.hidden = true;
         const at = event.target as HTMLElement;
-        if (at === grip || grip.contains(at)) return;
+        if (at === rail || rail.contains(at)) return;
         const target = handleAt(at);
         clearTimeout(leaving);
-        if (!target) { leaving = setTimeout(() => { grip.hidden = true; gripped = undefined; }, 400); return; }
+        if (!target) { leaving = setTimeout(() => { rail.hidden = true; gripped = undefined; }, 400); return; }
         gripped = target;
         const rect = target.getBoundingClientRect();
-        grip.style.left = `${Math.max(4, rect.left - 26)}px`;
-        grip.style.top = `${rect.top}px`;
-        grip.hidden = false;
+        rail.style.left = `${Math.max(4, rect.left - 26)}px`;
+        rail.style.top = `${rect.top}px`;
+        rail.hidden = false;
     });
-    addEventListener("scroll", () => (grip.hidden = true), { passive: true });
+    addEventListener("scroll", () => (rail.hidden = true), { passive: true });
+
+    // the page's own door, at its top-left corner: the layout and its options govern the
+    // whole page, so the control sits on the page rather than on any block inside it
+    const pageGrip = h("button", { class: "pac-studio__grip pac-studio__pagegrip", type: "button", title: "Page layout", "aria-label": "Page layout" });
+    pageGrip.innerHTML = icons.layout;
+    pageGrip.hidden = true;
+    document.body.append(pageGrip);
+    let pageAt: HTMLElement | undefined;
+    let pageLeaving: ReturnType<typeof setTimeout> | undefined;
+    pageGrip.addEventListener("click", event => {
+        event.stopPropagation();
+        if (pageAt) openPageMenu(pageAt, pageGrip.getBoundingClientRect());
+    });
+    // the grip sits outside the page, so the pointer crosses the shell on its way over;
+    // hiding waits for that crossing, and arriving on the grip cancels it
+    pageGrip.addEventListener("mouseenter", () => clearTimeout(pageLeaving));
+    document.addEventListener("mouseover", event => {
+        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return pageGrip.hidden = true;
+        const at = event.target as HTMLElement;
+        if (at === pageGrip || pageGrip.contains(at)) return;
+        const page = at.closest<HTMLElement>(".pac-page");
+        clearTimeout(pageLeaving);
+        if (!page) { pageLeaving = setTimeout(() => { pageGrip.hidden = true; pageAt = undefined; }, 400); return; }
+        pageAt = page;
+        const rect = page.getBoundingClientRect();
+        pageGrip.style.left = `${Math.max(4, rect.left - 26)}px`;
+        pageGrip.style.top = `${Math.max(4, rect.top)}px`;
+        pageGrip.hidden = false;
+    });
+    addEventListener("scroll", () => (pageGrip.hidden = true), { passive: true });
 
     document.addEventListener("contextmenu", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
@@ -167,9 +208,10 @@ async function init(): Promise<void> {
         const { panel, slot, close } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement; close(): void };
         slot.append(
             menuItem("Edit source (E)", () => openRaw()),
-            menuItem("Deck…", () => { close(); openDeck(); }),
+            menuItem("Deck settings…", () => { close(); openDeck(); }),
             menuItem("Theme…", () => themeDrill(panel)),
             menuItem("Export…", () => exportDrill(panel, close)),
+            h("div", { class: "pac-menu__rule" }),
         );
     });
 
@@ -177,7 +219,7 @@ async function init(): Promise<void> {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
         else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["select", "marks bar"], ["empty", "deletes the block"]);
-        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"]);
+        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"], [`${mod} Z`, "undo the last commit"], [`${mod} ⇧ Z`, "redo"]);
     });
 
     // the escape hatch for a block editor that lost focus: its own Escape handler lives on
@@ -198,6 +240,49 @@ async function init(): Promise<void> {
         event.preventDefault();
         openRaw();
     });
+
+    // commit-level undo, only with nothing open: an open textarea or CodeMirror keeps its own
+    document.addEventListener("keydown", event => {
+        if (event.key.toLowerCase() !== "z" || !(event.metaKey || event.ctrlKey) || event.altKey) return;
+        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+        if (chrome || document.body.hasAttribute("data-present")) return;
+        event.preventDefault();
+        step(event.shiftKey ? "redo" : "undo");
+    });
+}
+
+/*
+ * Undo is the inverse splice of each commit, kept in sessionStorage because every commit
+ * reloads the page. An entry whose replaced text is no longer at its offset (the file moved
+ * under the studio) is dropped rather than applied; the server's hash guard is the backstop.
+ */
+interface Splice { start: number; end: number; text: string }
+interface Entry extends Splice { was: string }   // what the range holds now; a mismatch means the file moved
+const UNDO = "pac-undo";
+const REDO = "pac-redo";
+const DEPTH = 50;
+
+function stack(key: string): Entry[] {
+    try { return JSON.parse(sessionStorage.getItem(key) ?? "[]"); } catch { return []; }
+}
+
+function push(key: string, entry: Entry): void {
+    sessionStorage.setItem(key, JSON.stringify([...stack(key), entry].slice(-DEPTH)));
+}
+
+function inverse(change: Splice, source: string): Entry {
+    return { start: change.start, end: change.start + change.text.length, text: source.slice(change.start, change.end), was: change.text };
+}
+
+function step(direction: "undo" | "redo"): void {
+    const from = direction === "undo" ? UNDO : REDO;
+    const entries = stack(from);
+    const change = entries.pop();
+    if (!change) { hint(`nothing to ${direction}`); return; }
+    sessionStorage.setItem(from, JSON.stringify(entries));
+    if (doc.source.slice(change.start, change.end) !== change.was) { hint(`${direction} skipped: the file changed elsewhere`, true); return; }
+    hint(`${direction}…`);
+    splice(change, direction === "undo" ? REDO : UNDO);
 }
 
 /** the handle at an element, or the one handle inside the component root it sits in */
@@ -297,9 +382,9 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     if (component?.fields.length && !showLooks) menu.append(divider());
     for (const field of component?.fields ?? []) {
         menu.append(control(field, block.props[field.name], value => {
-            const props = explicit(component!, { ...block.props, [field.name]: value });
+            const props = explicit(component!.fields, { ...block.props, [field.name]: value });
             splice(structural(target, block.component === block.heuristic && !Object.keys(props).length ? null : block.component, props));
-        }));
+        }, closeMenu));
     }
 
     menu.append(divider(), iconButton("trash", "Delete", false, () => splice(remove(doc.source, target))));
@@ -310,21 +395,55 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
 }
 
-/** above the block's top-left corner, or below it when there is no room above */
-function place(bar: HTMLElement, at: DOMRect): void {
-    const { width, height } = bar.getBoundingClientRect();
-    const left = Math.max(8, Math.min(at.left, innerWidth - width - 8));
-    const top = at.top - height - 8 >= 8 ? at.top - height - 8 : Math.min(at.bottom + 8, innerHeight - height - 8);
-    bar.style.left = `${left}px`;
-    bar.style.top = `${top}px`;
-}
-
 function menuKey(event: KeyboardEvent): void {
     if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
 }
 
 function closeMenu(): void {
     if (chrome?.kind === "menu") shut();
+}
+
+/*
+ * The page toolbar: the layout the page wears, then that layout's own options. A change is
+ * one layout directive spliced before the page's first entity, or the removal of one when
+ * the pick says what the deck already says and the directive is not what breaks the page.
+ */
+function openPageMenu(section: HTMLElement, at: DOMRect): void {
+    const handle = section.querySelector<HTMLElement>("[data-pac-entity], [data-pac-span]");
+    const id = handle?.dataset.pacEntity ?? handle?.dataset.pacSpan?.split(" ")[0];
+    const page = doc.pages.find(p => id && p.ids.includes(id));
+    if (!page) return;
+
+    menu = document.createElement("div");
+    menu.className = "pac-studio__bar";
+    menu.addEventListener("click", event => event.stopPropagation());
+
+    const change = (name: string, props: Record<string, unknown>) => {
+        const written = explicit(doc.layouts.find(l => l.name === name)?.fields ?? [], props);
+        const splicing = relayout(doc.source, page, doc.layout, name, written);
+        if (splicing) splice(splicing);
+        else closeMenu();
+    };
+
+    // the layout the deck names in frontmatter is the one a page falls back to; say so
+    menu.append(label("Page"), divider(), dropdown(page.layout, doc.layouts.map(l =>
+        item(l.name, l.name === doc.layout ? "deck" : "", l.name === page.layout, () => change(l.name, page.props)))));
+
+    const fields = doc.layouts.find(l => l.name === page.layout)?.fields ?? [];
+    if (fields.length) menu.append(divider());
+    for (const field of fields) {
+        menu.append(control(field, page.props[field.name], value => {
+            // picking the value again clears an option that has no default of its own
+            const cleared = value === page.props[field.name] && field.default === undefined;
+            change(page.layout, { ...page.props, [field.name]: cleared ? undefined : value });
+        }, closeMenu));
+    }
+
+    document.body.append(menu);
+    place(menu, at);
+    addEventListener("keydown", menuKey);
+    const bar = menu;
+    show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
 }
 
 function kindOf(entity: DocEntity): TextKind | undefined {
@@ -369,147 +488,19 @@ function targetFor(entity: DocEntity, block: DocBlock): Target {
 }
 
 /** the props worth writing: those that differ from the schema's own defaults */
-function explicit(component: DocComponent, props: Record<string, unknown>): Record<string, unknown> {
+function explicit(fields: Field[], props: Record<string, unknown>): Record<string, unknown> {
     const out: Record<string, unknown> = {};
-    for (const field of component.fields) {
+    for (const field of fields) {
         const value = props[field.name];
         if (value !== undefined && value !== field.default) out[field.name] = value;
     }
     return out;
 }
 
-function label(text: string): HTMLElement {
-    const element = document.createElement("span");
-    element.className = "pac-studio__barlabel";
-    element.textContent = text;
-    return element;
-}
-
-function divider(): HTMLElement {
-    const element = document.createElement("span");
-    element.className = "pac-studio__bardivider";
-    return element;
-}
-
-function iconButton(icon: IconName, title: string, active: boolean, onClick: () => void): HTMLButtonElement {
-    const element = document.createElement("button");
-    element.className = "pac-studio__barbutton";
-    element.type = "button";
-    element.title = title;
-    element.setAttribute("aria-label", title);
-    element.innerHTML = icons[icon];
-    if (active) element.setAttribute("data-active", "");
-    element.addEventListener("click", onClick);
-    return element;
-}
-
-/** a button that opens its list beneath it; one open at a time */
-function dropdown(text: string, items: HTMLElement[]): HTMLElement {
-    const wrap = document.createElement("span");
-    wrap.className = "pac-studio__drop";
-    const button = document.createElement("button");
-    button.className = "pac-studio__barbutton pac-studio__barbutton--drop";
-    button.type = "button";
-    button.innerHTML = `<span>${text}</span>${icons.chevron}`;
-    const list = document.createElement("div");
-    list.className = "pac-studio__droplist";
-    list.hidden = true;
-    list.append(...items);
-    button.addEventListener("click", () => {
-        const opening = list.hidden;
-        for (const other of menu!.querySelectorAll<HTMLElement>(".pac-studio__droplist")) other.hidden = true;
-        list.hidden = !opening;
-    });
-    wrap.append(button, list);
-    return wrap;
-}
-
-function item(text: string, hint: string, active: boolean, onClick: () => void): HTMLButtonElement {
-    const element = document.createElement("button");
-    element.className = "pac-studio__dropitem";
-    element.type = "button";
-    const about = hint.length > 8;   // a syntax cue like `##` sits beside the name; a sentence goes beneath it
-    element.innerHTML = `<span>${text}</span><span class="pac-studio__drophint${about ? " pac-studio__drophint--about" : ""}">${hint}</span>`;
-    if (active) element.setAttribute("data-active", "");
-    element.addEventListener("click", onClick);
-    return element;
-}
-
-/** an option as an icon where one exists, sizes as a letter on the scale, the word as its title */
-const GLYPH: Record<string, Record<string, IconName>> = {
-    align: { left: "alignLeft", center: "alignCenter", right: "alignRight" },
-    axis: { horizontal: "horizontal", vertical: "vertical" },
-    stretch: { stretch: "stretch" },
-};
-/* an option shown as a short text glyph: the letters themselves say it */
-const LETTERS: Record<string, string> = { caps: "AB" };
-const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
-/* a colour chip is a swatch of the theme's own token, read from the page the studio sits in */
-const SWATCH: Record<string, string> = { ink: "--pac-ink", soft: "--pac-ink-soft", accent: "--pac-accent" };
-
-function glyph(field: string, option: string, active: boolean, onClick: () => void): HTMLButtonElement {
-    const icon = GLYPH[field]?.[option];
-    const swatch = field === "color" ? SWATCH[option] : undefined;
-    const letters = LETTERS[option];
-    if (!icon && !SIZES[option] && !swatch && !letters) return chip(option, active, onClick);
-    const element = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
-    if (icon) element.innerHTML = icons[icon];
-    else if (swatch) element.append(h("span", { class: "pac-studio__swatch", style: `background:var(${swatch})` }));
-    else if (letters) { element.classList.add("pac-studio__chip--text"); element.append(letters); }
-    else element.append(h("span", { style: `font-size:${SIZES[option]};font-weight:600` }, "A"));
-    return element;
-}
-
-function chip(text: string, active: boolean, onClick: () => void): HTMLButtonElement {
-    const element = document.createElement("button");
-    element.className = "pac-studio__chip";
-    element.type = "button";
-    element.textContent = text;
-    if (active) element.setAttribute("data-active", "");
-    element.addEventListener("click", onClick);
-    return element;
-}
-
-/** one option of the showing component: a chip per choice, a toggle, or a field */
-function control(field: Field, value: unknown, onChange: (value: unknown) => void): HTMLElement {
-    const wrap = document.createElement("span");
-    wrap.className = "pac-studio__field";
-    const name = document.createElement("span");
-    name.className = "pac-studio__fieldname";
-    name.textContent = field.name;
-    wrap.append(name);
-    if (field.type === "enum") {
-        wrap.append(...(field.options ?? []).map(option => glyph(field.name, option, option === value, () => onChange(option))));
-    } else if (field.type === "boolean") {
-        wrap.append(glyph(field.name, field.name, value === true, () => onChange(!value)));
-    } else {
-        const input = document.createElement("input");
-        input.className = "pac-studio__input";
-        input.type = field.type === "number" ? "number" : "text";
-        input.value = value === undefined ? "" : String(value);
-        input.addEventListener("keydown", event => {
-            if (event.key === "Enter") onChange(field.type === "number" ? Number(input.value) : input.value);
-            if (event.key === "Escape") closeMenu();
-            event.stopPropagation();
-        });
-        wrap.append(input);
-    }
-    return wrap;
-}
-
-function menuItem(text: string, onClick: () => void): HTMLElement {
-    return h("button", { class: "pac-menu__item", type: "button", click: onClick }, text);
-}
-
-/** a drill replaces the menu's panel with one section, in place */
-function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void {
-    panel.replaceChildren(h("div", { class: "pac-menu__head" }, title), ...rows);
-}
-
 async function themeDrill(panel: HTMLElement): Promise<void> {
     const { themes, current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
     drill(panel, "Theme", ...themes.map(theme => {
-        const row = menuItem(theme, () => splice(themeChange(theme)));
+        const row = menuItem(theme, () => { const change = themeChange(theme); if (change) splice(change); });
         if (theme === current) row.setAttribute("data-active", "");
         return row;
     }));
@@ -540,11 +531,61 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
     );
 }
 
-/** the theme is one frontmatter line; changing it is a splice like any other edit */
-function themeChange(theme: string): { start: number; end: number; text: string } {
+/*
+ * The deck's settings are its frontmatter, and the frontmatter is a slice like any block:
+ * the same editor, in flow above the first page, the same splice. Opened from the menu, or
+ * by clicking the mark.
+ * The theme keeps its own picker beside it; here it is one more line.
+ */
+const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
+const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\ntheme: acme";
+
+function openDeck(): void {
+    const page = document.querySelector<HTMLElement>(".pac-page");
+    if (!page) return;
+    const matter = MATTER.exec(doc.source);
+    const initial = matter?.[1] ?? "";
+    openEditor(page, {
+        initial,
+        caret: "end",
+        mode: "deck",
+        placeholder: `frontmatter, one key per line\n${KEYS}`,
+        commit: text => {
+            const body = text.trim();
+            if (body === initial.trim()) return undefined;
+            const end = matter ? matter[0].length : 0;
+            return { start: 0, end, text: body ? `---\n${body}\n---\n\n` : "" };
+        },
+    });
+}
+
+/** whether a click on a page landed on its mark, whose box is a pseudo-element's computed style */
+function onMark(event: MouseEvent): boolean {
+    const at = event.target as HTMLElement;
+    const page = at.closest?.<HTMLElement>(".pac-page");
+    if (!page || (at !== page && !at.matches("main, article"))) return false;
+    const style = getComputedStyle(page, "::before");
+    if (style.backgroundImage === "none" || style.content === "none") return false;
+    const px = (v: string) => (v === "auto" ? NaN : parseFloat(v));
+    const rect = page.getBoundingClientRect();
+    const w = px(style.width), h = px(style.height);
+    const left = Number.isNaN(px(style.right)) ? rect.left + px(style.left) : rect.right - px(style.right) - w;
+    const top = Number.isNaN(px(style.bottom)) ? rect.top + px(style.top) : rect.bottom - px(style.bottom) - h;
+    return event.clientX >= left && event.clientX <= left + w && event.clientY >= top && event.clientY <= top + h;
+}
+
+/** the theme is one frontmatter line, and the default theme is the absent line: picking it
+ * removes the key, so a round trip through another theme leaves the file as it was */
+function themeChange(theme: string): { start: number; end: number; text: string } | undefined {
     const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
+    const line = matter && /^theme:.*$/m.exec(matter[1]!);
+    if (theme === "default") {
+        if (!line) return undefined;
+        if (line[0] === matter![1]) return { start: 0, end: matter![0].length, text: "" };
+        const start = 4 + line.index;
+        return { start, end: start + line[0].length + 1, text: "" };
+    }
     if (matter) {
-        const line = /^theme:.*$/m.exec(matter[1]!);
         if (line) {
             const start = 4 + line.index;
             return { start, end: start + line[0].length, text: `theme: ${theme}` };
@@ -583,6 +624,7 @@ function openAt(index: number, caret: Caret): void {
 }
 
 function edit(target: HTMLElement, range: Range, caret: Caret): void {
+    if (range.kind === "image" && openImage(target, range)) return;
     const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
     openEditor(target, {
         initial: range.md,
@@ -590,6 +632,78 @@ function edit(target: HTMLElement, range: Range, caret: Caret): void {
         mode,
         commit: text => (text === range.md ? undefined : { start: range.start, end: range.end, text }),
     });
+}
+
+/*
+ * An image is two facts, name and url, plus an optional title kept as written. The form
+ * replaces the source textarea; markup the pattern does not cover (a link around the image,
+ * attributes) falls back to it.
+ */
+const IMAGE = /^!\[((?:[^[\]\\]|\\.)*)\]\(\s*(<[^>]*>|[^\s)]+)(?:\s+("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))?\s*\)\s*$/;
+
+function openImage(target: HTMLElement, range: Range): boolean {
+    const match = IMAGE.exec(range.md);
+    if (!match) return false;
+    const [, altText = "", rawUrl = "", title = ""] = match;
+    const url = rawUrl.startsWith("<") ? rawUrl.slice(1, -1) : rawUrl;
+
+    const panel = h("form", { class: "pac-studio__image" });
+    const field = (name: string, value: string, placeholder: string): HTMLInputElement => {
+        const input = h("input", { class: "pac-studio__input", value, placeholder, spellcheck: "false", autocomplete: "off" }) as HTMLInputElement;
+        panel.append(h("label", { class: "pac-studio__imagerow" }, h("span", { class: "pac-studio__fieldname" }, name), input));
+        return input;
+    };
+    const alt = field("name", altText, "what the picture shows");
+    const src = field("url", url, "https://… or a local path");
+    panel.append(h("p", { class: "pac-studio__imagehint" },
+        "A local file works by path, relative to the deck folder or absolute. It stays linked, not copied: change the file and the deck shows the new one."));
+
+    const rect = target.getBoundingClientRect();
+    panel.style.left = `${rect.left + scrollX}px`;
+    panel.style.top = `${rect.top + scrollY}px`;
+    panel.style.width = `${Math.min(Math.max(rect.width, 320), 560)}px`;
+    document.body.append(panel);
+    target.classList.add("pac-studio--dim");
+
+    let done = false;
+    const editor: Chrome = {
+        kind: "block",
+        holds: true,
+        close() {
+            done = true;
+            panel.remove();
+            target.classList.remove("pac-studio--dim");
+        },
+    };
+    show(editor);
+    src.focus();
+    src.setSelectionRange(src.value.length, src.value.length);
+
+    const commit = async () => {
+        if (done) return;
+        done = true;
+        const href = src.value.trim();
+        const text = `![${alt.value.trim()}](${/[\s)]/.test(href) ? `<${href}>` : href}${title ? ` ${title}` : ""})`;
+        if (text === range.md) { if (chrome === editor) shut(); return; }
+        for (const input of [alt, src]) input.readOnly = true;
+        hint("saving…");
+        editor.holds = false;
+        await splice({ start: range.start, end: range.end, text });
+    };
+
+    panel.addEventListener("submit", event => { event.preventDefault(); commit(); });
+    panel.addEventListener("keydown", event => {
+        event.stopPropagation();                        // the viewer's own keys stay out of the inputs
+        if (event.key === "Escape") { event.preventDefault(); if (chrome === editor) shut(); }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); commit(); }
+    });
+    // a click on the panel's own chrome keeps focus in the field; focus leaving the panel commits
+    panel.addEventListener("mousedown", event => { if (!(event.target as HTMLElement).matches("input")) event.preventDefault(); });
+    panel.addEventListener("focusout", event => {
+        if (panel.contains(event.relatedTarget as Node | null)) return;
+        commit();
+    });
+    return true;
 }
 
 function insertAfter(target: HTMLElement, at: number): void {
@@ -646,8 +760,8 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
     // the marks bar: the same wraps as the chords, shown above the textarea while a selection
     // is live, so the syntax is a click away and still visible in the text it lands in
     const marks = h("div", { class: "pac-studio__marks" },
-        ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"], ["==", "==", "Highlight"]] as const).map(([marker, text, title]) =>
-            h("button", { class: "pac-studio__mark", type: "button", title, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
+        ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"], ["==", "==", "Highlight"]] as const).map(([marker, text, tip]) =>
+            h("button", { class: "pac-studio__mark", type: "button", "data-tip": tip, "aria-label": tip, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
     marks.hidden = true;
     document.body.append(marks);
     const selected = () => {
@@ -802,10 +916,14 @@ async function openRaw(): Promise<void> {
     }
 }
 
-const barButton = (text: string, key: string, onClick: () => void): HTMLElement =>
-    h("button", { class: "pac-studio__rawbutton", type: "button", title: key, click: onClick }, text);
-
-async function splice(change: { start: number; end: number; text: string }): Promise<void> {
+/** `onto` is where the inverse lands: the undo stack for an edit, the other stack for a step */
+async function splice(change: Splice, onto: string = UNDO): Promise<void> {
+    // a toolbar press is committed the moment it is pressed: the bar freezes until the
+    // rebuilt page arrives, because a second press would splice against a stale hash
+    if (chrome?.kind === "menu" && menu) {
+        menu.setAttribute("data-busy", "");
+        hint("saving…");
+    }
     let failure: string | undefined;
     try {
         const response = await fetch("/__edit", {
@@ -826,33 +944,10 @@ async function splice(change: { start: number; end: number; text: string }): Pro
         setTimeout(() => location.reload(), 900);
         return;
     }
+    push(onto, inverse(change, doc.source));
+    if (onto === UNDO) sessionStorage.removeItem(REDO);
     // on success the server rebuilds and the reload arrives over the SSE channel; if it
     // never does (the rebuild threw, the channel dropped), the page frees itself rather
     // than leave a frozen editor. Generous, so a slow fit pass is not cut short.
     setTimeout(() => location.reload(), 5000);
-}
-
-function mark(area: HTMLTextAreaElement, marker: string): void {
-    const { selectionStart: a, selectionEnd: b, value } = area;
-    area.setRangeText(`${marker}${value.slice(a, b)}${marker}`, a, b, "select");
-    size(area);
-}
-
-function size(area: HTMLTextAreaElement): void {
-    area.style.height = "auto";
-    // scrollHeight is content only; the offset/client difference restores the border
-    area.style.height = `${area.scrollHeight + area.offsetHeight - area.clientHeight}px`;
-}
-
-/** a hint stays until replaced; one given a lifetime fades out on its own after that many ms */
-function hint(text: string, alarm = false, lifetime?: number): void {
-    document.querySelector(".pac-studio__hint")?.remove();
-    const bar = h("div", { class: `pac-studio__hint${alarm ? " pac-studio__hint--alarm" : ""}` }, text);
-    document.body.append(bar);
-    if (lifetime === undefined) return;
-    setTimeout(() => {
-        if (!bar.isConnected) return;
-        bar.setAttribute("data-fading", "");
-        bar.addEventListener("transitionend", () => bar.remove(), { once: true });
-    }, lifetime);
 }

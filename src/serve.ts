@@ -18,6 +18,8 @@ const SETTLE = 40;
 // the studio, when present, installs __pacReload to hold a reload while an editor is open
 const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=window.__pacReload;h?h():location.reload()}</script>`;
 
+const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
+
 export interface ServeOptions {
     /** the deck file; its folder is where the assets it references are resolved */
     deck: string;
@@ -68,9 +70,13 @@ export function serve(options: ServeOptions): Server {
             }
 
             if (url.pathname !== "/") {
-                // local assets a deck references, resolved against the deck's own folder
-                const asset = Bun.file(join(dirname(deck), decodeURIComponent(url.pathname).slice(1)));
-                if (await asset.exists()) return new Response(asset);
+                // local assets a deck references: relative to the deck's own folder first,
+                // then the path taken as absolute, so ![](/Users/me/pic.png) shows too
+                const path = decodeURIComponent(url.pathname);
+                for (const candidate of [join(dirname(deck), path.slice(1)), path]) {
+                    const asset = Bun.file(candidate);
+                    if (await asset.exists()) return new Response(asset);
+                }
             }
 
             return new Response(html.replace("</body>", `${RELOAD}</body>`), {
@@ -97,8 +103,9 @@ export function serve(options: ServeOptions): Server {
         }, SETTLE);
     }
 
+    // an image beside the deck is linked, not copied, so a change to it shows like a source edit
     const watchers = [watch(dirname(deck), (_, file) => {
-        if (file === basename(deck)) schedule(basename(deck));
+        if (file && (file === basename(deck) || IMAGE.test(file))) schedule(file);
     })];
 
     for (const root of roots) {

@@ -67,6 +67,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pac-menu__item:hover:not(:disabled) { background: rgb(0 0 0 / 7%); }
+.pac-menu__rule { height: 1px; margin: .25rem 0; background: rgb(0 0 0 / 8%); }
 .pac-menu__item:disabled { opacity: .38; cursor: default; }
 .pac-menu__item[data-active] { font-weight: 600; }
 
@@ -180,6 +181,7 @@ body[data-present] .pac-menu { background: rgb(20 24 29 / 94%); border-color: rg
 body[data-present] .pac-menu__brand { color: #f2f5f8; border-color: rgb(255 255 255 / 10%); }
 body[data-present] .pac-menu__head { color: #7d8894; }
 body[data-present] .pac-menu__item { color: #f2f5f8; }
+body[data-present] .pac-menu__rule { background: rgb(255 255 255 / 10%); }
 body[data-present] .pac-menu__item:hover:not(:disabled) { background: rgb(255 255 255 / 12%); }
 
 /*

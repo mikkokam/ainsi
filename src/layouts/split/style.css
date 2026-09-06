@@ -24,7 +24,15 @@
 }
 [data-layout="split"] main[data-side="right"] article > .pac-full { inset: 0 0 0 auto; }
 
+/* no image yet: the empty half wears the surface instead of a hole, gone once an image lands */
+[data-layout="split"] main:not(:has(.pac-full))::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 50%;
+    background: var(--pac-surface);
+}
+[data-layout="split"] main[data-side="right"]:not(:has(.pac-full))::before { inset: 0 0 0 auto; }
+
 @media screen and (max-width: 900px) {
+    [data-layout="split"] main:not(:has(.pac-full))::before { display: none; }
     [data-layout="split"] article,
     [data-layout="split"] main[data-side="right"] article {
         margin: 0; padding: 9% 7%;

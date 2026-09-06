@@ -103,6 +103,30 @@ export function remove(source: string, target: Target): Splice {
     return { start, end, text: "" };
 }
 
+export interface PageTarget {
+    /** offset of the page's first entity */
+    first: number;
+    /** the layout directive already governing the page, when there is one */
+    directive?: { start: number; end: number };
+    /** the page starts here only because of that directive; removing it would merge pages */
+    held?: boolean;
+}
+
+/**
+ * One splice that sets a page's layout and props. The deck's own layout with no props means
+ * no directive: an existing one is removed unless it is what breaks the page, and a missing
+ * one is not written. Undefined means the file already says this.
+ */
+export function relayout(source: string, page: PageTarget, deck: string, name: string, props: Record<string, unknown> = {}): Splice | undefined {
+    const line = directiveLine(`layout ${name}`, props);
+    const bare = name === deck && Object.keys(props).length === 0;
+    if (!page.directive) return bare ? undefined : { start: page.first, end: page.first, text: `${line}\n` };
+    if (!bare || page.held) return { start: page.directive.start, end: page.directive.end, text: line };
+    let end = page.directive.end;
+    while (end < page.first && /\s/.test(source[end]!)) end++;
+    return { start: page.directive.start, end, text: "" };
+}
+
 /** GitHub's alert kinds; the marker is the quote's first line, so a kind change is a rewrite of that line */
 export const ALERT_KINDS = ["note", "tip", "important", "warning", "caution"] as const;
 const ALERT = /^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][^\S\n]*\n?/;

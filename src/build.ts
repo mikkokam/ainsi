@@ -43,11 +43,14 @@ export function assemble(source: string, options: Pick<BuildOptions, "registry" 
         diagnostics.push({ level: "warn", message: `unknown deck layout "${doc.settings.layout}"; using default` });
     }
     const fallback = house?.name ?? "default";
+    // the schema's defaults apply to a frontmatter layout too, not only to a directive's
+    const filled = house?.props.safeParse({});
+    const fallbackProps: Record<string, unknown> = filled?.success ? filled.data : {};
 
     // a layout directive starts a page and governs that page alone; the deck's own layout
     // is declared once in frontmatter, where the rest of the deck-wide facts already live
     const pages: Page[] = candidates.map((entities, index) => {
-        let current = { name: fallback, props: {} as Record<string, unknown> };
+        let current = { name: fallback, props: { ...fallbackProps } };
         const ids = new Set(entities.map(e => e.id));
         const chosen = layoutDirectives.filter(d => ids.has(d.before!));
         if (chosen.length > 1) {

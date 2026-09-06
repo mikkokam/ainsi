@@ -139,7 +139,9 @@ export async function loadLayouts(roots: string[], diagnostics: Diagnostic[] = [
 
             let definition: LayoutDefinition | undefined = inherited ?? layouts.get("default");
             if (await Bun.file(entry).exists()) {
-                definition = (await import(fresh(entry, options))).default;
+                // an index.ts without a render declares props only; the template is inherited
+                const own = (await import(fresh(entry, options))).default;
+                definition = own?.render ? own : definition ? { ...definition, ...own } : undefined;
             }
             if (!definition?.render) {
                 diagnostics.push({ level: "warn", message: `layout ${name}/ has no index.ts and no default to inherit; skipped` });
