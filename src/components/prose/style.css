@@ -2,6 +2,8 @@
 .pac-prose--small { font-size: .83em; }
 .pac-prose--large { font-size: 1.44em; line-height: 1.3; }
 .pac-prose--huge { font-size: 2.07em; line-height: 1.15; letter-spacing: -.01em; }
+/* capitals are tracked, or they read as shouting; the strong weight so a label holds its line */
+.pac-prose--caps { text-transform: uppercase; letter-spacing: .06em; font-weight: var(--pac-strong); }
 /* alignment is the block's, and a list keeps its markers inside the box */
 .pac-prose--center { text-align: center; }
 .pac-prose--right { text-align: right; }

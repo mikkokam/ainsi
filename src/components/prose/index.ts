@@ -13,13 +13,15 @@ export default {
     props: z.object({
         size: z.enum(["small", "normal", "large", "huge"]).default("normal"),
         align: z.enum(["left", "center", "right"]).default("left"),
+        /** tracked capitals: a label or an eyebrow above a title; the source keeps its case */
+        caps: z.boolean().default(false),
     }).passthrough(),
     splittable: true,
     density: ["regular", "tight"],
     render: ctx => {
         const size = ctx.props.size as string;
         const align = ctx.props.align as string;
-        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`].filter(Boolean);
+        const classes = [size !== "normal" && `pac-prose--${size}`, align !== "left" && `pac-prose--${align}`, ctx.props.caps === true && "pac-prose--caps"].filter(Boolean);
         return classes.length ? `<div class="pac-prose ${classes.join(" ")}">\n${flow(ctx)}\n</div>` : flow(ctx);
     },
 } satisfies ComponentDefinition;

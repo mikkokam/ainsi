@@ -9,6 +9,7 @@ coverLogo: assets/acme-a-logo.png
 
 Governance and policy solution for production AI
 
+
 ![Architectural timber workspace with natural sunlight](https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80)
 
 ---
@@ -41,7 +42,7 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 
 <!-- pac:layout split side=right -->
 
-<!-- pac: prose size=small -->
+<!-- pac: prose size=small caps -->
 How does it work
 
 <!-- pac: prose size=small -->
@@ -100,8 +101,8 @@ VP of Engineering, Series B Fintech (Stockholm)
 # Acme by the numbers
 
 <!-- pac: figures -->
-- **5** minutes to first governed call
-- **500 000** requests a day through one customer's gateway
+- **5 min** to first governed call
+- **500 000** avg requests a day through customers' gateways
 - **$2.4M** of token spend attributed to teams last quarter
 - **200 Mtok/s** peak throughput, no added latency
 

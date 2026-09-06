@@ -440,6 +440,7 @@ const GLYPH: Record<string, Record<string, IconName>> = {
     align: { left: "alignLeft", center: "alignCenter", right: "alignRight" },
     axis: { horizontal: "horizontal", vertical: "vertical" },
     stretch: { stretch: "stretch" },
+    caps: { caps: "caps" },
 };
 const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
 

@@ -136,7 +136,7 @@ test("a heuristic block carries its component's schema defaults, like a directiv
     expect(aside.origin).toBe("heuristic");
     expect(aside.props).toEqual({ side: "right" });
     const [plain] = blocksOf("words\n").pages;
-    expect(plain![0]!.props).toEqual({ size: "normal", align: "left" });
+    expect(plain![0]!.props).toEqual({ size: "normal", align: "left", caps: false });
 });
 
 test("a newline inside a paragraph is a line break; a blank line is still a new block", async () => {
