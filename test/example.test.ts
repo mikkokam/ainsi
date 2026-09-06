@@ -25,7 +25,7 @@ test("the example deck builds clean", () => {
 
 test("the example deck exercises the whole vocabulary bar the escape hatch", () => {
     const used = new Set(result.pages.flatMap(p => p.blocks.map(b => b.component)));
-    const missing = registry.names().filter(n => n !== "raw" && !used.has(n));
+    const missing = registry.names().filter(n => !used.has(n));
     expect(missing).toEqual([]);
 });
 

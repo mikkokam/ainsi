@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["aside", "boxes", "comparison", "full", "lead", "prose", "quote", "raw", "table", "timeline"],
+        ["aside", "boxes", "comparison", "full", "lead", "prose", "quote", "table", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(11);
+    expect(registry.names().length).toBe(10);
 });
 
 test("a later root overrides a builtin of the same name", async () => {
@@ -72,7 +72,7 @@ test("a directive naming nothing registered warns and renders anyway", async () 
 
 test("a component used many times emits its css and script exactly once", async () => {
     const registry = await load([BUILTIN]);
-    const md = "# Yksi\n\n- Q1: a\n- Q2: b\n\n# Kaksi\n\n- Q3: c\n- Q4: d\n\n# Kolme\n\n- Q5: e\n- Q6: f\n";
+    const md = "# Yksi\n\n- Q1: a\n- Q2: b\n\n---\n\n# Kaksi\n\n- Q3: c\n- Q4: d\n\n---\n\n# Kolme\n\n- Q5: e\n- Q6: f\n";
     const { html, pages } = build(md, { registry, layouts, themeCss: "" });
 
     expect(pages.flatMap(p => p.blocks).filter(b => b.component === "timeline").length).toBe(3);

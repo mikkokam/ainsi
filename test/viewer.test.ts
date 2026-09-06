@@ -5,7 +5,7 @@ import { build } from "../src/build";
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
 const viewer = await loadViewer();
-const md = "# One\n\na\n\n# Two\n\nb\n";
+const md = "# One\n\na\n\n---\n\n# Two\n\nb\n";
 
 test("the viewer bundles to one self-contained script", () => {
     expect(viewer.script).toBeTruthy();
@@ -53,13 +53,13 @@ test("the viewer carries the shortcut card and the grid answers the keyboard", (
 });
 
 test("a page's address is its first heading, slugged", () => {
-    const { html } = build("# Hyvä Alku\n\na\n\n# Two\n\nb\n", { registry, layouts, themeCss: "" });
+    const { html } = build("# Hyvä Alku\n\na\n\n---\n\n# Two\n\nb\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('id="hyva-alku"');
     expect(html).toContain('id="two"');
 });
 
 test("duplicate headings and headingless pages still get distinct addresses", () => {
-    const { html } = build("# Same\n\na\n\n# Same\n\nb\n\n---\n\nno heading here\n", { registry, layouts, themeCss: "" });
+    const { html } = build("# Same\n\na\n\n---\n\n# Same\n\nb\n\n---\n\nno heading here\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('id="same"');
     expect(html).toContain('id="same-2"');
     expect(html).toContain('id="page-3"');

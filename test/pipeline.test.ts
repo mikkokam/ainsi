@@ -53,10 +53,33 @@ test("a directive governing nothing warns rather than failing", () => {
     expect(diagnostics.some(d => d.message.includes("governs nothing"))).toBe(true);
 });
 
-test("extent runs until the next directive", () => {
+test("a directive spans the heuristic's run and stops at the next directive", () => {
     const md = "<!-- pac: prose -->\n\na\n\nb\n\n<!-- pac: boxes -->\n\n- x\n- y\n";
     const [page] = blocksOf(md).pages;
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 2], ["boxes", 1]]);
+});
+
+test("a directive does not swallow what the heuristic would have grouped apart", () => {
+    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n- x\n- y\n").pages;
+    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["boxes", 1]]);
+});
+
+test("a directive grows its span until the component accepts it", () => {
+    const [page] = blocksOf("<!-- pac: timeline -->\n\n## Plan\n\n- Q1: a\n- Q2: b\n").pages;
+    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["timeline", 2]]);
+});
+
+test("an end marker bounds a directive inside a run", () => {
+    const md = "a\n\n<!-- pac: quote -->\n\nb\n\n<!-- pac: end -->\n\nc\n";
+    const [page] = blocksOf(md).pages;
+    expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "heuristic"], ["quote", 1, "directive"], ["prose", 1, "heuristic"]]);
+});
+
+test("a directive carries its source offsets", () => {
+    const md = "x\n\n<!-- pac: boxes -->\n\n- a\n- b\n";
+    const { doc } = parse(md);
+    const [d] = doc.directives;
+    expect(md.slice(d!.start, d!.end)).toBe("<!-- pac: boxes -->");
 });
 
 test("an unknown component degrades to the heuristic", () => {
@@ -88,9 +111,11 @@ test("a label column plus two is a comparison, wider stays a table", () => {
     expect(wide.pages[0]![0]!.component).toBe("table");
 });
 
-test("h1 and thematic break both start a page candidate", () => {
-    const { doc } = parse("# One\n\na\n\n# Two\n\nb\n\n---\n\nc\n");
-    expect(paginate(doc.entities, doc.settings).length).toBe(3);
+test("a thematic break starts a page; an h1 only when the deck opts in", () => {
+    const md = "# One\n\na\n\n# Two\n\nb\n\n---\n\nc\n";
+    const { doc } = parse(md);
+    expect(paginate(doc.entities, doc.settings).length).toBe(2);
+    expect(paginate(doc.entities, { ...doc.settings, h1StartsPage: true }).length).toBe(3);
 });
 
 test("blocks partition the page with no gaps or overlap", () => {

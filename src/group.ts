@@ -1,8 +1,11 @@
 import type { Block, Diagnostic, Directive, Entity } from "./types";
-import type { Registry } from "./registry";
+import type { Component, Registry } from "./registry";
 
 const SHORT_ITEM = 60;
 const LABELLED = /^\s*[^:\n]{1,24}:\s+\S/;
+
+/** the directive that claims a boundary and nothing else: what follows it is the heuristic's */
+export const END = "end";
 
 /** Directives win where they apply; everything else falls to the heuristics. */
 export function group(
@@ -19,10 +22,10 @@ export function group(
 
     while (i < page.length) {
         const directive = starts.get(page[i]!.id);
-        if (directive) {
-            const end = extent(page, i, starts);
-            const span = page.slice(i, end);
+        if (directive && directive.component !== END) {
             const component = registry.get(directive.component);
+            const end = component ? extent(page, i, blocks.length === 0, starts, component) : i + 1;
+            const span = page.slice(i, end);
             if (!component) {
                 diagnostics.push({
                     level: "warn",
@@ -52,11 +55,16 @@ export function group(
     return blocks;
 }
 
-/** A directive runs until the next directive or the end of the page. */
-function extent(page: Entity[], from: number, starts: Map<string, Directive>): number {
-    let i = from + 1;
-    while (i < page.length && !starts.has(page[i]!.id)) i++;
-    return i;
+/**
+ * A directive spans what the heuristic would have taken from its entity, grown one entity at
+ * a time until the component accepts the span, and never past the next directive. So a
+ * retag of one paragraph in a run takes that paragraph, and `timeline` before a heading and
+ * a list takes both.
+ */
+function extent(page: Entity[], from: number, atPageTop: boolean, starts: Map<string, Directive>, component: Component): number {
+    let end = from + heuristic(page, from, atPageTop, starts)[1];
+    while (!component.accepts(page.slice(from, end)) && end < page.length && !starts.has(page[end]!.id)) end++;
+    return end;
 }
 
 function make(entities: Entity[], component: string, props: Record<string, unknown>, origin: Block["origin"]): Block {

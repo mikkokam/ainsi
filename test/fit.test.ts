@@ -147,7 +147,7 @@ test.skipIf(!chromium)("a page that no rung can rescue is flagged, not silently 
 
 /* ------------------------------------------------------- what the solver puts in the html */
 
-const SETTINGS = { theme: "default", ratio: "16:9", h1StartsPage: true, layout: "default" };
+const SETTINGS = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default" };
 const markup = (page: Page) => {
     const { html } = render([page], "T", SETTINGS, options);
     return html.slice(html.indexOf("<body"));           // the stylesheet declares --pac-step too

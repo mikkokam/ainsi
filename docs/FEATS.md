@@ -48,20 +48,6 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## The Studio: structural edits (feat)
-
-Any block to any block. Change what an entity is, change how a span renders, delete a block, change the page's layout, change the theme, split a page. No caret is involved, they are infrequent and atomic, and a full re-render is what you want because the structure changed. The rigidity to refuse is the one where a heading can only ever be a heading; the file is markdown and every one of these is a splice.
-
-Two edits, kept apart. An entity kind change rewrites the slice's leading syntax: strip `# ` for a paragraph, prefix `- ` for a list item, `> ` for a quote, and back. Deterministic in the markdown direction, no component involved. Free between the text-shaped kinds; table and image are not offered as targets, because a paragraph has no columns and an image has no text, and the studio never invents content. A component change is the directive line. `accepts()` stays as the renderer's contract and stops filtering the palette: show every component, and when the pick does not accept the span, rewrite the shape first (a paragraph becomes a one-item list) and then write the directive. So a heading into boxes is two ranges through the same splice endpoint.
-
-The directive line has a lifecycle. None before the entity: add one. One there: replace it. The pick equals what the heuristic would choose: delete it, so the file stays clean. The third case needs the doc endpoint to expose the heuristic's choice per block, which is `group()` run once without directives. Props come from the component's own zod schema, so validation, defaults and coercion are already one declaration.
-
-One engine change in the way: a directive runs until the next directive or the end of the page, so retagging a paragraph in the middle of a prose run swallows everything after it. Change the extent to what the heuristic would have taken; an end marker would work too and litters files with closing comments.
-
-Two handles are needed in the output, emitted in edit mode only and never written into the markdown: a block handle for these edits and an entity handle for the content edits below. Both are derived from ids that already exist. `prose` deliberately emits no wrapper of its own, so there is nothing to hang one on; solving that without changing what a plain build emits is the one real unknown here.
-
-Done: a kind change and a component change on any text-shaped block, end to end, the directive added, replaced or removed as the case demands, and a mid-page retag leaving its neighbours alone.
-
 ## The Studio: content edits (feat)
 
 Typing, which is where every editor of this shape goes wrong. The move that avoids it: edit the entity's markdown slice, not the rendered HTML. Clicking a paragraph replaces that one block's rendered output with a plain textarea holding its markdown, usually one to five lines. On blur, splice it back by offset and rebuild.

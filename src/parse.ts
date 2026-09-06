@@ -6,7 +6,7 @@ import { toString as mdToString } from "mdast-util-to-string";
 import { parse as parseYaml } from "yaml";
 import type { Diagnostic, Directive, Entity, EntityKind, Settings, Source } from "./types";
 
-const DEFAULTS: Settings = { theme: "default", ratio: "16:9", h1StartsPage: true, layout: "default" };
+const DEFAULTS: Settings = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default" };
 
 const DIRECTIVE = /^<!--\s*pac\s*:\s*([\s\S]*?)\s*-->$/;
 const LAYOUT = "layout";
@@ -56,6 +56,7 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
     const entities: Entity[] = [];
     const directives: Directive[] = [];
     const pending: Omit<Directive, "before">[] = [];
+    const at = (node: any) => ({ start: node.position.start.offset as number, end: node.position.end.offset as number });
     const seen = new Map<string, number>();
 
     for (const node of tree.children as any[]) {
@@ -76,7 +77,7 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
                 diagnostics.push({ level: "warn", message: `directive names no component: ${node.value.trim()}` });
                 continue;
             }
-            pending.push(parsed);
+            pending.push({ ...parsed, ...at(node) });
             continue;
         }
 

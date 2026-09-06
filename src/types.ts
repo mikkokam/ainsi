@@ -19,6 +19,9 @@ export interface Directive {
     props: Record<string, string>;
     /** id of the entity this directive precedes; null when it precedes nothing */
     before: string | null;
+    /** source offsets of the comment, so an editor can replace or remove it */
+    start: number;
+    end: number;
 }
 
 export interface Settings {

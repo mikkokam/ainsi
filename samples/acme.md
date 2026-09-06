@@ -1,7 +1,5 @@
 ---
 theme: paper
-ratio: "16:9"
-layout: default
 ---
 
 <!-- pac:layout header -->
@@ -12,9 +10,16 @@ Governance and policy infrastructure for production AI
 
 ![Architectural timber workspace with natural sunlight](https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80)
 
+---
+
+
 # Fast-growing companies adopt AI faster than they can govern it
 
+<!-- pac: boxes -->
+
 A fifty-person engineering team might now connect eight model providers across product, support, and internal tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
+
+---
 
 # What that costs them
 
@@ -22,6 +27,8 @@ A fifty-person engineering team might now connect eight model providers across p
 - Surprise token spikes discovered only at billing
 - Fragmented policies written in ad-hoc prompt code
 - Unchecked PII and secret leaks across shadow tools
+
+---
 
 <!-- pac:layout split side=right -->
 
@@ -33,6 +40,8 @@ Zero changes to existing application code: swap one base URL in your client conf
 
 ![Tactile notebook and fountain pen on warm oak desk](https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&q=80)
 
+---
+
 # How Acme protects your workload
 
 <!-- pac: boxes -->
@@ -41,6 +50,8 @@ Zero changes to existing application code: swap one base URL in your client conf
 - Record: Immutable event stream of prompt hashes, latency, and tokens
 - Redact: Real-time PII masking and secret prevention at the wire
 - Comply: Instant audit packages for EU AI Act, SOC 2, and GDPR
+
+---
 
 # Operating with & without Acme
 
@@ -60,12 +71,16 @@ Zero changes to existing application code: swap one base URL in your client conf
 
 VP of Engineering, Series B Fintech (Stockholm)
 
+---
+
 # Product roadmap
 
 - Q1: Turnkey OPA policy bundles for EU AI Act Article 12 compliance
 - Q2: Real-time semantic budget limits and anomalous spend throttling
 - Q3: Air-gapped on-premise appliances and self-hosted VPC agents
 - Q4: Native zero-trust egress connectors for sovereign European LLMs
+
+---
 
 # Transparent, usage-based pricing
 
@@ -75,11 +90,15 @@ VP of Engineering, Series B Fintech (Stockholm)
 | Business   | 10         | Up to 5M reqs    | 2-year audit vault     | 1 450 € / mo |
 | Enterprise | Unlimited  | Custom volume    | 7-year vault + VPC     | Custom       |
 
+---
+
 # Built by infrastructure engineers
 
 ![Founding team in a sunlit Nordic workshop studio](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80)
 
 Founded by former payment security and distributed systems leads from Pay More Inc and Bank of Tor. We built Acme after managing compliance across 40+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
+
+---
 
 <!-- pac:layout header align=center -->
 

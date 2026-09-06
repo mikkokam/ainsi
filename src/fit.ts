@@ -326,7 +326,10 @@ async function launch(diagnostics: Diagnostic[]): Promise<import("playwright-cor
         // an escape hatch for a machine that has a browser but not playwright's own copy of
         // one, which is every CI image with chromium already installed
         const executablePath = process.env.PAC_CHROMIUM;
-        return await chromium.launch(executablePath ? { executablePath } : {});
+        // pdf export redraws cross-origin images onto a canvas to downscale them; with web
+        // security on, that taints the canvas and the pixels cannot be read back. Every page
+        // this browser ever renders is our own build, never foreign content.
+        return await chromium.launch({ args: ["--disable-web-security"], ...(executablePath ? { executablePath } : {}) });
     } catch {
         diagnostics.push({
             level: "warn",

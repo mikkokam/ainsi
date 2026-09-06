@@ -56,7 +56,7 @@ test("every token the engine, components and layouts use is declared by every sh
 });
 
 test("a theme swap changes no markup", () => {
-    const md = "# Otsikko\n\njohdanto\n\n# Vaiheet\n\n- Q1: a\n- Q2: b\n";
+    const md = "# Otsikko\n\njohdanto\n\n---\n\n# Vaiheet\n\n- Q1: a\n- Q2: b\n";
     const body = (theme: string) => build(md, { registry: defaults, layouts, themeCss: theme }).html.split("</style>")[1];
     expect(body("/* a */")).toBe(body("/* b */"));
 });

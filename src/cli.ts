@@ -2,18 +2,21 @@
 import { readdir } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
+import { END, group } from "./group";
 import { fit, openFit, type FitSession } from "./fit";
 import { parse } from "./parse";
-import { pdf } from "./pdf";
+import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { serve } from "./serve";
 import { BUILTIN, LAYOUTS, load, loadLayouts, loadStudio, loadTheme, loadViewer } from "./load";
-import type { Diagnostic, Page, Settings } from "./types";
+import type { Registry } from "./registry";
+import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
+import type { ZodTypeAny } from "zod";
 
 const argv = process.argv.slice(2);
 const input = argv.find(a => !a.startsWith("-") && argv[argv.indexOf(a) - 1] !== "-o" && argv[argv.indexOf(a) - 1] !== "--port" && argv[argv.indexOf(a) - 1] !== "--components");
 
 if (!input) {
-    console.error("usage: pac <deck.md> [-o out.html] [--watch] [--edit] [--no-viewer] [--fit] [--pdf] [--port 4321] [--components <dir>]");
+    console.error("usage: pac <deck.md> [-o out.html] [--watch] [--edit] [--no-viewer] [--fit] [--pdf[=screen|compact|full]] [--port 4321] [--components <dir>]");
     process.exit(1);
 }
 
@@ -28,7 +31,13 @@ const pdfOutput = join(dirname(deck), `${basename(deck, extname(deck))}.pdf`);
 const componentRoots = argv.flatMap((a, i) => (a === "--components" && argv[i + 1] ? [resolve(argv[i + 1]!)] : []));
 const editing = argv.includes("--edit");
 const watching = argv.includes("--watch") || editing;
-const printing = argv.includes("--pdf");
+const pdfFlag = argv.find(a => a === "--pdf" || a.startsWith("--pdf="));
+const printing = pdfFlag !== undefined;
+const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
+if (printing && !PDF_IMAGES.includes(pdfImages)) {
+    console.error(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
+    process.exit(1);
+}
 // a pdf of unfitted pages loses their overflow silently, so printing always fits first
 const fitting = argv.includes("--fit") || printing;
 const port = Number(flag("--port") ?? 4321);
@@ -51,7 +60,26 @@ async function measuring(): Promise<FitSession> {
 if (watching && fitting) await measuring();
 
 /** What the studio splices against: offsets from the same parse the deck was built from. */
-let doc = { hash: "", source: "", file: "", entities: [] as { id: string; kind: string; start: number; end: number; md: string }[] };
+interface DocBlock {
+    ids: string[];
+    component: string;
+    origin: Block["origin"];
+    props: Record<string, unknown>;
+    /** the components whose accepts() passes for the whole span */
+    accepted: string[];
+    /** what grouping picks with no directive, so the studio can drop one that agrees */
+    heuristic: string;
+    directive?: { start: number; end: number };
+    terminator?: { start: number; end: number };
+}
+interface DocComponent { name: string; fields: Field[]; takesList: boolean }
+interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
+let doc = {
+    hash: "", source: "", file: "",
+    entities: [] as { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }[],
+    blocks: [] as DocBlock[],
+    components: [] as DocComponent[],
+};
 let currentTheme = "default";
 const studio = editing ? await loadStudio() : undefined;
 
@@ -61,20 +89,6 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     const parsed = parse(source);
     const settings = parsed.doc.settings;
     currentTheme = settings.theme;
-    if (editing) {
-        doc = {
-            hash: Bun.hash(source).toString(16),
-            source,
-            file: basename(deck),
-            entities: parsed.doc.entities.map(e => ({
-                id: e.id,
-                kind: e.kind,
-                start: e.node.position.start.offset,
-                end: e.node.position.end.offset,
-                md: e.md,
-            })),
-        };
-    }
     const diagnostics: Diagnostic[] = [];
     const { themeDir, theme, registry, layouts } = await stack(settings.theme, diagnostics);
 
@@ -89,6 +103,23 @@ async function build(): Promise<{ html: string; roots: string[] }> {
 
     const assembled = assemble(source, buildOptions);
     diagnostics.push(...assembled.diagnostics);
+    if (editing) {
+        doc = {
+            hash: Bun.hash(source).toString(16),
+            source,
+            file: basename(deck),
+            entities: parsed.doc.entities.map(e => ({
+                id: e.id,
+                kind: e.kind,
+                start: e.node.position.start.offset,
+                end: e.node.position.end.offset,
+                md: e.md,
+                accepted: registry.all().filter(c => c.accepts([e])).map(c => c.name),
+            })),
+            blocks: describeBlocks(assembled.pages, parsed.doc.entities, parsed.doc.directives, registry),
+            components: describeComponents(registry),
+        };
+    }
 
     const result = fitting
         ? await fit(assembled.pages, assembled.title, assembled.settings, buildOptions, renderPages, session)
@@ -109,6 +140,52 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     return { html: result.html, roots: [themeDir, ...componentRoots] };
 }
 
+/** every block with what governs it: its directive and end marker, and the heuristic's pick */
+function describeBlocks(pages: Page[], entities: Entity[], directives: Directive[], registry: Registry): DocBlock[] {
+    return pages.flatMap(page => {
+        const own = page.blocks.flatMap(b => b.entities);
+        const free = group(own, [], registry, []);
+        return page.blocks.map(block => {
+            const first = block.entities[0]!;
+            const last = block.entities.at(-1)!;
+            const next = entities[entities.findIndex(e => e.id === last.id) + 1];
+            const directive = directives.find(d => d.before === first.id && d.kind === "component" && d.component !== END);
+            const terminator = next && directives.find(d => d.before === next.id && d.component === END);
+            return {
+                ids: block.entities.map(e => e.id),
+                component: block.component,
+                origin: block.origin,
+                props: block.props,
+                accepted: registry.all().filter(c => c.accepts(block.entities)).map(c => c.name),
+                heuristic: free.find(b => b.entities.includes(first))?.component ?? "prose",
+                ...(directive ? { directive: { start: directive.start, end: directive.end } } : {}),
+                ...(terminator ? { terminator: { start: terminator.start, end: terminator.end } } : {}),
+            };
+        });
+    });
+}
+
+/** the palette: each component's fields from its own zod schema, and whether a lone list satisfies it */
+function describeComponents(registry: Registry): DocComponent[] {
+    const list = parse("- a: b\n- c: d\n").doc.entities;
+    return registry.all().map(c => ({ name: c.name, fields: fields(c.props), takesList: c.accepts(list) }));
+}
+
+function fields(schema: ZodTypeAny): Field[] {
+    const shape = (schema as any).shape as Record<string, any> | undefined;
+    if (!shape) return [];
+    return Object.entries(shape).map(([name, type]) => {
+        let def = type._def;
+        let fallback: unknown;
+        while (def.typeName === "ZodDefault" || def.typeName === "ZodOptional") {
+            if (def.typeName === "ZodDefault") fallback = def.defaultValue();
+            def = def.innerType._def;
+        }
+        const kind = def.typeName === "ZodEnum" ? "enum" : def.typeName === "ZodBoolean" ? "boolean" : def.typeName === "ZodNumber" ? "number" : "string";
+        return { name, type: kind, ...(kind === "enum" ? { options: def.values as string[] } : {}), ...(fallback !== undefined ? { default: fallback } : {}) };
+    });
+}
+
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = resolve(import.meta.dir, "..", "themes", themeName);
@@ -119,13 +196,13 @@ async function stack(themeName: string, diagnostics: Diagnostic[]) {
 }
 
 /** The fitted pages printed without viewer or handles, beside the deck, over whatever is there. */
-async function print(pages: Page[], title: string, settings: Settings, options: BuildOptions): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
+async function print(pages: Page[], title: string, settings: Settings, options: BuildOptions, images: PdfImages = pdfImages): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
     const { html } = renderPages(pages, title, settings, { ...options, viewer: undefined, edit: false });
-    return pdf(html, pdfOutput, await measuring());
+    return pdf(html, pdfOutput, await measuring(), images);
 }
 
 /** what the studio's export runs: the deck as it is on disk, fitted, printed, and opened */
-async function exportPdf(): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
+async function exportPdf(images: PdfImages): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
     const source = await Bun.file(deck).text();
     const diagnostics: Diagnostic[] = [];
     const { theme, registry, layouts } = await stack(parse(source).doc.settings.theme, diagnostics);
@@ -133,7 +210,7 @@ async function exportPdf(): Promise<{ written: boolean; diagnostics: Diagnostic[
     const assembled = assemble(source, options);
     const fitted = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
     diagnostics.push(...assembled.diagnostics, ...fitted.diagnostics);
-    const printed = await print(fitted.pages, assembled.title, assembled.settings, options);
+    const printed = await print(fitted.pages, assembled.title, assembled.settings, options, images);
     diagnostics.push(...printed.diagnostics);
     return { written: printed.written, diagnostics };
 }
@@ -159,7 +236,9 @@ const server = serve({
             return Response.json({ themes, current: currentTheme });
         }
         if (url.pathname === "/__pdf" && request.method === "POST") {
-            const { written, diagnostics } = await exportPdf();
+            const wanted = url.searchParams.get("images") ?? "screen";
+            if (!PDF_IMAGES.includes(wanted as PdfImages)) return new Response(`images takes ${PDF_IMAGES.join(", ")}`, { status: 400 });
+            const { written, diagnostics } = await exportPdf(wanted as PdfImages);
             for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
             if (!written) return new Response(diagnostics.map(d => d.message).join("\n") || "pdf failed", { status: 500 });
             console.log(`-> ${pdfOutput}`);

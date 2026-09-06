@@ -117,6 +117,44 @@ body[data-pac-raw] { overflow: hidden; }
     padding: 24px 20px 45vh;
 }
 
+/* the block menu: chips in rows, one pick commits */
+.pac-studio__menu {
+    position: fixed; z-index: 80;
+    min-width: 260px; max-width: 420px;
+    padding: .5rem .6rem .6rem;
+    font: 12px/1.3 system-ui, sans-serif;
+    color: #14181d;
+    background: rgb(255 255 255 / 97%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+}
+.pac-studio__menurow + .pac-studio__menurow { margin-top: .5rem; }
+.pac-studio__menuhead {
+    font: 600 10px/1 system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #8a94a0;
+    margin-bottom: .3rem;
+    user-select: none;
+}
+.pac-studio__chips { display: flex; flex-wrap: wrap; gap: .25rem; align-items: center; }
+.pac-studio__chip {
+    font: 500 12px/1 system-ui, sans-serif;
+    color: #14181d;
+    padding: .35rem .55rem;
+    border: 1px solid rgb(0 0 0 / 12%); border-radius: 999px;
+    background: #fff; cursor: pointer;
+}
+.pac-studio__chip:hover { background: rgb(0 0 0 / 6%); }
+.pac-studio__chip[data-active] { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+.pac-studio__field { display: flex; flex-wrap: wrap; gap: .25rem; align-items: center; width: 100%; }
+.pac-studio__fieldname { font: 500 11px/1 ui-monospace, monospace; color: #5b6672; margin-right: .2rem; }
+.pac-studio__input {
+    font: 12px/1.3 ui-monospace, monospace;
+    padding: .3rem .45rem; width: 9rem;
+    border: 1px solid rgb(0 0 0 / 15%); border-radius: 6px;
+}
+
 /* only failures surface here; the shortcut card is the viewer's */
 .pac-studio__hint {
     position: fixed;

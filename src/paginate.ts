@@ -1,8 +1,8 @@
 import type { Entity, Settings } from "./types";
 
 /**
- * Page candidates only. Breaks, h1 and layout directives are authored, so they resolve
- * before grouping, which the `lead` heuristic needs. The fit solver may split a candidate
+ * Page candidates only. Breaks and layout directives are authored, and h1 when the deck
+ * opts in, so they resolve before grouping, which the `lead` heuristic needs. The fit solver may split a candidate
  * further; it never merges two.
  */
 export function paginate(entities: Entity[], settings: Settings, layoutStarts: Set<string> = new Set()): Entity[][] {

@@ -33,13 +33,13 @@ test("a layout directive next to an h1 makes one page, not an empty one", () => 
 });
 
 test("a layout governs its own page and no other", () => {
-    const md = "<!-- pac:layout header -->\n\n# One\n\na\n\n# Two\n\nb\n\n---\n\nc\n";
+    const md = "<!-- pac:layout header -->\n\n# One\n\na\n\n---\n\n# Two\n\nb\n\n---\n\nc\n";
     const { pages } = build(md, { registry, layouts, themeCss: "" });
     expect(pages.map(p => p.layout)).toEqual(["header", "default", "default"]);
 });
 
 test("a deck declares its house layout once, in frontmatter", () => {
-    const md = "---\nlayout: split\n---\n\n# One\n\na\n\n<!-- pac:layout header -->\n\n# Two\n\nb\n\n# Three\n\nc\n";
+    const md = "---\nlayout: split\n---\n\n# One\n\na\n\n<!-- pac:layout header -->\n\n# Two\n\nb\n\n---\n\n# Three\n\nc\n";
     const { pages } = build(md, { registry, layouts, themeCss: "" });
     expect(pages.map(p => p.layout)).toEqual(["split", "header", "split"]);
 });

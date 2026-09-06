@@ -77,7 +77,7 @@ function start(): void {
         });
 
         toolbar.append(panel);
-        document.dispatchEvent(new CustomEvent("pac:menu", { detail: { panel, slot } }));
+        document.dispatchEvent(new CustomEvent("pac:menu", { detail: { panel, slot, close: closeMenu } }));
         addEventListener("pointerdown", outside, true);
     }
 
