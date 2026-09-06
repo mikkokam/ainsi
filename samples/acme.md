@@ -1,5 +1,5 @@
 ---
-logo: acme-logo.png
+logo: assets/acme-logo.png
 ---
 
 <!-- pac:layout header -->
