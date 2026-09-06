@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
-import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
+import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme } from "../src/load";
 
 const defaults = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -40,7 +40,7 @@ test("a component hard-codes no colour", () => {
     expect(offences).toEqual([]);
 });
 
-test("every token the engine, components and layouts use is declared by every shipped theme", async () => {
+test("every token the engine, components and layouts use is declared by the default theme, which every theme layers on", async () => {
     const used = new Set<string>();
     for (const css of [BASE_CSS, ...defaults.all().map(c => c.css ?? ""), ...layouts.all().map(l => l.css ?? "")]) {
         for (const [, name] of css.matchAll(/var\((--[a-z0-9-]+)/g)) {
@@ -48,10 +48,12 @@ test("every token the engine, components and layouts use is declared by every sh
         }
     }
     const dir = `${import.meta.dir}/../themes`;
-    for (const theme of (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory())) {
-        const css = await Bun.file(`${dir}/${theme.name}/variables.css`).text();
-        const missing = [...used].filter(t => !css.includes(`${t}:`));
-        expect([theme.name, missing]).toEqual([theme.name, []]);
+    const base = await Bun.file(`${dir}/default/variables.css`).text();
+    expect([...used].filter(t => !base.includes(`${t}:`))).toEqual([]);
+    for (const theme of (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory() && e.name !== "default")) {
+        const { css } = await loadTheme(`${dir}/${theme.name}`);
+        expect(css.indexOf("--pac-info:")).toBeGreaterThanOrEqual(0);           // inherited
+        expect(css.indexOf("--pac-accent:")).toBeLessThan(css.lastIndexOf("--pac-accent:"));   // the theme's own comes after and wins
     }
 });
 

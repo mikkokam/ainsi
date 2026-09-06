@@ -136,8 +136,8 @@ test("a GitHub alert is its own block with the marker lifted into a title", asyn
     const md = "# T\n\nbefore\n\n> [!WARNING]\n> Mind the ==gap==, and `keep` it.\n>\n> Second paragraph.\n\nafter\n";
     const { html, pages } = build(md, { registry, layouts, themeCss: "" });
     expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose", "alert", "prose"]);
-    expect(html).toContain('<aside class="pac-alert pac-alert--warning" data-pac="alert">');
-    expect(html).toContain('<p class="pac-alert__title">Warning</p>');
+    expect(html).toContain('<aside class="pac-alert pac-alert--warning" data-pac="alert" role="note" aria-label="Warning" title="Warning">');
+    expect(html).toContain('<span class="pac-alert__tag"><svg');
     expect(html).toContain("<p>Mind the <mark>gap</mark>, and <code>keep</code> it.</p>");
     expect(html).toContain("<p>Second paragraph.</p>");
     expect(html).not.toContain("[!WARNING]");

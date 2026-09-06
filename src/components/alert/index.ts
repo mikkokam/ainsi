@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { type ComponentDefinition, type Entity } from "../../kit";
+import { ALERT_ICONS } from "./icons";
 
 /** GitHub's alert syntax: a blockquote whose first line is `[!NOTE]` or one of its four siblings */
 export const KINDS = ["note", "tip", "important", "warning", "caution"] as const;
@@ -23,8 +24,9 @@ export default {
         if (children[0]?.type === "text" && children[0].value === "") children.shift();
         if (children[0]?.type === "break") children.shift();
         const body = [...(children.length ? [{ ...first, children }] : []), ...rest];
-        return `<aside class="pac-alert pac-alert--${kind}" data-pac="alert">
-    <p class="pac-alert__title">${kind[0]!.toUpperCase()}${kind.slice(1)}</p>
+        const name = `${kind[0]!.toUpperCase()}${kind.slice(1)}`;
+        return `<aside class="pac-alert pac-alert--${kind}" data-pac="alert" role="note" aria-label="${name}" title="${name}">
+    <span class="pac-alert__tag">${ALERT_ICONS[kind]}</span>
     ${ctx.html({ ...quote, node: { type: "root", children: body } })}
 </aside>`;
     },

@@ -175,11 +175,19 @@ function checkLayoutScope(name: string, css: string, diagnostics: Diagnostic[]):
     }
 }
 
-/** A theme is a folder: tokens, an optional escape hatch, and optional layout overrides. */
+export const DEFAULT_THEME = resolve(import.meta.dir, "..", "themes", "default");
+
+/**
+ * A theme is a folder: tokens, an optional escape hatch, and optional layout overrides. The
+ * default theme's tokens sit under every other theme's, so a theme declares only what it
+ * changes and a token added to the contract never leaves an older theme short.
+ */
 export async function loadTheme(dir: string, diagnostics: Diagnostic[] = []): Promise<{ css: string; layouts: string }> {
     const root = resolve(dir);
-    const variables = await readIfPresent(join(root, "variables.css"));
-    if (!variables) diagnostics.push({ level: "warn", message: `theme has no variables.css: ${root}` });
+    const own = await readIfPresent(join(root, "variables.css"));
+    if (!own) diagnostics.push({ level: "warn", message: `theme has no variables.css: ${root}` });
+    const base = root === DEFAULT_THEME ? undefined : await readIfPresent(join(DEFAULT_THEME, "variables.css"));
+    const variables = [base, own].filter(Boolean).join("\n\n");
 
     const styles = await readIfPresent(join(root, "styles.css"));
     if (styles) {

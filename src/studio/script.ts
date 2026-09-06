@@ -25,6 +25,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { ALERT_KINDS, alertOf, markerOf, remove, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
+import { ALERT_ICONS } from "../components/alert/icons";
 
 interface DocEntity { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }
 interface DocBlock {
@@ -272,7 +273,16 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
                 ...(alerting ? [item("alert", "", false, () => setAlert("note"))] : []),
             ]));
     }
-    if (isAlert) menu.append(control({ name: "kind", type: "enum", options: [...ALERT_KINDS] }, alertOf(entity.md), value => setAlert(value as string)));
+    if (isAlert) {
+        const kind = alertOf(entity.md);
+        const row = h("span", { class: "pac-studio__field" });
+        for (const k of ALERT_KINDS) {
+            const chip = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: k, "aria-label": k, "data-active": k === kind, click: () => setAlert(k) });
+            chip.innerHTML = ALERT_ICONS[k]!;
+            row.append(chip);
+        }
+        menu.append(row);
+    }
     const component = doc.components.find(c => c.name === block.component);
     if (component?.fields.length && !showLooks) menu.append(divider());
     for (const field of component?.fields ?? []) {

@@ -7,8 +7,8 @@ export const TOKENS = [
     // colour
     "--pac-ink", "--pac-ink-soft", "--pac-ground", "--pac-shell",
     "--pac-accent", "--pac-accent-ink", "--pac-rule", "--pac-surface",
-    // status: what good, careful and stop look like in this theme; alerts are the first to ask
-    "--pac-ok", "--pac-warn", "--pac-danger",
+    // status: what informative, good, notable, careful and stop look like; alerts are the first to ask
+    "--pac-info", "--pac-ok", "--pac-notice", "--pac-warn", "--pac-danger",
     // type
     "--pac-font", "--pac-font-display", "--pac-font-mono", "--pac-strong", "--pac-size", "--pac-leading",
     // how far the fit solver may step the type down before it splits a page instead

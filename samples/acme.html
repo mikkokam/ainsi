@@ -6,6 +6,42 @@
 <title>Acme Gatekeeper</title>
 <style>
 /* theme: tokens, and whatever no token should carry */
+/* A theme's tokens. It names no component, no layout and no deck. */
+:root {
+    --pac-ink: #14181d;
+    --pac-ink-soft: #5b6672;
+    --pac-ground: #ffffff;
+    --pac-shell: #eef1f4;
+    --pac-accent: #1f6feb;
+    --pac-accent-ink: #ffffff;
+    --pac-rule: #dfe4ea;
+    --pac-surface: #ffffff;
+    --pac-info: #0969da;
+    --pac-ok: #1a7f37;
+    --pac-notice: #8250df;
+    --pac-warn: #9a6700;
+    --pac-danger: #cf222e;
+
+    --pac-font: "Inter", system-ui, -apple-system, sans-serif;
+    --pac-font-display: var(--pac-font);
+    --pac-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --pac-strong: 620;
+    --pac-size: 22px;
+    --pac-leading: 1.45;
+    --pac-step-min: 0.8;
+
+    --pac-gap: 1.5rem;
+    --pac-pad: 5.5%;
+    --pac-radius: 4px;
+    --pac-border: 1px;
+
+    --pac-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+    --pac-blur: 0px;
+
+    --pac-motion: 480ms;
+    --pac-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
 /*
  * Post-minimal: warm ground rather than sterile white, editorial serif for display, real
  * depth instead of flatness. Still nothing but tokens.
@@ -19,9 +55,6 @@
     --pac-accent-ink: #fdfaf6;
     --pac-rule: #ded4c7;
     --pac-surface: rgb(255 253 250 / 72%);
-    --pac-ok: #4f7f3a;
-    --pac-warn: #b7791f;
-    --pac-danger: #b5473b;
 
     --pac-font: "Inter", system-ui, -apple-system, sans-serif;
     --pac-font-display: "Fraunces", Georgia, "Times New Roman", serif;
@@ -348,25 +381,30 @@ body[data-present] [data-current] .pac-boxes__box {
 body[data-present] [data-current] .pac-boxes__box:nth-child(2) { animation-delay: calc(var(--pac-motion) * .3); }
 body[data-present] [data-current] .pac-boxes__box:nth-child(3) { animation-delay: calc(var(--pac-motion) * .42); }
 body[data-present] [data-current] .pac-boxes__box:nth-child(n+4) { animation-delay: calc(var(--pac-motion) * .52); }
-/* GitHub's five kinds on the theme's tokens: note and important take the accent, tip,
-   warning and caution the theme's status colours */
+/* GitHub's five kinds on the theme's status tokens, the kind as an icon in the corner cut
+   to the box's own radius, the same tag the numbered boxes wear */
 .pac-alert {
-    --pac-alert-color: var(--pac-accent);
-    margin: 0; padding: .8em 1em .85em 1.1em;
+    --pac-alert-color: var(--pac-info);
+    position: relative;
+    margin: 0; padding: 2.1em 1.1em .9em;
     max-width: 40em;
-    border-left: 4px solid var(--pac-alert-color);
-    border-radius: 0 var(--pac-radius) var(--pac-radius) 0;
+    border: var(--pac-border) solid color-mix(in srgb, var(--pac-alert-color) 30%, var(--pac-rule));
+    border-radius: var(--pac-radius);
     background: color-mix(in srgb, var(--pac-alert-color) 7%, var(--pac-surface));
 }
 .pac-alert--tip { --pac-alert-color: var(--pac-ok); }
+.pac-alert--important { --pac-alert-color: var(--pac-notice); }
 .pac-alert--warning { --pac-alert-color: var(--pac-warn); }
 .pac-alert--caution { --pac-alert-color: var(--pac-danger); }
-.pac-alert__title {
-    margin: 0 0 .3em;
-    font-weight: var(--pac-strong); font-size: .85em;
-    text-transform: uppercase; letter-spacing: .06em;
-    color: var(--pac-alert-color);
+.pac-alert__tag {
+    position: absolute; top: -1px; left: -1px;
+    width: 2em; height: 1.7em;
+    display: grid; place-items: center;
+    color: var(--pac-accent-ink);
+    background: var(--pac-alert-color);
+    border-radius: var(--pac-radius) 0 var(--pac-radius) 0;
 }
+.pac-alert__tag svg { width: 1em; height: 1em; }
 .pac-alert p { margin: 0 0 .5em; }
 .pac-alert > :last-child, .pac-alert p:last-child { margin-bottom: 0; }
 .pac-comparison { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--pac-gap); }
@@ -777,8 +815,8 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
 </div>
 <p>Every outbound LLM call passes through Acme before reaching upstream providers.<br>
 <strong>Policies</strong> evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.</p>
-<aside class="pac-alert pac-alert--note" data-pac="alert">
-    <p class="pac-alert__title">Note</p>
+<aside class="pac-alert pac-alert--important" data-pac="alert" role="note" aria-label="Important" title="Important">
+    <span class="pac-alert__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v4"/><path d="M12 14h.01"/></svg></span>
     <p>Zero changes to existing application code: swap <mark>one base URL</mark> in your client configuration and enforce policy on day one.</p>
 </aside>
 <figure class="pac-full" data-pac="full"><img src="https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&amp;q=80" alt="Tactile notebook and fountain pen on warm oak desk"></figure></article></main>
