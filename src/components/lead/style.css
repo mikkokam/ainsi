@@ -1,2 +1,2 @@
-.pac-lead__title { font-size: 3.2em; }
+.pac-lead__title { font-size: 3.2em; margin-bottom: .3em; }   /* the same air a page title gets before its text */
 .pac-lead__body { font-size: 1.1em; color: var(--pac-ink-soft); }

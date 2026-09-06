@@ -66,7 +66,11 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page article > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
 /* a component's root carries data-pac, which is how a timeline's ol is told from a list's */
 .pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .55); }
-.pac-page article > :is(h1, h2, h3, h4, h5) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .35); }
+.pac-page article > :is(h2, h3, h4, h5) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .45); }
+/* a page title carries more weight than a heading in a document, so the air under it says so */
+.pac-page article > h1 + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .6); }
+.pac-page article > h1 + [data-pac] { margin-top: calc(var(--pac-gap) * 1.5); }
+.pac-page article > :is(h2, h3, h4, h5) + [data-pac] { margin-top: calc(var(--pac-gap) * 1.2); }
 .pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
 .pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
