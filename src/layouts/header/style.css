@@ -22,7 +22,7 @@
 [data-layout="header"] article > *:not(.pac-full) { position: relative; z-index: 1; }
 
 [data-layout="header"] h1 { font-size: 3.6em; margin: 0; }
-[data-layout="header"] p { font-size: 1.15em; opacity: .84; margin: .3em 0 0; max-width: 26em; }
+[data-layout="header"] p { font-size: 1.15em; opacity: .84; margin: .3em 0 0; }
 
 @media screen and (max-width: 900px) {
     [data-layout="header"] main { min-height: 78vh; }

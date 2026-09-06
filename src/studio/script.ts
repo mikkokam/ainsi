@@ -434,6 +434,23 @@ function item(text: string, hint: string, active: boolean, onClick: () => void):
     return element;
 }
 
+/** an option as an icon where one exists, sizes as a letter on the scale, the word as its title */
+const GLYPH: Record<string, Record<string, IconName>> = {
+    align: { left: "alignLeft", center: "alignCenter", right: "alignRight" },
+    axis: { horizontal: "horizontal", vertical: "vertical" },
+    stretch: { stretch: "stretch" },
+};
+const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
+
+function glyph(field: string, option: string, active: boolean, onClick: () => void): HTMLButtonElement {
+    const icon = GLYPH[field]?.[option];
+    if (!icon && !SIZES[option]) return chip(option, active, onClick);
+    const element = h("button", { class: "pac-studio__chip pac-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
+    if (icon) element.innerHTML = icons[icon];
+    else element.append(h("span", { style: `font-size:${SIZES[option]};font-weight:600` }, "A"));
+    return element;
+}
+
 function chip(text: string, active: boolean, onClick: () => void): HTMLButtonElement {
     const element = document.createElement("button");
     element.className = "pac-studio__chip";
@@ -453,9 +470,9 @@ function control(field: Field, value: unknown, onChange: (value: unknown) => voi
     name.textContent = field.name;
     wrap.append(name);
     if (field.type === "enum") {
-        wrap.append(...(field.options ?? []).map(option => chip(option, option === value, () => onChange(option))));
+        wrap.append(...(field.options ?? []).map(option => glyph(field.name, option, option === value, () => onChange(option))));
     } else if (field.type === "boolean") {
-        wrap.append(chip(value ? "on" : "off", value === true, () => onChange(!value)));
+        wrap.append(glyph(field.name, field.name, value === true, () => onChange(!value)));
     } else {
         const input = document.createElement("input");
         input.className = "pac-studio__input";
