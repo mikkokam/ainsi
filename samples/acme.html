@@ -335,58 +335,25 @@ body[data-present] [data-current][data-layout="header"] .pac-full img {
 .pac-prose--right { text-align: right; }
 .pac-prose--center ul, .pac-prose--center ol, .pac-prose--right ul, .pac-prose--right ol { list-style-position: inside; padding-left: 0; }
 .pac-full { margin: 0; display: grid; place-items: center; }
-.pac-lead__title { font-size: 3.2em; }
-.pac-lead__body { font-size: 1.1em; color: var(--pac-ink-soft); }
-/* equal columns, one per item, set like a magazine: a gutter of a few ems and nothing drawn between */
-.pac-columns {
-    list-style: none; margin: 0; padding: 0;
-    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
-    column-gap: 1.4em; row-gap: var(--pac-gap);
+/* numerals in the display face, in the accent, a rule under each row */
+.pac-agenda { list-style: none; margin: 0; padding: 0; }
+.pac-agenda__row {
+    display: grid; grid-template-columns: auto 1fr; column-gap: 1.2em; align-items: baseline;
+    padding: .55em 0;
+    border-bottom: var(--pac-border) solid var(--pac-rule);
 }
-.pac-columns__column { display: flex; flex-direction: column; gap: .35em; }
-.pac-columns__title { font-weight: var(--pac-strong); }
-.pac-columns__body { color: var(--pac-ink-soft); }
-/* a numbered list counts its columns */
-.pac-columns--ordered { counter-reset: pac-column; }
-.pac-columns--ordered .pac-columns__column::before {
-    counter-increment: pac-column;
-    content: counter(pac-column);
-    font: var(--pac-strong) .8em/1 var(--pac-font-mono);
+.pac-agenda__row:last-child { border-bottom: 0; }
+.pac-agenda__number {
+    font-family: var(--pac-font-display); font-weight: var(--pac-strong);
+    font-size: 1.6em; line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--pac-accent);
 }
-
-@media screen and (max-width: 900px) {
-    .pac-columns { grid-auto-flow: row; }
-}
-/* GitHub's five kinds on the theme's status tokens: the icon a disc on the left, on the first
-   line, and the text a column beside it, so the box is as tall as its words */
-.pac-alert {
-    --pac-alert-color: var(--pac-info);
-    margin: 0; padding: .9em 1.1em .95em 1em;
-    max-width: 40em;
-    font-size: .83em;   /* an aside speaks a step below the body, the same step as small text */
-    color: var(--pac-ink-soft);
-    display: grid; grid-template-columns: auto 1fr; column-gap: .8em; align-items: start;
-    border: var(--pac-border) solid color-mix(in srgb, var(--pac-alert-color) 30%, var(--pac-rule));
-    border-radius: var(--pac-radius);
-    background: color-mix(in srgb, var(--pac-alert-color) 7%, var(--pac-surface));
-}
-.pac-alert--tip { --pac-alert-color: var(--pac-ok); }
-.pac-alert--important { --pac-alert-color: var(--pac-notice); }
-.pac-alert--warning { --pac-alert-color: var(--pac-warn); }
-.pac-alert--caution { --pac-alert-color: var(--pac-danger); }
-.pac-alert__tag {
-    grid-row: 1 / span 99;
-    width: 1.5em; height: 1.5em;
-    margin-top: calc((var(--pac-leading) * 1em - 1.5em) / 2);   /* centred on the first line */
-    display: grid; place-items: center;
-    color: var(--pac-accent-ink);
-    background: var(--pac-alert-color);
-    border-radius: 50%;
-}
-.pac-alert__tag svg { width: .95em; height: .95em; }
-.pac-alert p { margin: 0 0 .5em; }
-.pac-alert > :last-child, .pac-alert p:last-child { margin-bottom: 0; }
+.pac-agenda__text { display: flex; flex-wrap: wrap; column-gap: .6em; align-items: baseline; }
+.pac-agenda__title { font-weight: var(--pac-strong); }
+.pac-agenda__body { color: var(--pac-ink-soft); }
+.pac-lead__title { font-size: 3.2em; }
+.pac-lead__body { font-size: 1.1em; color: var(--pac-ink-soft); }
 /* they lay themselves out: a shared width, wrapping to the next row when one will not fit */
 .pac-boxes {
     list-style: none; margin: 0; padding: 0;
@@ -433,6 +400,56 @@ body[data-present] [data-current] .pac-boxes__box {
 body[data-present] [data-current] .pac-boxes__box:nth-child(2) { animation-delay: calc(var(--pac-motion) * .3); }
 body[data-present] [data-current] .pac-boxes__box:nth-child(3) { animation-delay: calc(var(--pac-motion) * .42); }
 body[data-present] [data-current] .pac-boxes__box:nth-child(n+4) { animation-delay: calc(var(--pac-motion) * .52); }
+/* GitHub's five kinds on the theme's status tokens: the icon a disc on the left, on the first
+   line, and the text a column beside it, so the box is as tall as its words */
+.pac-alert {
+    --pac-alert-color: var(--pac-info);
+    margin: 0; padding: .9em 1.1em .95em 1em;
+    max-width: 40em;
+    font-size: .83em;   /* an aside speaks a step below the body, the same step as small text */
+    color: var(--pac-ink-soft);
+    display: grid; grid-template-columns: auto 1fr; column-gap: .8em; align-items: start;
+    border: var(--pac-border) solid color-mix(in srgb, var(--pac-alert-color) 30%, var(--pac-rule));
+    border-radius: var(--pac-radius);
+    background: color-mix(in srgb, var(--pac-alert-color) 7%, var(--pac-surface));
+}
+.pac-alert--tip { --pac-alert-color: var(--pac-ok); }
+.pac-alert--important { --pac-alert-color: var(--pac-notice); }
+.pac-alert--warning { --pac-alert-color: var(--pac-warn); }
+.pac-alert--caution { --pac-alert-color: var(--pac-danger); }
+.pac-alert__tag {
+    grid-row: 1 / span 99;
+    width: 1.5em; height: 1.5em;
+    margin-top: calc((var(--pac-leading) * 1em - 1.5em) / 2);   /* centred on the first line */
+    display: grid; place-items: center;
+    color: var(--pac-accent-ink);
+    background: var(--pac-alert-color);
+    border-radius: 50%;
+}
+.pac-alert__tag svg { width: .95em; height: .95em; }
+.pac-alert p { margin: 0 0 .5em; }
+.pac-alert > :last-child, .pac-alert p:last-child { margin-bottom: 0; }
+/* equal columns, one per item, set like a magazine: a gutter of a few ems and nothing drawn between */
+.pac-columns {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    column-gap: 1.4em; row-gap: var(--pac-gap);
+}
+.pac-columns__column { display: flex; flex-direction: column; gap: .35em; }
+.pac-columns__title { font-weight: var(--pac-strong); }
+.pac-columns__body { color: var(--pac-ink-soft); }
+/* a numbered list counts its columns */
+.pac-columns--ordered { counter-reset: pac-column; }
+.pac-columns--ordered .pac-columns__column::before {
+    counter-increment: pac-column;
+    content: counter(pac-column);
+    font: var(--pac-strong) .8em/1 var(--pac-font-mono);
+    color: var(--pac-accent);
+}
+
+@media screen and (max-width: 900px) {
+    .pac-columns { grid-auto-flow: row; }
+}
 .pac-comparison { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--pac-gap); }
 .pac-comparison__head { margin: 0 0 .6em; padding-bottom: .4em; border-bottom: 2px solid var(--pac-accent); }
 .pac-comparison__rows { margin: 0; display: grid; gap: .7em; }
@@ -453,6 +470,58 @@ body[data-present] [data-current] .pac-comparison__column {
 }
 body[data-present] [data-current] .pac-comparison__column:nth-child(2) { animation-delay: calc(var(--pac-motion) * .3); }
 body[data-present] [data-current] .pac-comparison__column:nth-child(n+3) { animation-delay: calc(var(--pac-motion) * .42); }
+/* four quadrants sharing rules through the middle; axis labels sit below and to the left */
+.pac-matrix { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr auto; }
+.pac-matrix__grid {
+    list-style: none; margin: 0; padding: 0;
+    grid-column: 2; grid-row: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+}
+.pac-matrix__cell {
+    display: flex; flex-direction: column; gap: .35em;
+    padding: 1em 1.2em;
+    border: 0 solid var(--pac-rule);
+}
+.pac-matrix__cell:nth-child(1), .pac-matrix__cell:nth-child(2) { border-bottom-width: var(--pac-border); }
+.pac-matrix__cell:nth-child(1), .pac-matrix__cell:nth-child(3) { border-right-width: var(--pac-border); }
+.pac-matrix__title { font-weight: var(--pac-strong); }
+.pac-matrix__body { color: var(--pac-ink-soft); font-size: .92em; }
+.pac-matrix__x, .pac-matrix__y {
+    font: var(--pac-strong) .75em/1 var(--pac-font-mono);
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--pac-ink-soft);
+}
+.pac-matrix__x { grid-column: 2; grid-row: 2; text-align: center; padding-top: .8em; }
+.pac-matrix__y { grid-column: 1; grid-row: 1; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; padding-left: .8em; }
+.pac-matrix:not(.pac-matrix--axes) { grid-template-columns: 1fr; }
+.pac-matrix:not(.pac-matrix--axes) .pac-matrix__grid { grid-column: 1; }
+/* two shared rows, values over captions, one column per figure, so every caption starts on
+   the same line. The value is display type stepped down by its own length to fit its share
+   of the width, so $500 000 and 200 Mtok/s shrink where 5 does not. */
+.pac-figures {
+    list-style: none; margin: 0; padding: 0;
+    container-type: inline-size;
+    display: grid; grid-auto-flow: column; grid-template-rows: auto auto;
+    grid-auto-columns: 1fr;
+    column-gap: 1.4em; row-gap: .3em;
+}
+.pac-figures__item { display: contents; }
+.pac-figures__value {
+    align-self: end; min-width: 0;
+    font-family: var(--pac-font-display);
+    font-weight: var(--pac-strong);
+    font-size: min(3.4em, calc(100cqw / var(--pac-figures-count, 3) / (var(--pac-figures-chars, 3) * .62)));
+    line-height: 1.05; letter-spacing: -.02em;
+    color: var(--pac-accent);
+    white-space: nowrap;
+}
+.pac-figures__caption { align-self: start; color: var(--pac-ink-soft); }
+
+@media screen and (max-width: 900px) {
+    .pac-figures { grid-auto-flow: row; grid-template-columns: 1fr 1fr; grid-template-rows: none; }
+    .pac-figures__item { display: flex; flex-direction: column; gap: .25em; }
+    .pac-figures__value { font-size: 2.4em; }
+}
 .pac-timeline {
     --pac-timeline-marker: .9em;
     list-style: none; margin: 0; padding: 0;
@@ -788,23 +857,45 @@ body[data-present] .pac-page[data-current] mark {
 <p>Governance and policy solution for production AI</p>
 <figure class="pac-full" data-pac="full"><img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&amp;q=80" alt="Architectural timber workspace with natural sunlight"></figure></article></main>
 </section>
-<section class="pac-page" id="fast-growing-companies-adopt-ai-faster-than-they-can-govern-it" data-page="2" data-layout="default">
+<section class="pac-page" id="what-we-will-cover" data-page="2" data-layout="default">
+<main><article><h1>What we will cover</h1>
+
+<ol class="pac-agenda" data-pac="agenda">
+    <li class="pac-agenda__row">
+        <span class="pac-agenda__number">01</span>
+        <span class="pac-agenda__text"><span class="pac-agenda__title">The problem</span><span class="pac-agenda__body">governance lags adoption</span></span>
+    </li>
+    <li class="pac-agenda__row">
+        <span class="pac-agenda__number">02</span>
+        <span class="pac-agenda__text"><span class="pac-agenda__title">The gateway</span><span class="pac-agenda__body">one deterministic door in front of every model</span></span>
+    </li>
+    <li class="pac-agenda__row">
+        <span class="pac-agenda__number">03</span>
+        <span class="pac-agenda__text"><span class="pac-agenda__title">Proof</span><span class="pac-agenda__body">what a customer got in under an hour</span></span>
+    </li>
+    <li class="pac-agenda__row">
+        <span class="pac-agenda__number">04</span>
+        <span class="pac-agenda__text"><span class="pac-agenda__title">Roadmap and pricing</span><span class="pac-agenda__body">where this goes and what it costs</span></span>
+    </li>
+</ol></article></main>
+</section>
+<section class="pac-page" id="fast-growing-companies-adopt-ai-faster-than-they-can-govern-it" data-page="3" data-layout="default">
 <main><article><div class="pac-lead" data-pac="lead">
     <h1 class="pac-lead__title">Fast-growing companies adopt AI faster than they can govern it</h1>
     <div class="pac-lead__body"><p>A fifty-person <mark>engineering team</mark> might now connect eight model <kbd>providers</kbd> across product, support, and <code>internal</code> tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.</p></div>
 </div></article></main>
 </section>
-<section class="pac-page" id="what-that-costs-them" data-page="3" data-layout="default">
+<section class="pac-page" id="what-that-costs-them" data-page="4" data-layout="default">
 <main><article><h1>What that costs them</h1>
 
-<ol class="pac-columns pac-columns--ordered" data-pac="columns">
-    <li class="pac-columns__column"><span class="pac-columns__body">Customer audit failures when enterprise clients ask</span></li>
-    <li class="pac-columns__column"><span class="pac-columns__body">Surprise token spikes discovered only at billing</span></li>
-    <li class="pac-columns__column"><span class="pac-columns__body">Fragmented policies written in ad-hoc prompt code</span></li>
-    <li class="pac-columns__column"><span class="pac-columns__body">Unchecked PII and secret leaks across <mark>shadow tools</mark></span></li>
+<ol class="pac-boxes pac-boxes--ordered" data-pac="boxes" data-stretch="false">
+    <li class="pac-boxes__box"><span class="pac-boxes__body">Customer audit failures when enterprise clients ask</span></li>
+    <li class="pac-boxes__box"><span class="pac-boxes__body">Surprise token spikes discovered only at billing</span></li>
+    <li class="pac-boxes__box"><span class="pac-boxes__body">Fragmented policies written in ad-hoc prompt code</span></li>
+    <li class="pac-boxes__box"><span class="pac-boxes__body">Unchecked PII and secret leaks across <mark>shadow tools</mark></span></li>
 </ol></article></main>
 </section>
-<section class="pac-page" id="a-single-deterministic-gateway-in-front-of-every-model" data-page="4" data-layout="split">
+<section class="pac-page" id="a-single-deterministic-gateway-in-front-of-every-model" data-page="5" data-layout="split">
 <main data-side="right"><article><div class="pac-prose pac-prose--small">
 <p>How does it work</p>
 </div>
@@ -819,17 +910,17 @@ body[data-present] .pac-page[data-current] mark {
 </aside>
 <figure class="pac-full" data-pac="full"><img src="https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&amp;q=80" alt="Tactile notebook and fountain pen on warm oak desk"></figure></article></main>
 </section>
-<section class="pac-page" id="how-acme-protects-your-workload" data-page="5" data-layout="default">
+<section class="pac-page" id="how-acme-protects-your-workload" data-page="6" data-layout="default">
 <main><article><h1>How Acme protects your workload</h1>
 
-<ol class="pac-boxes pac-boxes--ordered" data-pac="boxes" data-stretch="false">
-    <li class="pac-boxes__box"><span class="pac-boxes__title">Enforce</span><span class="pac-boxes__body">OPA inspects and validates requests before egress</span></li>
-    <li class="pac-boxes__box"><span class="pac-boxes__title">Record</span><span class="pac-boxes__body">Immutable event stream of prompt hashes, latency, and tokens</span></li>
-    <li class="pac-boxes__box"><span class="pac-boxes__title">Redact</span><span class="pac-boxes__body">Real-time PII masking and secret prevention at the wire</span></li>
-    <li class="pac-boxes__box"><span class="pac-boxes__title">Comply</span><span class="pac-boxes__body">Instant audit packages for EU AI Act, SOC 2, and GDPR</span></li>
+<ol class="pac-columns pac-columns--ordered" data-pac="columns">
+    <li class="pac-columns__column"><span class="pac-columns__title">Enforce</span><span class="pac-columns__body">OPA inspects and validates requests before egress</span></li>
+    <li class="pac-columns__column"><span class="pac-columns__title">Record</span><span class="pac-columns__body">Immutable event stream of prompt hashes, latency, and tokens</span></li>
+    <li class="pac-columns__column"><span class="pac-columns__title">Redact</span><span class="pac-columns__body">Real-time PII masking and secret prevention at the wire</span></li>
+    <li class="pac-columns__column"><span class="pac-columns__title">Comply</span><span class="pac-columns__body">Instant audit packages for EU AI Act, SOC 2, and GDPR</span></li>
 </ol></article></main>
 </section>
-<section class="pac-page" id="operating-with-without-acme" data-page="6" data-layout="default">
+<section class="pac-page" id="operating-with-without-acme" data-page="7" data-layout="default">
 <main><article><h1>Operating with &#x26; without Acme</h1>
 <div class="pac-comparison" data-pac="comparison">
     <div class="pac-comparison__column">
@@ -854,7 +945,7 @@ body[data-present] .pac-page[data-current] mark {
     </div>
 </div></article></main>
 </section>
-<section class="pac-page" id="page-7" data-page="7" data-layout="default">
+<section class="pac-page" id="page-8" data-page="8" data-layout="default">
 <main><article><blockquote>
 <p>When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.</p>
 </blockquote>
@@ -862,7 +953,41 @@ body[data-present] .pac-page[data-current] mark {
 <p>VP of Engineering, Series B Fintech (Stockholm)</p>
 </div></article></main>
 </section>
-<section class="pac-page" id="product-roadmap" data-page="8" data-layout="default">
+<section class="pac-page" id="where-acme-plays" data-page="9" data-layout="default">
+<main><article><h1>Where Acme plays</h1>
+
+<div class="pac-matrix pac-matrix--axes" data-pac="matrix">
+    <ul class="pac-matrix__grid">
+    <li class="pac-matrix__cell"><span class="pac-matrix__title">Prompt guidelines</span><span class="pac-matrix__body">cheap, and nobody follows them</span></li>
+    <li class="pac-matrix__cell"><span class="pac-matrix__title">Gateway policy</span><span class="pac-matrix__body">one URL swap, every call governed</span></li>
+    <li class="pac-matrix__cell"><span class="pac-matrix__title">Manual audits</span><span class="pac-matrix__body">weeks of work per review</span></li>
+    <li class="pac-matrix__cell"><span class="pac-matrix__title">Model retraining</span><span class="pac-matrix__body">months, and the risk moves elsewhere</span></li>
+    </ul><span class="pac-matrix__x">effort to adopt</span><span class="pac-matrix__y">impact on risk</span>
+</div></article></main>
+</section>
+<section class="pac-page" id="acme-by-the-numbers" data-page="10" data-layout="default">
+<main><article><h1>Acme by the numbers</h1>
+
+<ul class="pac-figures" data-pac="figures" style="--pac-figures-count: 4">
+    <li class="pac-figures__item" style="--pac-figures-chars: 1">
+        <span class="pac-figures__value">5</span>
+        <span class="pac-figures__caption">minutes to first governed call</span>
+    </li>
+    <li class="pac-figures__item" style="--pac-figures-chars: 7">
+        <span class="pac-figures__value">500 000</span>
+        <span class="pac-figures__caption">requests a day through one customer's gateway</span>
+    </li>
+    <li class="pac-figures__item" style="--pac-figures-chars: 5">
+        <span class="pac-figures__value">$2.4M</span>
+        <span class="pac-figures__caption">of token spend attributed to teams last quarter</span>
+    </li>
+    <li class="pac-figures__item" style="--pac-figures-chars: 10">
+        <span class="pac-figures__value">200 Mtok/s</span>
+        <span class="pac-figures__caption">peak throughput, no added latency</span>
+    </li>
+</ul></article></main>
+</section>
+<section class="pac-page" id="product-roadmap" data-page="11" data-layout="default">
 <main><article><h1>Product roadmap</h1>
 
 <ol class="pac-timeline pac-timeline--horizontal" data-pac="timeline">
@@ -888,7 +1013,7 @@ body[data-present] .pac-page[data-current] mark {
     </li>
 </ol></article></main>
 </section>
-<section class="pac-page" id="transparent-usage-based-pricing" data-page="9" data-layout="default">
+<section class="pac-page" id="transparent-usage-based-pricing" data-page="12" data-layout="default">
 <main><article><h1>Transparent, usage-based pricing</h1>
 <table>
 <thead>
@@ -925,7 +1050,7 @@ body[data-present] .pac-page[data-current] mark {
 </tbody>
 </table></article></main>
 </section>
-<section class="pac-page" id="built-by-infrastructure-engineers" data-page="10" data-layout="default">
+<section class="pac-page" id="built-by-infrastructure-engineers" data-page="13" data-layout="default">
 <main><article><h1>Built by infrastructure engineers</h1>
 <div class="pac-aside pac-aside--right" data-pac="aside">
     <figure class="pac-aside__figure"><img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&amp;q=80" alt="Founding team in a sunlit Nordic workshop studio"></figure>
@@ -938,7 +1063,7 @@ body[data-present] .pac-page[data-current] mark {
     <li class="pac-columns__column"><span class="pac-columns__title">EU</span><span class="pac-columns__body">residency and egress by default</span></li>
 </ul></article></main>
 </section>
-<section class="pac-page" id="start-governing-ai-in-production-today" data-page="11" data-layout="header">
+<section class="pac-page" id="start-governing-ai-in-production-today" data-page="14" data-layout="header">
 <main data-align="center"><article><div class="pac-prose pac-prose--center">
 <h1>Start governing AI in production today</h1>
 </div>

@@ -13,6 +13,15 @@ Governance and policy solution for production AI
 
 ---
 
+# What we will cover
+
+<!-- pac: agenda -->
+- **The problem** governance lags adoption
+- **The gateway** one deterministic door in front of every model
+- **Proof** what a customer got in under an hour
+- **Roadmap and pricing** where this goes and what it costs
+
+---
 
 # Fast-growing companies adopt AI faster than they can govern it
 
@@ -22,7 +31,7 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 
 # What that costs them
 
-<!-- pac: timeline -->
+<!-- pac: boxes -->
 1. Customer audit failures when enterprise clients ask
 2. Surprise token spikes discovered only at billing
 3. Fragmented policies written in ad-hoc prompt code
@@ -50,7 +59,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 # How Acme protects your workload
 
-<!-- pac: boxes -->
+<!-- pac: columns -->
 1. **Enforce** OPA inspects and validates requests before egress
 2. **Record** Immutable event stream of prompt hashes, latency, and tokens
 3. **Redact** Real-time PII masking and secret prevention at the wire
@@ -75,6 +84,26 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 <!-- pac: prose size=small align=right -->
 VP of Engineering, Series B Fintech (Stockholm)
+
+---
+
+# Where Acme plays
+
+<!-- pac: matrix x="effort to adopt" y="impact on risk" -->
+- **Prompt guidelines** cheap, and nobody follows them
+- **Gateway policy** one URL swap, every call governed
+- **Manual audits** weeks of work per review
+- **Model retraining** months, and the risk moves elsewhere
+
+---
+
+# Acme by the numbers
+
+<!-- pac: figures -->
+- **5** minutes to first governed call
+- **500 000** requests a day through one customer's gateway
+- **$2.4M** of token spend attributed to teams last quarter
+- **200 Mtok/s** peak throughput, no added latency
 
 ---
 

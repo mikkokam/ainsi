@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["alert", "aside", "boxes", "columns", "comparison", "full", "lead", "prose", "timeline"],
+        ["agenda", "alert", "aside", "boxes", "columns", "comparison", "figures", "full", "lead", "matrix", "prose", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(10);
+    expect(registry.names().length).toBe(13);
 });
 
 test("a later root overrides a builtin of the same name", async () => {
@@ -169,4 +169,30 @@ test("columns is boxes without the chrome: one column per item, a bold run as it
     expect(html).toContain('<li class="pac-columns__column"><span class="pac-columns__body">plain second</span></li>');
     const numbered = build("# T\n\n<!-- pac: columns -->\n1. one\n2. two\n", { registry, layouts, themeCss: "" }).html;
     expect(numbered).toContain('<ol class="pac-columns pac-columns--ordered" data-pac="columns">');
+});
+
+test("figures: the bold run is the figure, any text, sized to fit by its own length", async () => {
+    const registry = await load([BUILTIN]);
+    const { html } = build("# T\n\n<!-- pac: figures -->\n- **5** things\n- **$500 000** a year\n- **200 Mtok/s** peak\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<li class="pac-figures__item" style="--pac-figures-chars: 1">');
+    expect(html).toContain('<li class="pac-figures__item" style="--pac-figures-chars: 8">');
+    expect(html).toContain('<span class="pac-figures__value">200 Mtok/s</span>');
+    expect(html).toContain('<span class="pac-figures__caption">peak</span>');
+});
+
+test("matrix takes exactly four items and names its axes from props", async () => {
+    const registry = await load([BUILTIN]);
+    const four = build("# T\n\n<!-- pac: matrix x=\"effort\" y=\"impact\" -->\n- **A** a\n- **B** b\n- **C** c\n- **D** d\n", { registry, layouts, themeCss: "" });
+    expect(four.pages[0]!.blocks[1]!.component).toBe("matrix");
+    expect(four.html).toContain('<span class="pac-matrix__x">effort</span>');
+    const three = build("# T\n\n<!-- pac: matrix -->\n- a\n- b\n- c\n", { registry, layouts, themeCss: "" });
+    expect(three.pages[0]!.blocks.every(b => b.component === "prose")).toBe(true);
+    expect(three.diagnostics.some(d => d.message.includes("does not accept"))).toBe(true);
+});
+
+test("agenda numbers its rows with two digits", async () => {
+    const registry = await load([BUILTIN]);
+    const { html } = build("# T\n\n<!-- pac: agenda -->\n- **Open** where we are\n- **Plan** where next\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<span class="pac-agenda__number">01</span>');
+    expect(html).toContain('<span class="pac-agenda__title">Open</span>');
 });

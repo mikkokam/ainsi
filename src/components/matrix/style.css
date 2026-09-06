@@ -1,0 +1,25 @@
+/* four quadrants sharing rules through the middle; axis labels sit below and to the left */
+.pac-matrix { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr auto; }
+.pac-matrix__grid {
+    list-style: none; margin: 0; padding: 0;
+    grid-column: 2; grid-row: 1;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+}
+.pac-matrix__cell {
+    display: flex; flex-direction: column; gap: .35em;
+    padding: 1em 1.2em;
+    border: 0 solid var(--pac-rule);
+}
+.pac-matrix__cell:nth-child(1), .pac-matrix__cell:nth-child(2) { border-bottom-width: var(--pac-border); }
+.pac-matrix__cell:nth-child(1), .pac-matrix__cell:nth-child(3) { border-right-width: var(--pac-border); }
+.pac-matrix__title { font-weight: var(--pac-strong); }
+.pac-matrix__body { color: var(--pac-ink-soft); font-size: .92em; }
+.pac-matrix__x, .pac-matrix__y {
+    font: var(--pac-strong) .75em/1 var(--pac-font-mono);
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--pac-ink-soft);
+}
+.pac-matrix__x { grid-column: 2; grid-row: 2; text-align: center; padding-top: .8em; }
+.pac-matrix__y { grid-column: 1; grid-row: 1; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; padding-left: .8em; }
+.pac-matrix:not(.pac-matrix--axes) { grid-template-columns: 1fr; }
+.pac-matrix:not(.pac-matrix--axes) .pac-matrix__grid { grid-column: 1; }

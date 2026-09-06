@@ -1,0 +1,17 @@
+/* numerals in the display face, in the accent, a rule under each row */
+.pac-agenda { list-style: none; margin: 0; padding: 0; }
+.pac-agenda__row {
+    display: grid; grid-template-columns: auto 1fr; column-gap: 1.2em; align-items: baseline;
+    padding: .55em 0;
+    border-bottom: var(--pac-border) solid var(--pac-rule);
+}
+.pac-agenda__row:last-child { border-bottom: 0; }
+.pac-agenda__number {
+    font-family: var(--pac-font-display); font-weight: var(--pac-strong);
+    font-size: 1.6em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--pac-accent);
+}
+.pac-agenda__text { display: flex; flex-wrap: wrap; column-gap: .6em; align-items: baseline; }
+.pac-agenda__title { font-weight: var(--pac-strong); }
+.pac-agenda__body { color: var(--pac-ink-soft); }
