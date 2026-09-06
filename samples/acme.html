@@ -126,9 +126,10 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page { --pac-em: calc(var(--pac-size) * var(--pac-step, 1)); }
 .pac-page article > * + * { margin-top: var(--pac-gap); }
 .pac-page article > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
-.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose) + :is(p, ul, ol, blockquote, pre, .pac-prose) { margin-top: calc(var(--pac-em) * .55); }
-.pac-page article > :is(h1, h2, h3, h4, h5) + :is(p, ul, ol, blockquote, pre, .pac-prose) { margin-top: calc(var(--pac-em) * .35); }
-.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
+/* a component's root carries data-pac, which is how a timeline's ol is told from a list's */
+.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .55); }
+.pac-page article > :is(h1, h2, h3, h4, h5) + :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) { margin-top: calc(var(--pac-em) * .35); }
+.pac-page article > :is(p, ul, ol, blockquote, pre, .pac-prose):not([data-pac]) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
 .pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
