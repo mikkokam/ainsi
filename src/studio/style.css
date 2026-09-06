@@ -118,6 +118,9 @@ body[data-pac-raw] { overflow: hidden; }
     padding: 24px 20px 45vh;
 }
 
+/* a display rule beats the browser's [hidden]; say it again for what toggles by that attribute */
+.pac-studio__marks[hidden], .pac-studio__grip[hidden] { display: none; }
+
 /* the marks bar: bold, italic, code over a live selection in a block editor */
 .pac-studio__marks {
     position: fixed; z-index: 85;
