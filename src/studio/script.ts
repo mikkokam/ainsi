@@ -123,17 +123,22 @@ async function init(): Promise<void> {
     grip.innerHTML = icons.grip;
     grip.hidden = true;
     let gripped: HTMLElement | undefined;
+    let leaving: ReturnType<typeof setTimeout> | undefined;
     grip.addEventListener("click", event => { event.stopPropagation(); if (gripped) openMenu(gripped, gripped.getBoundingClientRect()); });
+    // the pointer crosses a sliver of page on its way from the block to the grip; hiding
+    // waits long enough for that crossing, and arriving on the grip cancels it
+    grip.addEventListener("mouseenter", () => clearTimeout(leaving));
     document.body.append(grip);
     document.addEventListener("mouseover", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return grip.hidden = true;
         const at = event.target as HTMLElement;
         if (at === grip || grip.contains(at)) return;
         const target = at.closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
-        if (!target) { grip.hidden = true; gripped = undefined; return; }
+        clearTimeout(leaving);
+        if (!target) { leaving = setTimeout(() => { grip.hidden = true; gripped = undefined; }, 400); return; }
         gripped = target;
         const rect = target.getBoundingClientRect();
-        grip.style.left = `${Math.max(4, rect.left - 30)}px`;
+        grip.style.left = `${Math.max(4, rect.left - 26)}px`;
         grip.style.top = `${rect.top}px`;
         grip.hidden = false;
     });
