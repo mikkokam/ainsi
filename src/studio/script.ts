@@ -180,6 +180,15 @@ async function init(): Promise<void> {
         if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"]);
     });
 
+    // the escape hatch for a block editor that lost focus: its own Escape handler lives on
+    // the textarea, so a stranded editor (a commit that never came back, focus elsewhere)
+    // would otherwise be closable by nothing but a manual reload
+    document.addEventListener("keydown", event => {
+        if (event.key !== "Escape" || chrome?.kind !== "block") return;
+        if ((event.target as HTMLElement).closest?.("textarea")) return;
+        shut();
+    });
+
     // a bare key, not a chord: ⌘E belongs to the browser's own Edit menu in Chromium, and a
     // single key can only fire in the one state the toggle is valid in, nothing focused
     document.addEventListener("keydown", event => {
@@ -483,64 +492,27 @@ async function themeDrill(panel: HTMLElement): Promise<void> {
 
 /*
  * Export writes beside the deck under its own name and replaces what is there; the server
- * fits, prints and opens the file, so the studio only reports how it went.
+ * fits, prints and opens the file, so the studio only reports how it went. Three image
+ * levels: screen density, compact for attachments, full for print.
  */
 function exportDrill(panel: HTMLElement, close: () => void): void {
     const target = `${doc.file.replace(/\.[^.]+$/, "")}.pdf`;
-    drill(panel, "Export", menuItem(`PDF, as ${target}`, async () => {
+    const write = (images: string) => async () => {
         close();
         hint(`Writing ${target}…`);
         try {
-            const response = await fetch("/__pdf", { method: "POST" });
+            const response = await fetch(`/__pdf?images=${images}`, { method: "POST" });
             if (response.ok) hint(`Wrote ${target}`, false, 2500);
-            else hint(await response.text() || `export failed: ${response.status}`, true, 6000);
+            else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
         } catch {
             hint("Export failed: server unreachable", true, 6000);
         }
-    }));
-}
-
-/*
- * The deck's settings are its frontmatter, and the frontmatter is a slice like any block:
- * the same editor, in flow above the first page, the same splice. Opened from the menu, or
- * by clicking the mark.
- * The theme keeps its own picker beside it; here it is one more line.
- */
-const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
-const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\ntheme: acme";
-
-function openDeck(): void {
-    const page = document.querySelector<HTMLElement>(".pac-page");
-    if (!page) return;
-    const matter = MATTER.exec(doc.source);
-    const initial = matter?.[1] ?? "";
-    openEditor(page, {
-        initial,
-        caret: "end",
-        mode: "deck",
-        placeholder: `frontmatter, one key per line\n${KEYS}`,
-        commit: text => {
-            const body = text.trim();
-            if (body === initial.trim()) return undefined;
-            const end = matter ? matter[0].length : 0;
-            return { start: 0, end, text: body ? `---\n${body}\n---\n\n` : "" };
-        },
-    });
-}
-
-/** whether a click on a page landed on its mark, whose box is a pseudo-element's computed style */
-function onMark(event: MouseEvent): boolean {
-    const at = event.target as HTMLElement;
-    const page = at.closest?.<HTMLElement>(".pac-page");
-    if (!page || (at !== page && !at.matches("main, article"))) return false;
-    const style = getComputedStyle(page, "::before");
-    if (style.backgroundImage === "none" || style.content === "none") return false;
-    const px = (v: string) => (v === "auto" ? NaN : parseFloat(v));
-    const rect = page.getBoundingClientRect();
-    const w = px(style.width), h = px(style.height);
-    const left = Number.isNaN(px(style.right)) ? rect.left + px(style.left) : rect.right - px(style.right) - w;
-    const top = Number.isNaN(px(style.bottom)) ? rect.top + px(style.top) : rect.bottom - px(style.bottom) - h;
-    return event.clientX >= left && event.clientX <= left + w && event.clientY >= top && event.clientY <= top + h;
+    };
+    drill(panel, "Export",
+        menuItem(`PDF, as ${target}`, write("screen")),
+        menuItem("PDF, compact", write("compact")),
+        menuItem("PDF, full-resolution images", write("full")),
+    );
 }
 
 /** the theme is one frontmatter line; changing it is a splice like any other edit */
@@ -815,6 +787,7 @@ async function splice(change: { start: number; end: number; text: string }): Pro
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ hash: doc.hash, ...change }),
+            signal: AbortSignal.timeout(8000),      // a hung write lands in the failure path, not a frozen editor
         });
         if (!response.ok) {
             failure = response.status === 409 ? "the file changed under the studio; reloading" : `edit failed: ${response.status}`;
