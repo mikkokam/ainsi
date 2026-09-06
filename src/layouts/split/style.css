@@ -25,7 +25,7 @@
 }
 [data-layout="split"] main[data-side="right"] article > .pac-full { inset: 0 0 0 auto; }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     [data-layout="split"] article,
     [data-layout="split"] main[data-side="right"] article {
         margin: 0; padding: 9% 7%;

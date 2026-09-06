@@ -20,6 +20,7 @@ Two things it must do that bespoke per-deck HTML cannot: change the content of a
     pac samples/acme.md --watch       # serves, rebuilds and reloads the browser
     pac samples/acme.md --no-viewer   # no toolbar, for a headless render
     pac samples/acme.md --fit         # make the pages fit (needs `bunx playwright install chromium`)
+    pac samples/acme.md --pdf         # also writes samples/acme.pdf, fitted, one sheet per page
 
 `--fit` measures every page in a real browser and, while one overflows, steps its type down
 within the range the theme allows, then splits it at a block boundary, then inside a component

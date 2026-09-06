@@ -67,13 +67,28 @@ body.pac:not([data-present]) .pac-page[data-overflow]::before {
     background: repeating-linear-gradient(90deg, #d6453c 0 9px, transparent 9px 18px);
     pointer-events: none;
 }
-@media print { .pac-page[data-overflow]::before { display: none; } }
+
+/*
+ * Print and PDF: the paper is the page. The build sizes @page to the deck's ratio, since a
+ * size rule takes no var(); here the box loses its card dressing and the shell around it,
+ * and each page breaks onto its own sheet. The page number and the overflow mark are
+ * reading aids and stay off the print.
+ */
+@media print {
+    .pac-page[data-overflow]::before { display: none; }
+    body.pac { padding: 0; background: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .pac-page { width: 1280px; margin: 0; border-radius: 0; box-shadow: none; break-after: page; break-inside: avoid; }
+    .pac-page:last-of-type { break-after: auto; }
+    body.pac:not([data-present]) .pac-page::after { display: none; }
+}
 
 /*
  * Reading view. A deck has two forms: a fixed-aspect page for projecting and printing, and
- * a fluid one for reading on whatever screen is to hand. Fit governs the first only.
+ * a fluid one for reading on whatever screen is to hand. Fit governs the first only. Scoped
+ * to screen: chromium lays a print out on its default paper before @page resizes it, and a
+ * narrow default paper would turn every printed page into a fluid one plus a spill sheet.
  */
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     /* still cards: the page keeps its radius, ground and shadow, and only stops being 16:9 */
     body.pac { padding: .8rem; }
     .pac-page {

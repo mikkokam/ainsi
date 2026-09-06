@@ -1,14 +1,11 @@
 {
     "name": "presentation-as-code",
-    "type": "module",
-    "private": true,
-    "bin": {
-        "pac": "src/cli.ts"
-    },
-    "scripts": {
-        "test": "bun test"
-    },
     "dependencies": {
+        "@codemirror/lang-markdown": "^6.5.2",
+        "@codemirror/search": "^6.7.2",
+        "@codemirror/state": "^6.7.4",
+        "@codemirror/view": "^6.43.11",
+        "codemirror": "^6.0.2",
         "hast-util-to-html": "^9.0.5",
         "mdast-util-to-hast": "^13.2.0",
         "mdast-util-to-string": "^4.0.0",
@@ -21,5 +18,13 @@
     },
     "optionalDependencies": {
         "playwright-core": "^1.62.1"
-    }
+    },
+    "bin": {
+        "pac": "src/cli.ts"
+    },
+    "private": true,
+    "scripts": {
+        "test": "bun test"
+    },
+    "type": "module"
 }

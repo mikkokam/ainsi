@@ -5,7 +5,7 @@
 .pac-comparison__row dt { font-size: .78em; text-transform: uppercase; letter-spacing: .06em; color: var(--pac-ink-soft); }
 .pac-comparison__row dd { margin: 0; }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     .pac-comparison { grid-auto-flow: row; }
 }
 

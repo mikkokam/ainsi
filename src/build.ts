@@ -177,8 +177,9 @@ ${rendered}
 <style>
 /* theme: tokens, and whatever no token should carry */
 ${options.themeCss ?? ""}
-/* engine: page structure */
+/* engine: page structure, and the paper a print lands on */
 ${BASE_CSS}
+@page { size: ${paper(settings.ratio)}; margin: 0; }
 /* layouts and components, styled through the tokens above */
 ${css}
 ${options.viewer?.css ?? ""}
@@ -191,6 +192,13 @@ ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="modu
 </html>`;
 
     return { html, diagnostics };
+}
+
+/** the sheet a page prints on: the design width at the deck's ratio, so one page is one sheet */
+function paper(ratio: string): string {
+    const [w, h] = ratio.split(":").map(Number);
+    const height = w && h ? Math.round((1280 * h) / w) : 720;
+    return `1280px ${height}px`;
 }
 
 export function build(source: string, options: BuildOptions): BuildResult {

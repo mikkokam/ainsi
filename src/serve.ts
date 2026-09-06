@@ -15,7 +15,8 @@ import { basename, dirname, join } from "node:path";
 /** editors fire several events for one save; one rebuild is enough */
 const SETTLE = 40;
 
-const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>location.reload()</script>`;
+// the studio, when present, installs __pacReload to hold a reload while an editor is open
+const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=window.__pacReload;h?h():location.reload()}</script>`;
 
 export interface ServeOptions {
     /** the deck file; its folder is where the assets it references are resolved */

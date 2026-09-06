@@ -59,6 +59,65 @@ body[data-pac-edit]:not([data-present]) [data-pac-span]:not([data-pac-entity]):h
     z-index: 5;
 }
 
+/* Raw mode: the whole file over the rendered deck. Fixed light chrome like the overlay
+   editor, whatever the theme, because source is chrome rather than content. */
+body[data-pac-raw] { overflow: hidden; }
+
+.pac-studio__raw {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    color: #111;
+}
+
+.pac-studio__raw[data-committing] { opacity: 0.6; pointer-events: none; }
+
+.pac-studio__rawbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font: 12px/1 system-ui, sans-serif;
+}
+
+.pac-studio__rawname { color: #888; font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pac-studio__rawgap { flex: 1; }
+
+.pac-studio__rawbutton {
+    font: 12px/1 system-ui, sans-serif;
+    color: #333;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.pac-studio__rawbutton[data-primary] {
+    color: #fff;
+    background: rgb(60, 110, 240);
+    border-color: rgb(60, 110, 240);
+}
+
+.pac-studio__raw .cm-editor { flex: 1; overflow: hidden; }
+.pac-studio__raw .cm-editor.cm-focused { outline: none; }
+.pac-studio__raw .cm-scroller {
+    font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow: auto;
+}
+/* a readable measure on a wide window; padding keeps the caret off the edges on a narrow one */
+.pac-studio__raw .cm-content {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 20px 45vh;
+}
+
+/* only failures surface here; the shortcut card is the viewer's */
 .pac-studio__hint {
     position: fixed;
     left: 12px;

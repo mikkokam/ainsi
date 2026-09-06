@@ -42,7 +42,14 @@ test("pages are numbered in the scroll view and not while presenting", () => {
 test("chrome never prints", () => {
     expect(viewer.css).toContain("@media print");
     const rule = viewer.css.slice(viewer.css.indexOf("@media print"));
-    expect(rule).toContain(".pac-toolbar, .pac-overview { display: none; }");
+    expect(rule).toContain(".pac-toolbar, .pac-overview, .pac-keys { display: none; }");
+});
+
+test("the viewer carries the shortcut card and the grid answers the keyboard", () => {
+    expect(viewer.script).toContain("pac:keys");
+    expect(viewer.script).toContain("pac-keys");
+    expect(viewer.css).toContain(".pac-keys");
+    for (const key of ["ArrowRight", "ArrowDown", "Home", "End", "Enter"]) expect(viewer.script).toContain(`"${key}"`);
 });
 
 test("a page's address is its first heading, slugged", () => {
@@ -61,4 +68,17 @@ test("duplicate headings and headingless pages still get distinct addresses", ()
 test("icons are inlined rather than fetched", () => {
     expect(viewer.script).toContain("<svg");
     expect(viewer.script).not.toMatch(/https?:\/\//);
+});
+
+test("the deck prints one page per sheet, sized to its ratio, with no chrome or reading marks", () => {
+    const { html } = build("---\nratio: 4:3\n---\n\n# One\n\na\n", { registry, layouts, themeCss: "", viewer });
+    expect(html).toContain("@page { size: 1280px 960px; margin: 0; }");
+    const print = html.slice(html.indexOf("@media print {"), html.indexOf("@media screen"));
+    expect(print).toContain("break-after: page");
+    expect(print).toContain(".pac-page::after { display: none; }");
+});
+
+test("the reading view is a screen affair: a print laid out on narrow paper must not reflow", () => {
+    const { html } = build(md, { registry, layouts, themeCss: "", viewer });
+    expect(html).not.toMatch(/@media \(max-width/);
 });

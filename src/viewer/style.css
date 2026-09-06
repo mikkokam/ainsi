@@ -84,16 +84,24 @@
     padding: 0; border: 0; background: transparent;
     text-align: left; cursor: pointer;
 }
+.pac-overview__cell:focus { outline: 0; }   /* the cursor is the frame's outline below */
 .pac-overview__frame {
     aspect-ratio: var(--pac-ratio, 16 / 9);
     overflow: hidden;
     border-radius: 6px;
     border: 1px solid rgb(0 0 0 / 12%);
     background: #fff;
+    transition: transform .14s ease, box-shadow .14s ease, outline-color .14s ease;
 }
-.pac-overview__cell:hover .pac-overview__frame,
-.pac-overview__cell:focus-visible .pac-overview__frame,
-.pac-overview__cell[data-active] .pac-overview__frame { outline: 2px solid #1f6feb; outline-offset: 1px; }
+.pac-overview__cell:hover .pac-overview__frame { outline: 2px solid rgb(31 111 235 / 55%); outline-offset: 1px; }
+/* the cursor grows and glows; a transform, so the neighbours stay put */
+.pac-overview__cell[data-active] { position: relative; z-index: 1; }
+.pac-overview__cell[data-active] .pac-overview__frame {
+    outline: 3px solid #1f6feb; outline-offset: 1px;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 7px rgb(31 111 235 / 18%), 0 12px 32px rgb(31 111 235 / 38%);
+}
+@media (prefers-reduced-motion: reduce) { .pac-overview__frame { transition: none; } }
 .pac-overview__label {
     font: 500 11px/1.3 system-ui, sans-serif;
     color: #5b6672;
@@ -115,6 +123,39 @@ body[data-present] .pac-overview .pac-page article > * { animation: none; }
 body[data-present] .pac-overview { background: rgb(12 15 18 / 96%); }
 body[data-present] .pac-overview__frame { border-color: rgb(255 255 255 / 14%); }
 body[data-present] .pac-overview__label { color: #98a4b3; }
+
+/* the shortcut list: held-modifier or ? card, bottom-left, over everything, never in the way */
+.pac-keys {
+    position: fixed; left: 1rem; bottom: 1rem; z-index: 110;
+    display: grid; grid-template-columns: auto 1fr; align-items: center;
+    column-gap: .8rem; row-gap: .4rem;
+    padding: .7rem .95rem .8rem;
+    font: 400 12px/1.3 system-ui, sans-serif;
+    color: #f2f5f8;
+    background: rgb(20 24 29 / 82%);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 22%);
+    pointer-events: none; user-select: none;
+}
+.pac-keys[data-out] { opacity: 0; transition: opacity .4s ease; }
+.pac-keys__head {
+    grid-column: 1 / -1;
+    font: 600 10px/1 system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #98a4b3;
+    margin-bottom: .2rem;
+}
+.pac-keys kbd {
+    justify-self: end;
+    font: 500 11px/1 ui-monospace, monospace;
+    padding: .3rem .4rem;
+    border-radius: 5px;
+    background: rgb(255 255 255 / 12%);
+    border: 1px solid rgb(255 255 255 / 14%);
+    white-space: nowrap;
+}
 
 /* presentation mode: one page, filling the viewport, scaled rather than reflowed */
 body[data-present] { overflow: hidden; background: #000; padding: 0; }
@@ -191,7 +232,7 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
  * device already in the reading form presents that form instead: one page, filling the
  * screen, flowing. Fit still governs the paged form, which is the one that gets projected.
  */
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     body[data-present] .pac-page[data-current] {
         position: fixed; inset: 0;
         width: 100%; height: 100%; margin: 0;
@@ -203,5 +244,5 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
 }
 
 @media print {
-    .pac-toolbar, .pac-overview { display: none; }
+    .pac-toolbar, .pac-overview, .pac-keys { display: none; }
 }

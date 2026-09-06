@@ -1,5 +1,12 @@
 import { icons, type IconName } from "./icons";
 
+/* the chord modifier: the key everyone on the platform already holds for app shortcuts */
+const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+const MOD = mac ? "⌘" : "Ctrl";
+const ALT = mac ? "⌥" : "Alt";
+const modKey = mac ? "Meta" : "Control";
+const chord = (event: KeyboardEvent): boolean => (mac ? event.metaKey : event.ctrlKey);
+
 const pages = [...document.querySelectorAll<HTMLElement>(".pac-page")];
 if (pages.length) start();
 
@@ -11,8 +18,8 @@ function start(): void {
     toolbar.className = "pac-toolbar";
 
     const menuButton = button("menu", "Menu", () => (panel ? closeMenu() : openMenu()));
-    const gridButton = button("grid", "Overview (o)", () => (overview ? closeOverview() : openOverview()));
-    const play = button("play", "Present", () => (presenting ? stop() : begin()));
+    const gridButton = button("grid", `Grid (${MOD}G)`, () => (overview ? closeOverview() : openOverview()));
+    const play = button("play", `Present (${MOD}⏎)`, () => (presenting ? stop() : begin()));
     const count = document.createElement("div");
     count.className = "pac-toolbar__count";
 
@@ -58,8 +65,6 @@ function start(): void {
         brand.textContent = document.body.hasAttribute("data-pac-studio") ? "PAC Studio" : "PAC Player";
         panel.append(brand);
 
-        item("Export…", undefined, "lands with --pdf");
-
         // the studio, when present, fills this with its own actions
         const slot = document.createElement("div");
         panel.append(slot);
@@ -94,13 +99,12 @@ function start(): void {
         panel!.append(element);
     }
 
-    function item(text: string, onClick?: () => void, why?: string): HTMLButtonElement {
+    function item(text: string, onClick: () => void): HTMLButtonElement {
         const element = document.createElement("button");
         element.className = "pac-menu__item";
         element.type = "button";
         element.textContent = text;
-        if (onClick) element.addEventListener("click", onClick);
-        else { element.disabled = true; if (why) element.title = why; }
+        element.addEventListener("click", onClick);
         panel!.append(element);
         return element;
     }
@@ -115,17 +119,17 @@ function start(): void {
      * so a thumbnail is the page itself rather than a stale capture.
      */
     let overview: HTMLDivElement | undefined;
+    let cursor = 0;
 
     function openOverview(): void {
         closeMenu();
         overview = document.createElement("div");
         overview.className = "pac-overview";
-        const current = presenting ? index : nearest();
+        cursor = presenting ? index : nearest();
         pages.forEach((page, i) => {
             const cell = document.createElement("button");
             cell.className = "pac-overview__cell";
             cell.type = "button";
-            if (i === current) cell.setAttribute("data-active", "");
             const frame = document.createElement("div");
             frame.className = "pac-overview__frame";
             const clone = page.cloneNode(true) as HTMLElement;
@@ -141,7 +145,37 @@ function start(): void {
         });
         document.body.append(overview);
         fitThumbs();
-        overview.querySelector("[data-active]")?.scrollIntoView({ block: "center" });
+        focusCell(cursor, "center");
+    }
+
+    const cells = () => [...overview!.querySelectorAll<HTMLElement>(".pac-overview__cell")];
+
+    /** the cursor is the focused cell, so Enter and Space are the button's own activation */
+    function focusCell(to: number, block: ScrollLogicalPosition = "nearest"): void {
+        const all = cells();
+        cursor = Math.max(0, Math.min(all.length - 1, to));
+        all.forEach((cell, i) => cell.toggleAttribute("data-active", i === cursor));
+        all[cursor]?.focus({ preventScroll: true });
+        all[cursor]?.scrollIntoView({ block });
+    }
+
+    function overviewKey(event: KeyboardEvent): void {
+        const all = cells();
+        const top = all[0]?.offsetTop;
+        const columns = Math.max(1, all.filter(cell => cell.offsetTop === top).length);
+        let to = cursor;
+        switch (event.key) {
+            case "ArrowRight": to += 1; break;
+            case "ArrowLeft": to -= 1; break;
+            case "ArrowDown": to += columns; break;
+            case "ArrowUp": to -= columns; break;
+            case "Home": to = 0; break;
+            case "End": to = all.length - 1; break;
+            case "Enter": case " ": event.preventDefault(); closeOverview(); return go(cursor, true);
+            default: return;
+        }
+        event.preventDefault();
+        focusCell(to);
     }
 
     function fitThumbs(): void {
@@ -175,7 +209,7 @@ function start(): void {
         presenting = false;
         document.body.removeAttribute("data-present");
         play.innerHTML = icons.play;
-        play.title = play.ariaLabel = "Present";
+        play.title = play.ariaLabel = `Present (${MOD}⏎)`;
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
         for (const page of pages) page.removeAttribute("data-current");
         pages[index]?.scrollIntoView({ block: "start" });
@@ -223,19 +257,75 @@ function start(): void {
     addEventListener("resize", fitThumbs, { passive: true });
     addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && presenting) stop(); });
 
+    /*
+     * The shortcut list: a translucent card bottom-left, shown while the chord modifier is
+     * down (the iPad convention). Built per mode on each show;
+     * the studio, when present, adds its own rows over the same event the menu uses.
+     */
+    let keys: HTMLDivElement | undefined;
+
+    type Row = [key: string, label: string];
+
+    function shortcuts(): { mode: string; rows: Row[] } {
+        const studio = document.body.hasAttribute("data-pac-studio");
+        if ((document.activeElement as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) return { mode: "Editing", rows: [] };
+        if (overview) return { mode: "Grid", rows: [["← → ↑ ↓", "move"], ["⏎", "open slide"], ["esc", "close"]] };
+        if (presenting) return { mode: "Presenting", rows: [["← →", "previous / next"], [`${MOD} ← →`, "first / last"], [`${MOD} G`, "grid"], ["esc", "leave"]] };
+        return { mode: studio ? "Studio" : "Player", rows: [[`${MOD} ⏎`, "present from this slide"], [`${MOD} G`, "grid"]] };
+    }
+
+    function openKeys(): void {
+        for (const fading of document.querySelectorAll(".pac-keys")) fading.remove();
+        const { mode, rows } = shortcuts();
+        document.dispatchEvent(new CustomEvent("pac:keys", { detail: { mode, rows, mod: MOD, alt: ALT } }));
+        keys = document.createElement("div");
+        keys.className = "pac-keys";
+        const head = document.createElement("div");
+        head.className = "pac-keys__head";
+        head.textContent = mode;
+        keys.append(head);
+        for (const [key, text] of rows) {
+            const kbd = document.createElement("kbd");
+            kbd.textContent = key;
+            const label = document.createElement("span");
+            label.textContent = text;
+            keys.append(kbd, label);
+        }
+        document.body.append(keys);
+    }
+
+    /** in is instant, out is a fade; the fading card is nobody's, so a reopen just replaces it */
+    function closeKeys(): void {
+        const card = keys;
+        keys = undefined;
+        if (!card) return;
+        card.setAttribute("data-out", "");
+        setTimeout(() => card.remove(), 400);
+    }
+
+    const release = () => { if (keys) closeKeys(); };
+    addEventListener("keyup", event => { if (event.key === modKey) release(); });
+    addEventListener("blur", release);
+
     addEventListener("keydown", event => {
+        if (event.key === modKey) { if (!keys) openKeys(); return; }
+        release();     // any other key while the modifier is down is a chord, not a request for the list
         if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
-        if (event.key === "Escape" && panel) return closeMenu();
-        if (event.key === "Escape" && overview) return closeOverview();
-        if (event.key === "Escape" && presenting) return stop();
-        if (event.key === "o") return overview ? closeOverview() : openOverview();
-        if (!presenting && event.key !== "f") return;
+        if (event.key === "Escape") {
+            if (panel) return closeMenu();
+            if (overview) return closeOverview();
+            if (presenting) return stop();
+            return;
+        }
+        if (chord(event) && event.key.toLowerCase() === "g") { event.preventDefault(); return overview ? closeOverview() : openOverview(); }
+        if (chord(event) && event.key === "Enter") { event.preventDefault(); return presenting ? stop() : begin(); }
+        if (overview) return overviewKey(event);
+        if (!presenting) return;
         switch (event.key) {
-            case "ArrowRight": case "ArrowDown": case " ": case "PageDown": event.preventDefault(); return go(index + 1);
-            case "ArrowLeft": case "ArrowUp": case "PageUp": event.preventDefault(); return go(index - 1);
+            case "ArrowRight": case "ArrowDown": case " ": case "PageDown": event.preventDefault(); return go(chord(event) ? pages.length - 1 : index + 1);
+            case "ArrowLeft": case "ArrowUp": case "PageUp": event.preventDefault(); return go(chord(event) ? 0 : index - 1);
             case "Home": return go(0);
             case "End": return go(pages.length - 1);
-            case "f": return presenting ? stop() : begin();
         }
     });
 

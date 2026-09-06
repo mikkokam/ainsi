@@ -71,7 +71,7 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 | Tier       | Workspaces | Monthly Requests | Retention & Compliance | Price        |
 | ---------- | ---------- | ---------------- | ---------------------- | ------------ |
-| Team       | 4          | Up to 500k reqs  | 90-day signed logs     | 490 € / mo   |
+| Team       | 3          | Up to 500k reqs  | 90-day signed logs     | 490 € / mo   |
 | Business   | 10         | Up to 5M reqs    | 2-year audit vault     | 1 450 € / mo |
 | Enterprise | Unlimited  | Custom volume    | 7-year vault + VPC     | Custom       |
 

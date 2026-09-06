@@ -22,7 +22,7 @@
 .pac-timeline__label { font-weight: var(--pac-strong); font-variant-numeric: tabular-nums; }
 .pac-timeline__body { color: var(--pac-ink-soft); font-size: .92em; }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     .pac-timeline--horizontal { grid-auto-flow: row; }
     .pac-timeline--horizontal .pac-timeline__step::before { display: none; }
 }
