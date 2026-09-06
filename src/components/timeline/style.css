@@ -6,7 +6,7 @@
 .pac-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
 .pac-timeline__step {
     display: flex; flex-direction: column; gap: .3em;
-    padding-top: 1.5em; position: relative;
+    padding-top: calc(var(--pac-timeline-marker) + .6em); position: relative;
 }
 .pac-timeline--horizontal .pac-timeline__step::before {
     content: ""; position: absolute;
@@ -19,6 +19,15 @@
     width: var(--pac-timeline-marker); height: var(--pac-timeline-marker);
     border-radius: 50%; background: var(--pac-accent);
 }
+/* a numbered source list keeps its numbers: the dot grows into a disc that carries one */
+.pac-timeline--numbered { --pac-timeline-marker: 1.7em; counter-reset: pac-step; }
+.pac-timeline--numbered .pac-timeline__marker {
+    counter-increment: pac-step;
+    display: grid; place-items: center;
+    font: var(--pac-strong) .7em/1 var(--pac-font-mono);
+    color: var(--pac-accent-ink);
+}
+.pac-timeline--numbered .pac-timeline__marker::before { content: counter(pac-step); }
 .pac-timeline__label { font-weight: var(--pac-strong); font-variant-numeric: tabular-nums; }
 .pac-timeline__body { color: var(--pac-ink-soft); font-size: .92em; }
 

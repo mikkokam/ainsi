@@ -1,10 +1,7 @@
 import type { Block, Diagnostic, Directive, Entity } from "./types";
 import type { Component, Registry } from "./registry";
 
-const SHORT_ITEM = 60;
-const LABELLED = /^\s*[^:\n]{1,24}:\s+\S/;
-
-/** the directive that claims a boundary and nothing else: what follows it is the heuristic's */
+/** a boundary and nothing else; decks written before directives governed one entity carry it */
 export const END = "end";
 
 /** Directives win where they apply; everything else falls to the heuristics. */
@@ -24,7 +21,7 @@ export function group(
         const directive = starts.get(page[i]!.id);
         if (directive && directive.component !== END) {
             const component = registry.get(directive.component);
-            const end = component ? extent(page, i, blocks.length === 0, starts, component) : i + 1;
+            const end = component ? extent(page, i, starts, component) : i + 1;
             const span = page.slice(i, end);
             if (!component) {
                 diagnostics.push({
@@ -56,13 +53,12 @@ export function group(
 }
 
 /**
- * A directive spans what the heuristic would have taken from its entity, grown one entity at
- * a time until the component accepts the span, and never past the next directive. So a
- * retag of one paragraph in a run takes that paragraph, and `timeline` before a heading and
- * a list takes both.
+ * A directive governs the entity it precedes, grown one entity at a time only until the
+ * component accepts the span, and never past the next directive. So `prose size=large`
+ * sizes one paragraph, and `timeline` before a heading and a list takes both.
  */
-function extent(page: Entity[], from: number, atPageTop: boolean, starts: Map<string, Directive>, component: Component): number {
-    let end = from + heuristic(page, from, atPageTop, starts)[1];
+function extent(page: Entity[], from: number, starts: Map<string, Directive>, component: Component): number {
+    let end = from + 1;
     while (!component.accepts(page.slice(from, end)) && end < page.length && !starts.has(page[end]!.id)) end++;
     return end;
 }
@@ -78,7 +74,11 @@ function make(entities: Entity[], component: string, props: Record<string, unkno
     };
 }
 
-/** Returns [component, entities consumed, props]. Order matters: timeline is tested before boxes. */
+/**
+ * Returns [component, entities consumed, props]. A list is a list: bullets or numbers as
+ * written, until a directive names a component. Tables and images still pick a form,
+ * because plain rendering of those rarely fits a page.
+ */
 function heuristic(
     page: Entity[],
     i: number,
@@ -88,16 +88,8 @@ function heuristic(
     const e = page[i]!;
     const next = page[i + 1];
 
-    if (e.kind === "heading" && atPageTop && next?.kind === "paragraph" && !page[i + 2]) {
+    if (e.kind === "heading" && atPageTop && next?.kind === "paragraph" && !page[i + 2] && !starts.has(next.id)) {
         return ["lead", 2, {}];
-    }
-
-    if (e.kind === "list") {
-        const items = listItems(e);
-        if (items.length >= 2 && items.every(t => LABELLED.test(t))) return ["timeline", 1, {}];
-        if (items.length >= 2 && items.length <= 5 && items.every(t => t.length <= SHORT_ITEM && !/[.!?]$/.test(t.trim()))) {
-            return ["boxes", 1, {}];
-        }
     }
 
     if (e.kind === "table") {
@@ -111,14 +103,10 @@ function heuristic(
 
     // prose absorbs the run of ordinary blocks so a page is not one block per paragraph,
     // but never past an entity a directive claims or one another heuristic could match
-    const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html"];
+    const absorbed: Entity["kind"][] = ["paragraph", "heading", "quote", "code", "html", "list"];
     let taken = 1;
     while (page[i + taken] && absorbed.includes(page[i + taken]!.kind) && !starts.has(page[i + taken]!.id)) taken++;
     return ["prose", taken, {}];
-}
-
-export function listItems(entity: Entity): string[] {
-    return (entity.node.children ?? []).map((item: any) => text(item));
 }
 
 function text(node: any): string {

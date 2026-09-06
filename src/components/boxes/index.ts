@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { escape, items, listOf, split, type ComponentDefinition } from "../../kit";
+import { labelled, listOf, type ComponentDefinition } from "../../kit";
 
 export default {
     accepts: entities => !!listOf(entities),
@@ -12,14 +12,15 @@ export default {
     render: ctx => {
         const list = listOf(ctx.entities)!;
         const before = ctx.entities.slice(0, ctx.entities.indexOf(list)).map(e => ctx.html(e)).join("\n");
-        const boxes = items(list).map(text => {
-            const [title, body] = split(text);
-            const head = title ? `<span class="pac-boxes__title">${escape(title)}</span>` : "";
-            return `<li class="pac-boxes__box">${head}<span class="pac-boxes__body">${escape(body)}</span></li>`;
+        const boxes = labelled(list, ctx.inline).map(([title, body]) => {
+            const head = title ? `<span class="pac-boxes__title">${title}</span>` : "";
+            return `<li class="pac-boxes__box">${head}<span class="pac-boxes__body">${body}</span></li>`;
         });
+        // a numbered list keeps its numbers: an ol, and the css puts each one on its box
+        const tag = list.ordered ? "ol" : "ul";
         return `${before}
-<ul class="pac-boxes" data-pac="boxes" data-stretch="${ctx.props.stretch === true}">
+<${tag} class="pac-boxes${list.ordered ? " pac-boxes--ordered" : ""}" data-pac="boxes" data-stretch="${ctx.props.stretch === true}">
     ${boxes.join("\n    ")}
-</ul>`;
+</${tag}>`;
     },
 } satisfies ComponentDefinition;

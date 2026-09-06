@@ -13,9 +13,7 @@ Governance and policy infrastructure for production AI
 ---
 
 
-### Fast-growing companies adopt AI faster than they can govern it
-
-<!-- pac: boxes -->
+# Fast-growing companies adopt AI faster than they can govern it
 
 A fifty-person engineering team might now connect eight model providers across product, support, and internal tools - with zero unified audit trail, unpredictable monthly token invoices, and no automated compliance checks.
 
@@ -23,10 +21,10 @@ A fifty-person engineering team might now connect eight model providers across p
 
 # What that costs them
 
-- Customer audit failures when enterprise clients ask
-- Surprise token spikes discovered only at billing
-- Fragmented policies written in ad-hoc prompt code
-- Unchecked PII and secret leaks across shadow tools
+1. Customer audit failures when enterprise clients ask
+2. Surprise token spikes discovered only at billing
+3. Fragmented policies written in ad-hoc prompt code
+4. Unchecked PII and secret leaks across shadow tools
 
 ---
 
@@ -36,6 +34,7 @@ A fifty-person engineering team might now connect eight model providers across p
 
 Every outbound LLM call passes through Acme before reaching upstream providers. **Policies** evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.
 
+<!-- pac: prose size=small -->
 Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.
 
 ![Tactile notebook and fountain pen on warm oak desk](https://images.unsplash.com/photo-1449247709967-d4461a6a6103?w=1600&q=80)
@@ -45,11 +44,10 @@ Zero changes to existing application code: swap one base URL in your client conf
 # How Acme protects your workload
 
 <!-- pac: boxes -->
-
-- Enforce: OPA inspects and validates requests before egress
-- Record: Immutable event stream of prompt hashes, latency, and tokens
-- Redact: Real-time PII masking and secret prevention at the wire
-- Comply: Instant audit packages for EU AI Act, SOC 2, and GDPR
+1. Enforce: OPA inspects and validates requests before egress
+2. Record: Immutable event stream of prompt hashes, latency, and tokens
+3. Redact: Real-time PII masking and secret prevention at the wire
+4. Comply: Instant audit packages for EU AI Act, SOC 2, and GDPR
 
 ---
 
@@ -68,13 +66,14 @@ Zero changes to existing application code: swap one base URL in your client conf
 <!-- pac: quote -->
 
 > When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.
-
-VP of Engineering, Series B Fintech (Stockholm)
+>
+> — VP of Engineering, Series B Fintech (Stockholm)
 
 ---
 
 # Product roadmap
 
+<!-- pac: timeline -->
 - Q1: Turnkey OPA policy bundles for EU AI Act Article 12 compliance
 - Q2: Real-time semantic budget limits and anomalous spend throttling
 - Q3: Air-gapped on-premise appliances and self-hosted VPC agents

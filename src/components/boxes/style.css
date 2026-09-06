@@ -17,6 +17,20 @@
     border-top: 3px solid var(--pac-accent);
     border-radius: var(--pac-radius);
 }
+/* a numbered list wears its number as a tag in the box's top-left corner, cut to the box's own radius */
+.pac-boxes--ordered { counter-reset: pac-box; }
+.pac-boxes--ordered .pac-boxes__box { position: relative; padding-top: 2.2em; }
+.pac-boxes--ordered .pac-boxes__box::before {
+    counter-increment: pac-box;
+    content: counter(pac-box);
+    position: absolute; top: -3px; left: -1px;
+    min-width: 2em; height: 1.7em; padding: 0 .55em;
+    display: grid; place-items: center;
+    font: var(--pac-strong) .7em/1 var(--pac-font-mono);
+    color: var(--pac-accent-ink);
+    background: var(--pac-accent);
+    border-radius: var(--pac-radius) 0 var(--pac-radius) 0;
+}
 .pac-boxes__title { font-weight: var(--pac-strong); }
 .pac-boxes__body { color: var(--pac-ink-soft); font-size: .92em; }
 

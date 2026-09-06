@@ -112,7 +112,7 @@ Refused now: picking a library (y.js, Loro, Automerge), because a persisted snap
 
 ## What forms a group when nothing matches (question) [guess]
 
-The six heuristics cover the cases seen so far. The guess is that everything else collapsing to `prose` is good enough, and that authors reach for a directive rarely. If in practice most pages need one, grouping is underpowered and the answer is probably a seventh rule rather than a bigger vocabulary. Answered by the three decks above, not by argument.
+A list renders as written, bullets or numbers, until a directive names timeline or boxes: the studio made the old guess visible, an author reading "auto · timeline" over a list they meant as bullets, and it went. The heuristics that remain pick a form for a heading at the top of a page, a table and an image, on the guess that plain rendering of those rarely fits a page. If a table or an image turns out to want the same treatment as lists, the answer is deleting that rule too, and the studio's show-as dropdown is where the author says otherwise. Answered by the three decks above, not by argument.
 
 ## One source, two projections (question)
 

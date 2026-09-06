@@ -53,15 +53,15 @@ test("a directive governing nothing warns rather than failing", () => {
     expect(diagnostics.some(d => d.message.includes("governs nothing"))).toBe(true);
 });
 
-test("a directive spans the heuristic's run and stops at the next directive", () => {
-    const md = "<!-- pac: prose -->\n\na\n\nb\n\n<!-- pac: boxes -->\n\n- x\n- y\n";
+test("a directive governs the one entity it precedes", () => {
+    const md = "<!-- pac: prose size=large -->\n\na\n\nb\n\n<!-- pac: boxes -->\n\n- x\n- y\n";
     const [page] = blocksOf(md).pages;
-    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 2], ["boxes", 1]]);
+    expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "directive"], ["prose", 1, "heuristic"], ["boxes", 1, "directive"]]);
 });
 
 test("a directive does not swallow what the heuristic would have grouped apart", () => {
-    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n- x\n- y\n").pages;
-    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["boxes", 1]]);
+    const [page] = blocksOf("<!-- pac: prose -->\n\na\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n").pages;
+    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 1], ["comparison", 1]]);
 });
 
 test("a directive grows its span until the component accepts it", () => {
@@ -69,7 +69,7 @@ test("a directive grows its span until the component accepts it", () => {
     expect(page!.map(b => [b.component, b.entities.length])).toEqual([["timeline", 2]]);
 });
 
-test("an end marker bounds a directive inside a run", () => {
+test("an end marker from an older deck is still honoured", () => {
     const md = "a\n\n<!-- pac: quote -->\n\nb\n\n<!-- pac: end -->\n\nc\n";
     const [page] = blocksOf(md).pages;
     expect(page!.map(b => [b.component, b.entities.length, b.origin])).toEqual([["prose", 1, "heuristic"], ["quote", 1, "directive"], ["prose", 1, "heuristic"]]);
@@ -84,7 +84,7 @@ test("a directive carries its source offsets", () => {
 
 test("an unknown component degrades to the heuristic", () => {
     const { pages, diagnostics } = blocksOf("<!-- pac: nonesuch -->\n\n- Q1: a\n- Q2: b\n");
-    expect(pages[0]![0]).toMatchObject({ component: "timeline", origin: "heuristic" });
+    expect(pages[0]![0]).toMatchObject({ component: "prose", origin: "heuristic" });
     expect(diagnostics.some(d => d.message.includes("unknown component"))).toBe(true);
 });
 
@@ -94,14 +94,9 @@ test("a component that rejects the span degrades to the heuristic", () => {
     expect(diagnostics.some(d => d.message.includes("does not accept"))).toBe(true);
 });
 
-test("labelled lists beat short lists: timeline is tested before boxes", () => {
-    const { pages } = blocksOf("- Q1: a\n- Q2: b\n- Q3: c\n");
-    expect(pages[0]![0]!.component).toBe("timeline");
-});
-
-test("a short unlabelled list is boxes, which sizes itself", () => {
-    const { pages } = blocksOf("- yksi\n- kaksi\n- kolme\n");
-    expect(pages[0]![0]).toMatchObject({ component: "boxes", props: {} });
+test("a list is a list until a directive says otherwise", () => {
+    const [page] = blocksOf("intro\n\n- Q1: a\n- Q2: b\n\n1. one\n2. two\n").pages;
+    expect(page!.map(b => [b.component, b.entities.length])).toEqual([["prose", 3]]);
 });
 
 test("a label column plus two is a comparison, wider stays a table", () => {

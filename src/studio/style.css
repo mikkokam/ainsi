@@ -117,6 +117,37 @@ body[data-pac-raw] { overflow: hidden; }
     padding: 24px 20px 45vh;
 }
 
+/* the marks bar: bold, italic, code over a live selection in a block editor */
+.pac-studio__marks {
+    position: fixed; z-index: 85;
+    display: flex; gap: .1rem;
+    padding: .2rem;
+    background: rgb(20 24 29 / 92%);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 22%);
+}
+.pac-studio__mark {
+    min-width: 28px; height: 26px; padding: 0 .4rem;
+    border: 0; border-radius: 5px;
+    background: transparent; color: #f2f5f8;
+    font: 600 12px/1 ui-monospace, monospace;
+    cursor: pointer;
+}
+.pac-studio__mark:hover { background: rgb(255 255 255 / 14%); }
+
+/* the grip: the toolbar's visible door, at the hovered block's top-left corner */
+.pac-studio__grip {
+    position: fixed; z-index: 75;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    padding: 0; border: 1px solid rgb(0 0 0 / 10%); border-radius: 6px;
+    background: rgb(255 255 255 / 95%); color: #5b6672;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+    cursor: pointer;
+}
+.pac-studio__grip svg { width: 15px; height: 15px; }
+.pac-studio__grip:hover { color: #1f6feb; border-color: #1f6feb; }
+
 /* the block toolbar: one row above the block, dropdowns beneath their buttons */
 .pac-studio__bar {
     position: fixed; z-index: 80;

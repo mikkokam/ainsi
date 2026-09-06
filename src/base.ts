@@ -46,9 +46,12 @@ body.pac:not([data-present]) .pac-page::after {
  */
 .pac-page main { height: 100%; padding: var(--pac-pad); }
 .pac-page h1, .pac-page h2, .pac-page h3 { font-family: var(--pac-font-display); }
-.pac-page h1 { font-size: 2.4em; line-height: 1.1; margin: 0 0 .4em; letter-spacing: -.02em; }
-.pac-page h2 { font-size: 1.5em; margin: 0 0 .4em; }
-.pac-page h3 { font-size: 1.1em; margin: 0 0 .4em; }
+.pac-page h1, .pac-page h2, .pac-page h3, .pac-page h4, .pac-page h5 { margin: 0 0 .4em; line-height: 1.2; }
+.pac-page h1 { font-size: 2.49em; line-height: 1.1; letter-spacing: -.02em; }
+.pac-page h2 { font-size: 2.07em; line-height: 1.12; }
+.pac-page h3 { font-size: 1.73em; }
+.pac-page h4 { font-size: 1.44em; }
+.pac-page h5 { font-size: 1.2em; }
 .pac-page p { margin: 0 0 .6em; }
 .pac-page > *:last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }

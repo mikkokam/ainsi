@@ -117,6 +117,28 @@ async function init(): Promise<void> {
         else edit(target, range, "end");
     });
 
+    // the same toolbar from a visible door: a grip at the block's top-left corner while the
+    // pointer is over it, so right-click is a shortcut rather than the only way in
+    const grip = h("button", { class: "pac-studio__grip", type: "button", title: "Block menu", "aria-label": "Block menu" });
+    grip.innerHTML = icons.grip;
+    grip.hidden = true;
+    let gripped: HTMLElement | undefined;
+    grip.addEventListener("click", event => { event.stopPropagation(); if (gripped) openMenu(gripped, gripped.getBoundingClientRect()); });
+    document.body.append(grip);
+    document.addEventListener("mouseover", event => {
+        if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return grip.hidden = true;
+        const at = event.target as HTMLElement;
+        if (at === grip || grip.contains(at)) return;
+        const target = at.closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
+        if (!target) { grip.hidden = true; gripped = undefined; return; }
+        gripped = target;
+        const rect = target.getBoundingClientRect();
+        grip.style.left = `${Math.max(4, rect.left - 30)}px`;
+        grip.style.top = `${rect.top}px`;
+        grip.hidden = false;
+    });
+    addEventListener("scroll", () => (grip.hidden = true), { passive: true });
+
     document.addEventListener("contextmenu", event => {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
         const target = (event.target as HTMLElement).closest<HTMLElement>("[data-pac-entity], [data-pac-span]");
@@ -146,7 +168,7 @@ async function init(): Promise<void> {
     document.addEventListener("pac:keys", event => {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
-        else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["empty", "deletes the block"]);
+        else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["select", "marks bar"], ["empty", "deletes the block"]);
         if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"]);
     });
 
@@ -163,27 +185,27 @@ async function init(): Promise<void> {
 
 /*
  * The block toolbar, above the block it governs. Three groups, left to right: what the
- * block is (its family, with a level dropdown for text and a bullets/numbered one for a
- * list), what it can become (the other families), and how it shows (the components that
- * accept it, then that component's options). Delete at the end. A family change rewrites
- * the entity's slice; a show-as change is a directive before it, bounded by an end marker
- * when the heuristic's run would carry on past it; the heuristic's own pick removes the
- * directive instead. Each press is one splice and the rebuild closes the bar.
+ * block is (its family, with a level dropdown for text), what it can become (the other
+ * families), and how it shows (the components that accept it, then that component's
+ * options). Delete at the end. A family change rewrites the entity's slice; a show-as
+ * change is a directive before it, which governs that entity alone; the heuristic's own
+ * pick removes the directive instead. Each press is one splice and the rebuild closes the bar.
  */
 let menu: HTMLElement | undefined;
 
 type Family = "text" | "list" | "quote" | "code";
-const FAMILY: Record<Family, { label: string; kind: TextKind; icon: IconName }> = {
-    text: { label: "Text", kind: "paragraph", icon: "text" },
-    list: { label: "Bullets", kind: "list", icon: "list" },
-    quote: { label: "Quote", kind: "quote", icon: "quote" },
-    code: { label: "Code", kind: "code", icon: "code" },
-};
-const TEXT_LEVELS: [TextKind, string, string][] = [["paragraph", "Text", "¶"], ["heading1", "Heading 1", "#"], ["heading2", "Heading 2", "##"], ["heading3", "Heading 3", "###"]];
-const LIST_LEVELS: [TextKind, string, string][] = [["list", "Bullets", "-"], ["ordered", "Numbered", "1."]];
+const FAMILY: Record<Family, string> = { text: "Text", list: "Bullets", quote: "Quote", code: "Code" };
+/** the convert buttons: a family each, lists twice because the marker is the whole difference */
+const CONVERT: [TextKind, string, IconName][] = [["paragraph", "Text", "text"], ["list", "Bullets", "list"], ["ordered", "Numbered", "ordered"], ["quote", "Quote", "quote"], ["code", "Code", "code"]];
+const TEXT_LEVELS: [TextKind, string, string][] = [["paragraph", "Text", "¶"], ["heading1", "Heading 1", "#"], ["heading2", "Heading 2", "##"], ["heading3", "Heading 3", "###"], ["heading4", "Heading 4", "####"], ["heading5", "Heading 5", "#####"]];
+/** components that are a family in disguise; the convert buttons already cover them. Plain
+ * rendering is a look for a list, a table or an image, and only a family for text. */
+const NOT_A_LOOK = ["quote", "lead"];
+const notALook = (family: Family | undefined) => (family && family !== "list" ? [...NOT_A_LOOK, "prose"] : NOT_A_LOOK);
+/** what the heuristic's plain rendering is called, by what it renders */
+const PLAIN: Record<string, string> = { list: "bullets", ordered: "numbered", quote: "quote", code: "code" };
 
 function openMenu(handle: HTMLElement, at: DOMRect): void {
-    closeMenu();
     const id = handle.dataset.pacEntity ?? handle.dataset.pacSpan?.split(" ")[0];
     const entity = doc.entities.find(e => e.id === id);
     const block = doc.blocks.find(b => entity && b.ids.includes(entity.id));
@@ -201,29 +223,35 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     const family = current && familyOf(current);
     const convert = (to: TextKind) => splice({ start: entity.start, end: entity.end, text: retag(entity.md, entity.kind, to, neighbours(entity)) });
     if (own && family === "text") menu.append(dropdown(TEXT_LEVELS.find(l => l[0] === current)![1], TEXT_LEVELS.map(([kind, label, hint]) => item(label, hint, kind === current, () => convert(kind)))));
-    else if (own && family === "list") menu.append(dropdown(LIST_LEVELS.find(l => l[0] === current)![1], LIST_LEVELS.map(([kind, label, hint]) => item(label, hint, kind === current, () => convert(kind)))));
-    else menu.append(label(own && family ? FAMILY[family].label : entity.kind));
+    else if (own && family === "list") menu.append(label(current === "ordered" ? "Numbered" : "Bullets"));
+    else menu.append(label(own && family ? FAMILY[family] : entity.kind));
 
     // what it can become
     if (own && family) {
         menu.append(divider());
-        for (const [name, def] of Object.entries(FAMILY) as [Family, typeof FAMILY[Family]][]) {
-            menu.append(iconButton(def.icon, def.label, name === family, () => { if (name !== family) convert(def.kind); }));
+        for (const [kind, title, icon] of CONVERT) {
+            const active = familyOf(kind) === family && (family !== "list" || kind === current);
+            menu.append(iconButton(icon, title, active, () => { if (!active) convert(kind); }));
         }
     }
 
-    // how it shows: the components that accept the target, the heuristic's own marked auto
+    // how it shows: the looks that accept the target, the heuristic's own marked auto. A text
+    // block has looks only when a component beyond plain rendering takes it.
     const accepted = block.origin === "directive" ? block.accepted : entity.accepted;
-    const choices = accepted.filter(name => doc.components.some(c => c.name === name));
-    if (choices.length > 1) {
+    const looks = accepted.filter(name => !notALook(family).includes(name) && doc.components.some(c => c.name === name));
+    const showLooks = looks.length > 0 || (!!block.directive && !notALook(family).includes(block.component));
+    if (showLooks) {
         menu.append(divider());
         const showing = block.component === block.heuristic && !block.directive ? "auto" : block.component;
-        menu.append(dropdown(showing === "auto" ? `auto · ${block.heuristic}` : block.component, [
-            item(`auto · ${block.heuristic}`, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
-            ...choices.filter(name => name !== block.heuristic).map(name => item(name, "", name === showing, () => splice(structural(target, name)))),
+        const plain = (name: string) => (name === "prose" ? PLAIN[current ?? entity.kind] ?? "text" : name);
+        const auto = `auto · ${plain(block.heuristic)}`;
+        menu.append(dropdown(showing === "auto" ? auto : plain(block.component), [
+            item(auto, "", showing === "auto", () => (block.directive ? splice(structural(target, null)) : closeMenu())),
+            ...looks.filter(name => name !== block.heuristic).map(name => item(plain(name), "", name === showing, () => splice(structural(target, name)))),
         ]));
     }
     const component = doc.components.find(c => c.name === block.component);
+    if (component?.fields.length && !showLooks) menu.append(divider());
     for (const field of component?.fields ?? []) {
         menu.append(control(field, block.props[field.name], value => {
             const props = explicit(component!, { ...block.props, [field.name]: value });
@@ -235,6 +263,8 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     document.body.append(menu);
     place(menu, at);
     addEventListener("keydown", menuKey);
+    const bar = menu;
+    show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
 }
 
 /** above the block's top-left corner, or below it when there is no room above */
@@ -251,16 +281,14 @@ function menuKey(event: KeyboardEvent): void {
 }
 
 function closeMenu(): void {
-    menu?.remove();
-    menu = undefined;
-    removeEventListener("keydown", menuKey);
+    if (chrome?.kind === "menu") shut();
 }
 
 function kindOf(entity: DocEntity): TextKind | undefined {
     switch (entity.kind) {
         case "heading": {
-            const depth = /^#+/.exec(entity.md)?.[0].length ?? 1;
-            return depth === 1 ? "heading1" : depth === 2 ? "heading2" : "heading3";
+            const depth = Math.min(5, /^#+/.exec(entity.md)?.[0].length ?? 1);
+            return `heading${depth}` as TextKind;
         }
         case "paragraph": return "paragraph";
         case "list": return /^\s*\d/.test(entity.md) ? "ordered" : "list";
@@ -294,7 +322,6 @@ function targetFor(entity: DocEntity, block: DocBlock): Target {
         kind: first.kind,
         ...(block.directive ? { directive: block.directive } : {}),
         ...(block.terminator ? { terminator: block.terminator } : {}),
-        runsOn: !governed && block.ids.indexOf(entity.id) < block.ids.length - 1,
     };
 }
 
@@ -399,6 +426,223 @@ function control(field: Field, value: unknown, onChange: (value: unknown) => voi
         wrap.append(input);
     }
     return wrap;
+}
+
+function menuItem(text: string, onClick: () => void): HTMLElement {
+    return h("button", { class: "pac-menu__item", type: "button", click: onClick }, text);
+}
+
+/** a drill replaces the menu's panel with one section, in place */
+function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[]): void {
+    panel.replaceChildren(h("div", { class: "pac-menu__head" }, title), ...rows);
+}
+
+async function themeDrill(panel: HTMLElement): Promise<void> {
+    const { themes, current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
+    drill(panel, "Theme", ...themes.map(theme => {
+        const row = menuItem(theme, () => splice(themeChange(theme)));
+        if (theme === current) row.setAttribute("data-active", "");
+        return row;
+    }));
+}
+
+/*
+ * Export writes beside the deck under its own name and replaces what is there; the server
+ * fits, prints and opens the file, so the studio only reports how it went.
+ */
+function exportDrill(panel: HTMLElement, close: () => void): void {
+    const target = `${doc.file.replace(/\.[^.]+$/, "")}.pdf`;
+    drill(panel, "Export", menuItem(`PDF, as ${target}`, async () => {
+        close();
+        hint(`Writing ${target}…`);
+        try {
+            const response = await fetch("/__pdf", { method: "POST" });
+            if (response.ok) hint(`Wrote ${target}`, false, 2500);
+            else hint(await response.text() || `export failed: ${response.status}`, true, 6000);
+        } catch {
+            hint("Export failed: server unreachable", true, 6000);
+        }
+    }));
+}
+
+/** the theme is one frontmatter line; changing it is a splice like any other edit */
+function themeChange(theme: string): { start: number; end: number; text: string } {
+    const matter = /^---\n([\s\S]*?)\n---/.exec(doc.source);
+    if (matter) {
+        const line = /^theme:.*$/m.exec(matter[1]!);
+        if (line) {
+            const start = 4 + line.index;
+            return { start, end: start + line[0].length, text: `theme: ${theme}` };
+        }
+        return { start: 4, end: 4, text: `theme: ${theme}\n` };
+    }
+    return { start: 0, end: 0, text: `---\ntheme: ${theme}\n---\n\n` };
+}
+
+interface Range { start: number; end: number; md: string; kind: string }
+
+/** an entity handle is one slice; a block handle spans the entities its component inlined */
+function rangeOf(target: HTMLElement): Range | undefined {
+    const byId = (id: string | undefined) => doc.entities.find(e => e.id === id);
+    if (target.dataset.pacEntity) {
+        const entity = byId(target.dataset.pacEntity);
+        return entity && { start: entity.start, end: entity.end, md: entity.md, kind: entity.kind };
+    }
+    const [firstId, lastId] = (target.dataset.pacSpan ?? "").split(" ");
+    const first = byId(firstId);
+    const last = byId(lastId);
+    return first && last
+        ? { start: first.start, end: last.end, md: doc.source.slice(first.start, last.end), kind: "block" }
+        : undefined;
+}
+
+/** every edit target in document order: entity handles and the block handles between them */
+const wrappers = () => [...document.querySelectorAll<HTMLElement>("[data-pac-entity], [data-pac-span]:not([data-pac-entity])")];
+
+/** ids are content hashes and change on every commit, so flow lands by position */
+function openAt(index: number, caret: Caret): void {
+    const all = wrappers();
+    const target = all[Math.max(0, Math.min(all.length - 1, index))];
+    const range = target && rangeOf(target);
+    if (target && range) edit(target, range, caret);
+}
+
+function edit(target: HTMLElement, range: Range, caret: Caret): void {
+    const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
+    openEditor(target, {
+        initial: range.md,
+        caret,
+        mode,
+        commit: text => (text === range.md ? undefined : { start: range.start, end: range.end, text }),
+    });
+}
+
+function insertAfter(target: HTMLElement, at: number): void {
+    openEditor(target, {
+        initial: "",
+        caret: "end",
+        mode: "insert",
+        placeholder: "markdown… a blank line makes two blocks",
+        commit: text => (text.trim() ? { start: at, end: at, text: `\n\n${text.trim()}` } : undefined),
+    });
+}
+
+interface EditorOptions {
+    initial: string;
+    caret: Caret;
+    mode: Mode;
+    placeholder?: string;
+    /** undefined means nothing changed: close with no write */
+    commit(text: string): { start: number; end: number; text: string } | undefined;
+}
+
+function openEditor(target: HTMLElement, options: EditorOptions): void {
+    const area = document.createElement("textarea");
+    area.rows = 1;                                      // the default of 2 floors scrollHeight a row too high
+    area.className = `pac-studio__editor pac-studio__editor--${options.mode}`;
+    area.value = options.initial;
+    if (options.placeholder) area.placeholder = options.placeholder;
+
+    if (options.mode === "inplace") {
+        // measured and styled before the element hides, so the textarea takes its box
+        const rect = target.getBoundingClientRect();
+        const style = getComputedStyle(target);
+        for (const property of ["font-family", "font-size", "font-weight", "font-style", "line-height", "letter-spacing", "text-align", "margin"] as const) {
+            area.style.setProperty(property, style.getPropertyValue(property));
+        }
+        area.style.minHeight = `${rect.height}px`;
+        target.insertAdjacentElement("afterend", area);
+        target.classList.add("pac-studio--hidden");
+    } else if (options.mode === "overlay") {
+        const rect = target.getBoundingClientRect();
+        area.style.left = `${rect.left + scrollX}px`;
+        area.style.top = `${rect.top + scrollY}px`;
+        area.style.width = `${Math.min(rect.width, 680)}px`;
+        document.body.append(area);
+        target.classList.add("pac-studio--dim");
+    } else {
+        target.insertAdjacentElement("afterend", area);
+    }
+
+    // the marks bar: the same wraps as the chords, shown above the textarea while a selection
+    // is live, so the syntax is a click away and still visible in the text it lands in
+    const marks = h("div", { class: "pac-studio__marks" },
+        ...([["**", "B", `Bold (${MOD}B)`], ["*", "I", `Italic (${MOD}I)`], ["`", "</>", "Inline code"]] as const).map(([marker, text, title]) =>
+            h("button", { class: "pac-studio__mark", type: "button", title, mousedown: (e: Event) => e.preventDefault(), click: () => mark(area, marker) }, text)));
+    marks.hidden = true;
+    document.body.append(marks);
+    const selected = () => {
+        marks.hidden = area.selectionStart === area.selectionEnd || document.activeElement !== area;
+        if (marks.hidden) return;
+        const rect = area.getBoundingClientRect();
+        marks.style.left = `${Math.max(8, rect.left)}px`;
+        marks.style.top = `${Math.max(8, rect.top - marks.offsetHeight - 6)}px`;
+    };
+    document.addEventListener("selectionchange", selected);
+
+    let done = false;
+    const editor: Chrome = {
+        kind: "block",
+        holds: true,
+        close() {
+            done = true;                                // removal blurs the textarea; that blur is not a commit
+            document.removeEventListener("selectionchange", selected);
+            marks.remove();
+            area.remove();
+            target.classList.remove("pac-studio--hidden", "pac-studio--dim");
+        },
+    };
+    show(editor);
+
+    size(area);
+    area.focus();
+    const at = options.caret === "end" ? area.value.length : 0;
+    area.setSelectionRange(at, at);
+    area.addEventListener("input", () => size(area));
+
+    const commit = async (flowTo?: number, caret: Caret = "end") => {
+        if (done) return;
+        done = true;
+        const change = options.commit(area.value);
+        if (!change) {
+            if (chrome === editor) shut();
+            if (flowTo !== undefined) openAt(flowTo, caret);
+            return;
+        }
+        // the editor stays, frozen, until the rebuilt page arrives: closing it now would
+        // flash the old rendered value for the length of the commit round trip
+        area.readOnly = true;
+        editor.holds = false;   // this write causes the next reload; a stale hash 409s and reloads anyway
+        // the write reloads the page, so the flow target survives in sessionStorage
+        if (flowTo !== undefined) sessionStorage.setItem(REOPEN, `${flowTo}|${caret}`);
+        await splice(change);
+    };
+
+    area.addEventListener("blur", () => commit());
+    area.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            if (chrome === editor) shut();
+            return;
+        }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); commit(); return; }
+        if ((event.key === "b" || event.key === "i") && (event.metaKey || event.ctrlKey)) {
+            event.preventDefault();
+            mark(area, event.key === "b" ? "**" : "*");
+            return;
+        }
+        const index = wrappers().indexOf(target);
+        if (index === -1) return;                       // a block handle has no place in the flow
+        const collapsed = area.selectionStart === area.selectionEnd;
+        if (event.key === "ArrowDown" && collapsed && area.selectionStart === area.value.length) {
+            event.preventDefault();
+            commit(index + 1, "start");
+        }
+        if (event.key === "ArrowUp" && collapsed && area.selectionStart === 0 && index > 0) {
+            event.preventDefault();
+            commit(index - 1, "end");
+        }
+    });
 }
 
 /*
