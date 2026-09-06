@@ -11,7 +11,7 @@ const layouts = await loadLayouts([LAYOUTS]);
 test("components are discovered by scanning folders, not by a barrel file", async () => {
     const registry = await load([BUILTIN]);
     expect(registry.names().sort()).toEqual(
-        ["alert", "aside", "boxes", "comparison", "full", "lead", "prose", "timeline"],
+        ["alert", "aside", "boxes", "columns", "comparison", "full", "lead", "prose", "timeline"],
     );
 });
 
@@ -25,7 +25,7 @@ test("a component's name is its folder name and is stated nowhere else", async (
 test("a third-party root registers alongside the builtins", async () => {
     const registry = await load([BUILTIN, FIXTURES]);
     expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(9);
+    expect(registry.names().length).toBe(10);
 });
 
 test("a later root overrides a builtin of the same name", async () => {
@@ -159,4 +159,14 @@ test("prose aligns a block without touching its text", async () => {
     const html = build("# T\n\n<!-- pac: prose align=center -->\nwords\n\n<!-- pac: prose size=large align=right -->\nmore\n", { registry, layouts, themeCss: "" }).html;
     expect(html).toContain('<div class="pac-prose pac-prose--center">');
     expect(html).toContain('<div class="pac-prose pac-prose--large pac-prose--right">');
+});
+
+test("columns is boxes without the chrome: one column per item, a bold run as its title", async () => {
+    const registry = await load([BUILTIN]);
+    const { html } = build("# T\n\n<!-- pac: columns -->\n- **Fast** ships in a day\n- plain second\n", { registry, layouts, themeCss: "" });
+    expect(html).toContain('<ul class="pac-columns" data-pac="columns">');
+    expect(html).toContain('<li class="pac-columns__column"><span class="pac-columns__title">Fast</span><span class="pac-columns__body">ships in a day</span></li>');
+    expect(html).toContain('<li class="pac-columns__column"><span class="pac-columns__body">plain second</span></li>');
+    const numbered = build("# T\n\n<!-- pac: columns -->\n1. one\n2. two\n", { registry, layouts, themeCss: "" }).html;
+    expect(numbered).toContain('<ol class="pac-columns pac-columns--ordered" data-pac="columns">');
 });

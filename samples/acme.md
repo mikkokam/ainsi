@@ -22,7 +22,7 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 
 # What that costs them
 
-<!-- pac: boxes stretch -->
+<!-- pac: timeline -->
 1. Customer audit failures when enterprise clients ask
 2. Surprise token spikes discovered only at billing
 3. Fragmented policies written in ad-hoc prompt code
@@ -73,7 +73,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 > When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.
 
-<!-- pac: prose size=small -->
+<!-- pac: prose size=small align=right -->
 VP of Engineering, Series B Fintech (Stockholm)
 
 ---
@@ -103,6 +103,11 @@ VP of Engineering, Series B Fintech (Stockholm)
 ![Founding team in a sunlit Nordic workshop studio](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80)
 
 Founded by former payment security and distributed systems leads from Pay More Inc and Bank of Tor. We built Acme after managing compliance across 40+ LLM services internally. Today, Acme governs production traffic across 18 European tech companies.
+
+<!-- pac: columns -->
+- **40+** LLM services governed internally before Acme
+- **18** European tech companies in production today
+- **EU** residency and egress by default
 
 ---
 
