@@ -9,7 +9,6 @@
 [data-layout="split"] article {
     height: 100%;
     display: flex; flex-direction: column; justify-content: center;
-    gap: var(--pac-gap);
     margin-left: 50%;
     padding: var(--pac-pad) var(--pac-pad) var(--pac-pad) var(--pac-gap);
 }

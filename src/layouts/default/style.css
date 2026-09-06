@@ -1,5 +1,5 @@
 [data-layout="default"] main { display: flex; flex-direction: column; justify-content: center; gap: var(--pac-gap); height: 100%; }
-[data-layout="default"] article { display: flex; flex-direction: column; gap: var(--pac-gap); }
+[data-layout="default"] article { display: flex; flex-direction: column; }
 
 @media screen and (max-width: 900px) {
     /* centred content taller than the box overflows both ways; in a scroll it starts at the top */

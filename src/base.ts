@@ -54,6 +54,20 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page h5 { font-size: 1.2em; }
 .pac-page p { margin: 0 0 .6em; }
 .pac-page > *:last-child { margin-bottom: 0; }
+
+/*
+ * Rhythm on the page. Blocks stand a --pac-gap apart; text that follows text stands a
+ * fraction of the page's type size apart instead, since prose is many elements rather than
+ * one block. Margins, not flex gap, because a gap cannot tell a paragraph from a component.
+ * --pac-em is the page's own font size, reachable from a child whose em is its own.
+ */
+.pac-page { --pac-em: calc(var(--pac-size) * var(--pac-step, 1)); }
+.pac-page article > * + * { margin-top: var(--pac-gap); }
+.pac-page article > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
+.pac-page article > :is(p, ul, ol, blockquote, pre) + :is(p, ul, ol, blockquote, pre) { margin-top: calc(var(--pac-em) * .55); }
+.pac-page article > :is(h1, h2, h3, h4, h5) + * { margin-top: calc(var(--pac-em) * .35); }
+.pac-page article > :is(p, ul, ol, blockquote, pre) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
+.pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }

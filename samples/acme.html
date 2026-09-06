@@ -116,6 +116,20 @@ body.pac:not([data-present]) .pac-page::after {
 .pac-page h5 { font-size: 1.2em; }
 .pac-page p { margin: 0 0 .6em; }
 .pac-page > *:last-child { margin-bottom: 0; }
+
+/*
+ * Rhythm on the page. Blocks stand a --pac-gap apart; text that follows text stands a
+ * fraction of the page's type size apart instead, since prose is many elements rather than
+ * one block. Margins, not flex gap, because a gap cannot tell a paragraph from a component.
+ * --pac-em is the page's own font size, reachable from a child whose em is its own.
+ */
+.pac-page { --pac-em: calc(var(--pac-size) * var(--pac-step, 1)); }
+.pac-page article > * + * { margin-top: var(--pac-gap); }
+.pac-page article > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
+.pac-page article > :is(p, ul, ol, blockquote, pre) + :is(p, ul, ol, blockquote, pre) { margin-top: calc(var(--pac-em) * .55); }
+.pac-page article > :is(h1, h2, h3, h4, h5) + * { margin-top: calc(var(--pac-em) * .35); }
+.pac-page article > :is(p, ul, ol, blockquote, pre) + :is(h2, h3, h4, h5) { margin-top: calc(var(--pac-em) * 1); }
+.pac-page article > .pac-prose > :last-child { margin-bottom: 0; }
 .pac-page code { font-family: var(--pac-font-mono); }
 .pac-page img { max-width: 100%; height: auto; display: block; }
 .pac-page strong { font-weight: var(--pac-strong); }
@@ -226,7 +240,7 @@ body[data-present] [data-current][data-layout="header"] .pac-full img {
     .pac-page[data-layout="header"]::before { top: 1.1rem; right: 1.1rem; width: 100px; height: 30px; }
 }
 [data-layout="default"] main { display: flex; flex-direction: column; justify-content: center; gap: var(--pac-gap); height: 100%; }
-[data-layout="default"] article { display: flex; flex-direction: column; gap: var(--pac-gap); }
+[data-layout="default"] article { display: flex; flex-direction: column; }
 
 @media screen and (max-width: 900px) {
     /* centred content taller than the box overflows both ways; in a scroll it starts at the top */
@@ -243,7 +257,6 @@ body[data-present] [data-current][data-layout="header"] .pac-full img {
 [data-layout="split"] article {
     height: 100%;
     display: flex; flex-direction: column; justify-content: center;
-    gap: var(--pac-gap);
     margin-left: 50%;
     padding: var(--pac-pad) var(--pac-pad) var(--pac-pad) var(--pac-gap);
 }
@@ -722,8 +735,14 @@ body[data-present] .pac-page[data-current] article > *:nth-child(n+5) { animatio
 </ol></article></main>
 </section>
 <section class="pac-page" id="a-single-deterministic-gateway-in-front-of-every-model" data-page="4" data-layout="split">
-<main data-side="right"><article><h1>A single deterministic gateway in front of every model</h1>
-<p>Every outbound LLM call passes through Acme before reaching upstream providers. <strong>Policies</strong> evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.</p>
+<main data-side="right"><article><div class="pac-prose pac-prose--small">
+<p>How does it work</p>
+</div>
+<div class="pac-prose pac-prose--small">
+<h1>A single deterministic gateway in front of every model</h1>
+</div>
+<p>Every outbound LLM call passes through Acme before reaching upstream providers.<br>
+<strong>Policies</strong> evaluate through Open Policy Agent (OPA), keeping rules declarative, version-controlled, and testable in CI/CD.</p>
 <div class="pac-prose pac-prose--small">
 <p>Zero changes to existing application code: swap one base URL in your client configuration and enforce policy on day one.</p>
 </div>

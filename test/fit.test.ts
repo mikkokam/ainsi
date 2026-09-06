@@ -26,6 +26,9 @@ const paragraphs = (n: number) => Array.from({ length: n }, (_, i) =>
     `Paragraph number ${i}, long enough on its own to add real vertical height to the page, several words to be sure of it.`,
 ).join("\n\n");
 
+/** one-liners: finer steps than the paragraphs above, for a split whose pages all fit at full size */
+const lines = (n: number) => Array.from({ length: n }, (_, i) => `Line number ${i}, short.`).join("\n\n");
+
 const OVERFLOWING = `# T
 
 intro
@@ -84,7 +87,7 @@ test.skipIf(!chromium)("a page that already fits is left untouched", async () =>
 test.skipIf(!chromium)("a page that only needs smaller type keeps the block it would have lost", async () => {
     // calibrated to overflow by a little: enough that the page does not fit as it stands,
     // not so much that shrinking within the theme's range cannot rescue it
-    const { pages, diagnostics } = await run(`# Just over the line\n\n${paragraphs(5)}\n`);
+    const { pages, diagnostics } = await run(`# Just over the line\n\n${paragraphs(7)}\n`);
 
     expect(pages.length).toBe(1);
     expect(pages[0]!.scale).toBeLessThan(1);
@@ -93,7 +96,7 @@ test.skipIf(!chromium)("a page that only needs smaller type keeps the block it w
 });
 
 test.skipIf(!chromium)("how far type may shrink is the theme's call, not the engine's", async () => {
-    const md = `# Just over the line\n\n${paragraphs(5)}\n`;
+    const md = `# Just over the line\n\n${paragraphs(7)}\n`;
 
     const generous = await run(md, withFloor(0.7));
     expect(generous.pages.length).toBe(1);
@@ -107,7 +110,7 @@ test.skipIf(!chromium)("how far type may shrink is the theme's call, not the eng
 test.skipIf(!chromium)("a page split back into shape gets its full type size again", async () => {
     // the whole page shrank to the floor on the way down the ladder; the halves carry less
     // and have no reason to keep the size the whole one needed
-    const { pages } = await run(`# T\n\n${paragraphs(14)}\n`);
+    const { pages } = await run(`# T\n\n${lines(18)}\n`);
     expect(pages.length).toBeGreaterThan(1);
     expect(pages.every(p => p.scale === 1)).toBe(true);
 });

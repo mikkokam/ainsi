@@ -99,7 +99,7 @@ test("a label keeps its inline marks: the cut is made in the tree, not the rende
 test("prose adds a wrapper only for a size, and the size is a scale step, not a heading", async () => {
     const registry = await load([BUILTIN]);
     const plain = build("# T\n\nwords\n", { registry, layouts, themeCss: "" }).html;
-    expect(plain).not.toContain("pac-prose");
+    expect(plain).not.toContain('class="pac-prose');
     const sized = build("# T\n\n<!-- pac: prose size=huge -->\nwords\n", { registry, layouts, themeCss: "" }).html;
     expect(sized).toContain('<div class="pac-prose pac-prose--huge">');
     expect(sized).toContain("<p>words</p>");
