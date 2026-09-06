@@ -153,3 +153,10 @@ test("==words== is a highlight, in prose and inside a component's own text", asy
     expect(html).toContain("say <mark>this</mark> and a == b stays");
     expect(html).toContain('<span class="pac-boxes__body"><mark>hot</mark></span>');
 });
+
+test("prose aligns a block without touching its text", async () => {
+    const registry = await load([BUILTIN]);
+    const html = build("# T\n\n<!-- pac: prose align=center -->\nwords\n\n<!-- pac: prose size=large align=right -->\nmore\n", { registry, layouts, themeCss: "" }).html;
+    expect(html).toContain('<div class="pac-prose pac-prose--center">');
+    expect(html).toContain('<div class="pac-prose pac-prose--large pac-prose--right">');
+});
