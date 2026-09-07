@@ -12,7 +12,8 @@ coverLogo: assets/saidot-mark.png
 Separate layers, and the record that joins them
 
 <!-- ainsi: prose size=small -->
-Each runtime enforces its own controls. Governance sits above them all, and one record carries the decisions down and the evidence back.
+The record is the register itself: every system with its tier, the controls that apply to it,
+the evidence behind each one, and the log of who changed what.
 
 &nbsp;
 CTO Mikko Kämäräinen
