@@ -12,8 +12,8 @@ import { imageOf, img, labelled, listOf, type ComponentDefinition } from "../../
  * and the spare space is the price. `crop` gives up the aspect ratio for a flush grid.
  */
 
-/** roughly a page of content at the deck's own type size, which is what a field may fill */
-const BUDGET = 16;
+/** roughly a page of content at the deck's own type size, less the captions under each row */
+const BUDGET = 15;
 
 /** the columns a count wants when nobody said: pairs stay pairs, four is a square, then threes */
 const columnsFor = (count: number): number =>

@@ -48,6 +48,31 @@ Index
 ---
 
 <!-- ainsi: prose size=small caps -->
+Motion
+
+# Three across, whole frames
+
+<!-- ainsi: tiles -->
+- ![A title card in motion, frozen mid-transition](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) Signal, title sequence
+- ![A studio light on a stand](https://images.unsplash.com/photo-1493932484895-752d1471eab5?w=900&q=80) Lighting test
+- ![A camera on a tripod facing a window](https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=900&q=80) Setup, day two
+
+---
+
+<!-- ainsi: prose size=small caps -->
+Motion
+
+# The same four, cropped to a grid
+
+<!-- ainsi: tiles crop columns=4 -->
+- ![A close crop of a screen](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=900&q=80) 01
+- ![A hand adjusting a dial](https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=80) 02
+- ![A monitor showing colour bars](https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=900&q=80) 03
+- ![A dark studio corner](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) 04
+
+---
+
+<!-- ainsi: prose size=small caps -->
 Print
 
 # Nothing here was cropped to fit

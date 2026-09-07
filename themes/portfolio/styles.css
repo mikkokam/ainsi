@@ -44,15 +44,15 @@ figcaption, small { font-family: var(--ainsi-font-mono); font-size: .68em; lette
 
 /*
  * The mark. Only a theme's tokens come from the default theme, never its stylesheet, so a
- * theme that does not place the logo shows none: this one hangs it bottom left, opposite the
+ * theme that does not place the logo shows none: this one hangs it bottom right, opposite the
  * page number, small enough to be a signature rather than a header.
  */
 .ainsi-page::before {
     content: "";
     position: absolute; z-index: 2;
-    left: var(--ainsi-pad); bottom: 1.5rem;
+    right: var(--ainsi-pad); bottom: 1.5rem;
     width: 82px; height: 24px;
-    background: var(--ainsi-logo) no-repeat left center / contain;
+    background: var(--ainsi-logo) no-repeat right center / contain;
     pointer-events: none;
 }
 /* a one-colour mark goes white where the ground is a photograph or the accent */
@@ -63,11 +63,12 @@ figcaption, small { font-family: var(--ainsi-font-mono); font-size: .68em; lette
 
 /* the cover wears its own mark, top left, where the title is not */
 .ainsi-page[data-layout="header"]::before {
-    top: 2.2rem; bottom: auto;
+    top: 2.2rem; bottom: auto; left: var(--ainsi-pad); right: auto;
+    background-position: left center;
     width: 120px; height: 34px;
     background-image: var(--ainsi-logo-cover);
 }
 
 @media screen and (max-width: 900px) {
-    .ainsi-page::before { left: 1.2rem; bottom: 1rem; width: 62px; height: 18px; }
+    .ainsi-page::before { right: 1.2rem; bottom: 1rem; width: 62px; height: 18px; }
 }
