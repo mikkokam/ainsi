@@ -30,7 +30,7 @@
 </head>
 <body>
 <main>
-    <h1>Ainsi</h1>
+    <h1>Ainsi STUDIO</h1>
     <p>Write a deck in markdown.</p>
     <div class="list">
         <button class="new" id="new">New presentation</button>
@@ -71,15 +71,15 @@
         if (!list.children.length) list.append(Object.assign(document.createElement("div"), { className: "empty", textContent: "no decks here" }));
     }
 
-    // both of these repoint the server, which pushes the reload that replaces this page
-    async function open(path) {
-        const response = await fetch("/__open", { method: "POST", body: JSON.stringify({ path }) });
+    // both of these repoint the server; this page then reloads onto the deck itself rather
+    // than waiting for the push, which is one thing fewer to be wrong about
+    async function repoint(path, body) {
+        const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
         if (!response.ok) return fail(response);
+        location.reload();
     }
-    document.getElementById("new").addEventListener("click", async () => {
-        const response = await fetch("/__new", { method: "POST", body: JSON.stringify({ at }) });
-        if (!response.ok) return fail(response);
-    });
+    const open = path => repoint("/__open", { path });
+    document.getElementById("new").addEventListener("click", () => repoint("/__new", { at }));
 
     browse();
 </script>

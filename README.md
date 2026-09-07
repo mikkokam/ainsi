@@ -1,5 +1,8 @@
 # Ainsi
 
+Mikko Kämäräinen  
+mikko@ukk0.com
+
 Version 0.1. Under active development; commands and markup may change between commits.
 
 Write a deck in markdown, get one self-contained HTML page: it presents full-screen, prints, exports to PDF and reads as a document on a phone. The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and pages are computed, not authored: too much on a slide and the solver steps the type down, then splits at the natural seam.
@@ -52,5 +55,7 @@ Diagrams are the sibling repo, [ainsi-d2](https://github.com/mikkokam/ainsi-d2):
 
     bun install                       # the full tree, browser wrapper included
     bun test
+
+The studio prints each rebuild's milliseconds by phase, and the browser console reports any commit round trip over 600 ms: write, rebuild, reload. `localStorage.setItem("ainsi:trace", "1")` reports every one, and `AINSI_TRACE=1` adds the server's side of the write.
 
 `docs/ARCHITECTURE.md` is how it is built. `docs/FEATS.md` is what is not built. The core is plain TypeScript with no framework: one engine (parse, paginate, group, fit, render) and three consumers of it, the CLI, the player shipped inside every deck, and the studio served by the dev server. A theme is a token list under `themes/`, a component under `src/components/` ships its own CSS against those tokens, and the engine owns the page box.

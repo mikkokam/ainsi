@@ -37,8 +37,9 @@ export interface ServeOptions {
 
 export interface Server {
     readonly url: string;
-    /** a change a route made itself; a watcher event for the same write coalesces into it */
-    changed(what: string): void;
+    /** a change a route made itself; pass own for a write this server did, so the watcher's
+     *  echo of it does not build the same deck a second time */
+    changed(what: string, own?: boolean): void;
     /** the deck moved: assets resolve beside the new path and the watcher follows it */
     retarget(deck: string): void;
     stop(): Promise<void>;
@@ -91,8 +92,17 @@ export function serve(options: ServeOptions): Server {
     });
 
     let pending: ReturnType<typeof setTimeout> | undefined;
+    /*
+     * A commit writes the deck and schedules its own rebuild, because a missed watch event
+     * would leave the editor waiting forever. The write then fires the watcher too, and its
+     * event lands after the rebuild has started, so the debounce does not absorb it and the
+     * deck is built twice for one edit. This is how long the echo is ignored for.
+     */
+    const ECHO = 400;
+    let echo = 0;
 
-    function schedule(what: string): void {
+    function schedule(what: string, own = false): void {
+        if (own) echo = Date.now() + ECHO;
         clearTimeout(pending);
         pending = setTimeout(async () => {
             console.log(`\n${what} changed`);
@@ -110,7 +120,11 @@ export function serve(options: ServeOptions): Server {
 
     // an image beside the deck is linked, not copied, so a change to it shows like a source edit
     const folder = () => deck === undefined ? undefined : watch(dirname(deck), (_, file) => {
-        if (file && (file === basename(deck!) || IMAGE.test(file))) schedule(file);
+        if (!file) return;
+        if (file === basename(deck!)) {
+            if (Date.now() < echo) return;
+            schedule(file);
+        } else if (IMAGE.test(file)) schedule(file);
     });
     let deckWatcher = folder();
     const watchers: ReturnType<typeof watch>[] = [];

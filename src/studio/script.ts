@@ -85,7 +85,41 @@ function shut(): void {
     if (pendingReload) location.reload();
 }
 
+/*
+ * A commit is the studio's slowest visible thing: "saving…" stays up from the blur until the
+ * rebuilt page has loaded, across a reload that wipes any in-page timer. The legs are kept in
+ * sessionStorage and read back on the next load, and a round trip over SLOW reports itself, so
+ * an occasional stall leaves a record without devtools having been open at the time.
+ */
+const TRACE = "ainsi:trace";
+const SLOW = 600;
+
+function traceMark(leg: "sent" | "answered" | "told"): void {
+    try {
+        const at = Date.now();
+        const kept = sessionStorage.getItem(TRACE);
+        const record = leg === "sent" ? { sent: at } : { ...(kept ? JSON.parse(kept) : {}), [leg]: at };
+        sessionStorage.setItem(TRACE, JSON.stringify(record));
+    } catch { /* private mode, or a full quota: a trace is never worth breaking an edit for */ }
+}
+
+function traceReport(): void {
+    try {
+        const kept = sessionStorage.getItem(TRACE);
+        if (!kept) return;
+        sessionStorage.removeItem(TRACE);
+        const { sent, answered, told } = JSON.parse(kept) as { sent: number; answered?: number; told?: number };
+        const total = Date.now() - sent;
+        if (total < SLOW && !localStorage.getItem(TRACE)) return;
+        console.log(`ainsi commit ${total} ms: write ${(answered ?? sent) - sent}, `
+            + `rebuild ${(told ?? answered ?? sent) - (answered ?? sent)}, reload ${Date.now() - (told ?? sent)}`);
+    } catch { /* as above */ }
+}
+
+traceReport();
+
 (window as unknown as { __ainsiReload(): void }).__ainsiReload = () => {
+    traceMark("told");
     if (chrome?.holds) {
         pendingReload = true;
         hint("the file changed elsewhere; reloads when this editor closes");
@@ -557,22 +591,30 @@ async function openDrill(panel: HTMLElement, at?: string): Promise<void> {
     };
     const rows = entries.map(entry => {
         const row = menuItem(entry.dir ? `${entry.name}/` : entry.name, () => {
-            if (entry.dir) return void openDrill(panel, entry.name === ".." ? up : join(at ?? "", entry.name));
-            open(join(at ?? "", entry.name));
+            if (entry.dir) return void openDrill(panel, join(at ?? "", entry.name));
+            void repoint("/__open", { path: join(at ?? "", entry.name) });
         });
         if (!entry.dir && entry.name === current) row.setAttribute("data-active", "");
         return row;
     });
     if (up !== undefined) rows.unshift(menuItem("../", () => void openDrill(panel, up)));
-    drill(panel, here, ...(rows.length ? rows : [label("nothing here")]));
+    // whatever a deck can be opened from can make one: the new deck lands in the folder on screen
+    rows.unshift(menuItem("New presentation", () => void repoint("/__new", { at: at ?? "" })));
+    drill(panel, here, ...rows);
 }
 
 const join = (a: string, b: string): string => (a ? `${a}/${b}` : b);
 
-async function open(path: string): Promise<void> {
-    const response = await fetch("/__open", { method: "POST", body: JSON.stringify({ path }) });
+/*
+ * Point the server at another deck and reload onto it. The reload is this client's own, not
+ * the one the server pushes: that push is held while an editor is open, and the studio has no
+ * chrome registered for the viewer's menu, so a stale hold from an earlier edit swallowed it
+ * and the click did nothing until the page was reloaded by hand.
+ */
+async function repoint(path: string, body: Record<string, string>): Promise<void> {
+    const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
     if (!response.ok) return hint((await response.text()) || "could not open", true, 4000);
-    // the server pushes a reload once it has repointed; nothing to patch here
+    location.reload();
 }
 
 async function themeDrill(panel: HTMLElement): Promise<void> {
@@ -1083,6 +1125,7 @@ async function splice(change: Splice, onto: string = UNDO): Promise<void> {
         hint("saving…");
     }
     let failure: string | undefined;
+    traceMark("sent");
     try {
         const response = await fetch("/__edit", {
             method: "POST",
@@ -1090,6 +1133,7 @@ async function splice(change: Splice, onto: string = UNDO): Promise<void> {
             body: JSON.stringify({ hash: doc.hash, ...change }),
             signal: AbortSignal.timeout(8000),      // a hung write lands in the failure path, not a frozen editor
         });
+        traceMark("answered");
         if (!response.ok) {
             failure = response.status === 409 ? "the file changed under the studio; reloading" : `edit failed: ${response.status}`;
         }

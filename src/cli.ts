@@ -138,18 +138,42 @@ let doc = {
     layouts: [] as DocLayout[],
 };
 let currentTheme = "default";
+/** AINSI_TRACE=1 adds the round trip either side of a rebuild: the write, and the browser's own view of it */
+const trace = !!process.env.AINSI_TRACE;
 const studio = editing ? await loadStudio() : undefined;
+
+/*
+ * Where a rebuild's milliseconds went. The studio holds the editor's "saving…" until the
+ * reload lands, so a slow phase here is a freeze the person feels; the summary line carries
+ * the split rather than a total nobody can act on.
+ */
+function stopwatch() {
+    let last = performance.now();
+    const marks: string[] = [];
+    return {
+        mark(what: string) {
+            const now = performance.now();
+            marks.push(`${what} ${Math.round(now - last)}`);
+            last = now;
+        },
+        get split() { return marks.join(", "); },
+    };
+}
 
 /** Everything the deck is made of, rebuilt from disk. Returns the html and what to watch. */
 async function build(): Promise<{ html: string; roots: string[] }> {
+    const clock = stopwatch();
     const source = await Bun.file(deck!).text();
     const parsed = parse(source);
     const settings = parsed.doc.settings;
     currentTheme = settings.theme;
+    clock.mark("parse");
     const diagnostics: Diagnostic[] = [];
     const { themeDir, theme, registry, layouts } = await stack(settings.theme, diagnostics);
+    clock.mark("load");
 
     let viewer = args.includes("--no-viewer") ? undefined : await loadViewer(diagnostics);
+    clock.mark("chrome");
     if (studio) {
         viewer = {
             css: [viewer?.css, studio.css].filter(Boolean).join("\n"),
@@ -159,6 +183,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
 
     const assembled = assemble(source, buildOptions);
+    clock.mark("assemble");
     diagnostics.push(...assembled.diagnostics);
     if (!editing) await inlineImages(assembled.pages, diagnostics);
     if (editing) {
@@ -184,9 +209,11 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         };
     }
 
+    if (editing) clock.mark("describe");
     const result = fitting
         ? await fit(assembled.pages, assembled.title, assembled.settings, buildOptions, renderPages, session)
         : { ...renderPages(assembled.pages, assembled.title, assembled.settings, buildOptions), pages: assembled.pages };
+    clock.mark(fitting ? "fit" : "render");
     diagnostics.push(...result.diagnostics);
 
     let written = output;
@@ -199,9 +226,11 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         await Bun.write(output, result.html);
     }
 
+    clock.mark("write");
     for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
     const where = written ? ` -> ${written}` : ", nothing written";
     console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks${where}`);
+    if (editing) console.log(`  ${clock.split} ms`);
     for (const page of result.pages) {
         const blocks = page.blocks.map(b => `${b.component}${b.origin === "directive" ? "*" : ""}`).join(", ");
         const fitted = [page.scale === 1 ? "" : ` x${page.scale}`, page.overflow ? " OVERFLOWS" : ""].join("");
@@ -324,7 +353,7 @@ function retarget(next: string): void {
     pdfOutput = sibling(".pdf");
     pptxOutput = sibling(".pptx");
     server.retarget(deck);
-    server.changed(basename(deck));
+    server.changed(basename(deck), true);
     if (first) console.log(`-> ${deck}`);
 }
 
@@ -429,6 +458,7 @@ const server = serve({
             return Response.json({ path: pptxOutput });
         }
         if (url.pathname === "/__edit" && request.method === "POST") {
+            const arrived = performance.now();
             const { hash, start, end, text } = await request.json();
             const source = await Bun.file(deck!).text();
             // a splice against a stale offset corrupts the file rather than losing an edit
@@ -436,10 +466,12 @@ const server = serve({
             const sane = Number.isInteger(start) && Number.isInteger(end)
                 && start >= 0 && end >= start && end <= source.length && typeof text === "string";
             if (!sane) return new Response("bad splice", { status: 400 });
+            const wrote = performance.now();
             await Bun.write(deck!, source.slice(0, start) + text + source.slice(end));
+            if (trace) console.log(`  edit: read and splice ${Math.round(wrote - arrived)} ms, write ${Math.round(performance.now() - wrote)} ms`);
             // the rebuild is scheduled here rather than left to the watcher: a missed or
             // misnamed watch event would leave the studio's editor waiting for a reload forever
-            server.changed(basename(deck!));
+            server.changed(basename(deck!), true);
             return new Response("ok");
         }
         if (url.pathname === "/__browse") {
