@@ -15,8 +15,21 @@ import { basename, dirname, join } from "node:path";
 /** editors fire several events for one save; one rebuild is enough */
 const SETTLE = 40;
 
-// the studio, when present, installs __ainsiReload to hold a reload while an editor is open
-const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=window.__ainsiReload;h?h():location.reload()}</script>`;
+/*
+ * The reload channel, and the page's own build number baked in beside it.
+ *
+ * The studio, when present, installs __ainsiReload to hold a reload while an editor is open.
+ * The open handler covers the gap the stream itself cannot: a push sent while the connection
+ * was down is simply gone, and the page would sit on stale html with its editor still saying
+ * "saving…". On every connect, including every reconnect, the page asks what the current build
+ * is and reloads if it is behind.
+ */
+const reloadScript = (build: number) => `<script>(()=>{const s=new EventSource("/__reload");`
+    + `const go=()=>{const h=window.__ainsiReload;h?h():location.reload()};s.onmessage=go;`
+    + `s.onopen=async()=>{try{const r=await fetch("/__build");if((await r.json()).build!==${build})go()}catch{}}})()</script>`;
+
+/** SSE through an idle proxy or a browser's own bookkeeping needs traffic; a comment is enough */
+const PING = 20_000;
 
 const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
 
@@ -51,11 +64,19 @@ export function serve(options: ServeOptions): Server {
     let html = options.initial;
 
     const clients = new Set<ReadableStreamDirectController>();
+    /** bumped on every successful rebuild; a page carries the number it was served with */
+    let build = 0;
 
     const server = Bun.serve({
         port,
+        // an SSE stream is idle by design. Bun's default cuts it at 10 seconds, which the
+        // browser reports as a broken response and, worse, drops any push sent before it
+        // reconnects.
+        idleTimeout: 0,
         async fetch(request) {
             const url = new URL(request.url);
+
+            if (url.pathname === "/__build") return Response.json({ build });
 
             if (url.pathname === "/__reload") {
                 return new Response(new ReadableStream({
@@ -85,7 +106,7 @@ export function serve(options: ServeOptions): Server {
                 }
             }
 
-            return new Response(html.replace("</body>", `${RELOAD}</body>`), {
+            return new Response(html.replace("</body>", `${reloadScript(build)}</body>`), {
                 headers: { "content-type": "text/html; charset=utf-8" },
             });
         },
@@ -108,6 +129,7 @@ export function serve(options: ServeOptions): Server {
             console.log(`\n${what} changed`);
             try {
                 html = await rebuild();
+                build++;
                 for (const client of clients) {
                     try { client.write("data: reload\n\n"); await client.flush(); } catch { clients.delete(client); }
                 }
@@ -137,6 +159,12 @@ export function serve(options: ServeOptions): Server {
         }
     }
 
+    const heartbeat = setInterval(() => {
+        for (const client of clients) {
+            try { client.write(": ping\n\n"); void client.flush(); } catch { clients.delete(client); }
+        }
+    }, PING);
+
     return {
         url: `http://localhost:${server.port}`,
         changed: schedule,
@@ -149,6 +177,7 @@ export function serve(options: ServeOptions): Server {
         },
         async stop() {
             clearTimeout(pending);
+            clearInterval(heartbeat);
             deckWatcher?.close();
             for (const watcher of watchers) watcher.close();
             clients.clear();
