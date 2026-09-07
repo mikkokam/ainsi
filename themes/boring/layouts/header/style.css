@@ -1,6 +1,6 @@
 /* the title slide is a slide: the title at the top, at the h1 the scale already gives it */
 [data-layout="header"] main { justify-content: flex-start; }
-[data-layout="header"] h1 { font-size: 2.441em; }
+[data-layout="header"] h1 { font-size: 1.563em; }
 
 /*
  * Without a photograph the engine grounds a cover in the placeholder under a scrim. Here that
@@ -15,5 +15,5 @@
 }
 
 @media screen and (max-width: 900px) {
-    [data-layout="header"] h1 { font-size: 1.953em; }
+    [data-layout="header"] h1 { font-size: 1.25em; }
 }

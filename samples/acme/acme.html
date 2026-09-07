@@ -325,13 +325,15 @@ body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
 
 /*
  * No font import: Arial is on the machine already, which is half of why a template like this
- * looks the way it does. The type runs on a major third, 1.25 a step from the body size, so the
- * levels are the powers of it and a heading is not given a size the scale does not contain.
+ * looks the way it does. The type runs on a major third, 1.25 a step, and takes two steps of it
+ * rather than four: an h1 is a heading rather than a display line. Below h2 the scale would go
+ * under the body size, so h3, h4 and h5 sit at it, bold, and a deck that needs five distinct
+ * heading levels on a slide has a page problem rather than a type problem.
  */
-.ainsi-page h1 { font-size: 2.441em; line-height: 1.2; letter-spacing: 0; }
-.ainsi-page h2 { font-size: 1.953em; line-height: 1.22; }
-.ainsi-page h3 { font-size: 1.563em; }
-.ainsi-page h4 { font-size: 1.25em; }
+.ainsi-page h1 { font-size: 1.563em; line-height: 1.25; letter-spacing: 0; }
+.ainsi-page h2 { font-size: 1.25em; line-height: 1.3; }
+.ainsi-page h3 { font-size: 1em; }
+.ainsi-page h4 { font-size: 1em; }
 .ainsi-page h5 { font-size: 1em; }
 .ainsi-page blockquote p { font-size: 1.25em; letter-spacing: 0; }
 
@@ -350,11 +352,11 @@ body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
 }
 
 /*
- * A heading here is nearly twice the body size, and the engine's .6em under an h1 is measured
- * in body ems, so what reads as air under a small h1 reads as a collision under this one.
+ * The engine's .6em under an h1 is measured in body ems, which is thin under a heading half
+ * again the body size and a template that leaves room around everything.
  */
 .ainsi-page :is(article, .ainsi-prose) > :is(h1, .ainsi-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) {
-    margin-top: calc(var(--ainsi-em) * 1.1);
+    margin-top: calc(var(--ainsi-em) * .8);
 }
 /* layouts and components, styled through the tokens above */
 /* No index.ts: a layout is a stylesheet, inheriting the default template. */
@@ -407,7 +409,7 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 }
 /* the title slide is a slide: the title at the top, at the h1 the scale already gives it */
 [data-layout="header"] main { justify-content: flex-start; }
-[data-layout="header"] h1 { font-size: 2.441em; }
+[data-layout="header"] h1 { font-size: 1.563em; }
 
 /*
  * Without a photograph the engine grounds a cover in the placeholder under a scrim. Here that
@@ -422,7 +424,7 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 }
 
 @media screen and (max-width: 900px) {
-    [data-layout="header"] h1 { font-size: 1.953em; }
+    [data-layout="header"] h1 { font-size: 1.25em; }
 }
 [data-layout="default"] main { display: flex; flex-direction: column; justify-content: center; gap: var(--ainsi-gap); height: 100%; }
 [data-layout="default"] article { display: flex; flex-direction: column; }

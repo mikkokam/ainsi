@@ -100,7 +100,7 @@ The lever a deck has over this is content: fewer items, shorter titles, an earli
 
 ## Diagrams
 
-Pictures come from `ainsi-d2`, not from the deck: write the `.d2`, build the PNG beside the deck, reference it as an ordinary image. The d2 skill carries that grammar.
+Pictures are built outside the deck, not drawn in it: produce the PNG or SVG beside the deck and reference it as an ordinary image.
 
 ## What a deck never contains
 

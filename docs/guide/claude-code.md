@@ -27,7 +27,7 @@ Run `ainsi deck.md` in one terminal and let the agent work the same file in anot
 
 ## Diagrams
 
-Pictures do not come from the deck. [ainsi-d2](https://github.com/mikkokam/ainsi-d2) is the sibling repo: house-style D2 with its own skill and an `ainsi-d2` command. Write the `.d2`, build a PNG beside the deck, reference it as an ordinary image.
+Pictures do not come from the deck. Draw one with whatever tool draws it, build a PNG or an SVG beside the deck, and reference it as an ordinary image.
 
 ## The skill itself
 
