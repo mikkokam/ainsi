@@ -8,12 +8,14 @@ coverLogo: assets/saidot-mark.png
 
 # Governance & runtime enforcement
 
-<!-- ainsi: prose size=large -->
+<!-- ainsi: prose size=small -->
 Separate layers, and the record that joins them
+
+<!-- ainsi: prose size=small -->
+Each runtime enforces its own controls. Governance sits above them all, and one record carries the decisions down and the evidence back.
 
 &nbsp;
 CTO Mikko Kämäräinen
-
 **Saidot**
 
 ---
@@ -37,6 +39,7 @@ Adopted faster than any review cycle, often without anyone registering them.
 
 <!-- ainsi: layout split side=right size=half -->
 
+<!-- ainsi: prose size=small -->
 # Three lines, one record
 
 *The model is not new.* What is new is what sits in the first line: a platform that enforces its own controls and reports on itself.
@@ -75,10 +78,11 @@ The platform knows who ran a workflow. It does not know the system's purpose, it
 
 # Enforcement stays in the runtime
 
+<!-- ainsi: prose size=small -->
 Enforcement on platforms: largely solved; and the hot path is where it belongs.
 What is missing sits at both ends: a control authored once, and the event that proves it held.
 
-<!-- ainsi: full size=m -->
+<!-- ainsi: full size=l -->
 ![One control read left to right. Authored once in governance, as prose for the person and structured fields for the machine. Enforced by you, in your policy engines, platform gates and model gateways. Proven back in governance, as the event attached to the control on the system it belongs to.](assets/enforcement-interface.png)
 
 <!-- ainsi: prose size=small -->
