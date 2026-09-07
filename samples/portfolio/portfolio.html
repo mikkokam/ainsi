@@ -733,7 +733,270 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 @media screen and (max-width: 900px) {
     .ainsi-tiles { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
+/* Viewer chrome. Not content, not a theme's business, and never printed. */
+.ainsi-toolbar {
+    position: fixed; top: 1rem; left: 1rem; z-index: 100;
+    display: flex; flex-direction: row; align-items: center; gap: .2rem;
+    padding: .3rem .35rem;
+    background: rgb(255 255 255 / 92%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 12%);
+    opacity: .28;
+    transition: opacity .18s ease;
+}
+.ainsi-toolbar:hover,
+.ainsi-toolbar[data-awake] { opacity: 1; }
 
+.ainsi-menu__brand {
+    font: 600 11px/1 system-ui, sans-serif;
+    letter-spacing: .05em;
+    color: #14181d;
+    padding: .55rem .6rem .45rem;
+    border-bottom: 1px solid rgb(0 0 0 / 8%);
+    margin-bottom: .25rem;
+    user-select: none;
+}
+
+.ainsi-toolbar__button {
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    padding: 0; border: 0; border-radius: 7px;
+    background: transparent; color: #14181d;
+    cursor: pointer;
+    transition: background .12s ease;
+}
+.ainsi-toolbar__button:hover { background: rgb(0 0 0 / 7%); }
+.ainsi-toolbar__button:focus-visible { outline: 2px solid #1f6feb; outline-offset: 1px; }
+.ainsi-toolbar__button svg { width: 20px; height: 20px; }
+
+.ainsi-toolbar__count {
+    font: 500 11px/1 ui-monospace, monospace;
+    text-align: center; color: #5b6672;
+}
+.ainsi-toolbar__count:not(:empty) { padding: 0 .45rem; }
+
+/* the menu: export stubs and the slide list; the studio prepends its own sections */
+.ainsi-menu {
+    position: absolute; top: calc(100% + 8px); left: 0;
+    min-width: 230px; max-height: 70vh; overflow-y: auto;
+    padding: .35rem;
+    background: rgb(255 255 255 / 97%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 16%);
+}
+.ainsi-menu__head {
+    font: 600 10px/1 system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #8a94a0;
+    padding: .55rem .6rem .3rem;
+    user-select: none;
+}
+.ainsi-menu__item {
+    display: block; width: 100%; text-align: left;
+    font: 400 13px/1.35 system-ui, sans-serif;
+    color: #14181d;
+    padding: .4rem .6rem; border: 0; border-radius: 6px;
+    background: transparent; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ainsi-menu__item:hover:not(:disabled) { background: rgb(0 0 0 / 7%); }
+.ainsi-menu__rule { height: 1px; margin: .25rem 0; background: rgb(0 0 0 / 8%); }
+.ainsi-menu__item:disabled { opacity: .38; cursor: default; }
+.ainsi-menu__item[data-active] { font-weight: 600; }
+
+/* the overview: every page scaled into a grid, click to go */
+.ainsi-overview {
+    position: fixed; inset: 0; z-index: 90;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem; align-content: start;
+    padding: 4.5rem 1.5rem 1.5rem;
+    background: rgb(240 243 246 / 97%);
+}
+.ainsi-overview__cell {
+    padding: 0; border: 0; background: transparent;
+    text-align: left; cursor: pointer;
+}
+.ainsi-overview__cell:focus { outline: 0; }   /* the cursor is the frame's outline below */
+.ainsi-overview__frame {
+    aspect-ratio: var(--ainsi-ratio, 16 / 9);
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid rgb(0 0 0 / 12%);
+    background: #fff;
+    transition: transform .14s ease, box-shadow .14s ease, outline-color .14s ease;
+}
+.ainsi-overview__cell:hover .ainsi-overview__frame { outline: 2px solid rgb(31 111 235 / 55%); outline-offset: 1px; }
+/* the cursor grows and glows; a transform, so the neighbours stay put */
+.ainsi-overview__cell[data-active] { position: relative; z-index: 1; }
+.ainsi-overview__cell[data-active] .ainsi-overview__frame {
+    outline: 3px solid #1f6feb; outline-offset: 1px;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 7px rgb(31 111 235 / 18%), 0 12px 32px rgb(31 111 235 / 38%);
+}
+@media (prefers-reduced-motion: reduce) { .ainsi-overview__frame { transition: none; } }
+.ainsi-overview__label {
+    font: 500 11px/1.3 system-ui, sans-serif;
+    color: #5b6672;
+    padding: .35rem .1rem 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* a clone keeps its design width and is scaled to the cell; presentation's display rules yield */
+.ainsi-overview .ainsi-page,
+body[data-present] .ainsi-overview .ainsi-page {
+    display: block; position: static;
+    width: 1280px; margin: 0;
+    border-radius: 0; box-shadow: none;
+    transform: scale(var(--ainsi-thumb-scale, .17));
+    transform-origin: top left;
+    pointer-events: none;
+    animation: none;
+}
+body[data-present] .ainsi-overview .ainsi-page article > * { animation: none; }
+body[data-present] .ainsi-overview { background: rgb(12 15 18 / 96%); }
+body[data-present] .ainsi-overview__frame { border-color: rgb(255 255 255 / 14%); }
+body[data-present] .ainsi-overview__label { color: #98a4b3; }
+
+/* the shortcut list: held-modifier or ? card, bottom-left, over everything, never in the way */
+.ainsi-keys {
+    position: fixed; left: 1rem; bottom: 1rem; z-index: 110;
+    display: grid; grid-template-columns: auto 1fr; align-items: center;
+    column-gap: .8rem; row-gap: .4rem;
+    padding: .7rem .95rem .8rem;
+    font: 400 12px/1.3 system-ui, sans-serif;
+    color: #f2f5f8;
+    background: rgb(20 24 29 / 82%);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 22%);
+    pointer-events: none; user-select: none;
+}
+.ainsi-keys[data-out] { opacity: 0; transition: opacity .4s ease; }
+.ainsi-keys__head {
+    grid-column: 1 / -1;
+    font: 600 10px/1 system-ui, sans-serif;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #98a4b3;
+    margin-bottom: .2rem;
+}
+.ainsi-keys kbd {
+    justify-self: end;
+    font: 500 11px/1 ui-monospace, monospace;
+    padding: .3rem .4rem;
+    border-radius: 5px;
+    background: rgb(255 255 255 / 12%);
+    border: 1px solid rgb(255 255 255 / 14%);
+    white-space: nowrap;
+}
+
+/* presentation mode: one page, filling the viewport, scaled rather than reflowed */
+body[data-present] { overflow: hidden; background: #000; padding: 0; }
+body[data-present] .ainsi-page { display: none; }
+body[data-present] .ainsi-page[data-current] {
+    display: block;
+    position: fixed; top: 50%; left: 50%;
+    width: 1280px; margin: 0;
+    border-radius: 0; box-shadow: none;
+    transform: translate(-50%, -50%) scale(var(--ainsi-present-scale, 1));
+}
+/* while presenting the strip all but disappears until asked for */
+body[data-present] .ainsi-toolbar { background: rgb(20 24 29 / 55%); border-color: rgb(255 255 255 / 10%); opacity: .1; }
+body[data-present] .ainsi-toolbar:hover,
+body[data-present] .ainsi-toolbar[data-awake] { opacity: .55; }
+body[data-present] .ainsi-toolbar:hover { opacity: 1; }
+body[data-present] .ainsi-toolbar__brand { color: #98a4b3; }
+body[data-present] .ainsi-toolbar__button { color: #f2f5f8; }
+body[data-present] .ainsi-toolbar__button:hover { background: rgb(255 255 255 / 12%); }
+body[data-present] .ainsi-toolbar__count { color: #98a4b3; }
+body[data-present] .ainsi-menu { background: rgb(20 24 29 / 94%); border-color: rgb(255 255 255 / 12%); }
+body[data-present] .ainsi-menu__brand { color: #f2f5f8; border-color: rgb(255 255 255 / 10%); }
+body[data-present] .ainsi-menu__head { color: #7d8894; }
+body[data-present] .ainsi-menu__item { color: #f2f5f8; }
+body[data-present] .ainsi-menu__rule { background: rgb(255 255 255 / 10%); }
+body[data-present] .ainsi-menu__item:hover:not(:disabled) { background: rgb(255 255 255 / 12%); }
+
+/*
+ * Entrance. A page arriving under presentation settles rather than snaps: the blocks rise
+ * and clear, each a little after the one above it. Duration and easing are theme tokens, so
+ * a theme can make it brisk, slow, or nothing at all by setting --ainsi-motion to 0s.
+ */
+@keyframes ainsi-rise {
+    from { opacity: 0; transform: translateY(16px) scale(.994); }
+    to { opacity: 1; transform: none; }
+}
+
+body[data-present] .ainsi-page[data-current] article > * {
+    animation: ainsi-rise var(--ainsi-motion) var(--ainsi-ease) backwards;
+}
+body[data-present] .ainsi-page[data-current] article > *:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .18); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .32); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(4) { animation-delay: calc(var(--ainsi-motion) * .44); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--ainsi-motion) * .54); }
+
+/*
+ * Highlights draw on rather than arrive painted: once the blocks are settling, each mark
+ * sweeps left to right like a highlighter pass. Only background-size moves, so the uneven
+ * ink of the stroke leads the sweep like a pen tip.
+ */
+@keyframes ainsi-mark-draw {
+    from { background-size: 0% 100%; }
+    to { background-size: 100% 100%; }
+}
+
+body[data-present] .ainsi-page[data-current] mark {
+    animation: ainsi-mark-draw calc(var(--ainsi-motion) * .85) var(--ainsi-ease) calc(var(--ainsi-motion) * 1.15) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body[data-present] .ainsi-page[data-current] *,
+    body[data-present] .ainsi-page[data-current] { animation: none !important; }
+}
+
+/*
+ * Touch: 40px is a comfortable mouse target and a poor thumb one, and a strip in the top-left
+ * corner sits on the content. On a phone it becomes a bar along the bottom, within reach and
+ * out of the way, and while presenting it hides itself until the screen is tapped.
+ */
+@media (pointer: coarse) {
+    .ainsi-toolbar {
+        top: auto; left: 50%; right: auto;
+        bottom: calc(.9rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        flex-direction: row; align-items: center;
+        gap: .4rem; padding: .5rem; border-radius: 16px;
+        opacity: 1;
+    }
+    .ainsi-toolbar__button { width: 52px; height: 52px; border-radius: 12px; }
+    .ainsi-toolbar__button svg { width: 26px; height: 26px; }
+    .ainsi-toolbar__count { font-size: 13px; padding: 0 .5rem 0 .2rem; }
+
+    body[data-present] .ainsi-toolbar { transition: opacity .22s ease; }
+    body[data-present] .ainsi-toolbar:not([data-awake]) { opacity: 0; pointer-events: none; }
+}
+
+/*
+ * Presenting on a phone. The paged form scaled to a 390pt screen is a letterbox strip, so a
+ * device already in the reading form presents that form instead: one page, filling the
+ * screen, flowing. Fit still governs the paged form, which is the one that gets projected.
+ */
+@media screen and (max-width: 900px) {
+    body[data-present] .ainsi-page[data-current] {
+        position: fixed; inset: 0;
+        width: 100%; height: 100%; margin: 0;
+        transform: none;
+        overflow-y: auto;
+        border-bottom: 0;
+    }
+    body[data-present] .ainsi-page[data-current] main { min-height: 100%; }
+}
+
+@media print {
+    .ainsi-toolbar, .ainsi-overview, .ainsi-keys { display: none; }
+}
 </style>
 </head>
 <body class="ainsi" style="--ainsi-ratio:16 / 9;--ainsi-logo:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik04IDQwVjhoN3YxMy41TDI4IDhoOUwyMy41IDIyIDM4IDQwaC05TDE1IDI0LjVWNDBIOFoiIGZpbGw9IiMwYTBhMGEiLz4KICA8dGV4dCB4PSI0OCIgeT0iMzQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iMSIgZmlsbD0iIzBhMGEwYSI+S0FBUkk8L3RleHQ+Cjwvc3ZnPgo=');--ainsi-logo-cover:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik04IDQwVjhoN3YxMy41TDI4IDhoOUwyMy41IDIyIDM4IDQwaC05TDE1IDI0LjVWNDBIOFoiIGZpbGw9IiNmZmZmZmYiLz4KICA8dGV4dCB4PSI0OCIgeT0iMzQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iMSIgZmlsbD0iI2ZmZmZmZiI+S0FBUkk8L3RleHQ+Cjwvc3ZnPgo=')">
@@ -901,6 +1164,6 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 <figure class="ainsi-full" data-size="full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?w=1600&amp;q=80" alt="studio corner at dusk"></figure></article></main>
 <span class="ainsi-number" aria-hidden="true">10</span>
 </section>
-
+<script type="module">(()=>{var Z=(q)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${q}</svg>`,_={play:Z('<polygon points="6 3 20 12 6 21 6 3"/>'),x:Z('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),menu:Z('<path d="M3 7h18"/><path d="M3 12h14"/><path d="M3 17h14"/>'),grid:Z('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>')};var B=/Mac|iPhone|iPad/.test(navigator.platform),Q=B?"⌘":"Ctrl",n=B?"⌥":"Alt",r=B?"Meta":"Control",A=(q)=>B?q.metaKey:q.ctrlKey,G=[...document.querySelectorAll(".ainsi-page")];if(G.length)e();function e(){let q=0,E=!1,S=document.createElement("div");S.className="ainsi-toolbar";let D=K("menu","Menu",()=>z?U():i()),p=K("grid",`Grid (${Q}G)`,()=>F?V():O()),R=K("play",`Present (${Q}⏎)`,()=>E?X():m()),T=document.createElement("div");T.className="ainsi-toolbar__count",S.append(D,p,R,T),document.body.append(S);let f,C=()=>{S.setAttribute("data-awake",""),clearTimeout(f),f=setTimeout(()=>{if(!z)S.removeAttribute("data-awake")},2600)};addEventListener("mousemove",C,{passive:!0}),addEventListener("pointerdown",C,{passive:!0}),C();function K(h,N,I){let $=document.createElement("button");return $.className="ainsi-toolbar__button",$.type="button",$.title=N,$.setAttribute("aria-label",N),$.innerHTML=_[h],$.addEventListener("click",(j)=>{j.stopPropagation(),I()}),$}let z;function i(){z=document.createElement("div"),z.className="ainsi-menu",z.addEventListener("click",($)=>$.stopPropagation());let h=document.createElement("div");h.className="ainsi-menu__brand",h.textContent=document.body.hasAttribute("data-ainsi-studio")?"Ainsi Studio":"Ainsi Player",z.append(h);let N=document.createElement("div");z.append(N),s("Slides");let I=E?q:x();G.forEach(($,j)=>{let J=a(`${j+1}  ${k($,j)}`,()=>{U(),H(j,!0)});if(j===I)J.setAttribute("data-active","")}),S.append(z),document.dispatchEvent(new CustomEvent("ainsi:menu",{detail:{panel:z,slot:N,close:U}})),addEventListener("pointerdown",M,!0)}function U(){z?.remove(),z=void 0,removeEventListener("pointerdown",M,!0)}function M(h){let N=h.target;if(z&&!z.contains(N)&&!D.contains(N))U()}function s(h){let N=document.createElement("div");N.className="ainsi-menu__head",N.textContent=h,z.append(N)}function a(h,N){let I=document.createElement("button");return I.className="ainsi-menu__item",I.type="button",I.textContent=h,I.addEventListener("click",N),z.append(I),I}function k(h,N){return h.querySelector("h1, h2, h3")?.textContent?.trim()||`Page ${N+1}`}let F,P=0;function O(){U(),F=document.createElement("div"),F.className="ainsi-overview",P=E?q:x(),G.forEach((h,N)=>{let I=document.createElement("button");I.className="ainsi-overview__cell",I.type="button";let $=document.createElement("div");$.className="ainsi-overview__frame";let j=h.cloneNode(!0);j.removeAttribute("id"),j.removeAttribute("data-current"),$.append(j);let J=document.createElement("div");J.className="ainsi-overview__label",J.textContent=`${N+1}  ${k(h,N)}`,I.append($,J),I.addEventListener("click",(Y)=>{Y.stopPropagation(),V(),H(N,!0)}),F.append(I)}),document.body.append(F),b(),w(P,"center")}let d=()=>[...F.querySelectorAll(".ainsi-overview__cell")];function w(h,N="nearest"){let I=d();P=Math.max(0,Math.min(I.length-1,h)),I.forEach(($,j)=>$.toggleAttribute("data-active",j===P)),I[P]?.focus({preventScroll:!0}),I[P]?.scrollIntoView({block:N})}function o(h){let N=d(),I=N[0]?.offsetTop,$=Math.max(1,N.filter((J)=>J.offsetTop===I).length),j=P;switch(h.key){case"ArrowRight":j+=1;break;case"ArrowLeft":j-=1;break;case"ArrowDown":j+=$;break;case"ArrowUp":j-=$;break;case"Home":j=0;break;case"End":j=N.length-1;break;case"Enter":case" ":return h.preventDefault(),V(),H(P,!0);default:return}h.preventDefault(),w(j)}function b(){if(!F)return;for(let h of F.querySelectorAll(".ainsi-overview__frame"))h.style.setProperty("--ainsi-thumb-scale",String(h.clientWidth/1280))}function V(){F?.remove(),F=void 0}function u(){T.textContent=E?`${q+1}/${G.length}`:""}function m(){E=!0,q=x(),document.body.setAttribute("data-present",""),R.innerHTML=_.x,R.title=R.ariaLabel="Leave presentation",document.documentElement.requestFullscreen?.().catch(()=>{}),c(),g()}function X(){if(E=!1,document.body.removeAttribute("data-present"),R.innerHTML=_.play,R.title=R.ariaLabel=`Present (${Q}⏎)`,document.fullscreenElement)document.exitFullscreen().catch(()=>{});for(let h of G)h.removeAttribute("data-current");G[q]?.scrollIntoView({block:"start"}),u()}function x(){let h=0,N=1/0;return G.forEach((I,$)=>{let j=Math.abs(I.getBoundingClientRect().top);if(j<N)N=j,h=$}),h}function g(){for(let h of G)h.removeAttribute("data-current");G[q]?.setAttribute("data-current",""),u()}function H(h,N=!1){let I=Math.max(0,Math.min(G.length-1,h));if(I===q&&!N)return;if(q=I,E)g();else G[q]?.scrollIntoView({behavior:"smooth",block:"start"})}function c(){if(!E||innerWidth<=900)return;let[h,N]=(getComputedStyle(document.body).getPropertyValue("--ainsi-ratio")||"16 / 9").split("/").map(($)=>Number($.trim())||1),I=1280/(h/N);document.body.style.setProperty("--ainsi-present-scale",String(Math.min(innerWidth/1280,innerHeight/I)))}addEventListener("resize",c,{passive:!0}),addEventListener("resize",b,{passive:!0}),addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&E)X()});let L;function v(){let h=document.body.hasAttribute("data-ainsi-studio");if(document.activeElement?.closest?.("input, textarea, [contenteditable]"))return{mode:"Editing",rows:[]};if(F)return{mode:"Grid",rows:[["← → ↑ ↓","move"],["⏎","open slide"],["esc","close"]]};if(E)return{mode:"Presenting",rows:[["← →","previous / next"],[`${Q} ← →`,"first / last"],[`${Q} G`,"grid"],["esc","leave"]]};return{mode:h?"Studio":"Player",rows:[[`${Q} ⏎`,"present from this slide"],[`${Q} G`,"grid"]]}}function l(){for(let $ of document.querySelectorAll(".ainsi-keys"))$.remove();let{mode:h,rows:N}=v();document.dispatchEvent(new CustomEvent("ainsi:keys",{detail:{mode:h,rows:N,mod:Q,alt:n}})),L=document.createElement("div"),L.className="ainsi-keys";let I=document.createElement("div");I.className="ainsi-keys__head",I.textContent=h,L.append(I);for(let[$,j]of N){let J=document.createElement("kbd");J.textContent=$;let Y=document.createElement("span");Y.textContent=j,L.append(J,Y)}document.body.append(L)}function t(){let h=L;if(L=void 0,!h)return;h.setAttribute("data-out",""),setTimeout(()=>h.remove(),400)}let y=()=>{if(L)t()};addEventListener("keyup",(h)=>{if(h.key===r)y()}),addEventListener("blur",y),addEventListener("keydown",(h)=>{if(h.key===r){if(!L)l();return}if(y(),h.target.closest?.("input, textarea, [contenteditable]"))return;if(h.key==="Escape"){if(z)return U();if(F)return V();if(E)return X();return}if(A(h)&&h.key.toLowerCase()==="g")return h.preventDefault(),F?V():O();if(A(h)&&h.key==="Enter")return h.preventDefault(),E?X():m();if(F)return o(h);if(!E)return;switch(h.key){case"ArrowRight":case"ArrowDown":case" ":case"PageDown":return h.preventDefault(),H(A(h)?G.length-1:q+1);case"ArrowLeft":case"ArrowUp":case"PageUp":return h.preventDefault(),H(A(h)?0:q-1);case"Home":return H(0);case"End":return H(G.length-1)}}),addEventListener("click",(h)=>{if(!E)return;let N=h.target.closest?.('a[href^="#"]');if(!N)return;let I=document.getElementById(decodeURIComponent(N.hash.slice(1)))?.closest(".ainsi-page");if(!I)return;h.preventDefault(),h.stopPropagation(),H(G.indexOf(I),!0)},!0),addEventListener("click",(h)=>{if(h.target.closest?.("a"))return;if(E&&!z&&!F&&innerWidth>900)H(q+1)});let W;addEventListener("touchstart",(h)=>{let N=h.changedTouches[0];W=N?{x:N.clientX,y:N.clientY}:void 0},{passive:!0}),addEventListener("touchend",(h)=>{let N=h.changedTouches[0];if(!E||!W||!N)return;let I=N.clientX-W.x;if(Math.abs(I)>60&&Math.abs(I)>Math.abs(N.clientY-W.y))H(q+(I<0?1:-1));W=void 0},{passive:!0})}})();</script>
 </body>
 </html>
