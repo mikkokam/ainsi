@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Kaari</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Geist:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap");
+/* engine: page structure, and the paper a print lands on */
+
+* { box-sizing: border-box; }
+
+/* the stand-in for an image not yet chosen; layouts paint it where an image would be their ground */
+.ainsi-page { --ainsi-placeholder: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22680.764%22%20height%3D%22528.354%22%20viewBox%3D%220%200%20180.119%20139.794%22%3E%3Cg%20transform%3D%22translate(-13.59%20-66.639)%22%20paint-order%3D%22fill%20markers%20stroke%22%3E%3Cpath%20fill%3D%22%23d0d0d0%22%20d%3D%22M13.591%2066.639H193.71v139.794H13.591z%22%2F%3E%3Cpath%20d%3D%22m118.507%20133.514-34.249%2034.249-15.968-15.968-41.938%2041.937H178.726z%22%20opacity%3D%22.675%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%2258.217%22%20cy%3D%22108.555%22%20r%3D%2211.773%22%20opacity%3D%22.675%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M26.111%2077.634h152.614v116.099H26.111z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+
+body.ainsi {
+    margin: 0;
+    padding: calc(var(--ainsi-gap) * 2);
+    background: var(--ainsi-shell);
+    font-family: var(--ainsi-font);
+    color: var(--ainsi-ink);
+}
+
+.ainsi-page {
+    aspect-ratio: var(--ainsi-ratio, 16 / 9);
+    width: min(1280px, 100%);
+    margin: 0 auto calc(var(--ainsi-gap) * 2);
+    background: var(--ainsi-ground);
+    border-radius: var(--ainsi-radius);
+    box-shadow: var(--ainsi-shadow);
+    font-size: calc(var(--ainsi-size) * var(--ainsi-step, 1));
+    line-height: var(--ainsi-leading);
+    overflow: hidden;
+    position: relative;
+}
+
+/*
+ * Tone: a page's ground, flipped to the accent, to the ink or to the tint, set by the layout's tone prop
+ * landing on main as a data attribute. The theme's values are stashed on the page first,
+ * because a var() reads the value on its own element: remapping --ainsi-accent and building
+ * the ground from --ainsi-accent on the same element would read the remap, not the theme.
+ * The remap is what keeps every component legible on the new ground without knowing about it.
+ */
+.ainsi-page {
+    --ainsi-page-ink: var(--ainsi-ink);
+    --ainsi-page-ground: var(--ainsi-ground);
+    --ainsi-page-accent: var(--ainsi-accent);
+    --ainsi-page-accent-ink: var(--ainsi-accent-ink);
+    --ainsi-page-tint: var(--ainsi-tint);
+}
+.ainsi-page main[data-tone="accent"] { --ainsi-tone-bg: var(--ainsi-page-accent); --ainsi-tone-ink: var(--ainsi-page-accent-ink); }
+.ainsi-page main[data-tone="inverse"] { --ainsi-tone-bg: var(--ainsi-page-ink); --ainsi-tone-ink: var(--ainsi-page-ground); }
+.ainsi-page main[data-tone="accent"], .ainsi-page main[data-tone="inverse"] {
+    background: var(--ainsi-tone-bg);
+    color: var(--ainsi-tone-ink);
+    --ainsi-ink: var(--ainsi-tone-ink);
+    --ainsi-ink-soft: color-mix(in srgb, var(--ainsi-tone-ink) 72%, transparent);
+    --ainsi-accent: var(--ainsi-tone-ink);
+    --ainsi-accent-ink: var(--ainsi-tone-bg);
+    --ainsi-ground: var(--ainsi-tone-bg);
+    --ainsi-surface: color-mix(in srgb, var(--ainsi-tone-ink) 8%, transparent);
+    --ainsi-rule: color-mix(in srgb, var(--ainsi-tone-ink) 30%, transparent);
+}
+/* soft keeps the ink and the accent: only the ground changes, and a surface lifts to the theme's ground */
+.ainsi-page main[data-tone="soft"] {
+    background: var(--ainsi-page-tint);
+    --ainsi-ground: var(--ainsi-page-tint);
+    --ainsi-surface: var(--ainsi-page-ground);
+}
+
+/*
+ * Page number, bottom left, never on a cover. An opaque mix of the ink into the ground rather
+ * than a faded ink, so an export lifting the text gets the colour that shows. It sits outside
+ * main, so a toned page names its own pair. numbers: off keeps it as a reading aid in the
+ * scroll view and drops it from presenting, print and export.
+ */
+.ainsi-page .ainsi-number {
+    position: absolute; bottom: 1.4rem; left: 1.6rem;
+    font: 500 12px/1 var(--ainsi-font-mono);
+    color: color-mix(in srgb, var(--ainsi-page-ink) 45%, var(--ainsi-page-ground));
+    pointer-events: none;
+}
+.ainsi-page:has(> main[data-tone="accent"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-accent-ink) 45%, var(--ainsi-page-accent)); }
+.ainsi-page:has(> main[data-tone="inverse"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-ground) 45%, var(--ainsi-page-ink)); }
+.ainsi-page:has(> main[data-tone="soft"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-ink) 45%, var(--ainsi-page-tint)); }
+.ainsi-page[data-layout="header"] .ainsi-number { display: none; }
+body[data-numbers="off"][data-present] .ainsi-number { display: none; }
+
+/*
+ * The page inset lives on main, not on the page. A percentage resolves against the
+ * containing block, and the page's is the body, which is wider than the page's own cap:
+ * put it on the page and every layout that repositions it lands somewhere else.
+ */
+.ainsi-page main { height: 100%; padding: var(--ainsi-pad); }
+.ainsi-page h1, .ainsi-page h2, .ainsi-page h3 { font-family: var(--ainsi-font-display); }
+.ainsi-page h1, .ainsi-page h2, .ainsi-page h3, .ainsi-page h4, .ainsi-page h5 { margin: 0 0 .4em; line-height: 1.2; }
+.ainsi-page h1 { font-size: 2.49em; line-height: 1.1; letter-spacing: -.02em; }
+.ainsi-page h2 { font-size: 2.07em; line-height: 1.12; }
+.ainsi-page h3 { font-size: 1.73em; }
+.ainsi-page h4 { font-size: 1.44em; }
+.ainsi-page h5 { font-size: 1.2em; }
+.ainsi-page p { margin: 0 0 .6em; }
+.ainsi-page > *:last-child { margin-bottom: 0; }
+
+/*
+ * Rhythm on the page. Blocks stand a --ainsi-gap apart; text that follows text stands a
+ * fraction of the page's type size apart instead, since prose is many elements rather than
+ * one block. Margins, not flex gap, because a gap cannot tell a paragraph from a component.
+ * --ainsi-em is the page's own font size, reachable from a child whose em is its own.
+ */
+.ainsi-page { --ainsi-em: calc(var(--ainsi-size) * var(--ainsi-step, 1)); }
+.ainsi-page article > * + * { margin-top: var(--ainsi-gap); }
+.ainsi-page :is(article, .ainsi-prose) > :is(p, h1, h2, h3, h4, h5, ul, ol, blockquote, pre) { margin-bottom: 0; }
+/* a component's root carries data-ainsi, which is how a timeline's ol is told from a list's.
+   A sized or coloured prose wrapper is looked through: what it ends with sets the space after
+   it, what it starts with the space before, so a heading given a colour does not move. */
+.ainsi-page :is(article, .ainsi-prose) > :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .55); }
+.ainsi-page :is(article, .ainsi-prose) > :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .45); }
+.ainsi-page :is(article, .ainsi-prose) > :is(p, ul, ol, blockquote, pre, .ainsi-prose:has(> :is(p, ul, ol, blockquote, pre):last-child)):not([data-ainsi]) + :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):first-child)) { margin-top: calc(var(--ainsi-em) * 1); }
+/* a page title carries more weight than a heading in a document, so the air under it says so */
+.ainsi-page :is(article, .ainsi-prose) > :is(h1, .ainsi-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .6); }
+.ainsi-page article > :is(h1, .ainsi-prose:has(> h1:last-child)) + [data-ainsi] { margin-top: calc(var(--ainsi-gap) * 1.5); }
+.ainsi-page article > :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):last-child)) + [data-ainsi] { margin-top: calc(var(--ainsi-gap) * 1.2); }
+.ainsi-page article > .ainsi-prose > :last-child { margin-bottom: 0; }
+.ainsi-page code { font-family: var(--ainsi-font-mono); }
+/* inline code as a chat client shows it: a small capsule, the theme's stop colour for the text */
+.ainsi-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--ainsi-rule); border-radius: .3em; background: var(--ainsi-surface); color: var(--ainsi-danger); }
+.ainsi-page img { max-width: 100%; height: auto; display: block; }
+/*
+ * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9
+ * page whose width tracks min(1280px, viewport), so 31vw approximates it at every desktop
+ * width and 400px matches the 1280px cap and the print page. Max constraints only, so the
+ * browser keeps the ratio. Layouts that make the image their ground lift the cap themselves.
+ */
+.ainsi-page img { max-height: min(400px, 31vw); }
+/* a placeholder stays modest in flow; a layout that makes the image its ground overrides this,
+   since layout css follows base */
+.ainsi-page img[data-ainsi-placeholder] { width: min(45%, 420px); }
+.ainsi-page strong { font-weight: var(--ainsi-strong); }
+/*
+ * A link takes the ink it sits on and says so with the underline, rather than a colour of its
+ * own. A page's ground is whatever a tone or a photograph makes it, and no single link colour
+ * reads on all of them: the browser's own blue is 2.1:1 on a dark ground, and an accent picked
+ * for the paper is no better on the accent itself. A theme that wants a coloured link on its
+ * own ground can say so; this is the floor.
+ */
+.ainsi-page a {
+    color: var(--ainsi-link, inherit);
+    text-decoration: underline;
+    text-decoration-thickness: .06em;
+    text-underline-offset: .18em;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+.ainsi-page a:hover { text-decoration-color: currentColor; }
+/* a blockquote as markdown gives it, in the display face; a signed one carries its caption */
+.ainsi-page blockquote { margin: 0; padding: 0 0 0 calc(var(--ainsi-gap) * .8); border-left: 3px solid var(--ainsi-accent); }
+.ainsi-page blockquote p { font-family: var(--ainsi-font-display); font-size: 1.45em; line-height: 1.38; letter-spacing: -.01em; margin: 0 0 .5em; }
+.ainsi-page blockquote p:last-child { margin-bottom: 0; }
+.ainsi-page .ainsi-quote { margin: 0; display: flex; flex-direction: column; gap: calc(var(--ainsi-gap) * .85); }
+.ainsi-page .ainsi-quote figcaption { padding-left: calc(var(--ainsi-gap) * .8 + 3px); font-size: .9em; font-weight: 500; color: var(--ainsi-ink-soft); }
+/* a table as markdown gives it */
+.ainsi-page table { border-collapse: collapse; width: 100%; }
+.ainsi-page th, .ainsi-page td { text-align: left; padding: .5em .8em; border-bottom: var(--ainsi-border) solid var(--ainsi-rule); }
+.ainsi-page th { font-weight: var(--ainsi-strong); }
+/* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
+/*
+ * The highlighter stroke is a background, not a pseudo: a pseudo box on an inline spans
+ * the bounding rect of its line boxes and breaks the moment a mark wraps. The gradient's
+ * slight angle cuts the start edge like a chisel tip; the ink is uneven along the run and
+ * fades out to nothing at the end. The shorthand sets position and size, so the draw
+ * animation can grow background-size from zero.
+ */
+.ainsi-page mark {
+    color: inherit; padding: .05em .25em .05em .15em;
+    border-radius: .15em;
+    background: linear-gradient(100deg,
+        transparent .12em,
+        color-mix(in srgb, var(--ainsi-accent) 38%, transparent) .2em,
+        color-mix(in srgb, var(--ainsi-accent) 28%, transparent) 30%,
+        color-mix(in srgb, var(--ainsi-accent) 33%, transparent) 60%,
+        color-mix(in srgb, var(--ainsi-accent) 22%, transparent) 85%,
+        color-mix(in srgb, var(--ainsi-accent) 4%, transparent)
+    ) 0 0 / 100% 100% no-repeat;
+}
+.ainsi-page kbd { font: .85em var(--ainsi-font-mono); padding: .1em .4em; border: 1px solid var(--ainsi-rule); border-bottom-width: 2px; border-radius: .3em; }
+.ainsi-page del { opacity: .55; }
+.ainsi-page li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.3em; }
+.ainsi-page input[type="checkbox"] { margin: 0 .5em 0 0; accent-color: var(--ainsi-accent); vertical-align: -.1em; }
+
+/*
+ * The fit solver ran out of ladder here and the page is clipped. Saying so beats hiding it,
+ * and the mark belongs to the engine rather than a theme: it reports a build fact, it is not
+ * a look a theme is allowed to have an opinion about. Reading view only, so a projected or
+ * printed page carries no trace of it.
+ */
+body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
+    content: "";
+    position: absolute; inset: auto 0 0 0; height: 3px;
+    background: repeating-linear-gradient(90deg, #d6453c 0 9px, transparent 9px 18px);
+    pointer-events: none;
+}
+
+/*
+ * Print and PDF: the paper is the page. The build sizes @page to the deck's ratio, since a
+ * size rule takes no var(); here the box loses its card dressing and the shell around it,
+ * and each page breaks onto its own sheet. The page number and the overflow mark are
+ * reading aids and stay off the print.
+ */
+@media print {
+    .ainsi-page[data-overflow]::before { display: none; }
+    body.ainsi { padding: 0; background: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .ainsi-page { width: 1280px; margin: 0; border-radius: 0; box-shadow: none; break-after: page; break-inside: avoid; }
+    .ainsi-page:last-of-type { break-after: auto; }
+    body[data-numbers="off"] .ainsi-number { display: none; }
+}
+
+/*
+ * Reading view. A deck has two forms: a fixed-aspect page for projecting and printing, and
+ * a fluid one for reading on whatever screen is to hand. Fit governs the first only. Scoped
+ * to screen: chromium lays a print out on its default paper before @page resizes it, and a
+ * narrow default paper would turn every printed page into a fluid one plus a spill sheet.
+ */
+@media screen and (max-width: 900px) {
+    /* still cards: the page keeps its radius, ground and shadow, and only stops being 16:9 */
+    body.ainsi { padding: .8rem; }
+    .ainsi-page {
+        aspect-ratio: auto;
+        width: 100%;
+        margin: 0 0 .8rem;
+        font-size: clamp(15px, 4.4vw, var(--ainsi-size));
+    }
+    .ainsi-page main { padding: 9% 7%; min-height: 58vh; }
+    /* the fluid page grows instead of clipping, so the cap only guards against a screenful */
+    .ainsi-page img { max-height: 70vh; }
+    .ainsi-page h1 { font-size: 2em; }
+    .ainsi-page .ainsi-number { bottom: 1rem; left: 1.1rem; font-size: 11px; }
+}
+
+@page { size: 1280px 720px; margin: 0; }
+/* theme: tokens, and whatever no token should carry; after the engine so its element rules win */
+/*
+ * The default: warm ground rather than sterile white, editorial serif for display, real
+ * depth instead of flatness. Every other theme layers on these tokens. Still nothing but tokens.
+ */
+:root {
+    --ainsi-ink: #241f1b;
+    --ainsi-ink-soft: #6b6058;
+    --ainsi-ground: #faf6f0;
+    --ainsi-shell: #ebe4da;
+    --ainsi-accent: #c1553a;
+    --ainsi-accent-ink: #fdfaf6;
+    --ainsi-rule: #ded4c7;
+    --ainsi-surface: rgb(255 253 250 / 72%);
+    --ainsi-tint: color-mix(in srgb, var(--ainsi-accent) 9%, var(--ainsi-ground));
+    --ainsi-info: #0969da;
+    --ainsi-ok: #1a7f37;
+    --ainsi-notice: #8250df;
+    --ainsi-warn: #9a6700;
+    --ainsi-danger: #cf222e;
+
+    --ainsi-font: "Inter", system-ui, -apple-system, sans-serif;
+    --ainsi-font-display: Georgia, "Times New Roman", serif;
+    --ainsi-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 600;
+    --ainsi-size: 22px;
+    --ainsi-leading: 1.55;
+    --ainsi-step-min: 0.8;
+
+    --ainsi-gap: 1.9rem;
+    --ainsi-pad: 8.5%;
+    --ainsi-radius: 14px;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: 0 1px 2px rgb(60 44 30 / 6%), 0 8px 24px -6px rgb(60 44 30 / 14%);
+    --ainsi-blur: 14px;
+    --ainsi-logo: none;   /* the deck names its marks in frontmatter; the theme only places them */
+    --ainsi-logo-cover: none;
+
+    --ainsi-motion: 700ms;
+    --ainsi-ease: cubic-bezier(.22, .68, 0, 1);
+}
+
+:root {
+    --ainsi-ink: #0a0a0a;
+    --ainsi-ink-soft: #6f6f72;
+    --ainsi-ground: #f4f4f2;
+    --ainsi-shell: #0a0a0a;
+    /* the accent is ink as often as it is a ground: a numeral, a heading set to accent, a
+       rule. Electric lime reads 1.07:1 on this paper and disappears, so the accent is the
+       deep end of the same hue and the electric one is the tint, where it is a ground with
+       black on it and reads 16.8:1 */
+    --ainsi-accent: #4d6b00;
+    --ainsi-accent-ink: #ffffff;
+    --ainsi-rule: #d8d8d4;
+    --ainsi-surface: #ffffff;
+    --ainsi-tint: #dcff6b;
+
+    /* Sora carries the headings, Geist is the neutral the body is set in, and IBM Plex Mono is
+       the small voice: subheads, captions and anything that reads as a label rather than prose */
+    --ainsi-font: "Geist", "Inter", system-ui, -apple-system, sans-serif;
+    --ainsi-font-display: "Sora", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --ainsi-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 800;
+    --ainsi-size: 23px;
+    --ainsi-leading: 1.45;
+    --ainsi-step-min: 0.72;
+
+    --ainsi-gap: 2rem;
+    --ainsi-pad: 7%;
+    /* the page has a corner; so does every picture on it, at the same radius */
+    --ainsi-radius: 14px;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: none;
+    --ainsi-blur: 0px;
+
+    --ainsi-motion: 420ms;
+    --ainsi-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+
+
+/*
+ * A portfolio deck: the work is the content and the type is the frame around it. h1 and h2 are
+ * Sora at weights the body never uses, tight and left-hung. h3 drops to mono and stops being a
+ * heading at all: it is the label over a field of work. The page is off-white so that a white
+ * photograph still has an edge.
+ */
+
+h1, h2 {
+    font-family: var(--ainsi-font-display);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: .95;
+    text-wrap: balance;
+}
+h1 { font-size: 3.1em; }
+h2 { font-size: 2.1em; }
+/* not smaller headings: labels, in the same mono the captions use. Sora stops at h2 */
+h3, h4, h5, h6 {
+    font-family: var(--ainsi-font-mono);
+    font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ainsi-ink-soft);
+}
+h3 { font-size: .8em; }
+h4 { font-size: .74em; }
+h5, h6 { font-size: .68em; }
+
+/* the asymmetry: a heading hangs left of the text it introduces, and the text stops short of
+   the measure so the page keeps a column of air on the right */
+main > h1, main > h2 { margin-left: -.04em; max-width: 18ch; }
+main > p { max-width: 44ch; }
+
+blockquote {
+    border-left: 3px solid var(--ainsi-accent);
+    padding-left: 1em;
+    font-family: var(--ainsi-font-display);
+    font-size: 1.35em; font-weight: 600; letter-spacing: -.02em; line-height: 1.15;
+}
+
+code, kbd { font-family: var(--ainsi-font-mono); font-size: .82em; }
+mark { background: var(--ainsi-accent); color: var(--ainsi-accent-ink); padding: 0 .12em; }
+
+/* small print is mono here, which is the only place the theme spends detail */
+figcaption, small { font-family: var(--ainsi-font-mono); font-size: .68em; letter-spacing: .04em; color: var(--ainsi-ink-soft); }
+
+/*
+ * The mark. Only a theme's tokens come from the default theme, never its stylesheet, so a
+ * theme that does not place the logo shows none: this one hangs it bottom right, opposite the
+ * page number, small enough to be a signature rather than a header.
+ */
+.ainsi-page::before {
+    content: "";
+    position: absolute; z-index: 2;
+    right: var(--ainsi-pad); bottom: 1.5rem;
+    width: 82px; height: 24px;
+    background: var(--ainsi-logo) no-repeat right center / contain;
+    pointer-events: none;
+}
+/* a one-colour mark goes white where the ground is a photograph or the accent */
+.ainsi-page[data-layout="header"]::before,
+.ainsi-page:has(> main[data-tone="accent"])::before,
+.ainsi-page:has(> main[data-tone="inverse"])::before,
+.ainsi-page:has(main .ainsi-full)::before { filter: brightness(0) invert(1); }
+
+/* the cover wears its own mark, top left, where the title is not */
+.ainsi-page[data-layout="header"]::before {
+    top: 2.2rem; bottom: auto; left: var(--ainsi-pad); right: auto;
+    background-position: left center;
+    width: 120px; height: 34px;
+    background-image: var(--ainsi-logo-cover);
+}
+
+@media screen and (max-width: 900px) {
+    .ainsi-page::before { right: 1.2rem; bottom: 1rem; width: 62px; height: 18px; }
+}
+/* layouts and components, styled through the tokens above */
+/* No index.ts: a layout is a stylesheet, inheriting the default template. */
+[data-layout="header"] { position: relative; color: var(--ainsi-accent-ink); }
+[data-layout="header"] main {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: flex-end;
+}
+[data-layout="header"] main[data-align="start"] { justify-content: flex-start; }
+[data-layout="header"] main[data-align="center"] { justify-content: center; }
+
+/* the page's own image becomes the ground; the component did not have to know */
+[data-layout="header"] .ainsi-full { position: absolute; inset: 0; margin: 0; display: block; }
+/* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
+[data-layout="header"] .ainsi-full { margin: 0 !important; }
+/* main in the selector outranks the full component's size rules, which are emitted later */
+[data-layout="header"] main .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+[data-layout="header"] .ainsi-full::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(170deg, rgb(0 0 0 / 25%) 0%, rgb(0 0 0 / 78%) 100%);
+}
+
+/* no image yet: the placeholder ground under the same scrim a real image wears, so the light
+   text already reads, and it is gone the moment the page gets an image */
+[data-layout="header"] main:not(:has(.ainsi-full)) {
+    background: linear-gradient(170deg, rgb(0 0 0 / 25%) 0%, rgb(0 0 0 / 78%) 100%), var(--ainsi-placeholder) center / cover;
+}
+
+/*
+ * The image is a positioned sibling of the text, so without this the text paints beneath it
+ * and beneath the gradient. Positioned siblings beat in-flow content whatever the source order.
+ */
+[data-layout="header"] article > *:not(.ainsi-full) { position: relative; z-index: 1; }
+
+[data-layout="header"] h1 { font-size: 3.6em; margin: 0; }
+[data-layout="header"] p { font-size: 1.15em; opacity: .84; margin: .3em 0 0; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="header"] main { min-height: 78vh; }
+    [data-layout="header"] h1 { font-size: 2.6em; }
+}
+
+/* the ground drifts rather than arrives: a slow scale, long enough not to read as motion */
+@keyframes ainsi-header-drift {
+    from { transform: scale(1); }
+    to { transform: scale(1.06); }
+}
+body[data-present] [data-current][data-layout="header"] .ainsi-full img {
+    animation: ainsi-header-drift 18s linear both;
+}
+/* The cover is a photograph with a name on it. The engine already makes the page's image the
+   ground; this only takes the type up to the size the picture can carry. */
+/* the cover is a photograph under a dark scrim, so the type is white here rather than the
+   accent's ink, which this theme sets dark for its lime */
+[data-layout="header"] { color: #fff; }
+[data-layout="header"] h1 {
+    font-size: 5.2em;
+    letter-spacing: -.045em;
+    line-height: .88;
+    max-width: 14ch;
+}
+[data-layout="header"] p {
+    font-family: var(--ainsi-font-mono);
+    font-size: .78em; letter-spacing: .08em; text-transform: uppercase;
+    max-width: 40ch;
+}
+
+@media screen and (max-width: 900px) {
+    /* the cover is a photograph under a dark scrim, so the type is white here rather than the
+   accent's ink, which this theme sets dark for its lime */
+[data-layout="header"] { color: #fff; }
+[data-layout="header"] h1 { font-size: 3em; }
+}
+[data-layout="default"] main { display: flex; flex-direction: column; justify-content: center; gap: var(--ainsi-gap); height: 100%; }
+[data-layout="default"] article { display: flex; flex-direction: column; }
+
+@media screen and (max-width: 900px) {
+    /* centred content taller than the box overflows both ways; in a scroll it starts at the top */
+    [data-layout="default"] main { justify-content: flex-start; }
+}
+/*
+ * The work wants the room. A content page here sits on a narrower inset than the covers and
+ * dividers, which keep the wide one because their type is the whole page; a field of pictures
+ * gains the difference in width, and the corner radius keeps the page from looking untrimmed.
+ */
+[data-layout="default"] main { padding: 4.5%; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="default"] main { padding: 6%; }
+}
+/*
+ * The divider between chapters: a numeral at the top, the title at the bottom, nothing else.
+ * The ground comes from its tone prop (accent by default), painted by the engine's tone rules.
+ * Sections count themselves: an increment with no reset scopes the counter to the page and
+ * its following siblings, so the third section page says 03 wherever it sits in the deck.
+ */
+[data-layout="section"] { counter-increment: ainsi-section; }
+[data-layout="section"] main { display: flex; }
+[data-layout="section"] article { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+[data-layout="section"] article::before {
+    content: counter(ainsi-section, decimal-leading-zero);
+    font-family: var(--ainsi-font-display);
+    font-size: 6em; line-height: 1; font-weight: 700; letter-spacing: -.02em;
+    opacity: .22;
+    margin-bottom: auto;
+}
+[data-layout="section"] h1, [data-layout="section"] h2 {
+    font-size: 3.4em; line-height: 1.05; letter-spacing: -.02em; margin: 0; max-width: 24ch;
+}
+[data-layout="section"] p { font-size: 1.2em; opacity: .82; margin: .5em 0 0; max-width: 52ch; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="section"] main { min-height: 58vh; }
+    [data-layout="section"] article::before { font-size: 4em; }
+    [data-layout="section"] h1, [data-layout="section"] h2 { font-size: 2.4em; }
+}
+/*
+ * A divider that can be a photograph. The base section paints its tone; where the page carries
+ * an image, that image becomes the ground instead and the numeral and title sit on it, under
+ * a scrim dark enough for white type at any exposure.
+ */
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 4.2em; letter-spacing: -.04em; line-height: .9; }
+[data-layout="section"] article::before { font-family: var(--ainsi-font-mono); font-size: 2.6em; font-weight: 400; opacity: .5; }
+
+/* white on a photograph, whatever the theme's accent ink is */
+[data-layout="section"] main:has(.ainsi-full) { color: #fff; }
+[data-layout="section"] .ainsi-full { position: absolute; inset: 0; margin: 0 !important; display: block; }
+[data-layout="section"] main:has(.ainsi-full) { position: relative; }
+[data-layout="section"] main .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+[data-layout="section"] .ainsi-full::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(170deg, rgb(0 0 0 / 30%) 0%, rgb(0 0 0 / 80%) 100%);
+}
+/* the type sits above the scrim, one child at a time: positioning the article itself would
+   make it the containing block and the ground would inset to the page's padding */
+[data-layout="section"] main:has(.ainsi-full) article > *:not(.ainsi-full),
+[data-layout="section"] main:has(.ainsi-full) article::before { position: relative; z-index: 1; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="section"] h1, [data-layout="section"] h2 { font-size: 2.6em; }
+}
+/*
+ * Also just a stylesheet. The image is taken out of flow with the text rather than sharing
+ * a grid row with it: CSS Grid ties row tracks across every column, so a tight centered text
+ * stack and a full-height image can't share one grid without one distorting the other.
+ * Absolute positioning against `main` sidesteps that; `article`, a single box, is free to
+ * flex-centre its own children without any row-sharing at all.
+ */
+[data-layout="split"] main { position: relative; padding: 0; --ainsi-split: 50%; }
+[data-layout="split"] main[data-size="third"] { --ainsi-split: 33.333%; }
+[data-layout="split"] main[data-size="two-thirds"] { --ainsi-split: 66.667%; }
+[data-layout="split"] article {
+    height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    margin-left: var(--ainsi-split);
+    padding: var(--ainsi-pad) var(--ainsi-pad) var(--ainsi-pad) var(--ainsi-gap);
+}
+[data-layout="split"] article > .ainsi-full {
+    position: absolute; inset: 0 auto 0 0;
+    width: var(--ainsi-split); height: 100%; margin: 0;
+}
+[data-layout="split"] article > .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+/* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
+[data-layout="split"] article > .ainsi-full { margin: 0 !important; }
+
+[data-layout="split"] main[data-side="right"] article {
+    margin-left: 0; margin-right: var(--ainsi-split);
+    padding: var(--ainsi-pad) var(--ainsi-gap) var(--ainsi-pad) var(--ainsi-pad);
+}
+[data-layout="split"] main[data-side="right"] article > .ainsi-full { inset: 0 0 0 auto; }
+
+/* the image's own size prop, which means the pane's share here: s, m, l contain the picture
+   uncropped and centred at that share of the pane (a diagram); full and unset cover (a photo) */
+[data-layout="split"] article > .ainsi-full[data-size="s"],
+[data-layout="split"] article > .ainsi-full[data-size="m"],
+[data-layout="split"] article > .ainsi-full[data-size="l"] { place-items: center; }
+[data-layout="split"] article > .ainsi-full[data-size="s"] img,
+[data-layout="split"] article > .ainsi-full[data-size="m"] img,
+[data-layout="split"] article > .ainsi-full[data-size="l"] img { object-fit: contain; }
+[data-layout="split"] article > .ainsi-full[data-size="s"] img { width: 50%; height: 50%; }
+[data-layout="split"] article > .ainsi-full[data-size="m"] img { width: 70%; height: 70%; }
+[data-layout="split"] article > .ainsi-full[data-size="l"] img { width: 88%; height: 88%; }
+
+/*
+ * size=image: the picture dictates the pane. The figure sits before the article (the layout
+ * hoists it) and, absolutely positioned with auto width, shrinks to the image's own ratio at
+ * full page height, so nothing is cropped; the text column is anchored to the figure's edge.
+ * A browser without anchor positioning keeps the half split. Capped at 70% so a page-wide
+ * diagram still leaves the words a column; a capped image letterboxes rather than crops.
+ */
+[data-layout="split"] main[data-size="image"] > .ainsi-full {
+    position: absolute; inset: 0 auto 0 0;
+    width: auto; max-width: 70%; height: 100%;
+    margin: 0 !important;
+    display: block;
+    anchor-name: --ainsi-split-image;
+}
+[data-layout="split"] main[data-size="image"] > .ainsi-full img {
+    width: auto; height: 100%; max-width: 100%; max-height: none; object-fit: contain;
+}
+[data-layout="split"] main[data-size="image"] article {
+    position: absolute; inset: 0 0 0 50%;
+    left: anchor(--ainsi-split-image right);
+    margin: 0; height: auto;
+}
+[data-layout="split"] main[data-size="image"][data-side="right"] > .ainsi-full { inset: 0 0 0 auto; }
+[data-layout="split"] main[data-size="image"][data-side="right"] article {
+    inset: 0 50% 0 0;
+    left: 0; right: anchor(--ainsi-split-image left);
+}
+
+/* no image yet: the empty half wears the placeholder instead of a hole, gone once an image lands */
+[data-layout="split"] main:not(:has(.ainsi-full))::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: var(--ainsi-split);
+    background: var(--ainsi-placeholder) center / cover, var(--ainsi-surface);
+}
+[data-layout="split"] main[data-side="right"]:not(:has(.ainsi-full))::before { inset: 0 0 0 auto; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="split"] main:not(:has(.ainsi-full))::before { display: none; }
+    [data-layout="split"] article,
+    [data-layout="split"] main[data-side="right"] article {
+        margin: 0; padding: 9% 7%;
+        height: auto;
+    }
+    [data-layout="split"] article > .ainsi-full,
+    [data-layout="split"] main[data-side="right"] article > .ainsi-full {
+        position: static; width: auto; height: auto; margin-bottom: var(--ainsi-gap);
+    }
+    [data-layout="split"] main[data-size="image"] article { position: static; }
+    [data-layout="split"] main[data-size="image"] > .ainsi-full {
+        position: static; width: auto; height: auto;
+        margin: 9% 7% 0 !important;
+    }
+    [data-layout="split"] main[data-size="image"] > .ainsi-full img { width: 100%; height: auto; }
+}
+/* a size is the type scale moved, never a weight: this is text, not a heading */
+.ainsi-prose--small { font-size: .83em; }
+.ainsi-prose--large { font-size: 1.44em; line-height: 1.3; }
+.ainsi-prose--huge { font-size: 2.07em; line-height: 1.15; letter-spacing: -.01em; }
+/* capitals are tracked, or they read as shouting; the strong weight so a label holds its line */
+.ainsi-prose--caps { text-transform: uppercase; letter-spacing: .06em; font-weight: var(--ainsi-strong); }
+/* the theme's inks by name */
+.ainsi-prose--soft { color: var(--ainsi-ink-soft); }
+.ainsi-prose--accent { color: var(--ainsi-accent); }
+/* alignment is the block's, and a list keeps its markers inside the box */
+.ainsi-prose--center { text-align: center; }
+.ainsi-prose--right { text-align: right; }
+.ainsi-prose--center ul, .ainsi-prose--center ol, .ainsi-prose--right ul, .ainsi-prose--right ol { list-style-position: inside; padding-left: 0; }
+/* left like text unless said otherwise */
+.ainsi-full { margin: 0; display: grid; justify-items: start; }
+.ainsi-full[data-align="center"] { justify-items: center; }
+.ainsi-full[data-align="right"] { justify-items: end; }
+
+/* the size prop: max constraints only, so the ratio holds; unset keeps the base cap. The
+   ground layouts outrank these with their own img rules, so a sized ground stays covering. */
+.ainsi-full[data-size="s"] img { max-width: 34%; max-height: min(220px, 17vw); }
+.ainsi-full[data-size="m"] img { max-width: 60%; max-height: min(400px, 31vw); }
+.ainsi-full[data-size="l"] img { max-width: 84%; max-height: min(520px, 40vw); }
+.ainsi-full[data-size="full"] img { max-height: none; }
+/* numerals in the display face, in the accent, a rule under each row */
+.ainsi-agenda { list-style: none; margin: 0; padding: 0; }
+.ainsi-agenda__row {
+    display: grid; grid-auto-flow: column; grid-auto-columns: auto 1fr; column-gap: 1.2em; align-items: baseline;
+    padding: .55em 0;
+    border-bottom: var(--ainsi-border) solid var(--ainsi-rule);
+}
+.ainsi-agenda__row:last-child { border-bottom: 0; }
+.ainsi-agenda__number {
+    font-family: var(--ainsi-font-display); font-weight: var(--ainsi-strong);
+    font-size: 1.6em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ainsi-accent);
+}
+.ainsi-agenda__text { display: flex; flex-wrap: wrap; column-gap: .6em; align-items: baseline; }
+.ainsi-agenda__title { font-weight: var(--ainsi-strong); }
+.ainsi-agenda__body { color: var(--ainsi-ink-soft); }
+/* The field: a grid whose rows are as tall as their tallest tile. */
+.ainsi-tiles {
+    list-style: none; margin: 0; padding: 0;
+    --ainsi-tiles-gap: var(--ainsi-gap);
+    display: grid;
+    grid-template-columns: repeat(var(--ainsi-tiles-columns, 3), 1fr);
+    gap: var(--ainsi-tiles-gap);
+    align-items: start;
+}
+
+/* start, not stretch: a flex item takes the cross size otherwise, which is what made a
+   portrait as wide as its cell and left the corner radius and the caption on the box rather
+   than on the picture */
+.ainsi-tiles__tile {
+    display: flex; flex-direction: column; align-items: flex-start; gap: .5em;
+    min-width: 0;
+}
+
+/*
+ * A picture keeps its own proportions and gives up height instead. The cap comes from the
+ * render, which knows how many rows the field has, and is in em, so the fit solver's type step
+ * takes the pictures down with everything else.
+ *
+ * Two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and a
+ * field of pictures has to be shorter than a lone one. object-fit matters as much: the cell
+ * sets the width, so height: auto plus a max-height does not keep the ratio, it clamps the
+ * height and leaves the width alone, which stretches a portrait across a landscape cell.
+ * contain puts the spare space beside the picture instead of inside it.
+ */
+.ainsi-tiles .ainsi-tiles__image {
+    display: block;
+    width: auto; height: auto;
+    max-width: 100%; max-height: var(--ainsi-tiles-cap, 15em);
+    border-radius: var(--ainsi-radius);
+    box-shadow: var(--ainsi-shadow);
+}
+/* crop: every cell the same, the picture filling it and losing its edges */
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__tile { align-items: stretch; }
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__tile--picture { height: 100%; }
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+}
+
+.ainsi-tiles__caption {
+    font: var(--ainsi-strong) .62em/1.3 var(--ainsi-font-mono);
+    letter-spacing: .04em;
+    color: var(--ainsi-ink-soft);
+}
+.ainsi-tiles__title {
+    font-family: var(--ainsi-font-display);
+    font-weight: var(--ainsi-strong);
+    line-height: 1.15;
+}
+.ainsi-tiles__body { color: var(--ainsi-ink-soft); }
+
+@media screen and (max-width: 900px) {
+    .ainsi-tiles { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+}
+
+</style>
+</head>
+<body class="ainsi" style="--ainsi-ratio:16 / 9;--ainsi-logo:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik04IDQwVjhoN3YxMy41TDI4IDhoOUwyMy41IDIyIDM4IDQwaC05TDE1IDI0LjVWNDBIOFoiIGZpbGw9IiMwYTBhMGEiLz4KICA8dGV4dCB4PSI0OCIgeT0iMzQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iMSIgZmlsbD0iIzBhMGEwYSI+S0FBUkk8L3RleHQ+Cjwvc3ZnPgo=');--ainsi-logo-cover:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMjAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik04IDQwVjhoN3YxMy41TDI4IDhoOUwyMy41IDIyIDM4IDQwaC05TDE1IDI0LjVWNDBIOFoiIGZpbGw9IiNmZmZmZmYiLz4KICA8dGV4dCB4PSI0OCIgeT0iMzQiIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EsIEFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyIiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iMSIgZmlsbD0iI2ZmZmZmZiI+S0FBUkk8L3RleHQ+Cjwvc3ZnPgo=')">
+<section class="ainsi-page" id="studio-kaari" data-page="1" data-layout="header">
+<main data-align="end"><article><h1>Studio Kaari</h1>
+<p>Selected work, 2024 to 2026</p>
+<figure class="ainsi-full" data-size="full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1568044852337-9bcc3378fc3c?w=1600&amp;q=80" alt="face"></figure></article></main>
+<span class="ainsi-number" aria-hidden="true">1</span>
+</section>
+<section class="ainsi-page" id="what-is-in-here" data-page="2" data-layout="default">
+<main><article><div class="ainsi-prose ainsi-prose--small ainsi-prose--caps">
+<p>Index</p>
+</div>
+<h1>What is in here</h1>
+
+<ol class="ainsi-agenda" data-ainsi="agenda">
+    <li class="ainsi-agenda__row"><span class="ainsi-agenda__number">01</span><span class="ainsi-agenda__text"><span class="ainsi-agenda__title">Identity</span><span class="ainsi-agenda__body">three marks and the systems under them</span></span></li>
+    <li class="ainsi-agenda__row"><span class="ainsi-agenda__number">02</span><span class="ainsi-agenda__text"><span class="ainsi-agenda__title">Print</span><span class="ainsi-agenda__body">books, posters, one album sleeve</span></span></li>
+    <li class="ainsi-agenda__row"><span class="ainsi-agenda__number">03</span><span class="ainsi-agenda__text"><span class="ainsi-agenda__title">Motion</span><span class="ainsi-agenda__body">title sequences and a signal idea</span></span></li>
+    <li class="ainsi-agenda__row"><span class="ainsi-agenda__number">04</span><span class="ainsi-agenda__text"><span class="ainsi-agenda__title">How we work</span><span class="ainsi-agenda__body">the short version</span></span></li>
+</ol></article></main>
+<span class="ainsi-number" aria-hidden="true">2</span>
+</section>
+<section class="ainsi-page" id="identity" data-page="3" data-layout="section">
+<main data-tone="accent"><article><h2>Identity</h2>
+<figure class="ainsi-full" data-size="full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1546803073-23568b8c98e6?w=1600&amp;q=80" alt="eye"></figure></article></main>
+<span class="ainsi-number" aria-hidden="true">3</span>
+</section>
+<section class="ainsi-page" id="index" data-page="4" data-layout="default">
+<main><article><h1>Index</h1>
+
+<ul class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 4; --ainsi-tiles-cap: 15.00em">
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1516617442634-75371039cb3a?w=900&amp;q=80" alt="A neon sign reading open">
+        <span class="ainsi-tiles__caption">Nocturne, 2025</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1558865869-c93f6f8482af?w=900&amp;q=80" alt="A gradient poster on a studio wall">
+        <span class="ainsi-tiles__caption">Vela, 2024</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1576926241721-4b830531f667?w=900&amp;q=80" alt="A typographic cover in black and white">
+        <span class="ainsi-tiles__caption">Ostinato, 2026</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1502691876148-a84978e59af8?w=900&amp;q=80" alt="A grid of colour swatches">
+        <span class="ainsi-tiles__caption">Field notes</span>
+    </li>
+</ul></article></main>
+<span class="ainsi-number" aria-hidden="true">4</span>
+</section>
+<section class="ainsi-page" id="three-across-whole-frames" data-page="5" data-layout="default">
+<main><article><div class="ainsi-prose ainsi-prose--small ainsi-prose--caps">
+<p>Motion</p>
+</div>
+<h1>Three across, whole frames</h1>
+
+<ul class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 3; --ainsi-tiles-cap: 15.00em">
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&amp;q=80" alt="A title card in motion, frozen mid-transition">
+        <span class="ainsi-tiles__caption">Signal, title sequence</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1760383640414-1b255c5a7128?w=900&amp;q=80" alt="A studio light on a stand">
+        <span class="ainsi-tiles__caption">Lighting test</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1642698099686-201dd457bbb9?w=900&amp;q=80" alt="A close crop of ink on paper">
+        <span class="ainsi-tiles__caption">Ink test</span>
+    </li>
+</ul></article></main>
+<span class="ainsi-number" aria-hidden="true">5</span>
+</section>
+<section class="ainsi-page" id="four-cropped-to-a-grid" data-page="6" data-layout="default">
+<main><article><div class="ainsi-prose ainsi-prose--small ainsi-prose--caps">
+<p>Motion</p>
+</div>
+<h1>Four, cropped to a grid</h1>
+
+<ul class="ainsi-tiles" data-ainsi="tiles" data-crop="true" style="--ainsi-tiles-columns: 4; --ainsi-tiles-cap: 15.00em">
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1635355643629-ac06bec6a914?w=900&amp;q=80" alt="A close crop of a screen">
+        <span class="ainsi-tiles__caption">01</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1725733618919-f45972c90229?w=900&amp;q=80" alt="A hand adjusting a dial">
+        <span class="ainsi-tiles__caption">02</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1549499090-5fa12865059c?w=900&amp;q=80" alt="A monitor showing colour bars">
+        <span class="ainsi-tiles__caption">03</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1557104878-24bf6e92da73?w=900&amp;q=80" alt="A dark studio corner">
+        <span class="ainsi-tiles__caption">04</span>
+    </li>
+</ul></article></main>
+<span class="ainsi-number" aria-hidden="true">6</span>
+</section>
+<section class="ainsi-page" id="nothing-here-was-cropped-to-fit" data-page="7" data-layout="default">
+<main><article><div class="ainsi-prose ainsi-prose--small ainsi-prose--caps">
+<p>Print</p>
+</div>
+<h1>Nothing here was cropped to fit</h1>
+
+<ul class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 5; --ainsi-tiles-cap: 15.00em">
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1616474223720-c32dccabf2eb?w=900&amp;q=80" alt="A tall book spread photographed from above">
+        <span class="ainsi-tiles__caption">Spread, 300 × 240</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=900&amp;q=80" alt="A poster in a narrow frame">
+        <span class="ainsi-tiles__caption">B2 poster</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=900&amp;q=80" alt="A wide landscape photograph">
+        <span class="ainsi-tiles__caption">Endpapers</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1751004865865-a27a8f859776?w=900&amp;q=80" alt="A stack of printed matter">
+        <span class="ainsi-tiles__caption">Press check</span>
+    </li>
+    <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1541753866388-0b3c701627d3?w=900&amp;q=80" alt="A close crop of ink on paper">
+        <span class="ainsi-tiles__caption">Ink test</span>
+    </li>
+</ul></article></main>
+<span class="ainsi-number" aria-hidden="true">7</span>
+</section>
+<section class="ainsi-page" id="the-short-version-of-how-we-work" data-page="8" data-layout="split">
+<main data-side="left" data-size="half"><article><h1>The short version of how we work</h1>
+<p>Three people, one room, no account managers. We take the brief apart in week one and show you the two directions worth arguing about in week two.</p>
+<figure class="ainsi-full" data-size="full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1512413914633-b5043f4041ea?w=1600&amp;q=80" alt="Paint"></figure></article></main>
+<span class="ainsi-number" aria-hidden="true">8</span>
+</section>
+<section class="ainsi-page" id="four-things-we-do-every-time" data-page="9" data-layout="default">
+<main><article><div class="ainsi-prose ainsi-prose--small ainsi-prose--caps">
+<p>How we work</p>
+</div>
+<h1>Four things we do every time</h1>
+
+<ul class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 2; --ainsi-tiles-cap: 7.50em">
+    <li class="ainsi-tiles__tile">
+        <span class="ainsi-tiles__title">Read the room first</span>
+        <span class="ainsi-tiles__body">The brief is what someone could write down. The first week is for what they could not.</span>
+    </li>
+    <li class="ainsi-tiles__tile">
+        <span class="ainsi-tiles__title">Two directions, not five</span>
+        <span class="ainsi-tiles__body">A shortlist is a way of avoiding the argument that decides the work.</span>
+    </li>
+    <li class="ainsi-tiles__tile">
+        <span class="ainsi-tiles__title">Make it in the real size</span>
+        <span class="ainsi-tiles__body">Nothing is approved at 40% on a screen. Posters get printed, sleeves get pressed.</span>
+    </li>
+    <li class="ainsi-tiles__tile">
+        <span class="ainsi-tiles__title">Leave the system behind</span>
+        <span class="ainsi-tiles__body">You get the files, the tokens and a page that says how to use them.</span>
+    </li>
+</ul></article></main>
+<span class="ainsi-number" aria-hidden="true">9</span>
+</section>
+<section class="ainsi-page" id="talk-to-us" data-page="10" data-layout="header">
+<main data-align="start"><article><h1>Talk to us</h1>
+<p><a href="mailto:hello@studiokaari.example">hello@studiokaari.example</a></p>
+<figure class="ainsi-full" data-size="full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?w=1600&amp;q=80" alt="studio corner at dusk"></figure></article></main>
+<span class="ainsi-number" aria-hidden="true">10</span>
+</section>
+
+</body>
+</html>

@@ -38,6 +38,12 @@ Generate those pages from the registry instead: walk the components and layouts,
 
 Done is a build step plus a test that fails when a generated page is stale, so the copy cannot drift silently. A site rendering the same pages comes after that, if ever; the drift is the problem, the site is a nicety.
 
+## A header page with no picture (defect)
+
+The `header` layout draws the placeholder graphic when its page holds no image: the grey mountain-and-sun stands in for a picture nobody asked for, behind the title. Writing a cover as type on paper is a reasonable thing to want, and today it needs the `default` layout with a tone instead, which is what `samples/review/review.md` does.
+
+Either the layout renders as plain type when there is no image on the page, or it says so in a warning. Silently inventing a picture is the one thing it should not do.
+
 ## Granular page swap (feat)
 
 Every rebuild is a full `location.reload()`, and the studio carries state to make that invisible: scroll position and the reopen target parked in sessionStorage, the hold counter that defers a reload while an editor is open, the read-only textarea that hides the flash. It works, and nothing a person does solo shows a symptom. What does show is narrow: an external writer, an agent working the file while a person watches, drops presenting, the grid or the menu back to the reading view at the same slide.

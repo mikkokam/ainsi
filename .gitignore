@@ -1,9 +1,16 @@
 node_modules/
 bun.lock
 *.html
-!samples/*.html
+!samples/**/*.html
 # the studio's start page is source, not a built deck
 !src/studio/*.html
+# built for others to continue in; not source
+*.pptx
+
+# editor and agent local settings
+.zed/
+.claude/
+
 .DS_Store
 
 # joined source written by the d2 render script in --watch mode

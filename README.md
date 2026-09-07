@@ -4,6 +4,14 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 ![A title page: the deck name over a photographic ground](docs/screenshots/header.jpg)
 
+## Demo
+
+Three decks, three themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
+
+- **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/acme/acme.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/acme/acme.md).
+- **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/portfolio/portfolio.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/portfolio/portfolio.md).
+- **[Winter service review](https://mikkokam.github.io/ainsi/samples/review/review.html)**, the `default` theme: a review with no photographs at all, tables and figures carrying it. [Source](samples/review/review.md).
+
 The loop: write `deck.md` with your agent in a folder on your machine, run `ainsi deck.md`, and a browser opens on the deck. Everything either of you does from then on lands in that one file. The agent rewrites a page while you are looking at it and the view reloads; you retype a line in the studio and the agent's next read sees it. There is no second copy of the document, so there is no split brain, nothing to sync and nothing to import. The same file opens in any markdown editor, and goes to anyone who has never heard of this tool.
 
 That is the case for markdown over a slide format. A deck here is a few kilobytes of what you actually say. The same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, the rest spacing, run properties and theme parts, so an agent asked to edit one spends its context on how a bullet is indented and loses the thread of the argument you needed the deck to make. Keeping the deck in markdown keeps the context tight and the attention, yours and the agent's, on what is said.
@@ -25,7 +33,24 @@ The last mile is visual, so there is a studio: a browser page over the same file
 
 Claude Code is the first-class client. The repo ships as a plugin whose skill teaches the grammar and the build loop, so the agent produces a deck in the house look and argues with you about the content instead of the formatting.
 
-Version 0.1. Under active development; commands and markup may change between commits.
+Version 1.0.
+
+## What this is instead of
+
+**A hosted AI deck tool.** You pay, and the deck lives in their cloud. Your agent cannot open it, so the work splits in two: the thinking happens in your repo and the artefact happens in a browser tab, and the two diverge from the first edit. Export is a one-way door out of a place your tools could not reach anyway.
+
+**PowerPoint.** The format is a zip of XML in which your words are a small fraction of the bytes. An agent asked to edit one converts in, converts out, and spends its context on run properties and spacing, which is time, tokens, and attention not spent on the argument. You still get a `.pptx` here, at the end, for whoever wants one.
+
+**Marp, Slidev, reveal.js.** The nearest neighbours: markdown or HTML decks, local files, version control, no service. The differences are narrow and worth naming, and the following is from memory rather than from their docs today, so check before quoting it.
+
+| | editing surface | PPTX out | a page that overflows |
+| --- | --- | --- | --- |
+| Marp | preview pane | slides as images | your problem |
+| Slidev | dev server, editor pane | slides as images | your problem |
+| reveal.js | none | none | your problem |
+| ainsi | studio: click a block, change what it is | text stays text | measured, stepped down, then split |
+
+The last column is the one that decides how a deck is written. Everywhere else, fitting is manual: you write, you look, you cut, you look again. Here the solver measures the real page and steps the type down within the range the theme allows before splitting at a seam, and says so when it cannot. The PPTX column is the other: exporting slides as pictures is a handoff nobody can continue, and text boxes over a rendered ground is one they can.
 
 ## Install
 
