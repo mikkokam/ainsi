@@ -1,0 +1,25 @@
+/*
+ * A divider that can be a photograph. The base section paints its tone; where the page carries
+ * an image, that image becomes the ground instead and the numeral and title sit on it, under
+ * a scrim dark enough for white type at any exposure.
+ */
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 4.2em; letter-spacing: -.04em; line-height: .9; }
+[data-layout="section"] article::before { font-family: var(--ainsi-font-mono); font-size: 2.6em; font-weight: 400; opacity: .5; }
+
+/* white on a photograph, whatever the theme's accent ink is */
+[data-layout="section"] main:has(.ainsi-full) { color: #fff; }
+[data-layout="section"] .ainsi-full { position: absolute; inset: 0; margin: 0 !important; display: block; }
+[data-layout="section"] main:has(.ainsi-full) { position: relative; }
+[data-layout="section"] main .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
+[data-layout="section"] .ainsi-full::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(170deg, rgb(0 0 0 / 30%) 0%, rgb(0 0 0 / 80%) 100%);
+}
+/* the type sits above the scrim, one child at a time: positioning the article itself would
+   make it the containing block and the ground would inset to the page's padding */
+[data-layout="section"] main:has(.ainsi-full) article > *:not(.ainsi-full),
+[data-layout="section"] main:has(.ainsi-full) article::before { position: relative; z-index: 1; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="section"] h1, [data-layout="section"] h2 { font-size: 2.6em; }
+}

@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Geist:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+/*
+ * A portfolio deck: the work is the content and the type is the frame around it. h1 and h2 are
+ * Sora at weights the body never uses, tight and left-hung. h3 drops to mono and stops being a
+ * heading at all: it is the label over a field of work. The page is off-white so that a white
+ * photograph still has an edge.
+ */
+
+h1, h2 {
+    font-family: var(--ainsi-font-display);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: .95;
+    text-wrap: balance;
+}
+h1 { font-size: 3.1em; }
+h2 { font-size: 2.1em; }
+/* not a smaller heading: a label, in the same mono the captions use */
+h3 {
+    font-family: var(--ainsi-font-mono);
+    font-weight: 500; font-size: .8em;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ainsi-ink-soft);
+}
+
+/* the asymmetry: a heading hangs left of the text it introduces, and the text stops short of
+   the measure so the page keeps a column of air on the right */
+main > h1, main > h2 { margin-left: -.04em; max-width: 18ch; }
+main > p { max-width: 44ch; }
+
+blockquote {
+    border-left: 3px solid var(--ainsi-accent);
+    padding-left: 1em;
+    font-family: var(--ainsi-font-display);
+    font-size: 1.35em; font-weight: 600; letter-spacing: -.02em; line-height: 1.15;
+}
+
+code, kbd { font-family: var(--ainsi-font-mono); font-size: .82em; }
+mark { background: var(--ainsi-accent); color: var(--ainsi-accent-ink); padding: 0 .12em; }
+
+/* small print is mono here, which is the only place the theme spends detail */
+figcaption, small { font-family: var(--ainsi-font-mono); font-size: .68em; letter-spacing: .04em; color: var(--ainsi-ink-soft); }
+
+/*
+ * The mark. Only a theme's tokens come from the default theme, never its stylesheet, so a
+ * theme that does not place the logo shows none: this one hangs it bottom left, opposite the
+ * page number, small enough to be a signature rather than a header.
+ */
+.ainsi-page::before {
+    content: "";
+    position: absolute; z-index: 2;
+    left: var(--ainsi-pad); bottom: 1.5rem;
+    width: 82px; height: 24px;
+    background: var(--ainsi-logo) no-repeat left center / contain;
+    pointer-events: none;
+}
+/* a one-colour mark goes white where the ground is a photograph or the accent */
+.ainsi-page[data-layout="header"]::before,
+.ainsi-page:has(> main[data-tone="accent"])::before,
+.ainsi-page:has(> main[data-tone="inverse"])::before,
+.ainsi-page:has(main .ainsi-full)::before { filter: brightness(0) invert(1); }
+
+/* the cover wears its own mark, top left, where the title is not */
+.ainsi-page[data-layout="header"]::before {
+    top: 2.2rem; bottom: auto;
+    width: 120px; height: 34px;
+    background-image: var(--ainsi-logo-cover);
+}
+
+@media screen and (max-width: 900px) {
+    .ainsi-page::before { left: 1.2rem; bottom: 1rem; width: 62px; height: 18px; }
+}

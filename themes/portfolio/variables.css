@@ -1,0 +1,32 @@
+:root {
+    --ainsi-ink: #0a0a0a;
+    --ainsi-ink-soft: #6f6f72;
+    --ainsi-ground: #f4f4f2;
+    --ainsi-shell: #0a0a0a;
+    --ainsi-accent: #c8ff2e;
+    --ainsi-accent-ink: #0a0a0a;
+    --ainsi-rule: #d8d8d4;
+    --ainsi-surface: #ffffff;
+    --ainsi-tint: #ececea;
+
+    /* Sora carries the headings, Geist is the neutral the body is set in, and IBM Plex Mono is
+       the small voice: subheads, captions and anything that reads as a label rather than prose */
+    --ainsi-font: "Geist", "Inter", system-ui, -apple-system, sans-serif;
+    --ainsi-font-display: "Sora", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --ainsi-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 800;
+    --ainsi-size: 23px;
+    --ainsi-leading: 1.45;
+    --ainsi-step-min: 0.72;
+
+    --ainsi-gap: 2rem;
+    --ainsi-pad: 7%;
+    --ainsi-radius: 0;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: none;
+    --ainsi-blur: 0px;
+
+    --ainsi-motion: 420ms;
+    --ainsi-ease: cubic-bezier(.16, 1, .3, 1);
+}

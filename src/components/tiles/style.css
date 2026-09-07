@@ -1,0 +1,67 @@
+/* The field itself. Both flows read the same column count; only the packing differs. */
+.ainsi-tiles {
+    list-style: none; margin: 0; padding: 0;
+    --ainsi-tiles-gap: var(--ainsi-gap);
+}
+.ainsi-tiles[data-flow="grid"] {
+    display: grid;
+    grid-template-columns: repeat(var(--ainsi-tiles-columns, 3), 1fr);
+    gap: var(--ainsi-tiles-gap);
+    align-items: start;
+}
+/* multi-column, because css masonry is not in the browsers a deck has to open in. The trade
+   is reading order: a masonry field runs down each column, so prose belongs in a grid */
+.ainsi-tiles[data-flow="masonry"] {
+    columns: var(--ainsi-tiles-columns, 3);
+    column-gap: var(--ainsi-tiles-gap);
+}
+.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__tile {
+    break-inside: avoid;
+    margin-bottom: var(--ainsi-tiles-gap);
+}
+
+.ainsi-tiles__tile {
+    display: flex; flex-direction: column; gap: .5em;
+    min-width: 0;
+}
+
+/*
+ * A picture keeps its own proportions and gives up height instead. The cap comes from the
+ * render, which knows how many rows the field has, and is in em, so the fit solver's type
+ * step takes the pictures down with everything else; a tall picture in a wide cell ends up
+ * narrower than the cell, which is the spare space a portfolio pays for not cropping.
+ */
+/* two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and
+   a field of pictures has to be shorter than a lone one */
+.ainsi-tiles .ainsi-tiles__image {
+    display: block;
+    width: 100%; height: auto;
+    max-height: var(--ainsi-tiles-cap, 16em);
+    border-radius: var(--ainsi-radius);
+    box-shadow: var(--ainsi-shadow);
+}
+/* crop: every cell the same, the picture filling it and losing its edges */
+.ainsi-tiles[data-crop="true"][data-flow="grid"] .ainsi-tiles__tile--picture { height: 100%; }
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__image {
+    aspect-ratio: 4 / 3;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+}
+
+.ainsi-tiles__caption {
+    font: var(--ainsi-strong) .62em/1.3 var(--ainsi-font-mono);
+    letter-spacing: .04em;
+    color: var(--ainsi-ink-soft);
+}
+.ainsi-tiles__title {
+    font-family: var(--ainsi-font-display);
+    font-weight: var(--ainsi-strong);
+    line-height: 1.15;
+}
+.ainsi-tiles__body { color: var(--ainsi-ink-soft); }
+
+@media screen and (max-width: 900px) {
+    .ainsi-tiles[data-flow="grid"] { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+    .ainsi-tiles[data-flow="masonry"] { columns: 2; }
+}

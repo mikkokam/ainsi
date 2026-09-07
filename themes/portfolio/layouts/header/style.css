@@ -1,0 +1,23 @@
+/* The cover is a photograph with a name on it. The engine already makes the page's image the
+   ground; this only takes the type up to the size the picture can carry. */
+/* the cover is a photograph under a dark scrim, so the type is white here rather than the
+   accent's ink, which this theme sets dark for its lime */
+[data-layout="header"] { color: #fff; }
+[data-layout="header"] h1 {
+    font-size: 5.2em;
+    letter-spacing: -.045em;
+    line-height: .88;
+    max-width: 14ch;
+}
+[data-layout="header"] p {
+    font-family: var(--ainsi-font-mono);
+    font-size: .78em; letter-spacing: .08em; text-transform: uppercase;
+    max-width: 40ch;
+}
+
+@media screen and (max-width: 900px) {
+    /* the cover is a photograph under a dark scrim, so the type is white here rather than the
+   accent's ink, which this theme sets dark for its lime */
+[data-layout="header"] { color: #fff; }
+[data-layout="header"] h1 { font-size: 3em; }
+}

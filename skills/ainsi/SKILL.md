@@ -64,7 +64,15 @@ Everything without a directive falls to the heuristics. A blockquote opening wit
 
 Six of them take a list, one item per row, and read a leading `**bold**` run as that item's title. `agenda` is the contents page, one row per item, keeping its numerals if the list is numbered. `boxes` gives one card per item, `stretch` to fill the height. `columns` is the same without the cards. `figures` makes the bold run the figure and the rest its caption. `timeline` walks the items as steps, `axis=horizontal` or `vertical`. `matrix` takes exactly four items as a two-by-two from the top left, with `x` and `y` naming the axes.
 
+`tiles` is a field of them: pictures, text, or both. `flow=grid` keeps the columns aligned, `flow=masonry` packs each column independently and therefore reads downwards, which suits pictures and not prose. `columns` overrides the count's own answer, and pictures are never cropped unless `crop` says so, which is why a field of mixed proportions leaves space rather than trimming edges. An item that is an image takes the text beside it as its caption, or its alt text when there is none.
+
 `comparison` takes a table: the header names the columns, the first column labels the rows, and every further column becomes a panel.
+
+`striped-table` is the markdown table with a band behind every other row, which is what a table of numbers wants once it is more than three rows deep. It takes no props.
+
+`bar-table` takes the same table and draws a bar behind the values of every numeric column, scaled to that column's largest. A column counts as numeric when most of its cells parse, and a cell parses when it starts with a number, so `5`, `5 tok/s`, `18%` and `€2 400` all measure while `unmetered` stays text. Numeric columns take the width and the rest stay as narrow as their text.
+
+`roadmap` reads a table as a plan: the header names the periods, the first column names the rows, an empty cell is empty and a cell with anything in it becomes a filled block. A cell holding only a mark (`x`, `-`, `*`) carries no text; anything else is a label inside the block. Filled cells that touch join into one bar.
 
 `full` is an image filling its slot, `size=s|m|l|full` and `align=left|center|right`. Under the header layout it becomes the page's ground.
 
