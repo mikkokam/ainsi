@@ -21,8 +21,9 @@ const RELOAD = `<script>new EventSource("/__reload").onmessage=()=>{const h=wind
 const IMAGE = /\.(png|jpe?g|gif|webp|avif|svg)$/i;
 
 export interface ServeOptions {
-    /** the deck file; its folder is where the assets it references are resolved */
-    deck: string;
+    /** the deck file; its folder is where the assets it references are resolved. Undefined
+     *  until one is chosen: the studio can start on no deck and be pointed at one. */
+    deck?: string;
     port: number;
     /** the html to serve until the first rebuild replaces it */
     initial: string;
@@ -76,7 +77,8 @@ export function serve(options: ServeOptions): Server {
                 // local assets a deck references: relative to the deck's own folder first,
                 // then the path taken as absolute, so ![](/Users/me/pic.png) shows too
                 const path = decodeURIComponent(url.pathname);
-                for (const candidate of [join(dirname(deck), path.slice(1)), path]) {
+                const beside = deck ? [join(dirname(deck), path.slice(1))] : [];
+                for (const candidate of [...beside, path]) {
                     const asset = Bun.file(candidate);
                     if (await asset.exists()) return new Response(asset);
                 }
@@ -107,8 +109,8 @@ export function serve(options: ServeOptions): Server {
     }
 
     // an image beside the deck is linked, not copied, so a change to it shows like a source edit
-    const folder = () => watch(dirname(deck), (_, file) => {
-        if (file && (file === basename(deck) || IMAGE.test(file))) schedule(file);
+    const folder = () => deck === undefined ? undefined : watch(dirname(deck), (_, file) => {
+        if (file && (file === basename(deck!) || IMAGE.test(file))) schedule(file);
     });
     let deckWatcher = folder();
     const watchers: ReturnType<typeof watch>[] = [];
@@ -125,15 +127,15 @@ export function serve(options: ServeOptions): Server {
         url: `http://localhost:${server.port}`,
         changed: schedule,
         retarget(next) {
-            const moved = dirname(next) !== dirname(deck);
+            const moved = deck === undefined || dirname(next) !== dirname(deck);
             deck = next;
             if (!moved) return;
-            deckWatcher.close();
+            deckWatcher?.close();
             deckWatcher = folder();
         },
         async stop() {
             clearTimeout(pending);
-            deckWatcher.close();
+            deckWatcher?.close();
             for (const watcher of watchers) watcher.close();
             clients.clear();
             await server.stop(true);

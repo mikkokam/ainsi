@@ -8,7 +8,7 @@ import { parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
+import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -22,7 +22,7 @@ const input = inputs[0];
 
 const USAGE = [
     "usage: ainsi [deck.md] [--port 4321] [--components <dir>]",
-    "           opens the studio; without a deck, on a new untitled.md in the current directory",
+    "           opens the studio; without a deck, on the chooser: open one here, or make one",
     "       ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer] [--components <dir>]",
     "           writes the file beside the deck and exits",
 ].join("\n");
@@ -41,26 +41,34 @@ const flag = (name: string): string | undefined => {
     return i === -1 ? undefined : args[i + 1];
 };
 
-/** a fresh deck to open on: untitled.md, or the first untitled-N.md the directory does not hold */
-async function untitled(): Promise<string> {
+/** a fresh deck: untitled.md in the given folder, or the first untitled-N.md it does not hold */
+async function untitled(dir: string): Promise<string> {
     for (let n = 1; ; n++) {
-        const candidate = resolve(n === 1 ? "untitled.md" : `untitled-${n}.md`);
+        const candidate = resolve(dir, n === 1 ? "untitled.md" : `untitled-${n}.md`);
         if (await Bun.file(candidate).exists()) continue;
         await Bun.write(candidate, "# Untitled\n");
         return candidate;
     }
 }
 
-let deck = input ? resolve(input) : await untitled();
+/*
+ * No deck until one is named or chosen. `ainsi` on its own used to write untitled.md into
+ * whatever directory it was run in, which is a file nobody asked for; it opens the chooser
+ * instead, and the file is born when the person says new.
+ */
+let deck: string | undefined = input ? resolve(input) : undefined;
 /*
  * What the studio's file browser may reach: where the command was run, or the deck's own
  * folder when the deck lies outside it. The studio is an http server on localhost, so an
  * endpoint taking any path would let any page in the browser read any file on the machine
  * through it. To work on a deck elsewhere, start the studio there.
  */
-const browseRoot = deck.startsWith(process.cwd() + "/") ? process.cwd() : dirname(deck);
+const browseRoot = deck && !deck.startsWith(process.cwd() + "/") ? dirname(deck) : process.cwd();
 const editing = !building;
-const sibling = (ext: string): string => join(dirname(deck), `${basename(deck, extname(deck))}${ext}`);
+const sibling = (ext: string): string => {
+    const path = deck!;
+    return join(dirname(path), `${basename(path, extname(path))}${ext}`);
+};
 const target = flag("-o");
 const to = flag("--to");
 if (to && !["html", "pdf"].includes(to)) fail(`--to takes html or pdf; got "${to}"`);
@@ -68,9 +76,9 @@ if (target && to && extname(target).slice(1) !== to) fail(`-o ${target} and --to
 const pdfFlag = args.find(a => a === "--pdf" || a.startsWith("--pdf="));
 const format: "html" | "pdf" = building && (to === "pdf" || extname(target ?? "").toLowerCase() === ".pdf" || pdfFlag) ? "pdf" : "html";
 const printing = format === "pdf";
-let output = target && format === "html" ? resolve(target) : sibling(".html");
-let pdfOutput = target && format === "pdf" ? resolve(target) : sibling(".pdf");
-let pptxOutput = sibling(".pptx");
+let output = deck ? (target && format === "html" ? resolve(target) : sibling(".html")) : "";
+let pdfOutput = deck ? (target && format === "pdf" ? resolve(target) : sibling(".pdf")) : "";
+let pptxOutput = deck ? sibling(".pptx") : "";
 const componentRoots = args.flatMap((a, i) => (a === "--components" && args[i + 1] ? [resolve(args[i + 1]!)] : []));
 const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
 if (printing && !PDF_IMAGES.includes(pdfImages)) fail(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
@@ -134,7 +142,7 @@ const studio = editing ? await loadStudio() : undefined;
 
 /** Everything the deck is made of, rebuilt from disk. Returns the html and what to watch. */
 async function build(): Promise<{ html: string; roots: string[] }> {
-    const source = await Bun.file(deck).text();
+    const source = await Bun.file(deck!).text();
     const parsed = parse(source);
     const settings = parsed.doc.settings;
     currentTheme = settings.theme;
@@ -157,7 +165,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         doc = {
             hash: Bun.hash(source).toString(16),
             source,
-            file: basename(deck),
+            file: basename(deck!),
             layout: settings.layout,
             entities: parsed.doc.entities.map(e => ({
                 id: e.id,
@@ -268,7 +276,7 @@ function fields(schema: ZodTypeAny): Field[] {
 async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Promise<string | undefined> {
     if (!logo) return undefined;
     if (/^(https?:|data:)/.test(logo)) return logo;
-    const file = Bun.file(resolve(dirname(deck), logo));
+    const file = Bun.file(resolve(dirname(deck!), logo));
     if (!(await file.exists())) {
         diagnostics.push({ level: "warn", message: `logo not found beside the deck: ${logo}` });
         return undefined;
@@ -287,7 +295,7 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
         const node = entity.node.type === "image" ? entity.node : entity.node.children?.[0];
         if (node?.type !== "image" || !node.url || /^(https?:|data:)/.test(node.url)) continue;
         if (!seen.has(node.url)) {
-            const file = Bun.file(resolve(dirname(deck), node.url));
+            const file = Bun.file(resolve(dirname(deck!), node.url));
             if (await file.exists()) {
                 seen.set(node.url, `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`);
             } else {
@@ -302,12 +310,14 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
 
 /** point the studio at another deck: the outputs, the watch and the editor follow it */
 function retarget(next: string): void {
+    const first = deck === undefined;
     deck = next;
     output = sibling(".html");
     pdfOutput = sibling(".pdf");
     pptxOutput = sibling(".pptx");
     server.retarget(deck);
     server.changed(basename(deck));
+    if (first) console.log(`-> ${deck}`);
 }
 
 /** a path the browser asked for, resolved under the browse root or refused */
@@ -318,7 +328,7 @@ function under(root: string, at: unknown): string | undefined {
 
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
-    const themeDir = themePath(themeName, dirname(deck));
+    const themeDir = themePath(themeName, dirname(deck!));
     const theme = await loadTheme(themeDir, diagnostics);
     const registry = await load([BUILTIN, ...componentRoots], diagnostics, { fresh: editing });
     const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: editing });
@@ -333,7 +343,7 @@ async function print(pages: Page[], title: string, settings: Settings, options: 
 
 /** what every export starts from: the deck as it is on disk, fitted */
 async function fitted(diagnostics: Diagnostic[]) {
-    const source = await Bun.file(deck).text();
+    const source = await Bun.file(deck!).text();
     const settings = parse(source).doc.settings;
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics);
     const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
@@ -363,7 +373,7 @@ async function exportPptx(): Promise<{ written: boolean; diagnostics: Diagnostic
     return { written: written.written, diagnostics };
 }
 
-const first = await build();
+const first = deck ? await build() : { html: await loadStart(), roots: [] as string[] };
 
 if (!editing) {
     await session?.close();
@@ -377,6 +387,10 @@ const server = serve({
     roots: [BUILTIN, LAYOUTS, ...first.roots],
     rebuild: async () => (await build()).html,
     route: editing ? async (request, url) => {
+        // before a deck is chosen the studio is the start page, and only browsing, opening
+        // and making a deck mean anything
+        const CHOOSE = new Response("no deck open", { status: 409 });
+        if (!deck && !["/__browse", "/__open", "/__new"].includes(url.pathname)) return url.pathname.startsWith("/__") ? CHOOSE : undefined;
         if (url.pathname === "/__doc") return Response.json(doc);
         if (url.pathname === "/__themes") {
             const themes = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
@@ -408,20 +422,20 @@ const server = serve({
         }
         if (url.pathname === "/__edit" && request.method === "POST") {
             const { hash, start, end, text } = await request.json();
-            const source = await Bun.file(deck).text();
+            const source = await Bun.file(deck!).text();
             // a splice against a stale offset corrupts the file rather than losing an edit
             if (Bun.hash(source).toString(16) !== hash) return new Response("stale", { status: 409 });
             const sane = Number.isInteger(start) && Number.isInteger(end)
                 && start >= 0 && end >= start && end <= source.length && typeof text === "string";
             if (!sane) return new Response("bad splice", { status: 400 });
-            await Bun.write(deck, source.slice(0, start) + text + source.slice(end));
+            await Bun.write(deck!, source.slice(0, start) + text + source.slice(end));
             // the rebuild is scheduled here rather than left to the watcher: a missed or
             // misnamed watch event would leave the studio's editor waiting for a reload forever
-            server.changed(basename(deck));
+            server.changed(basename(deck!));
             return new Response("ok");
         }
         if (url.pathname === "/__browse") {
-            const at = under(browseRoot, url.searchParams.get("at") ?? dirname(deck));
+            const at = under(browseRoot, url.searchParams.get("at") ?? (deck ? dirname(deck) : browseRoot));
             if (!at) return new Response("outside the folder the studio was started in", { status: 403 });
             const entries = await readdir(at, { withFileTypes: true });
             const listed = entries
@@ -433,8 +447,15 @@ const server = serve({
                 here: basename(at) || basename(browseRoot),
                 up: at === browseRoot ? undefined : relative(browseRoot, dirname(at)),
                 entries: listed,
-                current: at === dirname(deck) ? basename(deck) : undefined,
+                current: deck && at === dirname(deck) ? basename(deck) : undefined,
             });
+        }
+        if (url.pathname === "/__new" && request.method === "POST") {
+            const { at } = await request.json();
+            const dir = under(browseRoot, at);
+            if (!dir) return new Response("outside the folder the studio was started in", { status: 403 });
+            retarget(await untitled(dir));
+            return Response.json({ file: basename(deck!) });
         }
         if (url.pathname === "/__open" && request.method === "POST") {
             const { path } = await request.json();
@@ -444,23 +465,24 @@ const server = serve({
             // the theme and component roots were handed to the watcher at startup, so a deck on
             // another theme rebuilds on its own edits but not on that theme's
             if (next !== deck) retarget(next);
-            return Response.json({ file: basename(deck) });
+            return Response.json({ file: basename(deck!) });
         }
         if (url.pathname === "/__rename" && request.method === "POST") {
             const { name } = await request.json();
             const wanted = typeof name === "string" ? name.trim() : "";
             if (!wanted || /[\\/]/.test(wanted)) return new Response("a file name, without a path", { status: 400 });
-            const next = join(dirname(deck), extname(wanted) ? wanted : `${wanted}.md`);
+            const next = join(dirname(deck!), extname(wanted) ? wanted : `${wanted}.md`);
             if (next !== deck) {
                 if (await Bun.file(next).exists()) return new Response(`${basename(next)} exists`, { status: 409 });
                 // the html written beside the deck follows it, so no orphan is left under the old name
                 const html = sibling(".html");
-                await rename(deck, next);
+                await rename(deck!, next);
+                // sibling() reads deck, and the html that follows the deck is the new name's
                 deck = next;
                 if (await Bun.file(html).exists() && !(await Bun.file(sibling(".html")).exists())) await rename(html, sibling(".html"));
                 retarget(next);
             }
-            return Response.json({ file: basename(deck) });
+            return Response.json({ file: basename(deck!) });
         }
         return undefined;
     } : undefined,

@@ -1,0 +1,87 @@
+<!doctype html>
+<!--
+  The studio before it has a deck. `ainsi` on its own writes nothing until asked: this page
+  browses what the server allows and either opens a deck or asks it for a new one. It never
+  coexists with the deck view, so it carries its own small chrome rather than the studio's.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ainsi</title>
+<style>
+    :root { color-scheme: light dark; --ink: #1c1c1e; --soft: #6b6b70; --ground: #fbfbfd; --line: #e3e3e8; --tint: #f2f2f6; }
+    @media (prefers-color-scheme: dark) { :root { --ink: #f2f2f5; --soft: #9a9aa2; --ground: #17171a; --line: #2c2c31; --tint: #1f1f23; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--ground); color: var(--ink);
+           font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif; }
+    main { width: min(30rem, 92vw); }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .25rem; letter-spacing: -.01em; }
+    p { margin: 0 0 1.5rem; color: var(--soft); }
+    .list { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--tint); }
+    button { display: flex; gap: .6rem; align-items: baseline; width: 100%; padding: .6rem .8rem; text-align: left;
+             font: inherit; color: inherit; background: none; border: 0; border-top: 1px solid var(--line); cursor: pointer; }
+    button:first-child { border-top: 0; }
+    button:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+    .new { font-weight: 600; }
+    .where { margin: 1.5rem 0 .4rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+    .empty { padding: .6rem .8rem; color: var(--soft); }
+    .error { color: #c0392b; min-height: 1.5rem; margin-top: .8rem; }
+</style>
+</head>
+<body>
+<main>
+    <h1>Ainsi</h1>
+    <p>Write a deck in markdown.</p>
+    <div class="list">
+        <button class="new" id="new">New presentation</button>
+    </div>
+    <div class="where" id="where"></div>
+    <div class="list" id="list"></div>
+    <div class="error" id="error"></div>
+</main>
+<script>
+    const list = document.getElementById("list");
+    const where = document.getElementById("where");
+    const error = document.getElementById("error");
+    let at = "";
+
+    const row = (text, onClick, className) => {
+        const button = document.createElement("button");
+        button.textContent = text;
+        if (className) button.className = className;
+        button.addEventListener("click", onClick);
+        return button;
+    };
+    const under = (dir, name) => (dir ? dir + "/" + name : name);
+    const fail = async response => { error.textContent = (await response.text()) || "something went wrong"; };
+
+    async function browse(next) {
+        const response = await fetch("/__browse?at=" + encodeURIComponent(next ?? ""));
+        if (!response.ok) return fail(response);
+        const page = await response.json();
+        at = page.at;
+        where.textContent = page.here;
+        list.replaceChildren();
+        if (page.up !== undefined) list.append(row("../", () => browse(page.up)));
+        for (const entry of page.entries) {
+            list.append(entry.dir
+                ? row(entry.name + "/", () => browse(under(at, entry.name)))
+                : row(entry.name, () => open(under(at, entry.name))));
+        }
+        if (!list.children.length) list.append(Object.assign(document.createElement("div"), { className: "empty", textContent: "no decks here" }));
+    }
+
+    // both of these repoint the server, which pushes the reload that replaces this page
+    async function open(path) {
+        const response = await fetch("/__open", { method: "POST", body: JSON.stringify({ path }) });
+        if (!response.ok) return fail(response);
+    }
+    document.getElementById("new").addEventListener("click", async () => {
+        const response = await fetch("/__new", { method: "POST", body: JSON.stringify({ at }) });
+        if (!response.ok) return fail(response);
+    });
+
+    browse();
+</script>
+</body>
+</html>

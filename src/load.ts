@@ -235,6 +235,9 @@ function selectors(css: string): string[] {
 /** Viewer chrome: a toolbar and presentation mode. Not content, so not a component. */
 export const loadViewer = (diagnostics: Diagnostic[] = []) => chrome("viewer", diagnostics);
 
+/** The page the studio shows before a deck is chosen: open one, or make one. */
+export const loadStart = () => Bun.file(join(import.meta.dir, "studio", "start.html")).text();
+
 /** Studio chrome: the editing layer the dev server injects. Never in a deck. */
 export const loadStudio = (diagnostics: Diagnostic[] = []) => chrome("studio", diagnostics);
 
