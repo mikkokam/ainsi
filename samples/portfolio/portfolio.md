@@ -37,12 +37,12 @@ Index
 
 ---
 
-# Marks, and the systems under them
+# Index
 
-<!-- ainsi: tiles -->
+<!-- ainsi: tiles columns=4 -->
 - ![A neon sign reading open](https://images.unsplash.com/photo-1516617442634-75371039cb3a?w=900&q=80) Nocturne, 2025
 - ![A gradient poster on a studio wall](https://images.unsplash.com/photo-1558865869-c93f6f8482af?w=900&q=80) Vela, 2024
-- ![A typographic cover in black and white](https://images.unsplash.com/photo-1526040652367-ac003a0475fe?w=900&q=80) Ostinato, 2026
+- ![A typographic cover in black and white](https://images.unsplash.com/photo-1576926241721-4b830531f667?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0) Ostinato, 2026
 - ![A grid of colour swatches](https://images.unsplash.com/photo-1502691876148-a84978e59af8?w=900&q=80) Field notes
 
 ---
@@ -54,8 +54,8 @@ Motion
 
 <!-- ainsi: tiles -->
 - ![A title card in motion, frozen mid-transition](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) Signal, title sequence
-- ![A studio light on a stand](https://images.unsplash.com/photo-1493932484895-752d1471eab5?w=900&q=80) Lighting test
-- ![A camera on a tripod facing a window](https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=900&q=80) Setup, day two
+- ![A studio light on a stand](https://images.unsplash.com/photo-1760383640414-1b255c5a7128??w=900&q=80) Lighting test
+- ![A close crop of ink on paper](https://images.unsplash.com/photo-1642698099686-201dd457bbb9?w=900&q=80) Ink test
 
 ---
 
@@ -65,10 +65,10 @@ Motion
 # Four, cropped to a grid
 
 <!-- ainsi: tiles columns=4 crop -->
-- ![A close crop of a screen](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=900&q=80) 01
+- ![A close crop of a screen](https://images.unsplash.com/photo-1635355643629-ac06bec6a914?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) 01
 - ![A hand adjusting a dial](https://images.unsplash.com/photo-1725733618919-f45972c90229?q=80&w=3840&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) 02
-- ![A monitor showing colour bars](https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=900&q=80) 03
-- ![A dark studio corner](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) 04
+- ![A monitor showing colour bars](https://images.unsplash.com/photo-1549499090-5fa12865059c?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) 03
+- ![A dark studio corner](https://images.unsplash.com/photo-1557104878-24bf6e92da73?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0) 04
 
 ---
 
@@ -77,24 +77,23 @@ Print
 
 # Nothing here was cropped to fit
 
-<!-- ainsi: tiles flow=masonry columns=6 -->
-- ![A tall book spread photographed from above](https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&q=80) Spread, 300 × 240
+<!-- ainsi: tiles columns=5 -->
+- ![A tall book spread photographed from above](https://images.unsplash.com/photo-1616474223720-c32dccabf2eb?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) Spread, 300 × 240
 - ![A poster in a narrow frame](https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=900&q=80) B2 poster
 - ![A wide landscape photograph](https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=900&q=80) Endpapers
-- ![An album sleeve on a turntable](https://images.unsplash.com/photo-1483412033650-1015ddeb83d1?w=900&q=80) Sleeve, 2025
-- ![A stack of printed matter](https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=900&q=80) Press check
-- ![A close crop of ink on paper](https://images.unsplash.com/photo-1516961642265-531546e84af2?w=900&q=80) Ink test
+- ![A stack of printed matter](https://images.unsplash.com/photo-1751004865865-a27a8f859776?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) Press check
+- ![A close crop of ink on paper](https://images.unsplash.com/photo-1541753866388-0b3c701627d3?q=80&w=900&auto=format&fit=crop&ixlib=rb-4.1.0) Ink test
 
 ---
 
-<!-- ainsi: layout split side=right -->
+<!-- ainsi: layout split side=left size=two-thirds -->
 
 # The short version of how we work
 
 Three people, one room, no account managers. We take the brief apart in week one and show you the two directions worth arguing about in week two.
 
 <!-- ainsi: full size=full -->
-![Two people working at a long table](https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&q=80)
+![Paint](https://images.unsplash.com/photo-1512413914633-b5043f4041ea?q=80&w=2680&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
 ---
 
@@ -118,4 +117,4 @@ How we work
 hello@studiokaari.example
 
 <!-- ainsi: full size=full -->
-![A quiet studio corner at dusk](https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=1600&q=80)
+![studio corner at dusk](https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?q=80&w=3870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
