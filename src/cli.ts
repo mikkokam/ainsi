@@ -8,7 +8,7 @@ import { parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { BUILTIN, LAYOUTS, load, loadLayouts, loadStudio, loadTheme, loadViewer } from "./load";
+import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -295,7 +295,7 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
 
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
-    const themeDir = resolve(import.meta.dir, "..", "themes", themeName);
+    const themeDir = themePath(themeName, dirname(deck));
     const theme = await loadTheme(themeDir, diagnostics);
     const registry = await load([BUILTIN, ...componentRoots], diagnostics, { fresh: editing });
     const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: editing });
@@ -356,8 +356,10 @@ const server = serve({
     route: editing ? async (request, url) => {
         if (url.pathname === "/__doc") return Response.json(doc);
         if (url.pathname === "/__themes") {
-            const dir = resolve(import.meta.dir, "..", "themes");
-            const themes = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+            const themes = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+            // a deck on a theme of its own is still on it; the picker says so rather than
+            // showing a list the current theme is not in
+            if (!themes.includes(currentTheme)) themes.unshift(currentTheme);
             return Response.json({ themes, current: currentTheme });
         }
         if (url.pathname === "/__pdf" && request.method === "POST") {

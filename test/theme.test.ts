@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
-import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme } from "../src/load";
+import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadTheme, themeDir } from "../src/load";
 
 const defaults = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -80,4 +80,11 @@ test("only the css of components actually used is emitted", () => {
     const { html } = build("# T\n\n<!-- ainsi: boxes -->\n- a\n", { registry: defaults, layouts, themeCss: "" });
     expect(html).toContain(".ainsi-boxes__box");
     expect(html).not.toContain(".ainsi-timeline__step");
+});
+
+test("a bare theme name is one of ours, a path is the deck's own", () => {
+    expect(themeDir("acme", "/decks/pitch")).toBe(`${THEMES}/acme`);
+    expect(themeDir("./house", "/decks/pitch")).toBe("/decks/pitch/house");
+    expect(themeDir("../themes/house", "/decks/pitch")).toBe("/decks/themes/house");
+    expect(themeDir("/opt/themes/house", "/decks/pitch")).toBe("/opt/themes/house");
 });

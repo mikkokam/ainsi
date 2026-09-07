@@ -178,6 +178,16 @@ function checkLayoutScope(name: string, css: string, diagnostics: Diagnostic[]):
 }
 
 export const DEFAULT_THEME = resolve(import.meta.dir, "..", "themes", "default");
+export const THEMES = resolve(import.meta.dir, "..", "themes");
+
+/**
+ * A bare name is one of the themes shipped here; anything with a slash or a leading dot is a
+ * folder of the deck's own, resolved beside the deck the way its images and logo are, so a
+ * deck and the theme it is written against move as one thing.
+ */
+export function themeDir(name: string, deckDir: string): string {
+    return name.startsWith(".") || name.includes("/") ? resolve(deckDir, name) : join(THEMES, name);
+}
 
 /**
  * A theme is a folder: tokens, an optional escape hatch, and optional layout overrides. The

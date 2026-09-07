@@ -37,6 +37,8 @@ The studio is a browser page over your markdown file. Click a block to edit its 
 
 `samples/acme/acme.md` is a full deck to start from.
 
+A theme is a folder. `theme: acme` in the frontmatter names one shipped here; `theme: ../themes/house` names one of yours, resolved beside the deck, so a deck and its theme move together and a private brand never has to live in this repo.
+
 ## In Claude Code
 
 The repo is also a plugin: a skill that teaches an agent the deck grammar, the directives and the build loop. It calls the `ainsi` on your PATH, so install the tool first.

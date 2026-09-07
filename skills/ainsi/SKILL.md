@@ -33,7 +33,7 @@ Frontmatter is the deck's settings, and every key is optional:
 
 ```
 ---
-theme: saidot            # a folder under themes/; default, acme, saidot, saidot-web
+theme: acme              # a name is a theme shipped here; a path is one of your own
 ratio: 16:9              # the page box, and the paper a PDF prints on
 layout: default          # the deck's house layout; a page directive overrides it for one page
 h1StartsPage: false      # when true, every `# heading` opens a page
@@ -42,6 +42,8 @@ logo: assets/mark.svg    # a path beside the deck or a url; the theme places it
 coverLogo: assets/a.png  # what the cover wears instead, when a brand has two marks
 ---
 ```
+
+A theme name with a slash or a leading dot is a folder of the deck's own, resolved beside the deck the way its images are: `theme: ../themes/house` reads `themes/house` next to the deck's directory. The default theme's tokens sit under every theme, so a private one declares only what it changes.
 
 `---` on its own line breaks the page. That is the only page break: nothing else in the markdown starts one unless `h1StartsPage` is on.
 
