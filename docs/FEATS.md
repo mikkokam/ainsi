@@ -40,7 +40,7 @@ Done is a build step plus a test that fails when a generated page is stale, so t
 
 ## A header page with no picture (defect)
 
-The `header` layout draws the placeholder graphic when its page holds no image: the grey mountain-and-sun stands in for a picture nobody asked for, behind the title. Writing a cover as type on paper is a reasonable thing to want, and today it needs the `default` layout with a tone instead, which is what `samples/review/review.md` does.
+The `header` layout draws the placeholder graphic when its page holds no image: the grey mountain-and-sun stands in for a picture nobody asked for, behind the title. Writing a cover as type on paper is a reasonable thing to want, and today it needs the `default` layout with a tone instead.
 
 Either the layout renders as plain type when there is no image on the page, or it says so in a warning. Silently inventing a picture is the one thing it should not do.
 

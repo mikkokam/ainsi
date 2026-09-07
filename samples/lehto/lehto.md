@@ -5,7 +5,7 @@ theme: default
 <!-- ainsi: layout header -->
 
 <!-- ainsi: prose size=large -->
-# Lehto Puutyö
+# Lehto & Mänty
 
 <!-- ainsi: prose color=accent -->
 Bespoke furniture from Fiskars, Finland, since 1968
@@ -50,7 +50,7 @@ So the question we ask first is how long the piece has to last, and the second i
 # The workshop in four numbers
 
 <!-- ainsi: figures -->
-- **58** years in the same building, and the third generation at the benches
+- **58** years in the same building, Lehto since 1968 and Mänty since 1994
 - **60** pieces a year, which is the ceiling of four joiners and one kiln
 - **7%** moisture at delivery, measured on the piece and written on the drawing
 - **25 yr** structural guarantee on every joint we cut

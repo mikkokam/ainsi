@@ -10,7 +10,7 @@ Three decks, three themes, each built from the markdown beside it. They open in 
 
 - **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/acme/acme.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/acme/acme.md).
 - **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/portfolio/portfolio.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/portfolio/portfolio.md).
-- **[Lehto Puutyö](https://mikkokam.github.io/ainsi/samples/lehto/lehto.html)**, the `default` theme: a workshop pitching bespoke furniture, tables and figures carrying most of it. [Source](samples/lehto/lehto.md).
+- **[Lehto & Mänty](https://mikkokam.github.io/ainsi/samples/lehto/lehto.html)**, the `default` theme: a workshop pitching bespoke furniture, tables and figures carrying most of it. [Source](samples/lehto/lehto.md).
 
 The loop: write `deck.md` with your agent in a folder on your machine, run `ainsi deck.md`, and a browser opens on the deck. Everything either of you does from then on lands in that one file. The agent rewrites a page while you are looking at it and the view reloads; you retype a line in the studio and the agent's next read sees it. There is no second copy of the document, so there is no split brain, nothing to sync and nothing to import. The same file opens in any markdown editor, and goes to anyone who has never heard of this tool.
 
