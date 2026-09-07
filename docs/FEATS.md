@@ -1,25 +1,5 @@
 # Walking skeleton
 
-## Local images are not measured (defect)
-
-The fit pass measures with `setContent`, which gives the document no base URL, so a relative `![](pic.png)` resolves against `about:blank` and never loads. Measured just now: a local image reports `naturalHeight: 0` and occupies 31.9px, the height of its alt text, instead of its real height.
-
-So fit silently under-measures every page carrying a local image, and reports a page as fitting when the real output overflows. That is precisely the failure the solver exists to prevent, which makes this the worst defect open.
-
-The fix needs the deck's directory in `fit.ts`, which it currently has no reason to know: serve the deck's own folder to the measuring page, either by giving the measured html a `<base>` or by extending the session's route handler to answer local paths from disk. The route handler is already there for remote responses and only matches `^https?:` today.
-
-Done: a page whose only content is a tall local image is measured at that image's real height, and a deck of local images fits the same way a deck of remote ones does.
-
-## The exported file is not self-contained (feat)
-
-VISION promises one self-contained HTML page, and a deck referencing a local image breaks that promise silently: the html carries a relative src, and the moment it leaves the deck's folder the image is gone. Sharing currently works only for decks whose every asset is a remote URL.
-
-The fix is inlining, not packaging: at build, the CLI reads each local asset an image references and rewrites the src to a base64 data URI. One file, nothing to gather, nothing to zip. Remote URLs stay remote. The cost is a third over the raw image bytes, which compression on the wire mostly returns; the real size lever is downscaling export imagery to what the deck can render, roughly 2000px wide, which saves far more than the encoding costs and can arrive as a later step with a flag to skip it. Inlining belongs in the CLI because the engine has no filesystem, and it is skipped in watch and edit mode, where the dev server already serves the deck's folder and rewritten sources would shift the studio's offsets.
-
-Adjacent to the measurement defect above: a data URI measures the same everywhere, so inlining upstream of the fit pass makes local and remote images fit alike and shrinks what that fix must do. The boundary is slide imagery; a deck carrying video or tens of megabytes of assets is the day a package format earns discussion, and that day names its own feat.
-
-Done: a deck referencing a local image renders, fits and opens correctly from any location as a single html file, and a plain build on a deck with no local assets is byte-identical to today's.
-
 ## Density variants (feat)
 
 Every component declares `density` and nothing consumes it. The fit solver is what will, stepping a block to a tighter variant before splitting a page. Each variant needs a class the component's own CSS implements, `ainsi-<name>--tight`, so the theme is still not involved.

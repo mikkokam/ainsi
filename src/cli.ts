@@ -145,6 +145,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
 
     const assembled = assemble(source, buildOptions);
     diagnostics.push(...assembled.diagnostics);
+    if (!editing) await inlineImages(assembled.pages, diagnostics);
     if (editing) {
         doc = {
             hash: Bun.hash(source).toString(16),
@@ -268,6 +269,30 @@ async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Prom
     return `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`;
 }
 
+/**
+ * Every local image in the pages becomes a data url, read beside the deck, so the html is one
+ * file and the fit pass measures the image at its real height. Remote and data urls pass
+ * through. Skipped in the studio, which serves the deck's folder itself.
+ */
+async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<void> {
+    const seen = new Map<string, string | undefined>();
+    for (const entity of pages.flatMap(p => p.blocks).flatMap(b => b.entities)) {
+        const node = entity.node.type === "image" ? entity.node : entity.node.children?.[0];
+        if (node?.type !== "image" || !node.url || /^(https?:|data:)/.test(node.url)) continue;
+        if (!seen.has(node.url)) {
+            const file = Bun.file(resolve(dirname(deck), node.url));
+            if (await file.exists()) {
+                seen.set(node.url, `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`);
+            } else {
+                diagnostics.push({ level: "warn", message: `image not found beside the deck: ${node.url}` });
+                seen.set(node.url, undefined);
+            }
+        }
+        const url = seen.get(node.url);
+        if (url) node.url = url;
+    }
+}
+
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = resolve(import.meta.dir, "..", "themes", themeName);
@@ -290,6 +315,7 @@ async function fitted(diagnostics: Diagnostic[]) {
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics);
     const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics), coverLogo: await logoOf(settings.coverLogo, diagnostics) };
     const assembled = assemble(source, options);
+    await inlineImages(assembled.pages, diagnostics);
     const result = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
     diagnostics.push(...assembled.diagnostics, ...result.diagnostics);
     return { pages: result.pages, title: assembled.title, settings: assembled.settings, options };
