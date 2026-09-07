@@ -4,6 +4,20 @@ logo: assets/saidot-wordmark.svg
 coverLogo: assets/saidot-mark.png
 ---
 
+<!-- ainsi: layout header -->
+
+# Governance & runtime enforcement
+
+<!-- ainsi: prose size=large -->
+Separate layers, and the record that joins them
+
+&nbsp;
+CTO Mikko Kämäräinen
+
+**Saidot**
+
+---
+
 <!-- ainsi: prose size=small caps color=accent -->
 <!-- ainsi: layout default tone=inverse -->
 Governance and enforcement
@@ -17,7 +31,7 @@ Governance and enforcement
 Adopted faster than any review cycle, often without anyone registering them.
 
 <!-- ainsi: prose size=small color=soft -->
-*Three clouds, four agent platforms, a hundred systems? The **decisions** about them cannot live in a single platform.*
+*Three clouds, four agent platforms, a hundred systems? The **decisions** about them cannot live in a single runtime platform.*
 
 ---
 
@@ -61,14 +75,13 @@ The platform knows who ran a workflow. It does not know the system's purpose, it
 
 # Enforcement stays in the runtime
 
-<!-- ainsi: prose size=small -->
 Enforcement on platforms: largely solved; and the hot path is where it belongs.
 What is missing sits at both ends: a control authored once, and the event that proves it held.
 
-<!-- ainsi: full size=l -->
+<!-- ainsi: full size=m -->
 ![One control read left to right. Authored once in governance, as prose for the person and structured fields for the machine. Enforced by you, in your policy engines, platform gates and model gateways. Proven back in governance, as the event attached to the control on the system it belongs to.](assets/enforcement-interface.png)
 
-<!-- ainsi: prose size=small color=soft -->
+<!-- ainsi: prose size=small -->
 Current: Your team writes the rule, as it does today. No new component sits between your agents and your models.
 Planned: Working to automate or help creating rules.
 
@@ -97,7 +110,8 @@ Registering, classifying and mapping run through the MCP servers as well, so a c
 1. **Your controls, as entities** Your own controls sit in the graph beside the **110+** policies in the library, linked to systems, risks and evidence like anything else.
 Not documents attached to a record. Authoring your own policy frameworks is in preview.
 2. **Your process, as roles and tasks** Roles are assigned per system: owner, compliance specialist, reviewer, oversight manager.
-Lifecycle stages, approval gates and review cadence are set per organisation. Modelling the wider process as tasks is in development.
+Lifecycle stages, approval gates and review cadence are set per organisation.
+Modelling the wider process as tasks is in development.
 3. **Your automation, at your pace** Every rule is a workflow you switch on: classification, inheritance, control assignment, lifecycle approvals.
 What is not automated stays a task for a person.
 
@@ -108,10 +122,13 @@ What is not automated stays a task for a person.
 # Governance stays a gate. It stops being a queue.
 
 <!-- ainsi: columns -->
-- **Rules-based tiering** Properties decide the tier. A person ratifies it, because that one property scopes every obligation downstream.
-- **Rules-based control profiles** The tier resolves its own control set. Nobody maps controls per system.
+- **Rules-based tiering** Properties decide the tier.
+A person ratifies it, because that one property scopes every obligation downstream.
+- **Rules-based control profiles** The tier resolves its own control set.
+Nobody has to manually maps controls per system (but they can edit the set).
 - **Lifecycle approvals** A stage transition gates on approval, and reviews go to the role that owns them, when due.
-- **Event-based triggers** Drift, an incident or a change reopens the assessment. Production keeps the record current.
+- **Event-based triggers** Drift, an incident or a change reopens the assessment.
+Production keeps the record current.
 
 <!-- ainsi: prose size=small color=soft -->
 *Where this goes: the same loop at the scale of the whole AI estate of an organisation - with more of it automated and a person still deciding.*
