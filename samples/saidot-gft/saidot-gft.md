@@ -1,5 +1,5 @@
 ---
-theme: saidot-web
+theme: saidot
 logo: assets/saidot-wordmark.svg
 coverLogo: assets/saidot-mark.png
 ---
@@ -112,8 +112,8 @@ Registering, classifying and mapping run through the MCP servers as well, so a c
 # Your governance model, configured
 
 <!-- ainsi: agenda -->
-1. **Your controls, as entities** Your own controls sit in the graph beside the **110+** policies in the library, linked to systems, risks and evidence like anything else.
-Not documents attached to a record. Authoring your own policy frameworks is in preview.
+1. **Your policies, as entities** Your own framework goes into the graph beside the **110+** in the library: the policy, its sections, its requirements and its controls, linked to systems, risks and evidence.
+Not documents attached to a record. Authored over the API today, with the visual editor in preview.
 2. **Your process, as roles and tasks** Roles are assigned per system: owner, compliance specialist, reviewer, oversight manager.
 Lifecycle stages, approval gates and review cadence are set per organisation.
 Modelling the wider process as tasks is in development.
