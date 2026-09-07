@@ -21,7 +21,8 @@
 
     --ainsi-gap: 2rem;
     --ainsi-pad: 7%;
-    --ainsi-radius: 0;
+    /* the page has a corner; so does every picture on it, at the same radius */
+    --ainsi-radius: 14px;
     --ainsi-border: 1px;
 
     --ainsi-shadow: none;
