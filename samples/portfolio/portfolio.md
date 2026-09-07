@@ -54,7 +54,7 @@ Motion
 
 <!-- ainsi: tiles -->
 - ![A title card in motion, frozen mid-transition](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) Signal, title sequence
-- ![A studio light on a stand](https://images.unsplash.com/photo-1760383640414-1b255c5a7128??w=900&q=80) Lighting test
+- ![A studio light on a stand](https://images.unsplash.com/photo-1760383640414-1b255c5a7128?w=900&q=80) Lighting test
 - ![A close crop of ink on paper](https://images.unsplash.com/photo-1642698099686-201dd457bbb9?w=900&q=80) Ink test
 
 ---
