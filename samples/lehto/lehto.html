@@ -594,6 +594,62 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
     .ainsi-figures__item { display: flex; flex-direction: column; gap: .25em; }
     .ainsi-figures__value { font-size: 2.4em; }
 }
+.ainsi-timeline {
+    --ainsi-timeline-marker: .9em;
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: var(--ainsi-gap);
+}
+.ainsi-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
+.ainsi-timeline__step {
+    display: flex; flex-direction: column; gap: .3em;
+    padding-top: calc(var(--ainsi-timeline-marker) + .6em); position: relative;
+}
+.ainsi-timeline--horizontal .ainsi-timeline__step::before {
+    content: ""; position: absolute;
+    top: calc(var(--ainsi-timeline-marker) / 2); left: 0; right: calc(var(--ainsi-gap) * -1);
+    height: var(--ainsi-border); background: var(--ainsi-rule);
+}
+.ainsi-timeline--horizontal .ainsi-timeline__step:last-child::before { right: 0; }
+.ainsi-timeline__marker {
+    position: absolute; top: 0; left: 0;
+    width: var(--ainsi-timeline-marker); height: var(--ainsi-timeline-marker);
+    border-radius: 50%; background: var(--ainsi-accent);
+}
+/* a numbered source list keeps its numbers: the dot grows into a disc that carries one */
+.ainsi-timeline--numbered { --ainsi-timeline-marker: 1.7em; counter-reset: ainsi-step; }
+.ainsi-timeline--numbered .ainsi-timeline__marker {
+    counter-increment: ainsi-step;
+    display: grid; place-items: center;
+    font: var(--ainsi-strong) .7em/1 var(--ainsi-font-mono);
+    color: var(--ainsi-accent-ink);
+}
+.ainsi-timeline--numbered .ainsi-timeline__marker::before { content: counter(ainsi-step); }
+.ainsi-timeline__label { font-weight: var(--ainsi-strong); font-variant-numeric: tabular-nums; }
+.ainsi-timeline__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+
+@media screen and (max-width: 900px) {
+    .ainsi-timeline--horizontal { grid-auto-flow: row; }
+    .ainsi-timeline--horizontal .ainsi-timeline__step::before { display: none; }
+}
+
+@keyframes ainsi-timeline-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes ainsi-timeline-marker {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+body[data-present] [data-current] .ainsi-timeline__step {
+    animation: ainsi-timeline-in var(--ainsi-motion) var(--ainsi-ease) backwards;
+}
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .26); }
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .38); }
+body[data-present] [data-current] .ainsi-timeline__step:nth-child(n+4) { animation-delay: calc(var(--ainsi-motion) * .5); }
+body[data-present] [data-current] .ainsi-timeline__marker {
+    animation: ainsi-timeline-marker var(--ainsi-motion) var(--ainsi-ease) backwards;
+    animation-delay: inherit;
+}
 /* The field: a grid whose rows are as tall as their tallest tile. */
 .ainsi-tiles {
     list-style: none; margin: 0; padding: 0;
@@ -769,61 +825,26 @@ body[data-present] [data-current] .ainsi-boxes__box:nth-child(n+4) { animation-d
 .ainsi-matrix__y { grid-column: 1; grid-row: 1; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; padding-left: .8em; }
 .ainsi-matrix:not(.ainsi-matrix--axes) { grid-template-columns: 1fr; }
 .ainsi-matrix:not(.ainsi-matrix--axes) .ainsi-matrix__grid { grid-column: 1; }
-.ainsi-timeline {
-    --ainsi-timeline-marker: .9em;
+/* equal columns, one per item, set like a magazine: a gutter of a few ems and nothing drawn between */
+.ainsi-columns {
     list-style: none; margin: 0; padding: 0;
-    display: grid; gap: var(--ainsi-gap);
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    column-gap: 1.4em; row-gap: var(--ainsi-gap);
 }
-.ainsi-timeline--horizontal { grid-auto-flow: column; grid-auto-columns: 1fr; }
-.ainsi-timeline__step {
-    display: flex; flex-direction: column; gap: .3em;
-    padding-top: calc(var(--ainsi-timeline-marker) + .6em); position: relative;
+.ainsi-columns__column { display: flex; flex-direction: column; gap: .35em; }
+.ainsi-columns__title { font-weight: var(--ainsi-strong); }
+.ainsi-columns__body { color: var(--ainsi-ink-soft); }
+/* a numbered list counts its columns */
+.ainsi-columns--ordered { counter-reset: ainsi-column; }
+.ainsi-columns--ordered .ainsi-columns__column::before {
+    counter-increment: ainsi-column;
+    content: counter(ainsi-column);
+    font: var(--ainsi-strong) .8em/1 var(--ainsi-font-mono);
+    color: var(--ainsi-accent);
 }
-.ainsi-timeline--horizontal .ainsi-timeline__step::before {
-    content: ""; position: absolute;
-    top: calc(var(--ainsi-timeline-marker) / 2); left: 0; right: calc(var(--ainsi-gap) * -1);
-    height: var(--ainsi-border); background: var(--ainsi-rule);
-}
-.ainsi-timeline--horizontal .ainsi-timeline__step:last-child::before { right: 0; }
-.ainsi-timeline__marker {
-    position: absolute; top: 0; left: 0;
-    width: var(--ainsi-timeline-marker); height: var(--ainsi-timeline-marker);
-    border-radius: 50%; background: var(--ainsi-accent);
-}
-/* a numbered source list keeps its numbers: the dot grows into a disc that carries one */
-.ainsi-timeline--numbered { --ainsi-timeline-marker: 1.7em; counter-reset: ainsi-step; }
-.ainsi-timeline--numbered .ainsi-timeline__marker {
-    counter-increment: ainsi-step;
-    display: grid; place-items: center;
-    font: var(--ainsi-strong) .7em/1 var(--ainsi-font-mono);
-    color: var(--ainsi-accent-ink);
-}
-.ainsi-timeline--numbered .ainsi-timeline__marker::before { content: counter(ainsi-step); }
-.ainsi-timeline__label { font-weight: var(--ainsi-strong); font-variant-numeric: tabular-nums; }
-.ainsi-timeline__body { color: var(--ainsi-ink-soft); font-size: .92em; }
 
 @media screen and (max-width: 900px) {
-    .ainsi-timeline--horizontal { grid-auto-flow: row; }
-    .ainsi-timeline--horizontal .ainsi-timeline__step::before { display: none; }
-}
-
-@keyframes ainsi-timeline-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: none; }
-}
-@keyframes ainsi-timeline-marker {
-    from { transform: scale(0); }
-    to { transform: scale(1); }
-}
-body[data-present] [data-current] .ainsi-timeline__step {
-    animation: ainsi-timeline-in var(--ainsi-motion) var(--ainsi-ease) backwards;
-}
-body[data-present] [data-current] .ainsi-timeline__step:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .26); }
-body[data-present] [data-current] .ainsi-timeline__step:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .38); }
-body[data-present] [data-current] .ainsi-timeline__step:nth-child(n+4) { animation-delay: calc(var(--ainsi-motion) * .5); }
-body[data-present] [data-current] .ainsi-timeline__marker {
-    animation: ainsi-timeline-marker var(--ainsi-motion) var(--ainsi-ease) backwards;
-    animation-delay: inherit;
+    .ainsi-columns { grid-auto-flow: row; }
 }
 /* rows are spaced, columns are not: two filled periods next to each other are one run, and a
    gap between them would read as two separate pieces of work */
@@ -1473,14 +1494,14 @@ body[data-present] .ainsi-studio__hint { display: none; }
 <h1 data-ainsi-entity="e:43c92f:0">Lehto &#x26; Mänty</h1>
 </div>
 <div class="ainsi-prose ainsi-prose--accent">
-<p data-ainsi-entity="e:7b246e:0">Bespoke furniture from Fiskars, Finland, since 1968</p>
+<p data-ainsi-entity="e:0497b0:0">Bespoke woodwork from Åbo, Finland, since 1928</p>
 </div>
-<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:2f1a78:0" src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&amp;w=1600&amp;auto=format&amp;fit=crop" alt="The bench room in morning light, shavings on the floor"></figure></article></main>
+<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:2f1a78:0" src="https://images.unsplash.com/photo-1547609434-b732edfee020?q=80&amp;w=1600&amp;auto=format&amp;fit=crop" alt="The bench room in morning light, shavings on the floor"></figure></article></main>
 <span class="ainsi-number" aria-hidden="true">1</span>
 </section>
-<section class="ainsi-page" id="what-this-deck-covers" data-page="2" data-layout="default">
+<section class="ainsi-page" id="wood-runs-in-family" data-page="2" data-layout="default">
 <main><article><div class="ainsi-prose ainsi-prose--accent">
-<h1 data-ainsi-entity="e:b8ff70:0">What this deck covers</h1>
+<h1 data-ainsi-entity="e:cfb2a2:0">Wood runs in family</h1>
 </div>
 
 <ol data-ainsi-span="e:2b3b75:0 e:2b3b75:0" class="ainsi-agenda" data-ainsi="agenda">
@@ -1496,24 +1517,25 @@ body[data-present] .ainsi-studio__hint { display: none; }
 <p data-ainsi-entity="e:5a6760:0">Four benches, one kiln, sixty pieces a year</p></article></main>
 <span class="ainsi-number" aria-hidden="true">3</span>
 </section>
-<section class="ainsi-page" id="we-make-what-a-machine-cannot-and-say-so-about-the-rest" data-page="4" data-layout="split">
-<main data-side="right" data-size="third"><article><h1 data-ainsi-entity="e:f5fa6d:0">We make what a machine cannot, and say so about the rest</h1>
+<section class="ainsi-page" id="what-a-machine-cannot" data-page="4" data-layout="split">
+<main data-side="right" data-size="third"><article><h1 data-ainsi-entity="e:cae4c7:0">What a machine cannot</h1>
 <p data-ainsi-entity="e:7efa0c:0">A dining table with a mitred frame and drawbored joints takes a joiner eleven days. The same table, dowelled and screwed, takes a factory eleven minutes. Both will be in the room for a year; only one will still be flat in twenty.</p>
 <p data-ainsi-entity="e:d1c0a3:0">So the question we ask first is how long the piece has to last, and the second is what the room does to it. Underfloor heating and a sixteen-metre window are harder on a table than any customer.</p>
-<aside class="ainsi-alert ainsi-alert--note" data-ainsi="alert" role="note" aria-label="Note" title="Note">
-    <span class="ainsi-alert__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
-    <p data-ainsi-entity="e:90815c:0">Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors. A piece shipped to a coastal house in Spain is made to a different number, and we say which on the drawing.</p>
+<aside class="ainsi-alert ainsi-alert--warning" data-ainsi="alert" role="note" aria-label="Warning" title="Warning">
+    <span class="ainsi-alert__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+    <p data-ainsi-entity="e:af6567:0">Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors.<br>
+A piece shipped to a coastal house in Spain is made to a different number.</p>
 </aside>
-<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:91e2b3:0" src="https://images.unsplash.com/photo-1516216628859-9bccecab13ca?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="A joiner cutting a mortise by hand"></figure></article></main>
+<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:91e2b3:0" src="https://images.unsplash.com/photo-1617873228868-f64a54e91a01?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="A joiner cutting a mortise by hand"></figure></article></main>
 <span class="ainsi-number" aria-hidden="true">4</span>
 </section>
 <section class="ainsi-page" id="the-workshop-in-four-numbers" data-page="5" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:ce5b7a:0">The workshop in four numbers</h1>
 
-<ul data-ainsi-span="e:53d5f8:0 e:53d5f8:0" class="ainsi-figures" data-ainsi="figures" style="--ainsi-figures-count: 4; --ainsi-figures-chars: 5">
+<ul data-ainsi-span="e:4c72ee:0 e:4c72ee:0" class="ainsi-figures" data-ainsi="figures" style="--ainsi-figures-count: 4; --ainsi-figures-chars: 5">
     <li class="ainsi-figures__item">
-        <span class="ainsi-figures__value">58</span>
-        <span class="ainsi-figures__caption">years in the same building, Lehto since 1968 and Mänty since 1994</span>
+        <span class="ainsi-figures__value">98</span>
+        <span class="ainsi-figures__caption">years in the same building, Lehto since 1928 and Mänty since 1954</span>
     </li>
     <li class="ainsi-figures__item">
         <span class="ainsi-figures__value">60</span>
@@ -1521,7 +1543,7 @@ body[data-present] .ainsi-studio__hint { display: none; }
     </li>
     <li class="ainsi-figures__item">
         <span class="ainsi-figures__value">7%</span>
-        <span class="ainsi-figures__caption">moisture at delivery, measured on the piece and written on the drawing</span>
+        <span class="ainsi-figures__caption">moisture at delivery, measured on the piece</span>
     </li>
     <li class="ainsi-figures__item">
         <span class="ainsi-figures__value">25 yr</span>
@@ -1530,30 +1552,57 @@ body[data-present] .ainsi-studio__hint { display: none; }
 </ul></article></main>
 <span class="ainsi-number" aria-hidden="true">5</span>
 </section>
-<section class="ainsi-page" id="four-pieces-from-this-year" data-page="6" data-layout="default">
+<section class="ainsi-page" id="ninety-eight-years-on-the-same-street" data-page="6" data-layout="default">
+<main><article><h1 data-ainsi-entity="e:44fa29:0">Ninety-eight years on the same street</h1>
+
+<ol data-ainsi-span="e:5cfeb9:0 e:5cfeb9:0" class="ainsi-timeline ainsi-timeline--horizontal" data-ainsi="timeline">
+    <li class="ainsi-timeline__step">
+        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
+        <span class="ainsi-timeline__label">1928</span>
+        <span class="ainsi-timeline__body">Esekiel Lehto rents the ground floor on Kyrkovägen and cuts church furniture.</span>
+    </li>
+    <li class="ainsi-timeline__step">
+        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
+        <span class="ainsi-timeline__label">1954</span>
+        <span class="ainsi-timeline__body">Väinö Mänty arrives with a veneer press, and the name takes its ampersand.</span>
+    </li>
+    <li class="ainsi-timeline__step">
+        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
+        <span class="ainsi-timeline__label">1978</span>
+        <span class="ainsi-timeline__body">The kiln is built in the yard, and the workshop stops buying timber it cannot dry itself.</span>
+    </li>
+    <li class="ainsi-timeline__step">
+        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
+        <span class="ainsi-timeline__label">1999</span>
+        <span class="ainsi-timeline__body">Rakel Lehto starts as an apprentice at the bench she runs now.</span>
+    </li>
+</ol></article></main>
+<span class="ainsi-number" aria-hidden="true">6</span>
+</section>
+<section class="ainsi-page" id="four-pieces-from-this-year" data-page="7" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:c3d52b:0">Four pieces from this year</h1>
 
-<ul data-ainsi-span="e:a30a57:0 e:a30a57:0" class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 4; --ainsi-tiles-cap: 15.00em">
+<ul data-ainsi-span="e:838811:0 e:838811:0" class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 4; --ainsi-tiles-cap: 15.00em">
     <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
-        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="An oak dining table with a mitred frame">
-        <span class="ainsi-tiles__caption">Ash table, 3.2 m</span>
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1719899913493-1e508c3833e8?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A dining table">
+        <span class="ainsi-tiles__caption">Dining table</span>
     </li>
     <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
-        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1556909212-d5b604d0c90d?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A wall of fitted cabinetry in pale wood">
-        <span class="ainsi-tiles__caption">Fitted wall, birch ply and oak</span>
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1762815990312-5d77b1e907f5?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A wall of fitted cabinetry">
+        <span class="ainsi-tiles__caption">Fitted wall, birch</span>
     </li>
     <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
-        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1567016432779-094069958ea5?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A stack of hand-cut dovetails">
-        <span class="ainsi-tiles__caption">Drawers, hand-cut</span>
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1572293070287-cc6e7bade025?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="Woodwork">
+        <span class="ainsi-tiles__caption">Woodwork for new museum in Utsjoki</span>
     </li>
     <li class="ainsi-tiles__tile ainsi-tiles__tile--picture">
-        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1600494603989-9650cf6ddd3d?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A finished chair against a white wall">
+        <img class="ainsi-tiles__image" src="https://images.unsplash.com/photo-1687068385765-01520ad1a599?q=80&amp;w=900&amp;auto=format&amp;fit=crop" alt="A proto chair">
         <span class="ainsi-tiles__caption">Chair, sixth prototype</span>
     </li>
 </ul></article></main>
-<span class="ainsi-number" aria-hidden="true">6</span>
+<span class="ainsi-number" aria-hidden="true">7</span>
 </section>
-<section class="ainsi-page" id="what-each-species-does-after-it-leaves-us" data-page="7" data-layout="default">
+<section class="ainsi-page" id="what-each-species-does-after-it-leaves-us" data-page="8" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:0360fb:0">What each species does after it leaves us</h1>
 <div data-ainsi-span="e:b091d0:0 e:b091d0:0" class="ainsi-bar-table" data-ainsi="bar-table">
 <table>
@@ -1567,9 +1616,9 @@ body[data-present] .ainsi-studio__hint { display: none; }
 </table>
 </div>
 <p data-ainsi-entity="e:d476ab:0">Movement is the column that decides a design. Ash is harder than oak and cheaper, and it moves half a percent more, which is a drawer that binds in February and a joint we have to cut differently.</p></article></main>
-<span class="ainsi-number" aria-hidden="true">7</span>
+<span class="ainsi-number" aria-hidden="true">8</span>
 </section>
-<section class="ainsi-page" id="workshop-and-factory-honestly" data-page="8" data-layout="default">
+<section class="ainsi-page" id="workshop-and-factory-honestly" data-page="9" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:622b76:0">Workshop and factory, honestly</h1>
 <div data-ainsi-span="e:144b23:0 e:144b23:0" class="ainsi-comparison" data-ainsi="comparison">
     <div class="ainsi-comparison__column">
@@ -1591,15 +1640,15 @@ body[data-present] .ainsi-studio__hint { display: none; }
         </dl>
     </div>
 </div></article></main>
-<span class="ainsi-number" aria-hidden="true">8</span>
+<span class="ainsi-number" aria-hidden="true">9</span>
 </section>
-<section class="ainsi-page" id="the-mistake-that-costs-the-most" data-page="9" data-layout="default">
+<section class="ainsi-page" id="the-mistake-that-costs-the-most" data-page="10" data-layout="default">
 <main data-tone="soft"><article><h1 data-ainsi-entity="e:cba8b4:0">The mistake that costs the most</h1>
 <p data-ainsi-entity="e:d447f6:0">A specification that gives a width, a length and a species, and says nothing about the room. We have delivered into an apartment with underfloor heating at 24 degrees and 22% humidity in February, which is drier than the kiln, and a 3.2 metre top will find that out within a month.</p>
 <p data-ainsi-entity="e:2d7836:0">The fix is one paragraph in the brief: the heating, the glazing, and whether anyone opens a window. It changes the joint, not the price. A frame-and-panel top moves at the panel and stays flat; a solid slab in that room is a warranty claim we have to honour.</p></article></main>
-<span class="ainsi-number" aria-hidden="true">9</span>
+<span class="ainsi-number" aria-hidden="true">10</span>
 </section>
-<section class="ainsi-page" id="what-a-finish-is-actually-for" data-page="10" data-layout="default">
+<section class="ainsi-page" id="what-a-finish-is-actually-for" data-page="11" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:c675c5:0">What a finish is actually for</h1>
 <div class="ainsi-striped-table" data-ainsi="striped-table">
 <table data-ainsi-entity="e:1ef7fd:0">
@@ -1644,9 +1693,9 @@ body[data-present] .ainsi-studio__hint { display: none; }
 </tbody>
 </table>
 </div></article></main>
-<span class="ainsi-number" aria-hidden="true">10</span>
+<span class="ainsi-number" aria-hidden="true">11</span>
 </section>
-<section class="ainsi-page" id="three-commissions-and-what-each-taught" data-page="11" data-layout="default">
+<section class="ainsi-page" id="three-commissions-and-what-each-taught" data-page="12" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:d35157:0">Three commissions and what each taught</h1>
 
 <ol data-ainsi-span="e:32a377:0 e:32a377:0" class="ainsi-boxes ainsi-boxes--ordered" data-ainsi="boxes" data-stretch="false">
@@ -1654,14 +1703,14 @@ body[data-present] .ainsi-studio__hint { display: none; }
     <li class="ainsi-boxes__box"><span class="ainsi-boxes__title">A conference table, 4.4 m</span><span class="ainsi-boxes__body">it went in through a window, which is a crane and a permit and a line in the quote</span></li>
     <li class="ainsi-boxes__box"><span class="ainsi-boxes__title">A chair, six prototypes</span><span class="ainsi-boxes__body">the piece we lost money on, and the one the workshop is now known for</span></li>
 </ol></article></main>
-<span class="ainsi-number" aria-hidden="true">11</span>
-</section>
-<section class="ainsi-page" id="how-a-commission-runs" data-page="12" data-layout="section">
-<main data-tone="ground"><article><h1 data-ainsi-entity="e:57277a:0">How a commission runs</h1>
-<p data-ainsi-entity="e:18dfe6:0">Sixteen weeks, four decisions, one of them yours alone</p></article></main>
 <span class="ainsi-number" aria-hidden="true">12</span>
 </section>
-<section class="ainsi-page" id="where-a-smaller-budget-should-go" data-page="13" data-layout="default">
+<section class="ainsi-page" id="how-a-commission-runs" data-page="13" data-layout="section">
+<main data-tone="ground"><article><h1 data-ainsi-entity="e:57277a:0">How a commission runs</h1>
+<p data-ainsi-entity="e:18dfe6:0">Sixteen weeks, four decisions, one of them yours alone</p></article></main>
+<span class="ainsi-number" aria-hidden="true">13</span>
+</section>
+<section class="ainsi-page" id="where-a-smaller-budget-should-go" data-page="14" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:2b5b86:0">Where a smaller budget should go</h1>
 
 <div data-ainsi-span="e:bc0ecd:0 e:bc0ecd:0" class="ainsi-matrix ainsi-matrix--axes" data-ainsi="matrix">
@@ -1672,36 +1721,20 @@ body[data-present] .ainsi-studio__hint { display: none; }
     <li class="ainsi-matrix__cell"><span class="ainsi-matrix__title">Carving and inlay</span><span class="ainsi-matrix__body">beautiful, and the first thing a later owner paints over</span></li>
     </ul><span class="ainsi-matrix__x">what it costs</span><span class="ainsi-matrix__y">what it is worth in twenty years</span>
 </div></article></main>
-<span class="ainsi-number" aria-hidden="true">13</span>
-</section>
-<section class="ainsi-page" id="brief-to-delivery" data-page="14" data-layout="default">
-<main><article><h1 data-ainsi-entity="e:bf846d:0">Brief to delivery</h1>
-
-<ol data-ainsi-span="e:a5ae78:0 e:a5ae78:0" class="ainsi-timeline ainsi-timeline--horizontal" data-ainsi="timeline">
-    <li class="ainsi-timeline__step">
-        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
-        <span class="ainsi-timeline__label">Week 1</span>
-        <span class="ainsi-timeline__body">Room measured, heating and glazing recorded, drawings agreed.</span>
-    </li>
-    <li class="ainsi-timeline__step">
-        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
-        <span class="ainsi-timeline__label">Week 3</span>
-        <span class="ainsi-timeline__body">Boards chosen with you in the timber store, grain marked for the top.</span>
-    </li>
-    <li class="ainsi-timeline__step">
-        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
-        <span class="ainsi-timeline__label">Week 6</span>
-        <span class="ainsi-timeline__body">Joints cut, dry-fitted, and photographed before glue.</span>
-    </li>
-    <li class="ainsi-timeline__step">
-        <span class="ainsi-timeline__marker" aria-hidden="true"></span>
-        <span class="ainsi-timeline__label">Week 16</span>
-        <span class="ainsi-timeline__body">Delivered, levelled, and the care card left on the piece.</span>
-    </li>
-</ol></article></main>
 <span class="ainsi-number" aria-hidden="true">14</span>
 </section>
-<section class="ainsi-page" id="a-commission-by-month" data-page="15" data-layout="default">
+<section class="ainsi-page" id="brief-to-delivery" data-page="15" data-layout="default">
+<main><article><h1 data-ainsi-entity="e:bf846d:0">Brief to delivery</h1>
+
+<ol data-ainsi-span="e:a5ae78:0 e:a5ae78:0" class="ainsi-columns ainsi-columns--ordered" data-ainsi="columns">
+    <li class="ainsi-columns__column"><span class="ainsi-columns__title">Week 1</span><span class="ainsi-columns__body">Room measured, heating and glazing recorded, drawings agreed.</span></li>
+    <li class="ainsi-columns__column"><span class="ainsi-columns__title">Week 3</span><span class="ainsi-columns__body">Boards chosen with you in the timber store, grain marked for the top.</span></li>
+    <li class="ainsi-columns__column"><span class="ainsi-columns__title">Week 6</span><span class="ainsi-columns__body">Joints cut, dry-fitted, and photographed before glue.</span></li>
+    <li class="ainsi-columns__column"><span class="ainsi-columns__title">Week 16</span><span class="ainsi-columns__body">Delivered, levelled, and the care card left on the piece.</span></li>
+</ol></article></main>
+<span class="ainsi-number" aria-hidden="true">15</span>
+</section>
+<section class="ainsi-page" id="a-commission-by-month" data-page="16" data-layout="default">
 <main><article><h1 data-ainsi-entity="e:a6dd91:0">A commission, by month</h1>
 <div data-ainsi-span="e:162cde:0 e:162cde:0" class="ainsi-roadmap" data-ainsi="roadmap">
 <table>
@@ -1714,26 +1747,26 @@ body[data-present] .ainsi-studio__hint { display: none; }
     </tbody>
 </table>
 </div></article></main>
-<span class="ainsi-number" aria-hidden="true">15</span>
+<span class="ainsi-number" aria-hidden="true">16</span>
 </section>
-<section class="ainsi-page" id="page-16" data-page="16" data-layout="default">
+<section class="ainsi-page" id="page-17" data-page="17" data-layout="default">
 <main><article><blockquote data-ainsi-entity="e:470194:0">
 <p>A joint you can see is a joint you meant. Everything else is furniture that hopes nobody looks underneath.</p>
 </blockquote>
 <div class="ainsi-prose ainsi-prose--right">
-<p data-ainsi-entity="e:b186b0:0">— Jussi Lehto, at the bench since 1979</p>
+<p data-ainsi-entity="e:801625:0">— Rakel Lehto, granddaughter of the founder, Esekiel Lehto - at the bench since 1999</p>
 </div></article></main>
-<span class="ainsi-number" aria-hidden="true">16</span>
+<span class="ainsi-number" aria-hidden="true">17</span>
 </section>
-<section class="ainsi-page" id="come-and-stand-in-the-timber-store" data-page="17" data-layout="header">
+<section class="ainsi-page" id="come-and-stand-in-the-timber-store" data-page="18" data-layout="header">
 <main data-align="end"><article><div class="ainsi-prose ainsi-prose--large ainsi-prose--center">
 <h1 data-ainsi-entity="e:361f8e:0">Come and stand in the timber store</h1>
 </div>
-<div class="ainsi-prose ainsi-prose--center ainsi-prose--soft">
-<p data-ainsi-entity="e:32593d:0">Fiskars village, most Thursdays, and the kettle is always on</p>
+<div class="ainsi-prose ainsi-prose--center ainsi-prose--accent">
+<p data-ainsi-entity="e:16c22e:0">Kyrkovägen 1, Åbo. Most Thursdays, and the kettle is always on.</p>
 </div>
-<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:b0cfae:0" src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&amp;w=1600&amp;auto=format&amp;fit=crop" alt="Boards stacked and stickered in a timber store"></figure></article></main>
-<span class="ainsi-number" aria-hidden="true">17</span>
+<figure class="ainsi-full" data-ainsi="full"><img data-ainsi-entity="e:105bc8:0" src="https://images.unsplash.com/photo-1772207896656-4210003d65ee?q=80&amp;w=1600&amp;auto=format&amp;fit=crop" alt="Lehto &amp; Mänty"></figure></article></main>
+<span class="ainsi-number" aria-hidden="true">18</span>
 </section>
 <script type="module">(()=>{var Z=(q)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${q}</svg>`,_={play:Z('<polygon points="6 3 20 12 6 21 6 3"/>'),x:Z('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),menu:Z('<path d="M3 7h18"/><path d="M3 12h14"/><path d="M3 17h14"/>'),grid:Z('<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>')};var B=/Mac|iPhone|iPad/.test(navigator.platform),Q=B?"⌘":"Ctrl",n=B?"⌥":"Alt",r=B?"Meta":"Control",A=(q)=>B?q.metaKey:q.ctrlKey,G=[...document.querySelectorAll(".ainsi-page")];if(G.length)e();function e(){let q=0,E=!1,S=document.createElement("div");S.className="ainsi-toolbar";let D=K("menu","Menu",()=>z?U():i()),p=K("grid",`Grid (${Q}G)`,()=>F?V():O()),R=K("play",`Present (${Q}⏎)`,()=>E?X():m()),T=document.createElement("div");T.className="ainsi-toolbar__count",S.append(D,p,R,T),document.body.append(S);let f,C=()=>{S.setAttribute("data-awake",""),clearTimeout(f),f=setTimeout(()=>{if(!z)S.removeAttribute("data-awake")},2600)};addEventListener("mousemove",C,{passive:!0}),addEventListener("pointerdown",C,{passive:!0}),C();function K(h,N,I){let $=document.createElement("button");return $.className="ainsi-toolbar__button",$.type="button",$.title=N,$.setAttribute("aria-label",N),$.innerHTML=_[h],$.addEventListener("click",(j)=>{j.stopPropagation(),I()}),$}let z;function i(){z=document.createElement("div"),z.className="ainsi-menu",z.addEventListener("click",($)=>$.stopPropagation());let h=document.createElement("div");h.className="ainsi-menu__brand",h.textContent=document.body.hasAttribute("data-ainsi-studio")?"Ainsi Studio":"Ainsi Player",z.append(h);let N=document.createElement("div");z.append(N),s("Slides");let I=E?q:x();G.forEach(($,j)=>{let J=a(`${j+1}  ${k($,j)}`,()=>{U(),H(j,!0)});if(j===I)J.setAttribute("data-active","")}),S.append(z),document.dispatchEvent(new CustomEvent("ainsi:menu",{detail:{panel:z,slot:N,close:U}})),addEventListener("pointerdown",M,!0)}function U(){z?.remove(),z=void 0,removeEventListener("pointerdown",M,!0)}function M(h){let N=h.target;if(z&&!z.contains(N)&&!D.contains(N))U()}function s(h){let N=document.createElement("div");N.className="ainsi-menu__head",N.textContent=h,z.append(N)}function a(h,N){let I=document.createElement("button");return I.className="ainsi-menu__item",I.type="button",I.textContent=h,I.addEventListener("click",N),z.append(I),I}function k(h,N){return h.querySelector("h1, h2, h3")?.textContent?.trim()||`Page ${N+1}`}let F,P=0;function O(){U(),F=document.createElement("div"),F.className="ainsi-overview",P=E?q:x(),G.forEach((h,N)=>{let I=document.createElement("button");I.className="ainsi-overview__cell",I.type="button";let $=document.createElement("div");$.className="ainsi-overview__frame";let j=h.cloneNode(!0);j.removeAttribute("id"),j.removeAttribute("data-current"),$.append(j);let J=document.createElement("div");J.className="ainsi-overview__label",J.textContent=`${N+1}  ${k(h,N)}`,I.append($,J),I.addEventListener("click",(Y)=>{Y.stopPropagation(),V(),H(N,!0)}),F.append(I)}),document.body.append(F),b(),w(P,"center")}let d=()=>[...F.querySelectorAll(".ainsi-overview__cell")];function w(h,N="nearest"){let I=d();P=Math.max(0,Math.min(I.length-1,h)),I.forEach(($,j)=>$.toggleAttribute("data-active",j===P)),I[P]?.focus({preventScroll:!0}),I[P]?.scrollIntoView({block:N})}function o(h){let N=d(),I=N[0]?.offsetTop,$=Math.max(1,N.filter((J)=>J.offsetTop===I).length),j=P;switch(h.key){case"ArrowRight":j+=1;break;case"ArrowLeft":j-=1;break;case"ArrowDown":j+=$;break;case"ArrowUp":j-=$;break;case"Home":j=0;break;case"End":j=N.length-1;break;case"Enter":case" ":return h.preventDefault(),V(),H(P,!0);default:return}h.preventDefault(),w(j)}function b(){if(!F)return;for(let h of F.querySelectorAll(".ainsi-overview__frame"))h.style.setProperty("--ainsi-thumb-scale",String(h.clientWidth/1280))}function V(){F?.remove(),F=void 0}function u(){T.textContent=E?`${q+1}/${G.length}`:""}function m(){E=!0,q=x(),document.body.setAttribute("data-present",""),R.innerHTML=_.x,R.title=R.ariaLabel="Leave presentation",document.documentElement.requestFullscreen?.().catch(()=>{}),c(),g()}function X(){if(E=!1,document.body.removeAttribute("data-present"),R.innerHTML=_.play,R.title=R.ariaLabel=`Present (${Q}⏎)`,document.fullscreenElement)document.exitFullscreen().catch(()=>{});for(let h of G)h.removeAttribute("data-current");G[q]?.scrollIntoView({block:"start"}),u()}function x(){let h=0,N=1/0;return G.forEach((I,$)=>{let j=Math.abs(I.getBoundingClientRect().top);if(j<N)N=j,h=$}),h}function g(){for(let h of G)h.removeAttribute("data-current");G[q]?.setAttribute("data-current",""),u()}function H(h,N=!1){let I=Math.max(0,Math.min(G.length-1,h));if(I===q&&!N)return;if(q=I,E)g();else G[q]?.scrollIntoView({behavior:"smooth",block:"start"})}function c(){if(!E||innerWidth<=900)return;let[h,N]=(getComputedStyle(document.body).getPropertyValue("--ainsi-ratio")||"16 / 9").split("/").map(($)=>Number($.trim())||1),I=1280/(h/N);document.body.style.setProperty("--ainsi-present-scale",String(Math.min(innerWidth/1280,innerHeight/I)))}addEventListener("resize",c,{passive:!0}),addEventListener("resize",b,{passive:!0}),addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&E)X()});let L;function v(){let h=document.body.hasAttribute("data-ainsi-studio");if(document.activeElement?.closest?.("input, textarea, [contenteditable]"))return{mode:"Editing",rows:[]};if(F)return{mode:"Grid",rows:[["← → ↑ ↓","move"],["⏎","open slide"],["esc","close"]]};if(E)return{mode:"Presenting",rows:[["← →","previous / next"],[`${Q} ← →`,"first / last"],[`${Q} G`,"grid"],["esc","leave"]]};return{mode:h?"Studio":"Player",rows:[[`${Q} ⏎`,"present from this slide"],[`${Q} G`,"grid"]]}}function l(){for(let $ of document.querySelectorAll(".ainsi-keys"))$.remove();let{mode:h,rows:N}=v();document.dispatchEvent(new CustomEvent("ainsi:keys",{detail:{mode:h,rows:N,mod:Q,alt:n}})),L=document.createElement("div"),L.className="ainsi-keys";let I=document.createElement("div");I.className="ainsi-keys__head",I.textContent=h,L.append(I);for(let[$,j]of N){let J=document.createElement("kbd");J.textContent=$;let Y=document.createElement("span");Y.textContent=j,L.append(J,Y)}document.body.append(L)}function t(){let h=L;if(L=void 0,!h)return;h.setAttribute("data-out",""),setTimeout(()=>h.remove(),400)}let y=()=>{if(L)t()};addEventListener("keyup",(h)=>{if(h.key===r)y()}),addEventListener("blur",y),addEventListener("keydown",(h)=>{if(h.key===r){if(!L)l();return}if(y(),h.target.closest?.("input, textarea, [contenteditable]"))return;if(h.key==="Escape"){if(z)return U();if(F)return V();if(E)return X();return}if(A(h)&&h.key.toLowerCase()==="g")return h.preventDefault(),F?V():O();if(A(h)&&h.key==="Enter")return h.preventDefault(),E?X():m();if(F)return o(h);if(!E)return;switch(h.key){case"ArrowRight":case"ArrowDown":case" ":case"PageDown":return h.preventDefault(),H(A(h)?G.length-1:q+1);case"ArrowLeft":case"ArrowUp":case"PageUp":return h.preventDefault(),H(A(h)?0:q-1);case"Home":return H(0);case"End":return H(G.length-1)}}),addEventListener("click",(h)=>{if(!E)return;let N=h.target.closest?.('a[href^="#"]');if(!N)return;let I=document.getElementById(decodeURIComponent(N.hash.slice(1)))?.closest(".ainsi-page");if(!I)return;h.preventDefault(),h.stopPropagation(),H(G.indexOf(I),!0)},!0),addEventListener("click",(h)=>{if(h.target.closest?.("a"))return;if(E&&!z&&!F&&innerWidth>900)H(q+1)});let W;addEventListener("touchstart",(h)=>{let N=h.changedTouches[0];W=N?{x:N.clientX,y:N.clientY}:void 0},{passive:!0}),addEventListener("touchend",(h)=>{let N=h.changedTouches[0];if(!E||!W||!N)return;let I=N.clientX-W.x;if(Math.abs(I)>60&&Math.abs(I)>Math.abs(N.clientY-W.y))H(q+(I<0?1:-1));W=void 0},{passive:!0})}})();
 (()=>{var y8=[],T7=[];(()=>{let Z="lc,34,7n,7,7b,19,,,,2,,2,,,20,b,1c,l,g,,2t,7,2,6,2,2,,4,z,,u,r,2j,b,1m,9,9,,o,4,,9,,3,,5,17,3,1n,9,16,o,,x,1i,3,,i,,7,a,2,t,3,1k,,,7,2,2,2,3,9,,a,2,q,,2,3,1k,,,5,4,2,2,3,3,,u,2,3,,b,3,1k,,,8,,3,,3,k,2,m,6,,3,1k,,,7,2,2,2,3,7,3,a,2,u,,1n,5,3,3,,4,9,,14,5,1j,,,7,,3,,4,7,2,b,2,t,3,1k,,,7,,3,,4,7,2,b,2,f,,c,4,1j,2,,7,,3,,4,9,,a,2,t,3,1y,,4,6,,,,8,i,2,1p,,,8,c,8,2q,,,a,b,7,21,2,r,,,,,,4,2,1d,k,,2,5,b,,10,9,,2u,b,,6,n,4,4,3,g,4,d,,,3,6,,f,,jj,3,qa,4,s,3,t,2,u,2,1s,w,9,,19,3,,,39,2,y,,3a,c,4,c,63,5,1l,a,,,,,2,o,2,,1c,1a,2,c,k,5,1b,h,12,9,c,3,u,d,1k,e,1c,k,48,3,,l,4,,6,,2,3,5i,1s,ek,,5f,x,2da,3,3x,,2o,w,fe,6,2x,2,n9w,4,,a,w,2,28,2,7k,,3,,4,,n,5,4,,2b,2,1e,i,q,i,d,,12,8,p,d,18,4,1b,e,10,,1v,e,c,,8,2,1a,,1f,,,3,2,2,5,2,,,15,5,5,2,6k,8,,2,fn4,,kh,g,g,g,a6,2,gt,,6a,,45,5,1ae,3,,2,5,4,14,3,4,,4l,2,fx,4,1t,5,8t,2,25,6,1y,b,1d,4,3e,3,1h,f,15,,2,2,a,4,19,b,7,,1p,3,10,e,g,2,18,,c,3,1c,e,8,4,,2,2k,c,6,,2,,4d,c,l,4,1j,2,,7,2,2,2,3,9,,a,2,2,7,3,5,1v,9,,,2,,,4,,5,,,e,2,2a,i,n,,29,k,6j,7,2,9,r,2,2a,h,2y,d,2t,3,2,a,74,f,6t,6,,2,2,4,,,,2,3x,7,2,7,3,,s,a,14,7,,4,8,,9,b,1a,g,5i,8,5j,8,,8,2a,m,,e,3e,6,3,,,2,,7,,,1u,5,,2,,5,9n,4,9,2,,,1c,7,3,5,n,,44l,,6,f,8ug,i,1xc,5,1n,7,t4,,,1j,7,4,29,,b,2,f57,2,3mp,1a,2,n,f2,5,3,6,8,8,2,7,u,4,44,3,1iz,1j,4,1e,8,,e,,m,5,,f,11s,7,,h,2,7,,2,,5,2s,,4g,7,af,,1p,4,e4,4,72,2,6r,,2,,7,2,5,,d6,7,31,7,240,5".split(",").map(($)=>$?parseInt($,36):1);for(let $=0,J=0;$<Z.length;$++)($%2?T7:y8).push(J=J+Z[$])})();function aQ(Z){if(Z<768)return!1;for(let $=0,J=y8.length;;){let X=$+J>>1;if(Z<y8[X])J=X;else if(Z>=T7[X])$=X+1;else return!0;if($==J)return!1}}function E7(Z){return Z>=127462&&Z<=127487}var P7=8205;function S7(Z,$,J=!0,X=!0){return(J?y7:oQ)(Z,$,X)}function y7(Z,$,J){if($==Z.length)return $;if($&&b7(Z.charCodeAt($))&&k7(Z.charCodeAt($-1)))$--;let X=S8(Z,$);$+=C7(X);while($<Z.length){let Y=S8(Z,$);if(X==P7||Y==P7||J&&aQ(Y))$+=C7(Y),X=Y;else if(E7(Y)){let Q=0,K=$-2;while(K>=0&&E7(S8(Z,K)))Q++,K-=2;if(Q%2==0)break;else $+=2}else break}return $}function oQ(Z,$,J){while($>1){let X=y7(Z,$-2,J);if(X<$)return X;$--}return 0}function S8(Z,$){let J=Z.charCodeAt($);if(!k7(J)||$+1==Z.length)return J;let X=Z.charCodeAt($+1);if(!b7(X))return J;return(J-55296<<10)+(X-56320)+65536}function b7(Z){return Z>=56320&&Z<57344}function k7(Z){return Z>=55296&&Z<56320}function C7(Z){return Z<65536?1:2}class m{lineAt(Z){if(Z<0||Z>this.length)throw RangeError(`Invalid position ${Z} in document of length ${this.length}`);return this.lineInner(Z,!1,1,0)}line(Z){if(Z<1||Z>this.lines)throw RangeError(`Invalid line number ${Z} in ${this.lines}-line document`);return this.lineInner(Z,!0,1,0)}replace(Z,$,J){[Z,$]=M0(this,Z,$);let X=[];if(this.decompose(0,Z,X,2),J.length)J.decompose(0,J.length,X,3);return this.decompose($,this.length,X,1),V2.from(X,this.length-($-Z)+J.length)}append(Z){return this.replace(this.length,this.length,Z)}slice(Z,$=this.length){[Z,$]=M0(this,Z,$);let J=[];return this.decompose(Z,$,J,0),V2.from(J,$-Z)}eq(Z){if(Z==this)return!0;if(Z.length!=this.length||Z.lines!=this.lines)return!1;let $=this.scanIdentical(Z,1),J=this.length-this.scanIdentical(Z,-1),X=new R0(this),Y=new R0(Z);for(let Q=$,K=$;;){if(X.next(Q),Y.next(Q),Q=0,X.lineBreak!=Y.lineBreak||X.done!=Y.done||X.value!=Y.value)return!1;if(K+=X.value.length,X.done||K>=J)return!0}}iter(Z=1){return new R0(this,Z)}iterRange(Z,$=this.length){return new p8(this,Z,$)}iterLines(Z,$){let J;if(Z==null)J=this.iter();else{if($==null)$=this.lines+1;let X=this.line(Z).from;J=this.iterRange(X,Math.max(X,$==this.lines+1?this.length:$<=1?0:this.line($-1).to))}return new d8(J)}toString(){return this.sliceString(0)}toJSON(){let Z=[];return this.flatten(Z),Z}constructor(){}static of(Z){if(Z.length==0)throw RangeError("A document must have at least one line");if(Z.length==1&&!Z[0])return m.empty;return Z.length<=32?new G1(Z):V2.from(G1.split(Z,[]))}}class G1 extends m{constructor(Z,$=tQ(Z)){super();this.text=Z,this.length=$}get lines(){return this.text.length}get children(){return null}lineInner(Z,$,J,X){for(let Y=0;;Y++){let Q=this.text[Y],K=X+Q.length;if(($?J:K)>=Z)return new u7(X,K,J,Q);X=K+1,J++}}decompose(Z,$,J,X){let Y=Z<=0&&$>=this.length?this:new G1(x7(this.text,Z,$),Math.min($,this.length)-Math.max(0,Z));if(X&1){let Q=J.pop(),K=U6(Y.text,Q.text.slice(),0,Y.length);if(K.length<=32)J.push(new G1(K,Q.length+Y.length));else{let U=K.length>>1;J.push(new G1(K.slice(0,U)),new G1(K.slice(U)))}}else J.push(Y)}replace(Z,$,J){if(!(J instanceof G1))return super.replace(Z,$,J);[Z,$]=M0(this,Z,$);let X=U6(this.text,U6(J.text,x7(this.text,0,Z)),$),Y=this.length+J.length-($-Z);if(X.length<=32)return new G1(X,Y);return V2.from(G1.split(X,[]),Y)}sliceString(Z,$=this.length,J=`

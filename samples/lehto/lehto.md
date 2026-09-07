@@ -8,14 +8,14 @@ theme: default
 # Lehto & Mänty
 
 <!-- ainsi: prose color=accent -->
-Bespoke furniture from Fiskars, Finland, since 1968
+Bespoke woodwork from Åbo, Finland, since 1928
 
-![The bench room in morning light, shavings on the floor](https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=1600&auto=format&fit=crop)
+![The bench room in morning light, shavings on the floor](https://images.unsplash.com/photo-1547609434-b732edfee020?q=80&w=1600&auto=format&fit=crop)
 
 ---
 
 <!-- ainsi: prose color=accent -->
-# What this deck covers
+# Wood runs in family
 
 <!-- ainsi: agenda -->
 1. **The workshop** four benches, one kiln, and what that limits us to
@@ -34,36 +34,48 @@ Four benches, one kiln, sixty pieces a year
 ---
 
 <!-- ainsi: layout split side=right size=third -->
-# We make what a machine cannot, and say so about the rest
+# What a machine cannot
 
 A dining table with a mitred frame and drawbored joints takes a joiner eleven days. The same table, dowelled and screwed, takes a factory eleven minutes. Both will be in the room for a year; only one will still be flat in twenty.
 
 So the question we ask first is how long the piece has to last, and the second is what the room does to it. Underfloor heating and a sixteen-metre window are harder on a table than any customer.
 
-> [!NOTE]
-> Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors. A piece shipped to a coastal house in Spain is made to a different number, and we say which on the drawing.
+> [!WARNING]
+> Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors.
+A piece shipped to a coastal house in Spain is made to a different number.
 
-![A joiner cutting a mortise by hand](https://images.unsplash.com/photo-1516216628859-9bccecab13ca?q=80&w=1200&auto=format&fit=crop)
+![A joiner cutting a mortise by hand](https://images.unsplash.com/photo-1617873228868-f64a54e91a01?q=80&w=1200&auto=format&fit=crop)
 
 ---
 
 # The workshop in four numbers
 
 <!-- ainsi: figures -->
-- **58** years in the same building, Lehto since 1968 and Mänty since 1994
+- **98** years in the same building, Lehto since 1928 and Mänty since 1954
 - **60** pieces a year, which is the ceiling of four joiners and one kiln
-- **7%** moisture at delivery, measured on the piece and written on the drawing
+- **7%** moisture at delivery, measured on the piece
 - **25 yr** structural guarantee on every joint we cut
+
+---
+
+# Ninety-eight years on the same street
+
+<!-- ainsi: timeline -->
+- **1928** Esekiel Lehto rents the ground floor on Kyrkovägen and cuts church furniture.
+- **1954** Väinö Mänty arrives with a veneer press, and the name takes its ampersand.
+- **1978** The kiln is built in the yard, and the workshop stops buying timber it cannot dry itself.
+- **1999** Rakel Lehto starts as an apprentice at the bench she runs now.
 
 ---
 
 # Four pieces from this year
 
 <!-- ainsi: tiles columns=4 -->
-- ![An oak dining table with a mitred frame](https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=900&auto=format&fit=crop) Ash table, 3.2 m
-- ![A wall of fitted cabinetry in pale wood](https://images.unsplash.com/photo-1556909212-d5b604d0c90d?q=80&w=900&auto=format&fit=crop) Fitted wall, birch ply and oak
-- ![A stack of hand-cut dovetails](https://images.unsplash.com/photo-1567016432779-094069958ea5?q=80&w=900&auto=format&fit=crop) Drawers, hand-cut
-- ![A finished chair against a white wall](https://images.unsplash.com/photo-1600494603989-9650cf6ddd3d?q=80&w=900&auto=format&fit=crop) Chair, sixth prototype
+- ![A dining table](https://images.unsplash.com/photo-1719899913493-1e508c3833e8?q=80&w=900&auto=format&fit=crop) Dining table
+- ![A wall of fitted cabinetry](https://images.unsplash.com/photo-1762815990312-5d77b1e907f5?q=80&w=900&auto=format&fit=crop) Fitted wall, birch
+- ![Woodwork](https://images.unsplash.com/photo-1572293070287-cc6e7bade025?q=80&w=900&auto=format&fit=crop) Woodwork for new museum in Utsjoki
+- ![A proto chair](https://images.unsplash.com/photo-1687068385765-01520ad1a599?q=80&w=900&auto=format&fit=crop) Chair, sixth prototype
+
 
 ---
 
@@ -144,11 +156,11 @@ Sixteen weeks, four decisions, one of them yours alone
 
 # Brief to delivery
 
-<!-- ainsi: timeline -->
-- **Week 1** Room measured, heating and glazing recorded, drawings agreed.
-- **Week 3** Boards chosen with you in the timber store, grain marked for the top.
-- **Week 6** Joints cut, dry-fitted, and photographed before glue.
-- **Week 16** Delivered, levelled, and the care card left on the piece.
+<!-- ainsi: columns -->
+1. **Week 1** Room measured, heating and glazing recorded, drawings agreed.
+2. **Week 3** Boards chosen with you in the timber store, grain marked for the top.
+3. **Week 6** Joints cut, dry-fitted, and photographed before glue.
+4. **Week 16** Delivered, levelled, and the care card left on the piece.
 
 ---
 
@@ -167,7 +179,7 @@ Sixteen weeks, four decisions, one of them yours alone
 > A joint you can see is a joint you meant. Everything else is furniture that hopes nobody looks underneath.
 
 <!-- ainsi: prose align=right -->
-— Jussi Lehto, at the bench since 1979
+— Rakel Lehto, granddaughter of the founder, Esekiel Lehto - at the bench since 1999
 
 ---
 
@@ -176,7 +188,7 @@ Sixteen weeks, four decisions, one of them yours alone
 <!-- ainsi: prose size=large align=center -->
 # Come and stand in the timber store
 
-<!-- ainsi: prose align=center color=soft -->
-Fiskars village, most Thursdays, and the kettle is always on
+<!-- ainsi: prose align=center color=accent -->
+Kyrkovägen 1, Åbo. Most Thursdays, and the kettle is always on.
 
-![Boards stacked and stickered in a timber store](https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?q=80&w=1600&auto=format&fit=crop)
+![Lehto & Mänty](https://images.unsplash.com/photo-1772207896656-4210003d65ee?q=80&w=1600&auto=format&fit=crop)
