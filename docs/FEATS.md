@@ -30,13 +30,13 @@ Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 
 
 # Later
 
-## A reference for the grammar (feat)
+## A generated reference (feat)
 
-Nothing states the directive syntax in full, the frontmatter keys, the props each component and layout accepts, or what the studio's menus do. That knowledge lives in `src/components/*/index.ts` as `about` strings and zod schemas, and in the skill, which teaches an agent rather than a person. The README is the pitch and the tour and deliberately stops at naming the components.
+`docs/guide/` is written by hand, and half of it restates what the code already declares: every prop table under Components and Layouts is a copy of a zod schema, and a prop added without touching the guide leaves a page that is quietly wrong. The skill is a third copy of the same grammar, kept deliberately short for an agent to read whole.
 
-The repo is public now, so a reader who is not driving Claude Code has nowhere to go after the README.
+Generate those pages from the registry instead: walk the components and layouts, emit `about`, what each accepts, whether it splits, and the props with their defaults. Then the hand-written pages keep only what no schema holds, which is most of Writing, Themes, the CLI and the studio.
 
-Done is a site generated from the definitions, not written beside them: a component that gains a prop gains a documented prop, and a renamed one cannot leave a stale page behind. Hand-written pages on top of that for the frontmatter, writing a theme, and the studio's own gestures. Prose restating the zod schemas by hand is the failure to avoid; it is stale inside a week and then it outvotes the code.
+Done is a build step plus a test that fails when a generated page is stale, so the copy cannot drift silently. A site rendering the same pages comes after that, if ever; the drift is the problem, the site is a nicety.
 
 ## Granular page swap (feat)
 
