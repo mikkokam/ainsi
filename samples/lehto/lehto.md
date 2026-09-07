@@ -36,10 +36,12 @@ Four benches, one kiln, sixty pieces a year
 
 ---
 
-<!-- ainsi: layout split side=right size=third -->
+<!-- ainsi: layout split side=left size=third -->
 # What a machine cannot
 
-A dining table with a mitred frame and drawbored joints takes a joiner eleven days. The same table, dowelled and screwed, takes a factory eleven minutes. Both will be in the room for a year; only one will still be flat in twenty.
+A dining table with a mitred frame and drawbored joints takes a joiner eleven days.
+The same table, dowelled and screwed, takes a factory eleven minutes.
+Both will be in the room for a year; only one will still be in use in twenty.
 
 So the question we ask first is how long the piece has to last, and the second is what the room does to it.
 Underfloor heating and a sixteen-metre window are harder on a table than any customer.
