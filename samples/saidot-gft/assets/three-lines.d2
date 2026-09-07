@@ -4,12 +4,12 @@
 
 ...@../../../../d2-style/theme/house
 
-third: THIRD LINE · INDEPENDENT ASSURANCE {
+third: INDEPENDENT ASSURANCE · THIRD LINE AND EXTERNAL {
   class: violet
   label.near: top-left
 
   audit: |md <div style="text-align:center"><b>Internal audit</b><br/><span style="color:#64748b">tests whether the control<br/>held, not the claim that it did</span></div> | {class: icon; width: 230; icon: ../../../../d2-style/icons/lucide-clipboard-check.svg}
-  conformity: |md <div style="text-align:center"><b>Conformity assessment</b><br/><span style="color:#64748b">EU AI Act · ISO 42001</span></div> | {class: icon; width: 200; icon: ../../../../d2-style/icons/lucide-badge-check.svg}
+  external: |md <div style="text-align:center"><b>External assurance</b><br/><span style="color:#64748b">ISO 42001 certification<br/>notified body or authority, where required</span></div> | {class: icon; width: 290; icon: ../../../../d2-style/icons/lucide-landmark.svg}
 }
 
 second: SECOND LINE · GOVERNANCE {
@@ -29,6 +29,7 @@ first: FIRST LINE · BUILD AND RUN {
 }
 
 third <- second: the record, with its trail
+third <- first: samples what actually ran
 second -> first: the tier and the control set
 second <- first: {source-arrowhead.label: evidence\nattestation}
 

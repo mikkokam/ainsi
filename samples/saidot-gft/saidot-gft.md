@@ -12,7 +12,7 @@ Governance and enforcement
 
 <!-- ainsi: boxes stretch -->
 1. **Models** Swapped for a newer version, a cheaper provider or a fine-tune, and every system built on the old one inherits the change.
-2. **Agents & the platforms** Built on Foundry, Bedrock, Google or in-house orchestration, acting on business systems through tools, replaced in weeks.
+2. **Platforms, systems & agents** Built on Foundry, Bedrock, Google or in-house orchestration, acting on business systems through tools, replaced in weeks.
 3. **AI inside the tools already in use** Copilots in productivity suites, assistants inside SaaS, GenAI in the delivery pipeline.
 Adopted faster than any review cycle, often without anyone registering them.
 
@@ -25,17 +25,18 @@ Adopted faster than any review cycle, often without anyone registering them.
 
 # Three lines, one record
 
-The model is not new. What is new is what sits in the first line: a platform that enforces its own controls and reports on itself.
+*The model is not new.* What is new is what sits in the first line: a platform that enforces its own controls and reports on itself.
 
-The second line needs a record that is not the first line's own reporting. The tier, the control set, the thresholds, and the trail of who decided what, and when.
+The second line needs its own record. The first line emits the evidence. It does not hold the register, set the tier, or decide when a control is satisfied.
 
-The third line tests that record against what actually ran. Internal audit and external conformity assessment, without asking the teams under audit to assemble their own evidence.
+The third line tests that record against what actually ran, sampling the runtime directly. Neither internal audit nor an external assessor should have to ask the teams under audit to assemble their own evidence.
 
 <!-- ainsi: prose size=small color=soft -->
-ISO/IEC 42001 asks for internal audit and management review. The EU AI Act asks for a conformity assessment and the technical documentation behind it. Both assume the record exists.
+ISO/IEC 42001 asks for internal audit and management review.
+The EU AI Act asks high-risk providers for a conformity assessment, in most cases their own, and the technical documentation behind it. Both assume the record exists.
 
-<!-- ainsi: full size=l align=right -->
-![Three stacked bands. Third line, independent assurance: internal audit and conformity assessment. Second line, governance: AI risk and compliance, and the record. First line, build and run: builders and platform teams, and enforcement in each runtime. The tier and the control set travel down, evidence comes up, the record goes to assurance.](assets/three-lines.png)
+<!-- ainsi: full size=m align=right -->
+![Three stacked bands. Independent assurance, third line and external: internal audit, and external assurance for certification and notified bodies. Second line, governance: AI risk and compliance, and the record. First line, build and run: builders and platform teams, and enforcement in each runtime. The tier and the control set travel down, evidence comes up, the record goes to assurance, and assurance samples the runtime directly.](assets/three-lines.png)
 
 ---
 
