@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { readdir, rename } from "node:fs/promises";
-import { basename, dirname, extname, join, resolve } from "node:path";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
 import { END, group } from "./group";
 import { fit, openFit, type FitSession } from "./fit";
@@ -52,6 +52,13 @@ async function untitled(): Promise<string> {
 }
 
 let deck = input ? resolve(input) : await untitled();
+/*
+ * What the studio's file browser may reach: where the command was run, or the deck's own
+ * folder when the deck lies outside it. The studio is an http server on localhost, so an
+ * endpoint taking any path would let any page in the browser read any file on the machine
+ * through it. To work on a deck elsewhere, start the studio there.
+ */
+const browseRoot = deck.startsWith(process.cwd() + "/") ? process.cwd() : dirname(deck);
 const editing = !building;
 const sibling = (ext: string): string => join(dirname(deck), `${basename(deck, extname(deck))}${ext}`);
 const target = flag("-o");
@@ -293,6 +300,22 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
     }
 }
 
+/** point the studio at another deck: the outputs, the watch and the editor follow it */
+function retarget(next: string): void {
+    deck = next;
+    output = sibling(".html");
+    pdfOutput = sibling(".pdf");
+    pptxOutput = sibling(".pptx");
+    server.retarget(deck);
+    server.changed(basename(deck));
+}
+
+/** a path the browser asked for, resolved under the browse root or refused */
+function under(root: string, at: unknown): string | undefined {
+    const path = resolve(root, typeof at === "string" ? at : "");
+    return path === root || path.startsWith(root + "/") ? path : undefined;
+}
+
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = themePath(themeName, dirname(deck));
@@ -397,6 +420,32 @@ const server = serve({
             server.changed(basename(deck));
             return new Response("ok");
         }
+        if (url.pathname === "/__browse") {
+            const at = under(browseRoot, url.searchParams.get("at") ?? dirname(deck));
+            if (!at) return new Response("outside the folder the studio was started in", { status: 403 });
+            const entries = await readdir(at, { withFileTypes: true });
+            const listed = entries
+                .filter(e => !e.name.startsWith(".") && (e.isDirectory() || e.name.endsWith(".md")))
+                .map(e => ({ name: e.name, dir: e.isDirectory() }))
+                .sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name));
+            return Response.json({
+                at: relative(browseRoot, at),
+                here: basename(at) || basename(browseRoot),
+                up: at === browseRoot ? undefined : relative(browseRoot, dirname(at)),
+                entries: listed,
+                current: at === dirname(deck) ? basename(deck) : undefined,
+            });
+        }
+        if (url.pathname === "/__open" && request.method === "POST") {
+            const { path } = await request.json();
+            const next = under(browseRoot, path);
+            if (!next || !next.endsWith(".md")) return new Response("a markdown deck under the studio's folder", { status: 403 });
+            if (!(await Bun.file(next).exists())) return new Response(`${basename(next)} is gone`, { status: 404 });
+            // the theme and component roots were handed to the watcher at startup, so a deck on
+            // another theme rebuilds on its own edits but not on that theme's
+            if (next !== deck) retarget(next);
+            return Response.json({ file: basename(deck) });
+        }
         if (url.pathname === "/__rename" && request.method === "POST") {
             const { name } = await request.json();
             const wanted = typeof name === "string" ? name.trim() : "";
@@ -409,11 +458,7 @@ const server = serve({
                 await rename(deck, next);
                 deck = next;
                 if (await Bun.file(html).exists() && !(await Bun.file(sibling(".html")).exists())) await rename(html, sibling(".html"));
-                output = sibling(".html");
-                pdfOutput = sibling(".pdf");
-                pptxOutput = sibling(".pptx");
-                server.retarget(deck);
-                server.changed(basename(deck));
+                retarget(next);
             }
             return Response.json({ file: basename(deck) });
         }

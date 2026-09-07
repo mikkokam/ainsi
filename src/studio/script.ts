@@ -254,6 +254,7 @@ async function init(): Promise<void> {
         const { panel, slot, close } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement; close(): void };
         slot.append(
             menuItem("Edit source (E)", () => openRaw()),
+            menuItem("Open deck…", () => openDrill(panel)),
             menuItem("Deck settings…", () => { close(); openDeck(); }),
             menuItem("Theme…", () => themeDrill(panel)),
             menuItem("Export…", () => exportDrill(panel, close)),
@@ -540,6 +541,38 @@ function explicit(fields: Field[], props: Record<string, unknown>): Record<strin
         if (value !== undefined && value !== field.default) out[field.name] = value;
     }
     return out;
+}
+
+/*
+ * The file browser: folders and markdown, nothing else, under the folder the studio was
+ * started in. Opening a deck is the same as having launched the studio on it, so the server
+ * repoints and pushes a reload rather than the client patching itself into the new deck.
+ */
+async function openDrill(panel: HTMLElement, at?: string): Promise<void> {
+    const query = at === undefined ? "" : `?at=${encodeURIComponent(at)}`;
+    const response = await fetch(`/__browse${query}`);
+    if (!response.ok) return hint(await response.text(), true, 4000);
+    const { here, up, entries, current } = await response.json() as {
+        here: string; up?: string; entries: { name: string; dir: boolean }[]; current?: string;
+    };
+    const rows = entries.map(entry => {
+        const row = menuItem(entry.dir ? `${entry.name}/` : entry.name, () => {
+            if (entry.dir) return void openDrill(panel, entry.name === ".." ? up : join(at ?? "", entry.name));
+            open(join(at ?? "", entry.name));
+        });
+        if (!entry.dir && entry.name === current) row.setAttribute("data-active", "");
+        return row;
+    });
+    if (up !== undefined) rows.unshift(menuItem("../", () => void openDrill(panel, up)));
+    drill(panel, here, ...(rows.length ? rows : [label("nothing here")]));
+}
+
+const join = (a: string, b: string): string => (a ? `${a}/${b}` : b);
+
+async function open(path: string): Promise<void> {
+    const response = await fetch("/__open", { method: "POST", body: JSON.stringify({ path }) });
+    if (!response.ok) return hint((await response.text()) || "could not open", true, 4000);
+    // the server pushes a reload once it has repointed; nothing to patch here
 }
 
 async function themeDrill(panel: HTMLElement): Promise<void> {

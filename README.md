@@ -23,7 +23,7 @@ For `--fit` and PDF export, also `bunx playwright install chromium`, or point `A
     ainsi deck.md                     # opens the studio on the deck
     ainsi                             # opens the studio on a new untitled.md here
 
-The studio is a browser page over your markdown file. Click a block to edit its text, right-click for what it is and what it can become, try a theme, export a PDF. Every change is written to the `.md` file, and any other editor or agent writing that file reloads the studio. The file name sits in the toolbar; type over it to rename.
+The studio is a browser page over your markdown file. Click a block to edit its text, right-click for what it is and what it can become, try a theme, export a PDF. Every change is written to the `.md` file, and any other editor or agent writing that file reloads the studio. The file name sits in the toolbar; type over it to rename. **Open deck…** in the menu browses the folder you started the studio in, folders and markdown only, and opening one is the same as having launched the studio on it.
 
 `ainsi build` writes a file beside the deck and exits:
 
