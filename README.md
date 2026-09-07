@@ -13,10 +13,10 @@ Requires [Bun](https://bun.sh).
 
     git clone git@github.com:mikkokam/ainsi.git
     cd ainsi
-    bun install
+    bun install --production          # 25 MB; plain `bun install` adds the browser wrapper, 38 MB
     bun link                          # puts `ainsi` on the PATH, globally
 
-For `--fit` and PDF export, also `bunx playwright install chromium`, or point `AINSI_CHROMIUM=/path/to/chrome` at a browser already on the machine.
+`--fit`, PDF and PPTX measure and print in a headless browser, which `--production` leaves out. To have them: `bun install` here, then `bunx playwright install chromium`, or point `AINSI_CHROMIUM=/path/to/chrome` at a browser already on the machine. Without a browser, a build says so and writes unfitted pages rather than failing.
 
 ## Use
 
@@ -50,6 +50,7 @@ Diagrams are the sibling repo, [ainsi-d2](https://github.com/mikkokam/ainsi-d2):
 
 ## Development
 
+    bun install                       # the full tree, browser wrapper included
     bun test
 
 `docs/ARCHITECTURE.md` is how it is built. `docs/FEATS.md` is what is not built. The core is plain TypeScript with no framework: one engine (parse, paginate, group, fit, render) and three consumers of it, the CLI, the player shipped inside every deck, and the studio served by the dev server. A theme is a token list under `themes/`, a component under `src/components/` ships its own CSS against those tokens, and the engine owns the page box.

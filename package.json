@@ -1,5 +1,13 @@
 {
     "name": "ainsi",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "ainsi": "src/cli.ts"
+    },
+    "scripts": {
+        "test": "bun test"
+    },
     "dependencies": {
         "@codemirror/lang-markdown": "^6.5.2",
         "@codemirror/search": "^6.7.2",
@@ -17,15 +25,7 @@
         "yaml": "^2.7.0",
         "zod": "^3.24.1"
     },
-    "optionalDependencies": {
+    "devDependencies": {
         "playwright-core": "^1.62.1"
-    },
-    "bin": {
-        "ainsi": "src/cli.ts"
-    },
-    "private": true,
-    "scripts": {
-        "test": "bun test"
-    },
-    "type": "module"
+    }
 }

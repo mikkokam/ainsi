@@ -9,8 +9,9 @@ import type { Block, Diagnostic, Entity, Page, Settings } from "./types";
  * silently clipped.
  *
  * Requires a real browser: overflow is a layout fact, and no heuristic replaces measuring it.
- * This must never be a hard dependency. `playwright-core` is a small wrapper with no browser
- * binary; `chromium.launch()` only succeeds if `playwright install chromium` has been run
+ * This must never be a hard dependency. `playwright-core` is a dev dependency, so a default
+ * install does not have it at all; where it is present it is a wrapper with no browser binary,
+ * and `chromium.launch()` only succeeds if `playwright install chromium` has been run
  * separately, or `AINSI_CHROMIUM` points at an existing binary. Any failure to import or launch
  * degrades to one diagnostic and the pages are returned unchanged, never thrown. A plain
  * build never calls this at all.
@@ -333,8 +334,8 @@ async function launch(diagnostics: Diagnostic[]): Promise<import("playwright-cor
     } catch {
         diagnostics.push({
             level: "warn",
-            message: "no browser available for fit checking; run `bunx playwright install chromium`, or set "
-                + "AINSI_CHROMIUM to an existing binary, to enable it. Pages are unchanged.",
+            message: "no browser available for fit checking; run `bun install && bunx playwright install "
+                + "chromium` in the ainsi checkout, or set AINSI_CHROMIUM to an existing binary, to enable it. Pages are unchanged.",
         });
         return undefined;
     }

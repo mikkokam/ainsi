@@ -28,17 +28,7 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## Playwright out of the default install (chore)
-
-`playwright-core` is an optional dependency that ships no browser binary, but `bun install` still fetches 14 MB of it against a 27 MB tree, for a wrapper most builds never load. Moving it to a dev dependency, with `--fit` and `--pdf` saying what to install, halves a default install and changes nothing else. The degrade path and its test already exist.
-
 # Later
-
-## The file stays the only mutation point (feat) [invariant]
-
-One line for ARCHITECTURE, maintainer's to write: the deck file is the single mutation point; no writer ever gets a second path, not a DOM-patch endpoint, not a database, not a per-block API that bypasses the file. Everything the studio proved rests on it, and it is also what keeps multi-user reachable later: a CRDT retrofits cleanly behind one door and not at all behind several, which is the corner Obsidian is in.
-
-Done: the sentence stands in ARCHITECTURE and this row is deleted.
 
 ## Granular page swap (feat)
 

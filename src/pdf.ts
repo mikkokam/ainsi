@@ -32,7 +32,11 @@ export async function pdf(html: string, path: string, session?: FitSession, imag
     const page = own.page;
     if (!page) {
         if (!session) await own.close();
-        diagnostics.push({ level: "warn", message: `no browser available; ${path} was not written` });
+        diagnostics.push({
+            level: "warn",
+            message: `no browser available, so ${path} was not written; run \`bun install && bunx playwright `
+                + "install chromium` in the ainsi checkout, or set AINSI_CHROMIUM to an existing binary",
+        });
         return { written: false, diagnostics };
     }
     try {

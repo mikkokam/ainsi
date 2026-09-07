@@ -189,11 +189,19 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         : { ...renderPages(assembled.pages, assembled.title, assembled.settings, buildOptions), pages: assembled.pages };
     diagnostics.push(...result.diagnostics);
 
-    if (printing) diagnostics.push(...(await print(result.pages, assembled.title, assembled.settings, buildOptions)).diagnostics);
-    else await Bun.write(output, result.html);
+    let written = output;
+    if (printing) {
+        const printed = await print(result.pages, assembled.title, assembled.settings, buildOptions);
+        diagnostics.push(...printed.diagnostics);
+        // no browser means no pdf; the summary says where the pages went, not where they would have
+        written = printed.written ? pdfOutput : "";
+    } else {
+        await Bun.write(output, result.html);
+    }
 
     for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
-    console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks -> ${printing ? pdfOutput : output}`);
+    const where = written ? ` -> ${written}` : ", nothing written";
+    console.log(`theme ${settings.theme}, ${result.pages.length} pages, ${result.pages.flatMap(p => p.blocks).length} blocks${where}`);
     for (const page of result.pages) {
         const blocks = page.blocks.map(b => `${b.component}${b.origin === "directive" ? "*" : ""}`).join(", ");
         const fitted = [page.scale === 1 ? "" : ` x${page.scale}`, page.overflow ? " OVERFLOWS" : ""].join("");
