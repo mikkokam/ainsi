@@ -1,8 +1,10 @@
 # Ainsi
 
-Write a deck in markdown. Get one self-contained HTML page: it presents full-screen, prints, exports to PDF and reads as a document on a phone. No database, no account, nothing to export from to get your work back out: the deck is a `.md` file and the result is an `.html` file.
+Presentations in markdown, for agent-first work on local files, with a GUI for the last mile.
 
-It all runs locally, with no service behind it, and your agent edits the same file the studio does. That is what the tool is for: markdown carries the content and almost nothing else, where the same deck as a `.pptx` is mostly a description of how it looks. A human and an agent can work the same deck in turn, on one file small enough to keep in context, and spend that attention on what the deck says. How it looks is an outcome.
+Write a deck in markdown and get one self-contained HTML page: it presents full-screen, prints, exports to PDF and to an editable PPTX, and reads as a document on a phone. Nothing runs but your machine. There is no service, no account, and nothing to export from to get your work back, because the deck is a `.md` file and the result is an `.html` file beside it.
+
+The file your agent edits is the file you edit. A deck here is a few kilobytes of what you actually say; the same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, most of it spacing, run properties and theme parts. An agent reading that spends its context on how a bullet is indented. Markdown keeps the context tight and the attention, yours and the agent's, on what the deck says.
 
 The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched.
 
@@ -10,6 +12,10 @@ Pages are computed, not authored. Too much on a slide and the solver steps the t
 
     <!-- ainsi: timeline axis=horizontal -->     a run of blocks
     <!-- ainsi:layout header align=center -->    the page it sits on
+
+The last mile is visual, so there is a studio: a browser page over the same file, where you click a block and change what it is, edit the text, try another theme. The agent writes what is said, you settle how it lands, and neither of you leaves the `.md`.
+
+Claude Code is the first-class client. The repo ships as a plugin whose skill teaches the grammar and the build loop, so the agent produces a deck in the house look and argues with you about the content instead of the formatting.
 
 Version 0.1. Under active development; commands and markup may change between commits.
 
@@ -29,7 +35,7 @@ Requires [Bun](https://bun.sh).
     ainsi deck.md                     # opens the studio on the deck
     ainsi                             # opens the studio on the chooser: open a deck here, or make one
 
-The studio is a browser page over your markdown file. Click a block to edit its text, right-click for what it is and what it can become, try a theme, export a PDF or an editable PPTX. Every change is written to the `.md` file, and any other editor or agent writing that file reloads the studio. The file name sits in the toolbar; type over it to rename. **Open deck…** in the menu browses the folder you started the studio in, folders and markdown only, and opening one is the same as having launched the studio on it. Nothing is written until you ask: `ainsi` on its own creates no file, and **New presentation** is what makes `untitled.md`.
+Click a block to edit its text, right-click for what it is and what it can become, try a theme, export a PDF or an editable PPTX. Every change is written to the `.md` file, and any other editor or agent writing that file reloads the studio. The file name sits in the toolbar; type over it to rename. **Open deck…** in the menu browses the folder you started the studio in, folders and markdown only, and opening one is the same as having launched the studio on it. Nothing is written until you ask: `ainsi` on its own creates no file, and **New presentation** is what makes `untitled.md`.
 
 **PPTX, editable** in the studio's export menu writes the deck as PowerPoint: everything that is not text is one background picture per page, exactly as it rendered, and every run of text sits above it as a native text box at the same position, size, colour and weight. A client can click any line and retype it, and cannot break the design, because the design is pixels underneath.
 
@@ -51,7 +57,7 @@ Presenting is ⌘⏎ in the browser, Ctrl+Enter elsewhere: full-screen, and bloc
 
 ## In Claude Code
 
-The repo is also a plugin: a skill that teaches an agent the deck grammar, the directives and the build loop. It calls the `ainsi` on your PATH, so install the tool first.
+The skill calls the `ainsi` on your PATH, so install the tool first.
 
     claude plugin marketplace add mikkokam/ainsi
     claude plugin install ainsi@ainsi
