@@ -28,6 +28,8 @@ export interface Settings {
     theme: string;
     ratio: string;
     h1StartsPage: boolean;
+    /** page numbers on every page but a cover; off hides them from print, export and presenting, never from the reading view */
+    numbers: boolean;
     /** the deck's house layout; a page directive is an exception lasting one page */
     layout: string;
     /** the deck's mark, a path beside the deck or a url; the theme places it */

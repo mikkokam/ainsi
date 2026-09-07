@@ -6,7 +6,7 @@ import { toString as mdToString } from "mdast-util-to-string";
 import { parse as parseYaml } from "yaml";
 import type { Diagnostic, Directive, Entity, EntityKind, Settings, Source } from "./types";
 
-const DEFAULTS: Settings = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default" };
+const DEFAULTS: Settings = { theme: "default", ratio: "16:9", h1StartsPage: false, layout: "default", numbers: true };
 
 const DIRECTIVE = /^<!--\s*ainsi\s*:\s*([\s\S]*?)\s*-->$/;
 const LAYOUT = "layout";
@@ -63,6 +63,8 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
         if (node.type === "yaml") {
             try {
                 settings = { ...DEFAULTS, ...(parseYaml(node.value) ?? {}) };
+                // yaml 1.2 keeps on/off as strings; a deck says `numbers: off` and means it
+                settings.numbers = !/^(false|off|no|0)$/i.test(String(settings.numbers));
             } catch (e) {
                 diagnostics.push({ level: "warn", message: `frontmatter is not valid YAML: ${String(e)}` });
             }

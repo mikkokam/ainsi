@@ -67,18 +67,22 @@ body.ainsi {
 }
 
 /*
- * Page number, bottom left, in the scroll view only, and never on a cover. It takes
- * currentColor, so it reads correctly over a header page's image without the layout having
- * to say anything.
+ * Page number, bottom left, never on a cover. An opaque mix of the ink into the ground rather
+ * than a faded ink, so an export lifting the text gets the colour that shows. It sits outside
+ * main, so a toned page names its own pair. numbers: off keeps it as a reading aid in the
+ * scroll view and drops it from presenting, print and export.
  */
-body.ainsi:not([data-present]) .ainsi-page::after {
-    content: attr(data-page);
+.ainsi-page .ainsi-number {
     position: absolute; bottom: 1.4rem; left: 1.6rem;
     font: 500 12px/1 var(--ainsi-font-mono);
-    color: currentColor; opacity: .45;
+    color: color-mix(in srgb, var(--ainsi-page-ink) 45%, var(--ainsi-page-ground));
     pointer-events: none;
 }
-body.ainsi:not([data-present]) .ainsi-page[data-layout="header"]::after { content: none; }
+.ainsi-page:has(> main[data-tone="accent"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-accent-ink) 45%, var(--ainsi-page-accent)); }
+.ainsi-page:has(> main[data-tone="inverse"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-ground) 45%, var(--ainsi-page-ink)); }
+.ainsi-page:has(> main[data-tone="soft"]) .ainsi-number { color: color-mix(in srgb, var(--ainsi-page-ink) 45%, var(--ainsi-page-tint)); }
+.ainsi-page[data-layout="header"] .ainsi-number { display: none; }
+body[data-numbers="off"][data-present] .ainsi-number { display: none; }
 
 /*
  * The page inset lives on main, not on the page. A percentage resolves against the
@@ -190,7 +194,7 @@ body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
     body.ainsi { padding: 0; background: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .ainsi-page { width: 1280px; margin: 0; border-radius: 0; box-shadow: none; break-after: page; break-inside: avoid; }
     .ainsi-page:last-of-type { break-after: auto; }
-    body.ainsi:not([data-present]) .ainsi-page::after { display: none; }
+    body[data-numbers="off"] .ainsi-number { display: none; }
 }
 
 /*
@@ -212,6 +216,6 @@ body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
     /* the fluid page grows instead of clipping, so the cap only guards against a screenful */
     .ainsi-page img { max-height: 70vh; }
     .ainsi-page h1 { font-size: 2em; }
-    body.ainsi:not([data-present]) .ainsi-page::after { bottom: 1rem; left: 1.1rem; font-size: 11px; }
+    .ainsi-page .ainsi-number { bottom: 1rem; left: 1.1rem; font-size: 11px; }
 }
 `;

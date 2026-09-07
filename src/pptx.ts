@@ -47,12 +47,19 @@ interface Box {
     runs: Run[];
 }
 
+/** The theme's mark on a page, rasterised: px page-relative box and a base64 png. */
+interface Mark {
+    x: number; y: number; w: number; h: number;
+    png: string;
+}
+
 interface PageDump {
     /** rendered page size px, so coordinates normalise however the page actually laid out */
     pw: number;
     ph: number;
     boxes: Box[];
-    /** base64 png of the page with every lifted glyph transparent */
+    mark?: Mark;
+    /** base64 png of the page with every lifted glyph and the mark transparent */
     shot: string;
 }
 
@@ -75,6 +82,8 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
     const borrowed = page === own.page;
 
     try {
+        // the print sheet is the export: no corner radius, no shadow, like the pdf
+        await page.emulateMedia({ media: "print" });
         await page.setContent(html, { waitUntil: "load" });
         await page.evaluate(() => document.fonts.ready);
 
@@ -82,11 +91,12 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
         const dumps: PageDump[] = [];
         for (let index = 0; index < count; index++) {
             const { pw, ph, boxes } = await page.evaluate(walk, index);
-            await page.evaluate(hide, index);
+            const mark = await page.evaluate(lift, index).catch(() => undefined);
+            await page.evaluate(hide, { index, mark: !!mark });
             const handle = (await page.$$(".ainsi-page"))[index]!;
             const shot = (await handle.screenshot({ type: "png" })).toString("base64");
             await page.evaluate(restore, index);
-            dumps.push({ pw, ph, boxes, shot });
+            dumps.push({ pw, ph, boxes, mark, shot });
         }
 
         const fonts = await resolveFonts(page, dumps);
@@ -100,6 +110,10 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
             const scale = SLIDE_W / dump.pw;
             const slide = deck.addSlide();
             slide.addImage({ data: "image/png;base64," + dump.shot, x: 0, y: 0, w: SLIDE_W, h: SLIDE_W * (dump.ph / dump.pw) });
+            if (dump.mark) {
+                const { x, y, w, h, png } = dump.mark;
+                slide.addImage({ data: "image/png;base64," + png, x: x * scale, y: y * scale, w: w * scale, h: h * scale });
+            }
             for (const box of dump.boxes) {
                 const texts = box.runs.map(run => ({
                     text: run.text,
@@ -134,6 +148,7 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
 
         await deck.writeFile({ fileName: path });
     } finally {
+        if (borrowed) await page.emulateMedia({ media: null }).catch(() => undefined);
         if (!borrowed) await page.close();
         if (!session) await own.close();
     }
@@ -150,11 +165,28 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
     const section = document.querySelectorAll<HTMLElement>(".ainsi-page")[index]!;
     const pageRect = section.getBoundingClientRect();
 
-    const hex = (rgb: string): string => {
-        const m = rgb.match(/\d+(\.\d+)?/g) ?? ["0", "0", "0"];
-        return m.slice(0, 3).map(n => Math.round(Number(n)).toString(16).padStart(2, "0")).join("");
+    /* a computed colour is rgb(a) or, after color-mix, color(srgb r g b / a) */
+    const rgba = (css: string): { r: number; g: number; b: number; a: number } => {
+        const srgb = css.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/);
+        if (srgb) return { r: Number(srgb[1]) * 255, g: Number(srgb[2]) * 255, b: Number(srgb[3]) * 255, a: srgb[4] === undefined ? 1 : Number(srgb[4]) };
+        const p = css.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0];
+        return { r: p[0]!, g: p[1]!, b: p[2]!, a: p.length > 3 ? p[3]! : 1 };
     };
-    const clear = (bg: string): boolean => /rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent/.test(bg);
+    const hex = (c: { r: number; g: number; b: number }): string =>
+        [c.r, c.g, c.b].map(n => Math.round(n).toString(16).padStart(2, "0")).join("");
+    const clear = (css: string): boolean => css === "transparent" || rgba(css).a === 0;
+    /* a translucent colour flattened against the nearest opaque fill behind it: ppt has no alpha on text or highlight */
+    const flat = (css: string, el: Element): string => {
+        const c = rgba(css);
+        if (c.a >= 1) return hex(c);
+        let backdrop = { r: 255, g: 255, b: 255 };
+        for (let behind: Element | null = el.parentElement; behind; behind = behind.parentElement) {
+            const fill = rgba(getComputedStyle(behind).backgroundColor);
+            if (fill.a > 0.99) { backdrop = fill; break; }
+            if (behind === section) break;
+        }
+        return hex({ r: c.r * c.a + backdrop.r * (1 - c.a), g: c.g * c.a + backdrop.g * (1 - c.a), b: c.b * c.a + backdrop.b * (1 - c.a) });
+    };
 
     const blockOf = (el: Element): HTMLElement => {
         let node: Element | null = el;
@@ -193,19 +225,7 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
                 }
             }
             if (clear(bg)) continue;
-            const parts = bg.match(/[\d.]+/g)!.map(Number);
-            const alpha = parts.length > 3 ? parts[3]! : 1;
-            if (alpha >= 1) return hex(bg);
-            let backdrop = [255, 255, 255];
-            for (let behind: Element | null = el.parentElement; behind; behind = behind.parentElement) {
-                const fill = getComputedStyle(behind).backgroundColor;
-                const p = fill.match(/[\d.]+/g)?.map(Number) ?? [];
-                if (p.length && (p.length < 4 || p[3]! > 0.99)) { backdrop = p.slice(0, 3); break; }
-                if (behind === section) break;
-            }
-            return parts.slice(0, 3)
-                .map((c, k) => Math.round(c * alpha + backdrop[k]! * (1 - alpha)))
-                .map(n => n.toString(16).padStart(2, "0")).join("");
+            return flat(bg, el);
         }
         return undefined;
     };
@@ -228,7 +248,7 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
             family: style.fontFamily,
             bold: parseInt(style.fontWeight) >= 600,
             italic: style.fontStyle === "italic",
-            color: hex(style.color),
+            color: flat(style.color, parent),
             highlight: chipOf(parent, block),
         });
         groups.set(block, runs);
@@ -257,12 +277,64 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
     return { pw: pageRect.width, ph: pageRect.height, boxes };
 }
 
-/** Runs in the page: lifted glyphs and inline chip fills go transparent for the screenshot. */
-function hide(index: number): void {
+/**
+ * Runs in the page. The theme's mark is the page's own ::before when it paints an image: a
+ * pseudo has no node to lift, so it is redrawn through a canvas at the size and place the
+ * background painted it, with the pseudo's filter and opacity applied (a one-colour mark
+ * inverted for a dark ground has no other way into a native image). Undefined when there is
+ * no such mark; a throw (a tainted canvas) leaves it painted in the ground.
+ */
+async function lift(index: number): Promise<Mark | undefined> {
+    const page = document.querySelectorAll(".ainsi-page")[index]!;
+    const style = getComputedStyle(page, "::before");
+    const src = style.backgroundImage.match(/^url\("?(.*?)"?\)$/)?.[1];
+    if (!src || style.display === "none" || style.content === "none") return undefined;
+    const box = {
+        w: parseFloat(style.width) + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+        h: parseFloat(style.height) + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom),
+    };
+    if (!(box.w > 0 && box.h > 0)) return undefined;
+    const rect = page.getBoundingClientRect();
+    const left = style.left === "auto" ? rect.width - parseFloat(style.right) - box.w : parseFloat(style.left);
+    const top = style.top === "auto" ? rect.height - parseFloat(style.bottom) - box.h : parseFloat(style.top);
+
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    if (!img.naturalWidth || !img.naturalHeight) return undefined;
+    const natural = img.naturalWidth / img.naturalHeight;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (style.backgroundSize === "cover" ? box.w / box.h > natural : style.backgroundSize !== "auto") {
+        // contain, cover on a tall box, and any explicit size read as contain: fit the width
+        w = box.w; h = box.w / natural;
+        if (style.backgroundSize !== "cover" && h > box.h) { h = box.h; w = box.h * natural; }
+    } else if (style.backgroundSize === "cover") {
+        h = box.h; w = box.h * natural;
+    }
+    // background-position resolves to two lengths or percentages of the slack
+    const [px = "0%", py = "0%"] = style.backgroundPosition.split(" ");
+    const along = (value: string, slack: number) => value.endsWith("%") ? slack * parseFloat(value) / 100 : parseFloat(value);
+    const x = left + along(px, box.w - w);
+    const y = top + along(py, box.h - h);
+
+    const density = 4;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w * density));
+    canvas.height = Math.max(1, Math.round(h * density));
+    const context = canvas.getContext("2d")!;
+    if (style.filter !== "none") context.filter = style.filter;
+    context.globalAlpha = parseFloat(style.opacity);
+    context.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { x, y, w, h, png: canvas.toDataURL("image/png").split(",")[1]! };
+}
+
+/** Runs in the page: lifted glyphs, inline chip fills and a lifted mark go transparent for the screenshot. */
+function hide({ index, mark }: { index: number; mark: boolean }): void {
     const style = document.createElement("style");
     style.id = "ainsi-shot";
     style.textContent = ".ainsi-shot .ainsi-lift { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important }\n"
-        + ".ainsi-shot main :is(mark, code, kbd, samp):not(pre *) { background: transparent !important; box-shadow: none !important; border-color: transparent !important }";
+        + ".ainsi-shot main :is(mark, code, kbd, samp):not(pre *) { background: transparent !important; box-shadow: none !important; border-color: transparent !important }"
+        + (mark ? "\n.ainsi-shot::before { visibility: hidden !important }" : "");
     document.head.append(style);
     document.querySelectorAll(".ainsi-page")[index]!.classList.add("ainsi-shot");
 }

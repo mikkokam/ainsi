@@ -586,7 +586,7 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
  * The theme keeps its own picker beside it; here it is one more line.
  */
 const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
-const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\ntheme: acme";
+const KEYS = "logo: assets/mark.png\ncoverLogo: assets/cover-mark.png\nratio: 16:9\nlayout: default\nnumbers: on\ntheme: acme";
 
 function openDeck(): void {
     const page = document.querySelector<HTMLElement>(".ainsi-page");

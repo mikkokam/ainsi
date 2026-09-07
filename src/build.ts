@@ -168,8 +168,10 @@ export function render(
         let slug = base;
         for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
         taken.add(slug);
+        // the number is an element, not a pseudo, so an export lifts it as text like any other
         return `<section class="ainsi-page" id="${slug}" data-page="${page.index + 1}" data-layout="${page.layout}"${step}${overflow}>
 ${rendered}
+<span class="ainsi-number" aria-hidden="true">${page.index + 1}</span>
 </section>`;
     }).join("\n");
 
@@ -201,7 +203,7 @@ ${css}
 ${options.viewer?.css ?? ""}
 </style>
 </head>
-<body class="ainsi"${options.edit ? " data-ainsi-studio" : ""} style="--ainsi-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">
+<body class="ainsi"${options.edit ? " data-ainsi-studio" : ""}${settings.numbers ? "" : ' data-numbers="off"'} style="--ainsi-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">
 ${body}
 ${[scripts, options.viewer?.script].filter(Boolean).map(s => `<script type="module">${s}</script>`).join("\n")}
 </body>

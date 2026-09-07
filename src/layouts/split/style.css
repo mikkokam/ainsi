@@ -28,6 +28,18 @@
 }
 [data-layout="split"] main[data-side="right"] article > .ainsi-full { inset: 0 0 0 auto; }
 
+/* the image's own size prop, which means the pane's share here: s, m, l contain the picture
+   uncropped and centred at that share of the pane (a diagram); full and unset cover (a photo) */
+[data-layout="split"] article > .ainsi-full[data-size="s"],
+[data-layout="split"] article > .ainsi-full[data-size="m"],
+[data-layout="split"] article > .ainsi-full[data-size="l"] { place-items: center; }
+[data-layout="split"] article > .ainsi-full[data-size="s"] img,
+[data-layout="split"] article > .ainsi-full[data-size="m"] img,
+[data-layout="split"] article > .ainsi-full[data-size="l"] img { object-fit: contain; }
+[data-layout="split"] article > .ainsi-full[data-size="s"] img { width: 50%; height: 50%; }
+[data-layout="split"] article > .ainsi-full[data-size="m"] img { width: 70%; height: 70%; }
+[data-layout="split"] article > .ainsi-full[data-size="l"] img { width: 88%; height: 88%; }
+
 /*
  * size=image: the picture dictates the pane. The figure sits before the article (the layout
  * hoists it) and, absolutely positioned with auto width, shrinks to the image's own ratio at

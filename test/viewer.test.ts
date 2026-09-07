@@ -34,10 +34,9 @@ test("the viewer is omitted entirely when it is not wanted", () => {
 
 test("pages are numbered in the scroll view and not while presenting", () => {
     const { html } = build(md, { registry, layouts, themeCss: "" });
-    expect(html).toContain('body.ainsi:not([data-present]) .ainsi-page::after');
-    expect(html).toContain("content: attr(data-page)");
+    expect(html).toContain('<span class="ainsi-number" aria-hidden="true">2</span>');
     expect(html).toContain('data-page="2"');
-    expect(html).toContain('.ainsi-page[data-layout="header"]::after { content: none; }');
+    expect(html).toContain('.ainsi-page[data-layout="header"] .ainsi-number { display: none; }');
 });
 
 test("chrome never prints", () => {
@@ -76,7 +75,7 @@ test("the deck prints one page per sheet, sized to its ratio, with no chrome or 
     expect(html).toContain("@page { size: 1280px 960px; margin: 0; }");
     const print = html.slice(html.indexOf("@media print {"), html.indexOf("@media screen"));
     expect(print).toContain("break-after: page");
-    expect(print).toContain(".ainsi-page::after { display: none; }");
+    expect(print).toContain('body[data-numbers="off"] .ainsi-number { display: none; }');
 });
 
 test("the reading view is a screen affair: a print laid out on narrow paper must not reflow", () => {

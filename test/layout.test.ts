@@ -89,6 +89,13 @@ test("split without size=image keeps the figure inside the article", () => {
     expect(html).toMatch(/<article>[\s\S]*<figure[^>]*class="ainsi-full"/);
 });
 
+test("split honours the image's own size: s, m, l contain the picture in the pane, full and unset cover", () => {
+    const { html } = build("<!-- ainsi:layout split -->\n\n# T\n\na\n\n<!-- ainsi: full size=l -->\n![](x.png)\n", { registry, layouts, themeCss: "" });
+    expect(html).toMatch(/<figure class="ainsi-full" data-size="l"/);
+    expect(html).toContain('.ainsi-full[data-size="l"] img { width: 88%; height: 88%; }');
+    expect(html).toContain('.ainsi-full[data-size="l"] img { object-fit: contain; }');
+});
+
 test("a tone prop lands on main and the engine paints the ground from it", () => {
     const { html } = build("<!-- ainsi:layout default tone=accent -->\n\n# T\n\na\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<main data-tone="accent">');

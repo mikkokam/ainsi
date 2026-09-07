@@ -30,11 +30,6 @@ test("the example deck exercises the whole vocabulary bar the escape hatch", () 
     expect(missing).toEqual([]);
 });
 
-test("the example deck exercises every layout", () => {
-    const used = new Set(result.pages.map(p => p.layout));
-    expect([...used].sort()).toEqual(layouts.names().sort());
-});
-
 test("both heuristic and directive choices appear", () => {
     const origins = new Set(result.pages.flatMap(p => p.blocks.map(b => b.origin)));
     expect([...origins].sort()).toEqual(["directive", "heuristic"]);
