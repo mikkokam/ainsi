@@ -1,15 +1,14 @@
 /*
  * No font import: Arial is on the machine already, which is half of why a template like this
- * looks the way it does. The scale is shallow, a step of about 1.12 against the engine's 1.2,
- * so a heading is the same words a size up rather than a display line, and a title slide does
- * not get the cover treatment.
+ * looks the way it does. The type runs on a major third, 1.25 a step from the body size, so the
+ * levels are the powers of it and a heading is not given a size the scale does not contain.
  */
-.ainsi-page h1 { font-size: 1.6em; line-height: 1.25; letter-spacing: 0; }
-.ainsi-page h2 { font-size: 1.4em; line-height: 1.25; }
-.ainsi-page h3 { font-size: 1.24em; }
-.ainsi-page h4 { font-size: 1.11em; }
+.ainsi-page h1 { font-size: 2.441em; line-height: 1.2; letter-spacing: 0; }
+.ainsi-page h2 { font-size: 1.953em; line-height: 1.22; }
+.ainsi-page h3 { font-size: 1.563em; }
+.ainsi-page h4 { font-size: 1.25em; }
 .ainsi-page h5 { font-size: 1em; }
-.ainsi-page blockquote p { font-size: 1.15em; letter-spacing: 0; }
+.ainsi-page blockquote p { font-size: 1.25em; letter-spacing: 0; }
 
 /* the mark sits in the corner of every page, where a template puts it and nobody moves it */
 .ainsi-page::before {

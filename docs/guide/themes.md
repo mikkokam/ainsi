@@ -14,7 +14,7 @@ Only `variables.css` is required. The default theme's tokens sit under every oth
 
 ## Using one beside your deck
 
-A bare `theme: acme` names a theme shipped in this repo: `default` is the warm editorial one every other layers on, `acme` a product-pitch grotesque, `portfolio` a picture-led one, and `boring` the corporate template, Arial on white with a shallow scale, for a deck that has to look like everyone else's. Anything with a slash or a leading dot is yours, resolved beside the deck:
+A bare `theme: acme` names a theme shipped in this repo: `default` is the warm editorial one every other layers on, `acme` a product-pitch grotesque, `portfolio` a picture-led one, and `boring` the corporate template, Arial on white on a major third, for a deck that has to look like everyone else's. Anything with a slash or a leading dot is yours, resolved beside the deck:
 
     ---
     theme: ../brand/house
