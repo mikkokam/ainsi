@@ -1,0 +1,10 @@
+/*
+ * The work wants the room. A content page here sits on a narrower inset than the covers and
+ * dividers, which keep the wide one because their type is the whole page; a field of pictures
+ * gains the difference in width, and the corner radius keeps the page from looking untrimmed.
+ */
+[data-layout="default"] main { padding: 4.5%; }
+
+@media screen and (max-width: 900px) {
+    [data-layout="default"] main { padding: 6%; }
+}
