@@ -5,29 +5,29 @@ coverLogo: assets/saidot-mark.png
 ---
 
 <!-- ainsi: prose size=small caps color=accent -->
-Runtime enforcement
+Governance and enforcement
 
 # The systems being governed are in flux
 
 <!-- ainsi: boxes stretch -->
 1. **Models** Swapped for a newer version, a cheaper provider or a fine-tune, and every system built on the old one inherits the change.
-2. **Agents and the platforms they run on** Built on Foundry, Bedrock, Vertex or in-house orchestration, reaching into business systems through tools, replaced in weeks.
+2. **Agents and the platforms they run on** Built on Foundry, Bedrock, Vertex or in-house orchestration, acting on business systems through tools, replaced in weeks.
 3. **AI inside the tools already in use** Copilots in productivity suites, assistants inside SaaS, GenAI in the delivery pipeline. Adopted faster than any review cycle, often without anyone registering them.
 
 <!-- ainsi: prose size=small color=soft -->
-A bank's AI estate changes weekly. Governance that was designed around a quarterly model review meets a fleet it cannot see.
+Three clouds, four agent platforms, a hundred systems. The decisions about them cannot live in any one of the platforms.
 
 ---
 
 <!-- ainsi:layout split side=right size=image -->
 
-# A control plane governs what it runs
+# Governance is a separate role
 
-Each runtime enforces at its own boundary: tool calls, approval gates, content filters. That enforcement is real, and it stops at the platform edge.
+The decisions are the organisation's: which frameworks apply, the risk appetite, the tier of each system, the controls it must satisfy, who is answerable. They have to survive a platform swap, so they live above all of the platforms, in one place.
 
-The platform knows who runs a workflow and who approved a change. It does not carry the system's purpose, its risk tier or the person answerable for it. Risk is contextual, so the tier is decided where the use case is, not where the code runs.
+A runtime enforces what it runs and reports on itself. Oversight of that enforcement is a different accountability. Three lines of defence: the platform team is the first line, governance is the second, audit is the third. The first line cannot be its own second.
 
-An agent arriving over an open interface brings its own model, data, tools and purpose. The host enforces at the tool boundary. Governance has to see all the systems.
+The platform knows who ran a workflow. It does not know the system's purpose, its tier or its owner. Risk is contextual, so that is decided where the use case is.
 
 <!-- ainsi: full size=full -->
 ![Agent platform: control plane, enforcement point, execution, MCP boundary. Use case outside decides the risk tier.](assets/platform-gap.png)
@@ -38,54 +38,55 @@ An agent arriving over an open interface brings its own model, data, tools and p
 
 # Two layers, one loop
 
-Governance decides: the tier, the control set, the owner, the evidence required. It has to cover every runtime, including those with no enforcement of their own.
+Governance decides: the tier, the control set, the owner, the evidence required. It covers every runtime, including those with no enforcement of their own.
 
-Enforcement applies the decision at the moment of action: allow, block, escalate. It lives in each runtime and must be fast.
+Enforcement applies the decision at the moment of action: allow, block, escalate. It lives in each runtime, it must be fast, and it is largely solved there already: Rego, Cedar, platform approval gates, model gateways.
 
-Controls are authored once, with prose for the person and parameters for the machine, then compiled per runtime. Saidot enables enforcement. It does not sit in the hot path.
+Saidot conveys the decision down as itemised controls with parameters, and takes events back up as evidence. It does not sit in the hot path.
 
 <!-- ainsi: full size=full -->
 ![Governance plane above: evidence, system register, control library. Runtimes below: agent platform, other runtimes, everywhere else AI runs.](assets/governance-plane.png)
 
 ---
 
-<!-- ainsi:layout split size=image -->
+# How a decision travels
 
-# Evidence comes back from production
+<!-- ainsi: timeline -->
+1. **Register** Systems, models, agents, datasets and tools land in one graph, by hand, by connector, or by an agent over MCP.
+2. **Classify** Rules read the metadata, region, use, linked components, and set the tier. A person ratifies it.
+3. **Map** The tier and the linked risks resolve the control set through the graph. Each control is itemised, with parameters, readable over the API.
+4. **Assign** Tasks raise the review, approval or sign-off for the role that owns it, when the lifecycle says it is due.
+5. **Evidence** Observability events come back from the runtime and attach to the control. An event can open an incident, a review or a reclassification.
+6. **Report** Reviews and transparency reports are generated from the record, current on the day they are asked for.
 
-Runtime observability events are ingested from the AI stack: Azure AI Foundry, Amazon Bedrock, or any runtime over the API. An event can open an incident, trigger a review or change the risk level on an agent, a model or a system.
-
-Evidence attaches to the control on the system's record, with the classification, the approvals and the audit trail beside it. Reused across systems, exported on demand, and traceable from the obligation to the event that proved it.
-
-A runtime that cannot check a control returns that as a named gap. Never a silent pass.
-
-<!-- ainsi: full size=full -->
-![Decide and compile above, enforce and attest below. Controls as code flow down, events as evidence flow up.](assets/two-layers-loop.png)
+<!-- ainsi: prose size=small color=soft -->
+Register, map and evidence run through the Governance, Library and Docs MCP servers as well, so a client's own agents can operate the loop.
 
 ---
 
 <!-- ainsi:layout default tone=soft -->
 
-# Governance stays a gate. It stops being a queue.
+# Your governance model, configured
 
 <!-- ainsi: columns -->
-1. **Workflows** Rules do the routine. AI Act classification runs on registration and on change. Risks, risk levels and controls are inherited through the graph to every system whose properties match. Lifecycle stages gate on approval.
-2. **Tasks** The human process, modelled. Reviews, sign-offs and conformity assessments are raised for the role that owns them, when they are due. Accountability becomes named work, not a policy document.
-3. **Agents** Governance, Library and Docs MCP servers put the platform in front of any AI assistant. An agent registers the system from the deployment it sees, drafts the assessment, attaches evidence and opens the approval. 95% of the platform is operable over the REST API.
+1. **Your policies, as entities** Existing internal policies and controls are modelled in the graph beside the 110+ in the library. They link to systems, risks and evidence like anything else. Not documents attached to a record.
+2. **Your process, as tasks** Lifecycle stages, approval gates, review cadence and the roles that own them are set per organisation. Governance becomes named work in a queue, not a policy nobody reads. In development.
+3. **Your automation, at your pace** Every rule is a workflow you switch on: classification, inheritance, control assignment, lifecycle approvals. What is not automated stays a task for a person.
 
 <!-- ainsi: prose size=small color=soft -->
-The same three doors are how a delivery organisation embeds governance into client engagements without adding a manual step to each one.
+Shipped: graph, library, workflows, MCP servers, REST API, Observability API (Q2 2026), connectors for Azure AI Foundry and Amazon Bedrock.
 
 ---
 
 <!-- ainsi:layout default tone=accent -->
 
-# Status and roadmap
+# Governance stays a gate. It stops being a queue.
 
-<!-- ainsi: boxes stretch -->
-- **Shipped** Observability API, Q2 2026. Governance, Library and Docs MCP servers. Full REST API, including control catalogue read and write. Connectors for Azure AI Foundry and Amazon Bedrock. Evaluations generated per system and run in the runtime.
-- **In development** Tasks by role. Orchestrator MCP. Lifecycles, roles, thresholds and templates per organisation.
-- **Policy as code, roadmap** Controls compiled to each runtime's own policy engine. Applicability rules per system. OSCAL import and export, so a client's existing control catalogue enters the graph as controls, not as a document.
+<!-- ainsi: columns -->
+- **Rules-based tiering** Properties decide the tier. A person ratifies it, because that one property scopes every obligation downstream.
+- **Rules-based control profiles** The tier resolves its own control set. Nobody maps controls per system.
+- **Lifecycle tasks** Reviews and sign-offs are raised when due, to the role that owns them.
+- **Event-based triggers** Drift, an incident or a change reopens the assessment. Production keeps the record current.
 
 <!-- ainsi: prose size=small color=soft -->
-One register, one control library, one risk model. Each runtime keeps enforcing its own.
+Where this goes: the same loop at the scale of a bank's whole AI estate, with more of it automated and a person still deciding.
