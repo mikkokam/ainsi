@@ -1,0 +1,4 @@
+/* the band replaces the per-row rule: both at once reads as a grid and fights the text */
+.ainsi-striped-table td { border-bottom: 0; }
+.ainsi-striped-table th { border-bottom: 2px solid var(--ainsi-accent); }
+.ainsi-striped-table tbody tr:nth-child(even) { background: var(--ainsi-tint); }

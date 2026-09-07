@@ -11,7 +11,7 @@ coverLogo: assets/kaari-mark-white.svg
 Selected work, 2024 to 2026
 
 <!-- ainsi: full size=full -->
-![A gradient field in blue and violet](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=80)
+![face](https://images.unsplash.com/photo-1568044852337-9bcc3378fc3c?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
 ---
 
@@ -33,7 +33,7 @@ Index
 ## Identity
 
 <!-- ainsi: full size=full -->
-![A soft gradient in green and rust](https://images.unsplash.com/photo-1550859492-d5da9d8e45f3?w=1600&q=80)
+![eye](https://images.unsplash.com/photo-1546803073-23568b8c98e6?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
 ---
 
@@ -62,11 +62,11 @@ Motion
 <!-- ainsi: prose size=small caps -->
 Motion
 
-# The same four, cropped to a grid
+# Four, cropped to a grid
 
-<!-- ainsi: tiles crop columns=4 -->
+<!-- ainsi: tiles columns=4 crop -->
 - ![A close crop of a screen](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=900&q=80) 01
-- ![A hand adjusting a dial](https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=900&q=80) 02
+- ![A hand adjusting a dial](https://images.unsplash.com/photo-1725733618919-f45972c90229?q=80&w=3840&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D) 02
 - ![A monitor showing colour bars](https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=900&q=80) 03
 - ![A dark studio corner](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) 04
 
@@ -77,7 +77,7 @@ Print
 
 # Nothing here was cropped to fit
 
-<!-- ainsi: tiles flow=masonry columns=3 -->
+<!-- ainsi: tiles flow=masonry columns=6 -->
 - ![A tall book spread photographed from above](https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&q=80) Spread, 300 × 240
 - ![A poster in a narrow frame](https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=900&q=80) B2 poster
 - ![A wide landscape photograph](https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=900&q=80) Endpapers

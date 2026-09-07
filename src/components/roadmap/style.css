@@ -1,0 +1,21 @@
+/* rows are spaced, columns are not: two filled periods next to each other are one run, and a
+   gap between them would read as two separate pieces of work */
+.ainsi-roadmap table { border-collapse: separate; border-spacing: 0 .3em; }
+.ainsi-roadmap th, .ainsi-roadmap td { border-bottom: 0; padding: 0; }
+.ainsi-roadmap__row { width: 1%; padding-right: .8em; white-space: nowrap; font-weight: var(--ainsi-strong); }
+.ainsi-roadmap__period {
+    font: var(--ainsi-strong) .75em/1 var(--ainsi-font-mono);
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--ainsi-ink-soft);
+    padding-bottom: .4em;
+}
+.ainsi-roadmap__mark {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 2.4em; padding: .4em .7em;
+    border-radius: var(--ainsi-radius);
+    background: var(--ainsi-accent); color: var(--ainsi-accent-ink);
+    font-size: .85em; line-height: 1.25; text-align: center;
+}
+/* only the ends of a run are round; a joint inside it is square, so the run is one bar */
+.ainsi-roadmap__slot:has(+ .ainsi-roadmap__slot .ainsi-roadmap__mark) .ainsi-roadmap__mark { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.ainsi-roadmap__slot:has(.ainsi-roadmap__mark) + .ainsi-roadmap__slot .ainsi-roadmap__mark { border-top-left-radius: 0; border-bottom-left-radius: 0; }

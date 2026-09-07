@@ -52,8 +52,8 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 ---
 
 <!-- ainsi: prose size=small caps -->
-<!-- ainsi: layout split side=right -->
-How does it work
+<!-- ainsi: layout split side=right tone=soft -->
+##### How does it work
 
 <!-- ainsi: prose size=small -->
 # A single deterministic gateway in front of every model
@@ -92,9 +92,45 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 ---
 
+# What a seat costs
+
+<!-- ainsi: striped-table -->
+| Plan       | Governed calls | Retention | Per month |
+| ---------- | -------------- | --------- | --------- |
+| Team       | 2M             | 12 months | €490      |
+| Business   | 20M            | 3 years   | €2 400    |
+| Regulated  | 100M           | 7 years   | €7 900    |
+| Sovereign  | unmetered      | 7 years   | on ask    |
+
+---
+
+# Where the gateway spends its day
+
+<!-- ainsi: bar-table -->
+| Hop            | Share | Added latency | Calls a day |
+| -------------- | ----- | ------------- | ----------- |
+| Policy check   | 46%   | 0.9 ms        | 500 000     |
+| Attribution    | 24%   | 0.4 ms        | 500 000     |
+| Signing        | 19%   | 0.3 ms        | 400 000     |
+| Residency test | 11%   | 0.2 ms        | 120 000     |
+
+---
+
+# What ships when
+
+<!-- ainsi: roadmap -->
+|                | Q1 2026            | Q2 2026        | Q3 2026        | Q4 2026 |
+| -------------- | ------------------ | -------------- | -------------- | ------- |
+| Gateway        | Streaming policies | x              |                |         |
+| Audit          |                    | 7-year archive | x              |         |
+| Residency      | EU-only egress     |                | Nordic regions |         |
+| Self-hosting   |                    |                | Beta           | GA      |
+
+---
+
 > When our enterprise bank clients asked for our AI data governance records, we delivered verified OPA enforcement logs in under an hour. Acme turned a potential sales blocker into our strongest trust proof.
 
-<!-- ainsi: prose size=small align=right -->
+<!-- ainsi: prose align=right -->
 VP of Engineering, Series B Fintech (Stockholm)
 
 ---

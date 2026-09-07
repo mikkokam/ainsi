@@ -1,0 +1,18 @@
+/* a text column shrinks to one line, so the slack lands on the columns carrying bars */
+.ainsi-bar-table__text { width: 1%; white-space: nowrap; }
+.ainsi-bar-table td { border-bottom: 0; }
+.ainsi-bar-table th { border-bottom: 2px solid var(--ainsi-accent); }
+.ainsi-bar-table__num { position: relative; }
+/*
+ * The bar is the cell's ground, and its own height rather than the row's: a row grown tall by
+ * a wrapping label elsewhere would otherwise draw a block where its neighbours draw a bar.
+ * A full bar stops a gutter short of the cell edge, or it runs into the next column's bar and
+ * the row reads as one band.
+ */
+.ainsi-bar-table__bar {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 2em; width: calc(var(--ainsi-bar-table-fill, 0) * (100% - 1.2em));
+    border-radius: calc(var(--ainsi-radius) * .5);
+    background: color-mix(in srgb, var(--ainsi-accent) 20%, transparent);
+}
+.ainsi-bar-table__value { position: relative; }
