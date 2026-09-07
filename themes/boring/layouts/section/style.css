@@ -1,0 +1,4 @@
+/* the divider's numeral and title sit at the top together, rather than the title dropping to the foot */
+[data-layout="section"] article { justify-content: flex-start; }
+[data-layout="section"] article::before { margin-bottom: .2em; font-size: 3em; }
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 2em; letter-spacing: 0; }

@@ -1,0 +1,41 @@
+/*
+ * The house style of no house: Arial, a dark blue, and nothing else decided. What a deck looks
+ * like when the person making it changed none of the defaults. It is here to show that the
+ * corporate template is a theme like any other, so a deck can wear one without being written
+ * for one.
+ */
+:root {
+    --ainsi-ink: #000000;
+    --ainsi-ink-soft: #595959;
+    --ainsi-ground: #ffffff;
+    --ainsi-shell: #1f3864;
+    --ainsi-accent: #1f3864;
+    --ainsi-accent-ink: #ffffff;
+    --ainsi-rule: #bfbfbf;
+    --ainsi-surface: #f2f2f2;
+
+    --ainsi-info: #2e74b5;
+    --ainsi-ok: #217346;
+    --ainsi-notice: #7030a0;
+    --ainsi-warn: #bf8f00;
+    --ainsi-danger: #c00000;
+
+    --ainsi-font: Arial, Helvetica, sans-serif;
+    --ainsi-font-display: var(--ainsi-font);
+    --ainsi-font-mono: Consolas, "Courier New", monospace;
+    --ainsi-strong: 700;
+    --ainsi-size: 21px;
+    --ainsi-leading: 1.4;
+    --ainsi-step-min: 0.85;
+
+    --ainsi-gap: 1.4rem;
+    --ainsi-pad: 6%;
+    --ainsi-radius: 0;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: none;
+    --ainsi-blur: 0px;
+
+    --ainsi-motion: 0ms;
+    --ainsi-ease: linear;
+}

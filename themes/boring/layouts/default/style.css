@@ -1,0 +1,2 @@
+/* content starts at the top of the page, not centred in it */
+[data-layout="default"] main { justify-content: flex-start; }

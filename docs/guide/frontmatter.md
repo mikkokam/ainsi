@@ -26,7 +26,7 @@ Frontmatter that is not valid YAML is one warning and the defaults, never a fail
 
 ## theme
 
-A bare name is one of the themes shipped in this repo: `default`, `acme`, `portfolio`. Anything with a slash or a leading dot is a folder of your own, resolved beside the deck the way its images are, so `theme: ../themes/house` reads `themes/house` next to the deck's directory and the deck and its theme move as one thing. See [Themes](themes.md).
+A bare name is one of the themes shipped in this repo: `default`, `acme`, `portfolio`, `boring`. Anything with a slash or a leading dot is a folder of your own, resolved beside the deck the way its images are, so `theme: ../themes/house` reads `themes/house` next to the deck's directory and the deck and its theme move as one thing. See [Themes](themes.md).
 
 ## ratio
 
@@ -50,7 +50,7 @@ Page numbers on every page but the cover. `off` hides them from print, export an
 
 Both take a path beside the deck, an absolute path, or a URL. A missing file is a warning, not an error, and the deck builds without a mark.
 
-The deck says which mark; the theme says where it sits and how large. They arrive as two CSS variables, `--ainsi-logo` and `--ainsi-logo-cover`, and a theme that places neither shows none, which is the default theme's own choice for the cover. This is what placing a mark looks like, from `themes/portfolio/styles.css`:
+The deck says which mark; the theme says where it sits and how large. They arrive as two CSS variables, `--ainsi-logo` and `--ainsi-logo-cover`, and a theme that places neither shows none. This is what placing a mark looks like, from `themes/portfolio/styles.css`:
 
     .ainsi-page::before {
         content: "";

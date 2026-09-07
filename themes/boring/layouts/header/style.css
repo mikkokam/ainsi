@@ -1,0 +1,19 @@
+/* the title slide is a slide: the title at the top like every other page, and no display size */
+[data-layout="header"] main { justify-content: flex-start; }
+[data-layout="header"] h1 { font-size: 2.1em; }
+
+/*
+ * Without a photograph the engine grounds a cover in the placeholder under a scrim. Here that
+ * case is the normal one, so it is a plain page with the deck's own ink and a rule under the
+ * title, and a deck that does give the cover an image still gets the scrim and the light text.
+ */
+[data-layout="header"]:not(:has(.ainsi-full)) { color: var(--ainsi-ink); }
+[data-layout="header"] main:not(:has(.ainsi-full)) { background: var(--ainsi-ground); }
+[data-layout="header"]:not(:has(.ainsi-full)) h1 {
+    padding-bottom: .4em;
+    border-bottom: 3px solid var(--ainsi-accent);
+}
+
+@media screen and (max-width: 900px) {
+    [data-layout="header"] h1 { font-size: 1.8em; }
+}
