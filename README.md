@@ -2,7 +2,7 @@
 
 Presentations in markdown, for agent-first work on local files, with a GUI for the last mile.
 
-![A title page: the deck name over a photographic ground](docs/screenshots/header.jpg)
+![The studio: a cover page open, its title selected, the block toolbar above it](docs/screenshots/studio.jpg)
 
 ## Demo
 
