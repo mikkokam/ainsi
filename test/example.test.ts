@@ -6,7 +6,7 @@ import { parse } from "../src/parse";
 
 const registry = await load([BUILTIN]);
 
-const SAMPLES = ["acme", "portfolio", "review"];
+const SAMPLES = ["acme", "lehto", "portfolio"];
 
 async function sample(name: string) {
     const dir = resolve(import.meta.dir, "../samples", name);
