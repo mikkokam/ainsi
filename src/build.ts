@@ -3,6 +3,7 @@ import { paginate } from "./paginate";
 import { group } from "./group";
 import { blockHtml, inlineHtml, plainText } from "./html";
 import { BASE_CSS } from "./base";
+import { MARK } from "./mark";
 import type { Layouts, Registry } from "./registry";
 import type { Diagnostic, Entity, Page, Settings } from "./types";
 
@@ -191,6 +192,7 @@ ${rendered}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
+<link rel="icon" href="${options.logo ?? MARK}">
 <style>
 ${imports}
 /* engine: page structure, and the paper a print lands on */

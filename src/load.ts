@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { Layouts, Registry, type Component, type ComponentDefinition, type Layout, type LayoutDefinition } from "./registry";
+import { MARK } from "./mark";
 import type { Diagnostic } from "./types";
 
 const SCRIPTS = ["script.tsx", "script.ts", "script.jsx", "script.js"];
@@ -236,7 +237,7 @@ function selectors(css: string): string[] {
 export const loadViewer = (diagnostics: Diagnostic[] = []) => chrome("viewer", diagnostics);
 
 /** The page the studio shows before a deck is chosen: open one, or make one. */
-export const loadStart = () => Bun.file(join(import.meta.dir, "studio", "start.html")).text();
+export const loadStart = async () => (await Bun.file(join(import.meta.dir, "studio", "start.html")).text()).replace("__MARK__", MARK);
 
 /** Studio chrome: the editing layer the dev server injects. Never in a deck. */
 export const loadStudio = (diagnostics: Diagnostic[] = []) => chrome("studio", diagnostics);
