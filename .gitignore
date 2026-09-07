@@ -3,3 +3,6 @@ bun.lock
 *.html
 !samples/*.html
 .DS_Store
+
+# joined source written by the d2 render script in --watch mode
+.*.d2

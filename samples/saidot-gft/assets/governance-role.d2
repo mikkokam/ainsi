@@ -2,8 +2,6 @@
 # Governance carries the detail; the runtimes are collapsed to what each one
 # enforces. The platform's own internals are the deep-dive picture, not this one.
 
-...@../../../../d2-style/theme/house
-
 governance: GOVERNANCE {
   class: blue
   label.near: top-left
@@ -27,8 +25,5 @@ runtimes: MANY RUNTIMES · EACH ENFORCES ITS OWN {
   }
 }
 
-governance.decisions -> runtimes: the tier and the control set
+governance.decisions -> runtimes: the tier and\nthe control set
 governance.oversight <- runtimes: evidence · attestation · named gaps
-
-(** -> **)[*].class: wire
-(** <- **)[*].class: wireback

@@ -2,8 +2,6 @@
 # Deliberately the same stacked shape as governance-role.d2 on the next slide,
 # so the reader sees the middle band again when it is opened up.
 
-...@../../../../d2-style/theme/house
-
 third: INDEPENDENT ASSURANCE · THIRD LINE AND EXTERNAL {
   class: violet
   label.near: top-left
@@ -28,10 +26,7 @@ first: FIRST LINE · BUILD AND RUN {
   enforcement: |md <div style="text-align:center"><b>Enforcement in each runtime</b><br/><span style="color:#64748b">allow · block · escalate<br/>and reports on itself</span></div> | {class: icon; width: 245; icon: ../../../../d2-style/icons/lucide-shield.svg}
 }
 
-third <- second: the record, with its trail
-third <- first: samples what actually ran
-second -> first: the tier and the control set
-second <- first: {source-arrowhead.label: evidence\nattestation}
-
-(** -> **)[*].class: wire
-(** <- **)[*].class: wireback
+third <- second: the record,\nwith its trail
+third <- first: samples\nwhat actually ran
+second -> first: the tier and\nthe control set
+second <- first: evidence\nattestation
