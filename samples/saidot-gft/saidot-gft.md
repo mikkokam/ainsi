@@ -59,18 +59,17 @@ The platform knows who ran a workflow. It does not know the system's purpose, it
 
 ---
 
-<!-- ainsi: layout split side=left size=half -->
+# Enforcement stays in the runtime
 
-# Two layers, one loop
-
-Governance decides: the tier, the control set, the owner, the evidence required. It covers every runtime, including those with no enforcement of their own.
-
-Enforcement applies the decision at the moment of action: allow, block, escalate. It lives in each runtime, it must be fast, and it is largely solved there already: Rego, Cedar, platform approval gates, model gateways.
-
-Saidot conveys the decision down as itemised controls with parameters, and takes events back up as evidence. It does not sit in the hot path.
+<!-- ainsi: prose size=small -->
+Enforcement is largely solved, and the hot path is where it belongs.
+What is missing sits at both ends: a control authored once, and the event that proves it held.
 
 <!-- ainsi: full size=l -->
-![Governance plane above: evidence, system register, control library. Runtimes below: agent platform, other runtimes, everywhere else AI runs.](assets/governance-plane.png)
+![One control read left to right. Authored once in governance, as prose for the person and parameters for the machine. Enforced by you, in your policy engines, platform gates and model gateways. Proven back in governance, as the event attached to the control on the system it belongs to.](assets/enforcement-interface.png)
+
+<!-- ainsi: prose size=small color=soft -->
+Your team writes the rule, as it does today. No new component sits between your agents and your models.
 
 ---
 
