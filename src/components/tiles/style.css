@@ -8,8 +8,11 @@
     align-items: start;
 }
 
+/* start, not stretch: a flex item takes the cross size otherwise, which is what made a
+   portrait as wide as its cell and left the corner radius and the caption on the box rather
+   than on the picture */
 .ainsi-tiles__tile {
-    display: flex; flex-direction: column; gap: .5em;
+    display: flex; flex-direction: column; align-items: flex-start; gap: .5em;
     min-width: 0;
 }
 
@@ -26,15 +29,16 @@
  */
 .ainsi-tiles .ainsi-tiles__image {
     display: block;
-    width: 100%; height: auto;
-    max-height: var(--ainsi-tiles-cap, 15em);
-    object-fit: contain; object-position: center;
+    width: auto; height: auto;
+    max-width: 100%; max-height: var(--ainsi-tiles-cap, 15em);
     border-radius: var(--ainsi-radius);
     box-shadow: var(--ainsi-shadow);
 }
 /* crop: every cell the same, the picture filling it and losing its edges */
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__tile { align-items: stretch; }
 .ainsi-tiles[data-crop="true"] .ainsi-tiles__tile--picture { height: 100%; }
 .ainsi-tiles[data-crop="true"] .ainsi-tiles__image {
+    width: 100%;
     aspect-ratio: 4 / 3;
     height: 100%;
     max-height: none;

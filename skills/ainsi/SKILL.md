@@ -64,9 +64,9 @@ Everything without a directive falls to the heuristics. A blockquote opening wit
 
 Six of them take a list, one item per row, and read a leading `**bold**` run as that item's title. `agenda` is the contents page, one row per item, keeping its numerals if the list is numbered. `boxes` gives one card per item, `stretch` to fill the height. `columns` is the same without the cards. `figures` makes the bold run the figure and the rest its caption. `timeline` walks the items as steps, `axis=horizontal` or `vertical`. `matrix` takes exactly four items as a two-by-two from the top left, with `x` and `y` naming the axes.
 
-`tiles` is a field of them: pictures, text, or both, in a grid whose rows are as tall as their tallest tile. `columns` overrides the count's own answer, which is one, two or three as themselves, four as a square, then threes and fours. An item that is an image takes the text beside it as its caption, `- ![](x.jpg) Nocturne, 2025`, or its alt text when there is nothing beside it.
+`tiles` is a field of them: pictures, text, or both, in a grid whose rows are as tall as their tallest tile. `columns` overrides the count's own answer, which puts up to four in one row, then wraps in threes and fours. An item that is an image takes the text beside it as its caption, `- ![](x.jpg) Nocturne, 2025`, or its alt text when there is nothing beside it.
 
-Pictures keep their proportions and are never cropped unless `crop` says so, so a field of mixed orientations leaves space beside the narrow ones rather than trimming their edges; `crop` trades that back for a flush grid of identical cells. Heights are capped by the row count so a field cannot run off the page, in em, so the fit solver's type step takes the pictures down with everything else.
+Pictures keep their proportions and are never cropped unless `crop` says so: each one is drawn at its own shape, so a field of mixed orientations leaves space beside the narrow ones rather than trimming their edges; `crop` trades that back for a flush grid of identical cells. Heights are capped by the row count so a field cannot run off the page, in em, so the fit solver's type step takes the pictures down with everything else.
 
 `comparison` takes a table: the header names the columns, the first column labels the rows, and every further column becomes a panel.
 

@@ -17,9 +17,13 @@ import { imageOf, img, labelled, listOf, type ComponentDefinition } from "../../
 /** roughly a page of content at the deck's own type size, less the captions under each row */
 const BUDGET = 15;
 
-/** the columns a count wants when nobody said: pairs stay pairs, four is a square, then threes */
+/*
+ * The columns a count wants when nobody said. Up to four go in one row, because a row costs
+ * height and a field of four pictures across fills its cells rather than leaving air beside
+ * them; past that they wrap in threes, then fours.
+ */
 const columnsFor = (count: number): number =>
-    count <= 1 ? 1 : count <= 3 ? count : count === 4 ? 2 : count <= 6 ? 3 : 4;
+    count <= 4 ? Math.max(1, count) : count <= 6 ? 3 : 4;
 
 export default {
     about: "a list as a field of tiles: pictures or text, in a grid or packed into columns",
