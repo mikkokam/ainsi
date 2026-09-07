@@ -5,36 +5,42 @@ coverLogo: assets/saidot-mark.png
 ---
 
 <!-- ainsi: prose size=small caps color=accent -->
+<!-- ainsi: layout default tone=inverse -->
 Governance and enforcement
 
 # The systems being governed are in flux
 
 <!-- ainsi: boxes stretch -->
 1. **Models** Swapped for a newer version, a cheaper provider or a fine-tune, and every system built on the old one inherits the change.
-2. **Agents and the platforms they run on** Built on Foundry, Bedrock, Vertex or in-house orchestration, acting on business systems through tools, replaced in weeks.
-3. **AI inside the tools already in use** Copilots in productivity suites, assistants inside SaaS, GenAI in the delivery pipeline. Adopted faster than any review cycle, often without anyone registering them.
+2. **Agents & the platforms** Built on Foundry, Bedrock, Google or in-house orchestration, acting on business systems through tools, replaced in weeks.
+3. **AI inside the tools already in use** Copilots in productivity suites, assistants inside SaaS, GenAI in the delivery pipeline.
+Adopted faster than any review cycle, often without anyone registering them.
 
 <!-- ainsi: prose size=small color=soft -->
-Three clouds, four agent platforms, a hundred systems. The decisions about them cannot live in any one of the platforms.
+*Three clouds, four agent platforms, a hundred systems? The **decisions** about them cannot live in a single platform.*
 
 ---
 
-<!-- ainsi:layout split side=right size=image -->
+<!-- ainsi: layout split side=right size=two-thirds -->
 
+<!-- ainsi: prose size=small -->
 # Governance is a separate role
 
-The decisions are the organisation's: which frameworks apply, the risk appetite, the tier of each system, the controls it must satisfy, who is answerable. They have to survive a platform swap, so they live above all of the platforms, in one place.
+<!-- ainsi: prose size=small -->
+*The decisions are the organisation's: which frameworks apply, the risk appetite, the tier of each system, the controls it must satisfy, who is accountable. They have to survive a platform swap - or systems covering many - so they live above all of the platforms, in one place.*
 
+<!-- ainsi: prose size=small -->
 A runtime enforces what it runs and reports on itself. Oversight of that enforcement is a different accountability. Three lines of defence: the platform team is the first line, governance is the second, audit is the third. The first line cannot be its own second.
 
+<!-- ainsi: prose size=small -->
 The platform knows who ran a workflow. It does not know the system's purpose, its tier or its owner. Risk is contextual, so that is decided where the use case is.
 
-<!-- ainsi: full size=full -->
-![Agent platform: control plane, enforcement point, execution, MCP boundary. Use case outside decides the risk tier.](assets/platform-gap.png)
+<!-- ainsi: full size=l align=right -->
+![Governance above, holding decisions and oversight. Below it three runtimes, each enforcing its own: the agent platform, copilots and SaaS AI, build and deployment. The tier and the control set travel down, evidence and named gaps come back up.](assets/governance-role.png)
 
 ---
 
-<!-- ainsi:layout split side=right size=image -->
+<!-- ainsi: layout split side=left size=half -->
 
 # Two layers, one loop
 
@@ -44,7 +50,7 @@ Enforcement applies the decision at the moment of action: allow, block, escalate
 
 Saidot conveys the decision down as itemised controls with parameters, and takes events back up as evidence. It does not sit in the hot path.
 
-<!-- ainsi: full size=full -->
+<!-- ainsi: full size=l -->
 ![Governance plane above: evidence, system register, control library. Runtimes below: agent platform, other runtimes, everywhere else AI runs.](assets/governance-plane.png)
 
 ---
@@ -60,7 +66,7 @@ Saidot conveys the decision down as itemised controls with parameters, and takes
 6. **Report** Reviews and transparency reports are generated from the record, current on the day they are asked for.
 
 <!-- ainsi: prose size=small color=soft -->
-Register, map and evidence run through the Governance, Library and Docs MCP servers as well, so a client's own agents can operate the loop.
+Register, map and evidence run through the MCP servers as well, so a client's own agents can operate the loop.
 
 ---
 
@@ -68,13 +74,13 @@ Register, map and evidence run through the Governance, Library and Docs MCP serv
 
 # Your governance model, configured
 
-<!-- ainsi: columns -->
-1. **Your policies, as entities** Existing internal policies and controls are modelled in the graph beside the 110+ in the library. They link to systems, risks and evidence like anything else. Not documents attached to a record.
-2. **Your process, as tasks** Lifecycle stages, approval gates, review cadence and the roles that own them are set per organisation. Governance becomes named work in a queue, not a policy nobody reads. In development.
-3. **Your automation, at your pace** Every rule is a workflow you switch on: classification, inheritance, control assignment, lifecycle approvals. What is not automated stays a task for a person.
-
-<!-- ainsi: prose size=small color=soft -->
-Shipped: graph, library, workflows, MCP servers, REST API, Observability API (Q2 2026), connectors for Azure AI Foundry and Amazon Bedrock.
+<!-- ainsi: agenda -->
+1. **Your policies, as entities** Existing internal policies and their controls are modelled in the graph beside the **110+** policies in the library.
+They link to systems, risks and evidence like anything else. Not documents attached to a record.
+2. **Your process, as tasks** Lifecycle stages, approval gates, review cadence and the roles that own them are set per organisation.
+Governance becomes named work in a queue, not a policy nobody reads. In development.
+3. **Your automation, at your pace** Every rule is a workflow you switch on: classification, inheritance, control assignment, lifecycle approvals.
+What is not automated stays a task for a person.
 
 ---
 
@@ -89,4 +95,4 @@ Shipped: graph, library, workflows, MCP servers, REST API, Observability API (Q2
 - **Event-based triggers** Drift, an incident or a change reopens the assessment. Production keeps the record current.
 
 <!-- ainsi: prose size=small color=soft -->
-Where this goes: the same loop at the scale of a bank's whole AI estate, with more of it automated and a person still deciding.
+*Where this goes: the same loop at the scale of a bank's whole AI estate, with more of it automated and a person still deciding.*
