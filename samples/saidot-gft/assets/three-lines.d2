@@ -1,0 +1,36 @@
+# Slide 2 of the GFT deck. Where the AI estate lands in three lines of defence.
+# Deliberately the same stacked shape as governance-role.d2 on the next slide,
+# so the reader sees the middle band again when it is opened up.
+
+...@../../../../d2-style/theme/house
+
+third: THIRD LINE · INDEPENDENT ASSURANCE {
+  class: violet
+  label.near: top-left
+
+  audit: |md <div style="text-align:center"><b>Internal audit</b><br/><span style="color:#64748b">tests whether the control<br/>held, not the claim that it did</span></div> | {class: icon; width: 230; icon: ../../../../d2-style/icons/lucide-clipboard-check.svg}
+  conformity: |md <div style="text-align:center"><b>Conformity assessment</b><br/><span style="color:#64748b">EU AI Act · ISO 42001</span></div> | {class: icon; width: 200; icon: ../../../../d2-style/icons/lucide-badge-check.svg}
+}
+
+second: SECOND LINE · GOVERNANCE {
+  class: blue
+  label.near: top-left
+
+  risk: |md <div style="text-align:center"><b>AI risk and compliance</b><br/><span style="color:#64748b">the tier · the control set<br/>the thresholds</span></div> | {class: icon; width: 210; icon: ../../../../d2-style/icons/lucide-scale.svg}
+  record: |md <div style="text-align:center"><b>The record</b><br/><span style="color:#64748b">classifications · approvals<br/>evidence · who decided, when</span></div> | {class: icon; width: 235; icon: ../../../../d2-style/icons/lucide-archive.svg}
+}
+
+first: FIRST LINE · BUILD AND RUN {
+  class: slate
+  label.near: top-left
+
+  teams: |md <div style="text-align:center"><b>Builders and platform teams</b><br/><span style="color:#64748b">own the system · build the<br/>guards · run the evaluations</span></div> | {class: icon; width: 245; icon: ../../../../d2-style/icons/lucide-users.svg}
+  enforcement: |md <div style="text-align:center"><b>Enforcement in each runtime</b><br/><span style="color:#64748b">allow · block · escalate<br/>and reports on itself</span></div> | {class: icon; width: 245; icon: ../../../../d2-style/icons/lucide-shield.svg}
+}
+
+third <- second: the record, with its trail
+second -> first: the tier and the control set
+second <- first: {source-arrowhead.label: evidence\nattestation}
+
+(** -> **)[*].class: wire
+(** <- **)[*].class: wireback

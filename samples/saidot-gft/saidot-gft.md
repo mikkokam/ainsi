@@ -21,6 +21,24 @@ Adopted faster than any review cycle, often without anyone registering them.
 
 ---
 
+<!-- ainsi: layout split side=right size=half -->
+
+# Three lines, one record
+
+The model is not new. What is new is what sits in the first line: a platform that enforces its own controls and reports on itself.
+
+The second line needs a record that is not the first line's own reporting. The tier, the control set, the thresholds, and the trail of who decided what, and when.
+
+The third line tests that record against what actually ran. Internal audit and external conformity assessment, without asking the teams under audit to assemble their own evidence.
+
+<!-- ainsi: prose size=small color=soft -->
+ISO/IEC 42001 asks for internal audit and management review. The EU AI Act asks for a conformity assessment and the technical documentation behind it. Both assume the record exists.
+
+<!-- ainsi: full size=l align=right -->
+![Three stacked bands. Third line, independent assurance: internal audit and conformity assessment. Second line, governance: AI risk and compliance, and the record. First line, build and run: builders and platform teams, and enforcement in each runtime. The tier and the control set travel down, evidence comes up, the record goes to assurance.](assets/three-lines.png)
+
+---
+
 <!-- ainsi: layout split side=right size=two-thirds -->
 
 <!-- ainsi: prose size=small -->
@@ -30,7 +48,7 @@ Adopted faster than any review cycle, often without anyone registering them.
 *The decisions are the organisation's: which frameworks apply, the risk appetite, the tier of each system, the controls it must satisfy, who is accountable. They have to survive a platform swap - or systems covering many - so they live above all of the platforms, in one place.*
 
 <!-- ainsi: prose size=small -->
-A runtime enforces what it runs and reports on itself. Oversight of that enforcement is a different accountability. Three lines of defence: the platform team is the first line, governance is the second, audit is the third. The first line cannot be its own second.
+A runtime enforces what it runs and reports on itself. Oversight of that enforcement is a different accountability. The first line cannot be its own second.
 
 <!-- ainsi: prose size=small -->
 The platform knows who ran a workflow. It does not know the system's purpose, its tier or its owner. Risk is contextual, so that is decided where the use case is.
