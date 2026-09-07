@@ -9,8 +9,16 @@
     gap: var(--ainsi-tiles-gap);
     align-items: start;
 }
-/* multi-column, because css masonry is not in the browsers a deck has to open in. The trade
-   is reading order: a masonry field runs down each column, so prose belongs in a grid */
+/*
+ * Masonry as multi-column. The flexbox technique that reads across rather than down needs a
+ * fixed container height and items that fit it: with pictures whose heights are unknown until
+ * the browser has them, the only way to promise that is to cap every picture to the same
+ * height, which removes the variation masonry is for. Measured: the flex version broke into
+ * six columns of a three-column field the moment one tile was taller than the height allowed.
+ *
+ * So the browser packs the columns, and the cost is reading order, which runs down each column
+ * rather than across. That is why prose belongs in a grid and this flow is for pictures.
+ */
 .ainsi-tiles[data-flow="masonry"] {
     columns: var(--ainsi-tiles-columns, 3);
     column-gap: var(--ainsi-tiles-gap);
@@ -19,6 +27,9 @@
     break-inside: avoid;
     margin-bottom: var(--ainsi-tiles-gap);
 }
+/* packed columns are only worth having if the tiles differ in height, so the cap is looser
+   here and most pictures keep their own; it stops a portrait running off the page, no more */
+.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__image { max-height: calc(var(--ainsi-tiles-cap, 15em) * 1.6); }
 
 .ainsi-tiles__tile {
     display: flex; flex-direction: column; gap: .5em;

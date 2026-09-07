@@ -60,6 +60,7 @@ export default {
         });
 
         const columns = ctx.props.columns ? Number(ctx.props.columns) : columnsFor(tiles.length);
+        const masonry = (ctx.props.flow ?? "grid") === "masonry";
         /*
          * The height a picture may take, worked out here rather than in the stylesheet: a
          * browser will not divide by a custom property inside calc(), and silently keeps the
@@ -69,8 +70,9 @@ export default {
         const rows = Math.max(1, Math.ceil(tiles.length / columns));
         const cap = (BUDGET / rows).toFixed(2);
         const tag = list.ordered ? "ol" : "ul";
+
         return `${before}
-<${tag} class="ainsi-tiles" data-ainsi="tiles" data-flow="${ctx.props.flow ?? "grid"}" data-crop="${ctx.props.crop === true}" style="--ainsi-tiles-columns: ${columns}; --ainsi-tiles-cap: ${cap}em">
+<${tag} class="ainsi-tiles" data-ainsi="tiles" data-flow="${masonry ? "masonry" : "grid"}" data-crop="${ctx.props.crop === true}" style="--ainsi-tiles-columns: ${columns}; --ainsi-tiles-cap: ${cap}em">
     ${tiles.join("\n    ")}
 </${tag}>`;
     },
