@@ -1,6 +1,6 @@
 ---
 # Photographs are from Unsplash, used under the Unsplash Licence; each photo's id is in its url.
-theme: boring
+theme: acme
 logo: assets/acme-logo.png
 coverLogo: assets/acme-a-logo.png
 ---
