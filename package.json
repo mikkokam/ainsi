@@ -1,7 +1,7 @@
 {
     "name": "ainsi",
-    "private": true,
     "type": "module",
+    "license": "MIT",
     "bin": {
         "ainsi": "src/cli.ts"
     },
