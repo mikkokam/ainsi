@@ -30,6 +30,14 @@ Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 
 
 # Later
 
+## A reference for the grammar (feat)
+
+Nothing states the directive syntax in full, the frontmatter keys, the props each component and layout accepts, or what the studio's menus do. That knowledge lives in `src/components/*/index.ts` as `about` strings and zod schemas, and in the skill, which teaches an agent rather than a person. The README is the pitch and the tour and deliberately stops at naming the components.
+
+The repo is public now, so a reader who is not driving Claude Code has nowhere to go after the README.
+
+Done is a site generated from the definitions, not written beside them: a component that gains a prop gains a documented prop, and a renamed one cannot leave a stale page behind. Hand-written pages on top of that for the frontmatter, writing a theme, and the studio's own gestures. Prose restating the zod schemas by hand is the failure to avoid; it is stale inside a week and then it outvotes the code.
+
 ## Granular page swap (feat)
 
 Every rebuild is a full `location.reload()`, and the studio carries state to make that invisible: scroll position and the reopen target parked in sessionStorage, the hold counter that defers a reload while an editor is open, the read-only textarea that hides the flash. It works, and nothing a person does solo shows a symptom. What does show is narrow: an external writer, an agent working the file while a person watches, drops presenting, the grid or the menu back to the reading view at the same slide.

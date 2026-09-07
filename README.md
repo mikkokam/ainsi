@@ -4,9 +4,11 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 ![A title page: the deck name over a photographic ground](docs/screenshots/header.jpg)
 
-Write a deck in markdown and get one self-contained HTML page: it presents full-screen, prints, exports to PDF and to an editable PPTX, and reads as a document on a phone. Nothing runs but your machine. There is no service, no account, and nothing to export from to get your work back, because the deck is a `.md` file and the result is an `.html` file beside it.
+The loop: write `deck.md` with your agent in a folder on your machine, run `ainsi deck.md`, and a browser opens on the deck. Everything either of you does from then on lands in that one file. The agent rewrites a page while you are looking at it and the view reloads; you retype a line in the studio and the agent's next read sees it. There is no second copy of the document, so there is no split brain, nothing to sync and nothing to import. The same file opens in any markdown editor, and goes to anyone who has never heard of this tool.
 
-The file your agent edits is the file you edit. A deck here is a few kilobytes of what you actually say; the same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, most of it spacing, run properties and theme parts. An agent reading that spends its context on how a bullet is indented. Markdown keeps the context tight and the attention, yours and the agent's, on what the deck says.
+That is the case for markdown over a slide format. A deck here is a few kilobytes of what you actually say. The same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, the rest spacing, run properties and theme parts, so an agent asked to edit one spends its context on how a bullet is indented and loses the thread of the argument you needed the deck to make. Keeping the deck in markdown keeps the context tight and the attention, yours and the agent's, on what is said.
+
+When the deck has to leave your machine it leaves as a result, not as a project: one self-contained HTML page with the images embedded, which presents full-screen, prints and reads as a document on a phone; or a PDF; or an editable PPTX for whoever wants to carry on in PowerPoint. Nothing runs but your machine, there is no service and no account, and the deck stays a `.md` file with an `.html` file beside it.
 
 The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/acme/acme.md`, unchanged, under two of the themes in this repo:
 
