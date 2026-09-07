@@ -2,11 +2,17 @@
 
 Presentations in markdown, for agent-first work on local files, with a GUI for the last mile.
 
+![A title page: the deck name over a photographic ground](docs/screenshots/header.jpg)
+
 Write a deck in markdown and get one self-contained HTML page: it presents full-screen, prints, exports to PDF and to an editable PPTX, and reads as a document on a phone. Nothing runs but your machine. There is no service, no account, and nothing to export from to get your work back, because the deck is a `.md` file and the result is an `.html` file beside it.
 
 The file your agent edits is the file you edit. A deck here is a few kilobytes of what you actually say; the same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, most of it spacing, run properties and theme parts. An agent reading that spends its context on how a bullet is indented. Markdown keeps the context tight and the attention, yours and the agent's, on what the deck says.
 
-The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched.
+The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/acme/acme.md`, unchanged, under two of the themes in this repo:
+
+![Four figures with captions, set in a serif on warm paper](docs/screenshots/default.jpg)
+
+![The same four figures, set in a grotesque on white](docs/screenshots/acme.jpg)
 
 Pages are computed, not authored. Too much on a slide and the solver steps the type down within the range the theme allows, then splits at the natural seam. When it genuinely cannot fit, it tells you instead of quietly cropping.
 
@@ -68,7 +74,11 @@ Diagrams are the sibling repo, [ainsi-d2](https://github.com/mikkokam/ainsi-d2):
 
 Fourteen components, each a markdown list or table with a comment naming it, so the source stays readable as text: `agenda`, `alert`, `bar-table`, `boxes`, `columns`, `comparison`, `figures`, `full`, `matrix`, `prose`, `roadmap`, `striped-table`, `tiles`, `timeline`. A component decides how a run of blocks reads, never what colour it is.
 
+![A page split down the middle: text and an alert on the left, a photograph filling the right](docs/screenshots/split.jpg)
+
 Four layouts decide the page around them: `default`, `header` for a title or a photo ground, `section` for a divider, `split` for text beside an image. Themes add their own.
+
+![An index page of four pictures, each at its own aspect ratio, in a second theme](docs/screenshots/tiles.jpg)
 
 ## Development
 
