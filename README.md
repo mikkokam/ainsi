@@ -95,7 +95,7 @@ Four layouts decide the page around them: `default`, `header` for a title or a p
 
 ## The guide
 
-[docs/guide](docs/guide/README.md) is the reference: [writing a deck](docs/guide/writing.md), [components](docs/guide/components.md), [layouts](docs/guide/layouts.md), [frontmatter](docs/guide/frontmatter.md), [themes](docs/guide/themes.md).
+[docs](docs/README.md) is the reference: [writing a deck](docs/guide/writing.md), [components](docs/guide/components.md), [layouts](docs/guide/layouts.md), [frontmatter](docs/guide/frontmatter.md), [themes](docs/guide/themes.md).
 
 ## Development
 
