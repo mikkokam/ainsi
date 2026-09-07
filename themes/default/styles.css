@@ -20,3 +20,7 @@
 @media screen and (max-width: 900px) {
     .ainsi-page::before { right: 1.1rem; bottom: 1rem; width: 64px; height: 19px; }
 }
+
+/* a toned page is dark ground: it takes the cover's mark, which is drawn light */
+.ainsi-page:has(> main[data-tone="accent"])::before,
+.ainsi-page:has(> main[data-tone="inverse"])::before { background-image: var(--ainsi-logo-cover); }

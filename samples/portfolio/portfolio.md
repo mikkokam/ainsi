@@ -7,7 +7,8 @@ coverLogo: assets/kaari-mark-white.svg
 
 <!-- ainsi: layout header -->
 
-# Studio Kaari
+<!-- ainsi: prose align=right -->
+# StudioKaari
 
 Selected work, 2024 to 2026
 
@@ -19,7 +20,7 @@ Selected work, 2024 to 2026
 <!-- ainsi: prose size=small caps -->
 Index
 
-# What is in here
+# What \ how
 
 <!-- ainsi: agenda -->
 1. **Identity** three marks and the systems under them
@@ -38,7 +39,7 @@ Index
 
 ---
 
-# Index
+# Expos
 
 <!-- ainsi: tiles columns=4 -->
 - ![A neon sign reading open](https://images.unsplash.com/photo-1516617442634-75371039cb3a?w=900&q=80) Nocturne, 2025
@@ -55,8 +56,8 @@ Motion
 
 <!-- ainsi: tiles -->
 - ![A title card in motion, frozen mid-transition](https://images.unsplash.com/photo-1517816428104-797678c7cf0c?w=900&q=80) Signal, title sequence
-- ![A studio light on a stand](https://images.unsplash.com/photo-1760383640414-1b255c5a7128?w=900&q=80) Lighting test
-- ![A close crop of ink on paper](https://images.unsplash.com/photo-1642698099686-201dd457bbb9?w=900&q=80) Ink test
+- ![Animation](https://images.unsplash.com/photo-1760383640414-1b255c5a7128?w=900&q=80) Lighting test
+- ![Session](https://images.unsplash.com/photo-1642698099686-201dd457bbb9?w=900&q=80) Photo session
 
 ---
 
@@ -79,11 +80,11 @@ Print
 # Nothing here was cropped to fit
 
 <!-- ainsi: tiles columns=5 -->
-- ![A tall book spread photographed from above](https://images.unsplash.com/photo-1616474223720-c32dccabf2eb?w=900&q=80) Spread, 300 × 240
-- ![A poster in a narrow frame](https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=900&q=80) B2 poster
+- ![Graffiti-as-Service](https://images.unsplash.com/photo-1616474223720-c32dccabf2eb?w=900&q=80) Graffiti, 3 x 6m
+- ![A poster](https://images.unsplash.com/photo-1561998338-13ad7883b20f?w=900&q=80) Illuminated wall poster
 - ![A wide landscape photograph](https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=900&q=80) Endpapers
-- ![A stack of printed matter](https://images.unsplash.com/photo-1751004865865-a27a8f859776?w=900&q=80) Press check
-- ![A close crop of ink on paper](https://images.unsplash.com/photo-1541753866388-0b3c701627d3?w=900&q=80) Ink test
+- ![Test](https://images.unsplash.com/photo-1751004865865-a27a8f859776?w=900&q=80) Press check
+- ![Sketch](https://images.unsplash.com/photo-1541753866388-0b3c701627d3?w=900&q=80) Sketch test
 
 ---
 
@@ -91,23 +92,26 @@ Print
 
 # The short version of how we work
 
-Three people, one room, no account managers. We take the brief apart in week one and show you the two directions worth arguing about in week two.
+<!-- ainsi: prose size=small -->
+Three people, one room, no account managers. 
+
+We take the brief apart in week one and show you the two directions worth arguing about in week two.
 
 <!-- ainsi: full size=full -->
 ![Paint](https://images.unsplash.com/photo-1512413914633-b5043f4041ea?w=1600&q=80)
 
 ---
 
-<!-- ainsi: prose size=small caps -->
+<!-- ainsi: prose size=small caps color=accent -->
 How we work
 
 # Four things we do every time
 
 <!-- ainsi: tiles columns=2 -->
 - **Read the room first** The brief is what someone could write down. The first week is for what they could not.
-- **Two directions, not five** A shortlist is a way of avoiding the argument that decides the work.
-- **Make it in the real size** Nothing is approved at 40% on a screen. Posters get printed, sleeves get pressed.
-- **Leave the system behind** You get the files, the tokens and a page that says how to use them.
+- **One direction, not five** The vision is the vision. It is a way of avoiding the argument that decides the work.
+- **Make it in on-site** Nothing is approved on a screen. Posters get printed, sleeves get pressed, graffiti painted.
+- **Leave the system behind** You own the IPR. The paintings, the files, the tokens and a page that says how to use them.
 
 ---
 

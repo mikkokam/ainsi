@@ -109,3 +109,5 @@ The studio prints each rebuild's milliseconds by phase, and the browser console 
 ## Licence
 
 MIT, see [LICENSE](LICENSE). Mikko Kämäräinen, mikko@ukk0.com.
+
+The photographs in the sample decks are from [Unsplash](https://unsplash.com), used under the Unsplash Licence; each photo's id is in its url. The marks in them belong to invented companies.

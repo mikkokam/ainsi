@@ -2,8 +2,9 @@
  * The work wants the room. A content page here sits on a narrower inset than the covers and
  * dividers, which keep the wide one because their type is the whole page; a field of pictures
  * gains the difference in width, and the corner radius keeps the page from looking untrimmed.
+ * The content hangs from the top of that inset rather than sitting centred in the page.
  */
-[data-layout="default"] main { padding: 4.5%; }
+[data-layout="default"] main { padding: 4.5%; justify-content: flex-start; }
 
 @media screen and (max-width: 900px) {
     [data-layout="default"] main { padding: 6%; }

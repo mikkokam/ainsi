@@ -1,5 +1,8 @@
 ---
+# Photographs are from Unsplash, used under the Unsplash Licence; each photo's id is in its url.
 theme: default
+logo: assets/lehto-mark.svg
+coverLogo: assets/lehto-mark-white.svg
 ---
 
 <!-- ainsi: layout header -->
@@ -8,7 +11,7 @@ theme: default
 # Lehto & Mänty
 
 <!-- ainsi: prose color=accent -->
-Bespoke woodwork from Åbo, Finland, since 1928
+**Bespoke woodwork from Åbo, Finland, since 1928**
 
 ![The bench room in morning light, shavings on the floor](https://images.unsplash.com/photo-1547609434-b732edfee020?q=80&w=1600&auto=format&fit=crop)
 
@@ -38,7 +41,8 @@ Four benches, one kiln, sixty pieces a year
 
 A dining table with a mitred frame and drawbored joints takes a joiner eleven days. The same table, dowelled and screwed, takes a factory eleven minutes. Both will be in the room for a year; only one will still be flat in twenty.
 
-So the question we ask first is how long the piece has to last, and the second is what the room does to it. Underfloor heating and a sixteen-metre window are harder on a table than any customer.
+So the question we ask first is how long the piece has to last, and the second is what the room does to it.
+Underfloor heating and a sixteen-metre window are harder on a table than any customer.
 
 > [!WARNING]
 > Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors.

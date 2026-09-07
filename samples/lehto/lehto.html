@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lehto & Mänty</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2273%22%20height%3D%2273%22%20viewBox%3D%220%200%2073%2073%22%20fill%3D%22none%22%3E%3Ccircle%20cx%3D%2236.5%22%20cy%3D%2236.5%22%20r%3D%2236.5%22%20fill%3D%22black%22%2F%3E%3Cpath%20d%3D%22M16%2036.2921C16%2032.4881%2016.7472%2029.1142%2018.2417%2026.1706C19.7814%2023.2269%2021.842%2020.9626%2024.4233%2019.3776C27.05%2017.7925%2029.971%2017%2033.1863%2017C35.9941%2017%2038.4396%2017.5661%2040.5228%2018.6983C42.6512%2019.8304%2043.9504%2020.572%2045.6175%2022.2702V17.6114H55.1957V55.2446H45.6175V50.4499C43.9504%2052.4142%2042.6965%2052.9803%2040.5228%2054.1578C38.3943%2055.2899%2035.9262%2055.856%2033.1184%2055.856C29.9483%2055.856%2027.05%2055.0409%2024.4233%2053.4105C21.842%2051.7802%2019.7814%2049.4932%2018.2417%2046.5496C16.7472%2043.5607%2016%2040.1415%2016%2036.2921ZM44.9099%2036.428C44.9099%2034.1184%2044.4571%2032.1484%2043.5513%2030.5181C42.6456%2028.8425%2041.4228%2027.5745%2039.8831%2026.714C38.3433%2025.8083%2036.6904%2025.3554%2034.9242%2025.3554C33.158%2025.3554%2031.5277%2025.7856%2030.0332%2026.6461C28.5388%2027.5065%2027.316%2028.7746%2026.365%2030.4502C25.4593%2032.0805%2025.0064%2034.0278%2025.0064%2036.2921C25.0064%2038.5565%2025.4593%2040.5491%2026.365%2042.27C27.316%2043.9456%2028.5388%2045.2363%2030.0332%2046.142C31.573%2047.0477%2033.2033%2047.5006%2034.9242%2047.5006C36.6904%2047.5006%2038.3433%2047.0704%2039.8831%2046.2099C41.4228%2045.3042%2042.6456%2044.0362%2043.5513%2042.4059C44.4571%2040.7302%2044.9099%2038.7376%2044.9099%2036.428Z%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik0yNiA2IEwzNCAxOSBMMzAgMTkgTDM4IDI4IEwzMyAyOCBMNDIgMzcgTDI4LjUgMzcgTDI4LjUgNDIgTDIzLjUgNDIgTDIzLjUgMzcgTDEwIDM3IEwxOSAyOCBMMTQgMjggTDIyIDE5IEwxOCAxOSBaIiBmaWxsPSIjMGEwYTBhIi8+CiAgPHRleHQgeD0iNTYiIHk9IjM0IiBmb250LWZhbWlseT0iR2VvcmdpYSwgJ1RpbWVzIE5ldyBSb21hbicsIHNlcmlmIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0TGVuZ3RoPSIxNzYiIGxlbmd0aEFkanVzdD0ic3BhY2luZyIgZmlsbD0iIzBhMGEwYSI+TEVIVE8gJmFtcDsgTcOETlRZPC90ZXh0Pgo8L3N2Zz4K">
 <style>
 @import url("family=Inter:wght@400;500&display=swap");
 /* engine: page structure, and the paper a print lands on */
@@ -303,6 +303,10 @@ body.ainsi:not([data-present]) .ainsi-page[data-overflow]::before {
 @media screen and (max-width: 900px) {
     .ainsi-page::before { right: 1.1rem; bottom: 1rem; width: 64px; height: 19px; }
 }
+
+/* a toned page is dark ground: it takes the cover's mark, which is drawn light */
+.ainsi-page:has(> main[data-tone="accent"])::before,
+.ainsi-page:has(> main[data-tone="inverse"])::before { background-image: var(--ainsi-logo-cover); }
 /* layouts and components, styled through the tokens above */
 /* No index.ts: a layout is a stylesheet, inheriting the default template. */
 [data-layout="header"] { position: relative; color: var(--ainsi-accent-ink); }
@@ -1134,13 +1138,13 @@ body[data-present] .ainsi-page[data-current] mark {
 }
 </style>
 </head>
-<body class="ainsi" style="--ainsi-ratio:16 / 9">
+<body class="ainsi" style="--ainsi-ratio:16 / 9;--ainsi-logo:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik0yNiA2IEwzNCAxOSBMMzAgMTkgTDM4IDI4IEwzMyAyOCBMNDIgMzcgTDI4LjUgMzcgTDI4LjUgNDIgTDIzLjUgNDIgTDIzLjUgMzcgTDEwIDM3IEwxOSAyOCBMMTQgMjggTDIyIDE5IEwxOCAxOSBaIiBmaWxsPSIjMGEwYTBhIi8+CiAgPHRleHQgeD0iNTYiIHk9IjM0IiBmb250LWZhbWlseT0iR2VvcmdpYSwgJ1RpbWVzIE5ldyBSb21hbicsIHNlcmlmIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0TGVuZ3RoPSIxNzYiIGxlbmd0aEFkanVzdD0ic3BhY2luZyIgZmlsbD0iIzBhMGEwYSI+TEVIVE8gJmFtcDsgTcOETlRZPC90ZXh0Pgo8L3N2Zz4K');--ainsi-logo-cover:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgNDgiIGZpbGw9Im5vbmUiPgogIDxwYXRoIGQ9Ik0yNiA2IEwzNCAxOSBMMzAgMTkgTDM4IDI4IEwzMyAyOCBMNDIgMzcgTDI4LjUgMzcgTDI4LjUgNDIgTDIzLjUgNDIgTDIzLjUgMzcgTDEwIDM3IEwxOSAyOCBMMTQgMjggTDIyIDE5IEwxOCAxOSBaIiBmaWxsPSIjZmZmZmZmIi8+CiAgPHRleHQgeD0iNTYiIHk9IjM0IiBmb250LWZhbWlseT0iR2VvcmdpYSwgJ1RpbWVzIE5ldyBSb21hbicsIHNlcmlmIiBmb250LXNpemU9IjIwIiBmb250LXdlaWdodD0iNzAwIiB0ZXh0TGVuZ3RoPSIxNzYiIGxlbmd0aEFkanVzdD0ic3BhY2luZyIgZmlsbD0iI2ZmZmZmZiI+TEVIVE8gJmFtcDsgTcOETlRZPC90ZXh0Pgo8L3N2Zz4K')">
 <section class="ainsi-page" id="lehto-manty" data-page="1" data-layout="header">
 <main data-align="end"><article><div class="ainsi-prose ainsi-prose--large">
 <h1>Lehto &#x26; Mänty</h1>
 </div>
 <div class="ainsi-prose ainsi-prose--accent">
-<p>Bespoke woodwork from Åbo, Finland, since 1928</p>
+<p><strong>Bespoke woodwork from Åbo, Finland, since 1928</strong></p>
 </div>
 <figure class="ainsi-full" data-ainsi="full"><img src="https://images.unsplash.com/photo-1547609434-b732edfee020?q=80&amp;w=1600&amp;auto=format&amp;fit=crop" alt="The bench room in morning light, shavings on the floor"></figure></article></main>
 <span class="ainsi-number" aria-hidden="true">1</span>
@@ -1166,7 +1170,8 @@ body[data-present] .ainsi-page[data-current] mark {
 <section class="ainsi-page" id="what-a-machine-cannot" data-page="4" data-layout="split">
 <main data-side="right" data-size="third"><article><h1>What a machine cannot</h1>
 <p>A dining table with a mitred frame and drawbored joints takes a joiner eleven days. The same table, dowelled and screwed, takes a factory eleven minutes. Both will be in the room for a year; only one will still be flat in twenty.</p>
-<p>So the question we ask first is how long the piece has to last, and the second is what the room does to it. Underfloor heating and a sixteen-metre window are harder on a table than any customer.</p>
+<p>So the question we ask first is how long the piece has to last, and the second is what the room does to it.<br>
+Underfloor heating and a sixteen-metre window are harder on a table than any customer.</p>
 <aside class="ainsi-alert ainsi-alert--warning" data-ainsi="alert" role="note" aria-label="Warning" title="Warning">
     <span class="ainsi-alert__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
     <p>Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors.<br>
