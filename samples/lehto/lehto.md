@@ -109,6 +109,7 @@ Movement is the column that decides a design. Ash is harder than oak and cheaper
 
 # The mistake that costs the most
 
+<!-- ainsi: prose size=small -->
 A specification that gives a width, a length and a species, and says nothing about the room. We have delivered into an apartment with underfloor heating at 24 degrees and 22% humidity in February, which is drier than the kiln, and a 3.2 metre top will find that out within a month.
 
 The fix is one paragraph in the brief: the heating, the glazing, and whether anyone opens a window. It changes the joint, not the price. A frame-and-panel top moves at the panel and stays flat; a solid slab in that room is a warranty claim we have to honour.
@@ -157,14 +158,14 @@ Sixteen weeks, four decisions, one of them yours alone
 # Brief to delivery
 
 <!-- ainsi: columns -->
-1. **Week 1** Room measured, heating and glazing recorded, drawings agreed.
-2. **Week 3** Boards chosen with you in the timber store, grain marked for the top.
-3. **Week 6** Joints cut, dry-fitted, and photographed before glue.
-4. **Week 16** Delivered, levelled, and the care card left on the piece.
+1. **Visit** Room measured, heating and glazing recorded, drawings agreed.
+2. **Prep** Boards chosen with you in the timber store, grain marked for the top.
+3. **Cut** Joints cut, dry-fitted, and photographed before glue.
+4. **Install** Delivered, levelled, and the care card left on the piece.
 
 ---
 
-# A commission, by month
+# A full interior commission
 
 <!-- ainsi: roadmap -->
 |                   | Jan          | Feb | Mar | Apr        | May       |

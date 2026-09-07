@@ -54,7 +54,7 @@ A fifty-person ==engineering team== might now connect eight model <kbd>providers
 ---
 
 <!-- ainsi: prose size=small caps -->
-<!-- ainsi: layout split side=right tone=soft -->
+<!-- ainsi: layout split side=right tone=inverse -->
 ##### How does it work
 
 <!-- ainsi: prose size=small -->
@@ -118,6 +118,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 ---
 
+<!-- ainsi: layout default tone=soft -->
 # What ships when
 
 <!-- ainsi: roadmap -->
