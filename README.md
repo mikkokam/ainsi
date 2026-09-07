@@ -11,8 +11,8 @@ Write a deck in markdown, get one self-contained HTML page: it presents full-scr
 
 Requires [Bun](https://bun.sh).
 
-    git clone git@github.com:mikkokam/presentation-as-code.git
-    cd presentation-as-code
+    git clone git@github.com:mikkokam/ainsi.git
+    cd ainsi
     bun install
     bun link                          # puts `ainsi` on the PATH, globally
 
@@ -36,6 +36,15 @@ The studio is a browser page over your markdown file. Click a block to edit its 
 `ainsi deck.md` with stdout piped refuses to start a server and prints the build command instead.
 
 `samples/acme/acme.md` is a full deck to start from.
+
+## In Claude Code
+
+The repo is also a plugin: a skill that teaches an agent the deck grammar, the directives and the build loop. It calls the `ainsi` on your PATH, so install the tool first.
+
+    claude plugin marketplace add mikkokam/ainsi
+    claude plugin install ainsi@ainsi
+
+Diagrams are the sibling repo, [ainsi-d2](https://github.com/mikkokam/ainsi-d2): house-style D2 with its own skill and an `ainsi-d2` command.
 
 ## Development
 

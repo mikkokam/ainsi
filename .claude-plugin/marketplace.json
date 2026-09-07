@@ -1,0 +1,11 @@
+{
+    "name": "ainsi",
+    "owner": { "name": "Mikko Kämäräinen" },
+    "plugins": [
+        {
+            "name": "ainsi",
+            "source": "./",
+            "description": "Markdown decks built to one self-contained HTML page, or a PDF."
+        }
+    ]
+}

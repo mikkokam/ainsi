@@ -1,0 +1,6 @@
+{
+    "name": "ainsi",
+    "description": "Write a presentation as markdown and build it: deck grammar, component and layout directives, and the build loop.",
+    "version": "0.1.0",
+    "author": { "name": "Mikko Kämäräinen" }
+}
