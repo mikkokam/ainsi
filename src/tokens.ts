@@ -4,7 +4,9 @@
  * a theme is allowed to make, not one per property a component happens to set.
  */
 export const TOKENS = [
-    // colour
+    // colour. The accent is a ground carrying accent-ink and ink on the ground in its own
+    // right, a numeral or a rule or a heading set to accent, so a colour chosen only as a fill
+    // fails half its job: an electric one can read 1:1 against the paper and vanish.
     "--ainsi-ink", "--ainsi-ink-soft", "--ainsi-ground", "--ainsi-shell",
     "--ainsi-accent", "--ainsi-accent-ink", "--ainsi-rule", "--ainsi-surface",
     // a light wash of the accent: the soft tone's ground, where the ink and the accent stay as they are

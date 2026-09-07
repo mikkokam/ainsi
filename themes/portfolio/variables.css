@@ -3,11 +3,15 @@
     --ainsi-ink-soft: #6f6f72;
     --ainsi-ground: #f4f4f2;
     --ainsi-shell: #0a0a0a;
-    --ainsi-accent: #c8ff2e;
-    --ainsi-accent-ink: #0a0a0a;
+    /* the accent is ink as often as it is a ground: a numeral, a heading set to accent, a
+       rule. Electric lime reads 1.07:1 on this paper and disappears, so the accent is the
+       deep end of the same hue and the electric one is the tint, where it is a ground with
+       black on it and reads 16.8:1 */
+    --ainsi-accent: #4d6b00;
+    --ainsi-accent-ink: #ffffff;
     --ainsi-rule: #d8d8d4;
     --ainsi-surface: #ffffff;
-    --ainsi-tint: #ececea;
+    --ainsi-tint: #dcff6b;
 
     /* Sora carries the headings, Geist is the neutral the body is set in, and IBM Plex Mono is
        the small voice: subheads, captions and anything that reads as a label rather than prose */
