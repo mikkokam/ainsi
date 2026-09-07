@@ -2,11 +2,13 @@ import { z } from "zod";
 import { imageOf, img, labelled, listOf, type ComponentDefinition } from "../../kit";
 
 /**
- * A list laid out as a field: pictures, or text, or both. Two flows, because they answer
- * different questions. A grid keeps the columns aligned and lets the rows be as tall as
- * their tallest tile, which is what a page of even-ish pictures wants. Masonry packs each
- * column independently so nothing is left short, at the price of reading down rather than
- * across, which only matters when the items are prose.
+ * A list laid out as a field of tiles: pictures, or text, or both. One flow, a grid, whose
+ * rows are as tall as their tallest tile.
+ *
+ * There was a masonry flow. It packed the columns by height, which meant reading down each
+ * column instead of across, and the two ways to fix that reading order both wanted the tile
+ * heights up front, which a picture does not have until the browser has the file. Removed
+ * rather than kept as the flow nobody should choose.
  *
  * Pictures are never cropped by default: a portfolio shows the frame the photographer chose,
  * and the spare space is the price. `crop` gives up the aspect ratio for a flush grid.
@@ -23,7 +25,6 @@ export default {
     about: "a list as a field of tiles: pictures or text, in a grid or packed into columns",
     accepts: entities => !!listOf(entities),
     props: z.object({
-        flow: z.enum(["grid", "masonry"]).default("grid"),
         /** 0 asks for the count's own answer; anything else is that many columns */
         columns: z.number().int().min(0).max(6).default(0),
         /** true fills each cell and clips what does not fit; false keeps every picture whole */
@@ -60,7 +61,6 @@ export default {
         });
 
         const columns = ctx.props.columns ? Number(ctx.props.columns) : columnsFor(tiles.length);
-        const masonry = (ctx.props.flow ?? "grid") === "masonry";
         /*
          * The height a picture may take, worked out here rather than in the stylesheet: a
          * browser will not divide by a custom property inside calc(), and silently keeps the
@@ -72,7 +72,7 @@ export default {
         const tag = list.ordered ? "ol" : "ul";
 
         return `${before}
-<${tag} class="ainsi-tiles" data-ainsi="tiles" data-flow="${masonry ? "masonry" : "grid"}" data-crop="${ctx.props.crop === true}" style="--ainsi-tiles-columns: ${columns}; --ainsi-tiles-cap: ${cap}em">
+<${tag} class="ainsi-tiles" data-ainsi="tiles" data-crop="${ctx.props.crop === true}" style="--ainsi-tiles-columns: ${columns}; --ainsi-tiles-cap: ${cap}em">
     ${tiles.join("\n    ")}
 </${tag}>`;
     },

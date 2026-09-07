@@ -1,35 +1,12 @@
-/* The field itself. Both flows read the same column count; only the packing differs. */
+/* The field: a grid whose rows are as tall as their tallest tile. */
 .ainsi-tiles {
     list-style: none; margin: 0; padding: 0;
     --ainsi-tiles-gap: var(--ainsi-gap);
-}
-.ainsi-tiles[data-flow="grid"] {
     display: grid;
     grid-template-columns: repeat(var(--ainsi-tiles-columns, 3), 1fr);
     gap: var(--ainsi-tiles-gap);
     align-items: start;
 }
-/*
- * Masonry as multi-column. The flexbox technique that reads across rather than down needs a
- * fixed container height and items that fit it: with pictures whose heights are unknown until
- * the browser has them, the only way to promise that is to cap every picture to the same
- * height, which removes the variation masonry is for. Measured: the flex version broke into
- * six columns of a three-column field the moment one tile was taller than the height allowed.
- *
- * So the browser packs the columns, and the cost is reading order, which runs down each column
- * rather than across. That is why prose belongs in a grid and this flow is for pictures.
- */
-.ainsi-tiles[data-flow="masonry"] {
-    columns: var(--ainsi-tiles-columns, 3);
-    column-gap: var(--ainsi-tiles-gap);
-}
-.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__tile {
-    break-inside: avoid;
-    margin-bottom: var(--ainsi-tiles-gap);
-}
-/* packed columns are only worth having if the tiles differ in height, so the cap is looser
-   here and most pictures keep their own; it stops a portrait running off the page, no more */
-.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__image { max-height: calc(var(--ainsi-tiles-cap, 15em) * 1.6); }
 
 .ainsi-tiles__tile {
     display: flex; flex-direction: column; gap: .5em;
@@ -38,17 +15,14 @@
 
 /*
  * A picture keeps its own proportions and gives up height instead. The cap comes from the
- * render, which knows how many rows the field has, and is in em, so the fit solver's type
- * step takes the pictures down with everything else; a tall picture in a wide cell ends up
- * narrower than the cell, which is the spare space a portfolio pays for not cropping.
- */
-/*
- * Two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and a
- * field of pictures has to be shorter than a lone one.
+ * render, which knows how many rows the field has, and is in em, so the fit solver's type step
+ * takes the pictures down with everything else.
  *
- * object-fit matters here: the cell sets the width, so height: auto plus a max-height does not
- * keep the ratio, it clamps the height and leaves the width alone, which stretches a portrait
- * across a landscape cell. contain puts the space beside the picture instead of inside it.
+ * Two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and a
+ * field of pictures has to be shorter than a lone one. object-fit matters as much: the cell
+ * sets the width, so height: auto plus a max-height does not keep the ratio, it clamps the
+ * height and leaves the width alone, which stretches a portrait across a landscape cell.
+ * contain puts the spare space beside the picture instead of inside it.
  */
 .ainsi-tiles .ainsi-tiles__image {
     display: block;
@@ -58,11 +32,8 @@
     border-radius: var(--ainsi-radius);
     box-shadow: var(--ainsi-shadow);
 }
-/* packed columns are only worth having if the tiles differ in height, so the cap is looser
-   here and most pictures keep their own; it stops a portrait running off the page, no more */
-.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__image { max-height: calc(var(--ainsi-tiles-cap, 15em) * 1.6); }
 /* crop: every cell the same, the picture filling it and losing its edges */
-.ainsi-tiles[data-crop="true"][data-flow="grid"] .ainsi-tiles__tile--picture { height: 100%; }
+.ainsi-tiles[data-crop="true"] .ainsi-tiles__tile--picture { height: 100%; }
 .ainsi-tiles[data-crop="true"] .ainsi-tiles__image {
     aspect-ratio: 4 / 3;
     height: 100%;
@@ -83,6 +54,5 @@
 .ainsi-tiles__body { color: var(--ainsi-ink-soft); }
 
 @media screen and (max-width: 900px) {
-    .ainsi-tiles[data-flow="grid"] { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
-    .ainsi-tiles[data-flow="masonry"] { columns: 2; }
+    .ainsi-tiles { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
 }
