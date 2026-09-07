@@ -31,15 +31,25 @@
  * step takes the pictures down with everything else; a tall picture in a wide cell ends up
  * narrower than the cell, which is the spare space a portfolio pays for not cropping.
  */
-/* two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and
-   a field of pictures has to be shorter than a lone one */
+/*
+ * Two classes, because base caps every image at min(400px, 31vw) from `.ainsi-page img`, and a
+ * field of pictures has to be shorter than a lone one.
+ *
+ * object-fit matters here: the cell sets the width, so height: auto plus a max-height does not
+ * keep the ratio, it clamps the height and leaves the width alone, which stretches a portrait
+ * across a landscape cell. contain puts the space beside the picture instead of inside it.
+ */
 .ainsi-tiles .ainsi-tiles__image {
     display: block;
     width: 100%; height: auto;
-    max-height: var(--ainsi-tiles-cap, 16em);
+    max-height: var(--ainsi-tiles-cap, 15em);
+    object-fit: contain; object-position: center;
     border-radius: var(--ainsi-radius);
     box-shadow: var(--ainsi-shadow);
 }
+/* packed columns are only worth having if the tiles differ in height, so the cap is looser
+   here and most pictures keep their own; it stops a portrait running off the page, no more */
+.ainsi-tiles[data-flow="masonry"] .ainsi-tiles__image { max-height: calc(var(--ainsi-tiles-cap, 15em) * 1.6); }
 /* crop: every cell the same, the picture filling it and losing its edges */
 .ainsi-tiles[data-crop="true"][data-flow="grid"] .ainsi-tiles__tile--picture { height: 100%; }
 .ainsi-tiles[data-crop="true"] .ainsi-tiles__image {

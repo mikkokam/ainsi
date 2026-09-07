@@ -132,9 +132,20 @@ export function control(field: Field, value: unknown, onChange: (value: unknown)
         input.className = "ainsi-studio__input";
         input.type = field.type === "number" ? "number" : "text";
         input.value = value === undefined ? "" : String(value);
+        let last = value;
+        const commit = (): void => {
+            const typed = field.type === "number" ? Number(input.value) : input.value;
+            if (input.value === "" || (field.type === "number" && Number.isNaN(typed))) return;
+            if (typed === last) return;              // blur after Enter must not splice twice
+            last = typed;
+            onChange(typed);
+        };
+        // blur commits as well as Enter: a value typed and then clicked away from is a value
+        // meant, and the bar is closed by the click that would otherwise throw it away
+        input.addEventListener("blur", commit);
         input.addEventListener("keydown", event => {
-            if (event.key === "Enter") onChange(field.type === "number" ? Number(input.value) : input.value);
-            if (event.key === "Escape") onDismiss();
+            if (event.key === "Enter") { commit(); input.blur(); }
+            if (event.key === "Escape") { input.value = last === undefined ? "" : String(last); onDismiss(); }
             event.stopPropagation();
         });
         wrap.append(input);
