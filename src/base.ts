@@ -135,6 +135,21 @@ body[data-numbers="off"][data-present] .ainsi-number { display: none; }
    since layout css follows base */
 .ainsi-page img[data-ainsi-placeholder] { width: min(45%, 420px); }
 .ainsi-page strong { font-weight: var(--ainsi-strong); }
+/*
+ * A link takes the ink it sits on and says so with the underline, rather than a colour of its
+ * own. A page's ground is whatever a tone or a photograph makes it, and no single link colour
+ * reads on all of them: the browser's own blue is 2.1:1 on a dark ground, and an accent picked
+ * for the paper is no better on the accent itself. A theme that wants a coloured link on its
+ * own ground can say so; this is the floor.
+ */
+.ainsi-page a {
+    color: var(--ainsi-link, inherit);
+    text-decoration: underline;
+    text-decoration-thickness: .06em;
+    text-underline-offset: .18em;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+.ainsi-page a:hover { text-decoration-color: currentColor; }
 /* a blockquote as markdown gives it, in the display face; a signed one carries its caption */
 .ainsi-page blockquote { margin: 0; padding: 0 0 0 calc(var(--ainsi-gap) * .8); border-left: 3px solid var(--ainsi-accent); }
 .ainsi-page blockquote p { font-family: var(--ainsi-font-display); font-size: 1.45em; line-height: 1.38; letter-spacing: -.01em; margin: 0 0 .5em; }
