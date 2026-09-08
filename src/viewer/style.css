@@ -284,9 +284,12 @@ body[data-present] .ainsi-page[data-current] mark {
 }
 @keyframes ainsi-lightbox-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* the affordance, where a click opens rather than edits or turns the page */
-body.ainsi:not([data-ainsi-studio]) .ainsi-page img { cursor: zoom-in; }
-body.ainsi:not([data-ainsi-studio]) .ainsi-page[data-layout="header"] .ainsi-full img { cursor: inherit; }
+/* the affordance, where a click opens rather than edits or turns the page. Presenting is the
+   player again whatever the deck is running in, so the studio gets it too once it is presenting */
+body.ainsi:not([data-ainsi-studio]) .ainsi-page img,
+body.ainsi[data-present] .ainsi-page img { cursor: zoom-in; }
+body.ainsi:not([data-ainsi-studio]) .ainsi-page[data-layout="header"] .ainsi-full img,
+body.ainsi[data-present] .ainsi-page[data-layout="header"] .ainsi-full img { cursor: inherit; }
 
 @media (prefers-reduced-motion: reduce) { .ainsi-lightbox { animation: none; } }
 @media print { .ainsi-lightbox { display: none !important; } }
