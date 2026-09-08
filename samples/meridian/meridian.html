@@ -533,6 +533,9 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 [data-layout="split"] article > .ainsi-full {
     position: absolute; inset: 0 auto 0 0;
     width: var(--ainsi-split); height: 100%; margin: 0;
+    /* the ground is a crop: a picture taller than the pane is cut by it, and never counted as
+       the page running out of room, which would have the fit solver split a page in two */
+    overflow: hidden;
 }
 [data-layout="split"] article > .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
 /* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
@@ -1601,7 +1604,7 @@ body[data-present] .ainsi-studio__hint { display: none; }
 <span class="ainsi-number" aria-hidden="true">10</span>
 </section>
 <section class="ainsi-page" id="questions" data-page="11" data-layout="section">
-<main data-tone="accent"><article><h1 data-ainsi-entity="e:3d8585:0">Questions</h1>
+<main data-tone="inverse"><article><h1 data-ainsi-entity="e:3d8585:0">Questions</h1>
 <p data-ainsi-entity="e:3c939b:0"><a href="mailto:ir@meridian.example">ir@meridian.example</a></p></article></main>
 <span class="ainsi-number" aria-hidden="true">11</span>
 </section>

@@ -121,7 +121,7 @@ Where the next hundred million goes
 
 ---
 
-<!-- ainsi:layout section -->
+<!-- ainsi: layout section tone=inverse -->
 
 # Questions
 
