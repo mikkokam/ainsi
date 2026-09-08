@@ -1,0 +1,12 @@
+/* the column hangs from the top margin like every other page's does */
+[data-layout="split"] article { justify-content: flex-start; }
+[data-layout="split"] article > :first-child { margin-top: 1.4rem; }
+
+/* the scale is a fourth, and a half-width column takes one step off the headline */
+[data-layout="split"] h1 { font-size: 2.369em; }
+
+/* the mark hangs on the left margin, which on a left-hand picture is on top of the picture */
+.ainsi-page[data-layout="split"]:has(main[data-side="left"])::before {
+    left: auto; right: var(--ainsi-pad);
+    background-position: right center;
+}

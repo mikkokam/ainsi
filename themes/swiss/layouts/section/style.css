@@ -1,0 +1,12 @@
+/*
+ * The divider is the poster: the numeral huge in the accent, the title under it at headline
+ * size, both hung on the left margin with the rest of the page left empty on purpose.
+ */
+[data-layout="section"] article { justify-content: flex-end; align-items: flex-start; }
+[data-layout="section"] article::before {
+    font-size: 7em; font-weight: 700; line-height: .8;
+    letter-spacing: -.05em;
+    color: var(--ainsi-accent); opacity: 1;
+    margin-bottom: .06em;
+}
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 3.157em; letter-spacing: -.035em; }

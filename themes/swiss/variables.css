@@ -1,0 +1,47 @@
+/*
+ * White paper, black type, one red and one yellow. The accent has to work as an ink as well
+ * as a ground, and bright yellow on white reads about 1.6:1, so the red is the accent and the
+ * yellow is the tint: a wash to sit black on. Which is how the posters used them.
+ *
+ * The grid is arithmetic rather than taste. The page is 1280 wide, the margin is 5% of it, 64,
+ * and the gutter is 24: twelve columns of 74 with eleven gutters between them comes to exactly
+ * the 1152 left over. Every gap on the page is that gutter or a multiple of it.
+ */
+:root {
+    --ainsi-ink: #000000;
+    --ainsi-ink-soft: #6e6e6e;
+    --ainsi-ground: #ffffff;
+    --ainsi-shell: #000000;
+    --ainsi-accent: #e2231a;
+    --ainsi-accent-ink: #ffffff;
+    --ainsi-rule: #000000;
+    --ainsi-surface: #f0f0f0;
+    --ainsi-tint: #ffd400;
+
+    --ainsi-info: #005bbb;
+    --ainsi-ok: #007a33;
+    --ainsi-notice: #000000;
+    --ainsi-warn: #b45309;
+    --ainsi-danger: #e2231a;
+
+    /* the grotesque that is already on the machine, and a metric stand-in for the machines
+       where it is not: Arimo carries Helvetica's widths, so a line breaks in the same place */
+    --ainsi-font: "Helvetica Neue", Helvetica, "Arimo", Arial, sans-serif;
+    --ainsi-font-display: var(--ainsi-font);
+    --ainsi-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 700;
+    --ainsi-size: 21px;
+    --ainsi-leading: 1.35;
+    --ainsi-step-min: 0.8;
+
+    --ainsi-gap: 1.5rem;
+    --ainsi-pad: 5%;
+    --ainsi-radius: 0;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: none;
+    --ainsi-blur: 0px;
+
+    --ainsi-motion: 200ms;
+    --ainsi-ease: cubic-bezier(.2, 0, 0, 1);
+}

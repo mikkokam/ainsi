@@ -26,7 +26,7 @@ Frontmatter that is not valid YAML is one warning and the defaults, never a fail
 
 ## theme
 
-A bare name is one of the themes shipped in this repo: `default`, `acme`, `portfolio`, `darkroom`, `boring`. Anything with a slash or a leading dot is a folder of your own, resolved beside the deck the way its images are, so `theme: ../themes/house` reads `themes/house` next to the deck's directory and the deck and its theme move as one thing. See [Themes](themes.md).
+A bare name is one of the themes shipped in this repo: `default`, `acme`, `portfolio`, `darkroom`, `swiss`, `boring`. Anything with a slash or a leading dot is a folder of your own, resolved beside the deck the way its images are, so `theme: ../themes/house` reads `themes/house` next to the deck's directory and the deck and its theme move as one thing. See [Themes](themes.md).
 
 ## ratio
 

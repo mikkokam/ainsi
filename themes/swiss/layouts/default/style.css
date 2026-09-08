@@ -1,0 +1,4 @@
+/* the grid hangs from the top margin; a page half full is half full, not floated to the middle */
+[data-layout="default"] article { justify-content: flex-start; }
+/* the title clears the mark above it */
+[data-layout="default"] article > :first-child { margin-top: 1.4rem; }

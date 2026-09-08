@@ -1,0 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap");
+
+/*
+ * The scale is a perfect fourth, 1.333, and it is allowed to run: an h1 is four steps above the
+ * body rather than two, which is the difference between a heading and a headline. Tight
+ * leading, tracked in, and flush left with a hard rag: a balanced line is a centred line's
+ * apology and this theme does not centre anything.
+ */
+.ainsi-page h1, .ainsi-page h2, .ainsi-page h3, .ainsi-page h4, .ainsi-page h5 {
+    text-align: left;
+    text-wrap: initial;
+}
+.ainsi-page h1 { font-size: 3.157em; font-weight: 700; line-height: .92; letter-spacing: -.035em; }
+.ainsi-page h2 { font-size: 2.369em; font-weight: 700; line-height: .96; letter-spacing: -.03em; }
+.ainsi-page h3 { font-size: 1.333em; font-weight: 700; letter-spacing: -.02em; }
+/* below h3 a heading is a label on the grid, not a smaller headline */
+.ainsi-page h4, .ainsi-page h5 {
+    font-size: .78em; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+}
+
+/* a quote is set at headline weight with the accent as the rule, which is the poster's move */
+.ainsi-page blockquote { border-left-width: 6px; border-left-color: var(--ainsi-accent); }
+.ainsi-page blockquote p { font-size: 1.5em; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; }
+
+figcaption, small { font-size: .62em; letter-spacing: .02em; }
+
+/*
+ * Photographs are black and white. The colour on this page is the red and the yellow, and a
+ * full-colour photograph next to them is a third palette arguing with the other two. It is a
+ * filter rather than a demand on the deck, so the same markdown is in colour under any other
+ * theme, and the mark is a background image rather than an img and keeps its own colours.
+ */
+.ainsi-page img { filter: grayscale(1) contrast(1.04); }
+
+/* the mark sits top left, on the same margin the type hangs from */
+.ainsi-page::before {
+    content: "";
+    position: absolute; z-index: 2;
+    left: var(--ainsi-pad); top: 1.6rem;
+    width: 86px; height: 22px;
+    background: var(--ainsi-logo) no-repeat left center / contain;
+    pointer-events: none;
+}
+@media screen and (max-width: 900px) {
+    .ainsi-page::before { left: 1.2rem; top: 1rem; width: 64px; height: 17px; }
+}
