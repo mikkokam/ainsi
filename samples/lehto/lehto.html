@@ -126,6 +126,20 @@ body[data-numbers="off"][data-present] .ainsi-number { display: none; }
 .ainsi-page code { font-family: var(--ainsi-font-mono); }
 /* inline code as a chat client shows it: a small capsule, the theme's stop colour for the text */
 .ainsi-page :not(pre) > code { font-size: .85em; padding: .08em .35em; border: 1px solid var(--ainsi-rule); border-radius: .3em; background: var(--ainsi-surface); color: var(--ainsi-danger); }
+/*
+ * A fenced block is a quotation from a terminal set into a page that cannot scroll, so a long
+ * line wraps rather than running off the sheet, and it is set small enough that a realistic
+ * command still fits the column it is quoted into.
+ */
+.ainsi-page pre {
+    font-size: .62em; line-height: 1.5;
+    padding: .9em 1.1em;
+    background: var(--ainsi-surface);
+    border: var(--ainsi-border) solid var(--ainsi-rule);
+    border-radius: var(--ainsi-radius);
+    white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;
+}
+.ainsi-page pre code { font-size: inherit; color: inherit; }
 .ainsi-page img { max-width: 100%; height: auto; display: block; }
 /*
  * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9

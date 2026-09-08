@@ -1,5 +1,11 @@
 # Walking skeleton
 
+## Syntax highlighting in a fenced block (question)
+
+A fenced block now sets and wraps correctly but every token is one colour, and a deck that quotes a request body or a command is the case that asked for it. The question is whether a deck is a place to read code at all: a slide holds four to six lines before the type is unreadable in a room, and at that length colour buys less than it does in an editor.
+
+If it is worth it, the shape is a build-time pass, never runtime JS in the deck: a highlighter tokenises the fence and emits spans against the theme's status tokens, so a theme keeps deciding what the colours are and a built deck stays one file with nothing to fetch. The cost is a dependency of real size for a feature no sample deck currently uses. Deliverable is a `[decision]` sentence in ARCHITECTURE saying which way, not a library chosen quietly.
+
 ## Density variants (feat)
 
 Every component declares `density` and nothing consumes it. The fit solver is what will, stepping a block to a tighter variant before splitting a page. Each variant needs a class the component's own CSS implements, `ainsi-<name>--tight`, so the theme is still not involved.
