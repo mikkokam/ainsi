@@ -8,10 +8,10 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 Four decks, four themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
 
-- **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/acme/acme.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/acme/acme.md).
-- **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/portfolio/portfolio.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/portfolio/portfolio.md).
+- **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/gatekeeper/gatekeeper.md).
+- **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/kaari/kaari.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/kaari/kaari.md).
 - **[Lehto & Mänty](https://mikkokam.github.io/ainsi/samples/lehto/lehto.html)**, the `default` theme: a workshop pitching bespoke furniture, tables and figures carrying most of it. [Source](samples/lehto/lehto.md).
-- **[Boring Inc.](https://mikkokam.github.io/ainsi/samples/boring/boring.html)**, the `boring` theme: a quarterly operating review in the corporate template, wearing the theme's own logo rather than one the deck names. [Source](samples/boring/boring.md).
+- **[Boring Inc.](https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html)**, the `boring` theme: a quarterly operating review in the corporate template, wearing the theme's own logo rather than one the deck names. [Source](samples/boring-inc/boring-inc.md).
 
 ## Authoring
 
@@ -31,7 +31,7 @@ Nothing runs but your machine, there is no service and no account, and the deck 
 
 ## Layouts and components
 
-The markdown says what a block is (a timeline, a comparison) and what shape a page takes. A theme decides the look, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/acme/acme.md`, unchanged, under two of the themes in this repo:
+The markdown says what a block is (a timeline, a comparison) and what shape a page takes. A theme decides the look, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/gatekeeper/gatekeeper.md`, unchanged, under two of the themes in this repo:
 
 ![Four figures with captions, set in a serif on warm paper](docs/screenshots/default.jpg)
 
@@ -93,7 +93,7 @@ Requires [Bun](https://bun.sh).
 
 The studio is where you click a block to change what it is, edit the text, try a theme, and export. Presenting is ⌘⏎, in the studio and in a built deck alike. Every flag is in [the CLI](docs/guide/cli.md), every gesture in [the studio](docs/guide/studio.md).
 
-`samples/acme/acme.md` is a full deck to start from.
+`samples/gatekeeper/gatekeeper.md` is a full deck to start from.
 
 ## In Claude Code
 

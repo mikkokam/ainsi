@@ -1,8 +1,8 @@
 ---
 # Photographs are from Unsplash, used under the Unsplash Licence; each photo's id is in its url.
 theme: portfolio
-logo: assets/kaari-mark.svg
-coverLogo: assets/kaari-mark-white.svg
+logo: assets/kaari-arc.svg
+coverLogo: assets/kaari-lockup.svg
 ---
 
 <!-- ainsi: layout header -->
@@ -13,7 +13,7 @@ coverLogo: assets/kaari-mark-white.svg
 Selected work, 2024 to 2026
 
 <!-- ainsi: full size=full -->
-![face](https://images.unsplash.com/photo-1568044852337-9bcc3378fc3c?w=1600&q=80)
+![face](https://images.unsplash.com/photo-1627498290027-68b7a880f482?w=1600&q=80)
 
 ---
 

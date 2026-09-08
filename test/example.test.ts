@@ -6,7 +6,7 @@ import { parse } from "../src/parse";
 
 const registry = await load([BUILTIN]);
 
-const SAMPLES = ["acme", "lehto", "portfolio"];
+const SAMPLES = ["gatekeeper", "lehto", "kaari", "boring-inc", "aava"];
 
 async function sample(name: string) {
     const dir = resolve(import.meta.dir, "../samples", name);
@@ -18,7 +18,7 @@ async function sample(name: string) {
 }
 
 const decks = Object.fromEntries(await Promise.all(SAMPLES.map(async n => [n, await sample(n)] as const)));
-const acme = decks.acme!;
+const acme = decks.gatekeeper!;
 
 test("every sample names a theme that exists, and says nothing the defaults already say", async () => {
     for (const [name, deck] of Object.entries(decks)) {
