@@ -43,11 +43,13 @@ Revenue ahead of plan, margin behind it
 
 ---
 
-<!-- ainsi: layout split side=right size=half -->
+<!-- ainsi: layout split side=right size=two-thirds -->
 # Growth is real, and it is being bought
 
+<!-- ainsi: prose size=small -->
 Volume carried the quarter. Price did not: the average contract value fell 2.3% as the renewals signed in 2024 came up against a market that has three more credible vendors in it than it had then.
 
+<!-- ainsi: prose size=small -->
 Margin went where the discount went. Nothing in the cost base deteriorated, which is the one piece of good news in the sentence.
 
 > [!NOTE]
@@ -69,7 +71,7 @@ Margin went where the discount went. Nothing in the cost base deteriorated, whic
 
 ---
 
-<!-- ainsi: layout split side=left size=third -->
+<!-- ainsi: layout split side=left size=half -->
 # Logistics is the story
 
 Eleven per cent growth on a book that was shrinking two years ago, and it came from two contracts rather than from the market. Both renew in 2028.
@@ -130,6 +132,9 @@ Fourteen of twenty-two actions complete
 1. **Guidance held** full-year revenue €735m to €745m, margin 11.5% to 12.0%
 2. **Turku insourcing approved** €3.2m capital, payback fourteen months
 3. **Pricing floor** no renewal below 92% of list without unit head sign-off
+
+&nbsp;
+
 
 > [!IMPORTANT]
 > Without the pricing floor, the margin guidance is not defensible past Q1.
