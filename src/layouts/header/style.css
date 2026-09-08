@@ -3,12 +3,16 @@
 [data-layout="header"] main {
     position: relative;
     display: flex; flex-direction: column; justify-content: flex-end;
+    /* the cover is one blending group: the ground sits behind the words inside main rather
+       than each word being lifted above it, which is what lets a theme blend its title into
+       the photograph instead of into an empty box of its own */
+    isolation: isolate;
 }
 [data-layout="header"] main[data-align="start"] { justify-content: flex-start; }
 [data-layout="header"] main[data-align="center"] { justify-content: center; }
 
 /* the page's own image becomes the ground; the component did not have to know */
-[data-layout="header"] .ainsi-full { position: absolute; inset: 0; margin: 0; display: block; }
+[data-layout="header"] .ainsi-full { position: absolute; inset: 0; margin: 0; display: block; z-index: -1; }
 /* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
 [data-layout="header"] .ainsi-full { margin: 0 !important; }
 /* main in the selector outranks the full component's size rules, which are emitted later */
@@ -23,12 +27,6 @@
 [data-layout="header"] main:not(:has(.ainsi-full)) {
     background: linear-gradient(170deg, rgb(0 0 0 / 25%) 0%, rgb(0 0 0 / 78%) 100%), var(--ainsi-placeholder) center / cover;
 }
-
-/*
- * The image is a positioned sibling of the text, so without this the text paints beneath it
- * and beneath the gradient. Positioned siblings beat in-flow content whatever the source order.
- */
-[data-layout="header"] article > *:not(.ainsi-full) { position: relative; z-index: 1; }
 
 [data-layout="header"] h1 { font-size: 3.6em; margin: 0; }
 [data-layout="header"] p { font-size: 1.15em; opacity: .84; margin: .3em 0 0; }

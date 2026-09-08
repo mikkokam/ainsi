@@ -15,3 +15,6 @@ bun.lock
 
 # joined source written by the d2 render script in --watch mode
 .*.d2
+
+# built decks; the html beside a sample is the demo, a pdf is not
+*.pdf

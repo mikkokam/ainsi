@@ -12,7 +12,7 @@ logo: assets/meridian.svg
 <!-- ainsi: prose color=accent -->
 Meridian Instruments · Capital Markets Day, 12 March 2026
 
-![A machine hall in raking light](https://images.unsplash.com/photo-1553413077-190dd305871c?w=1600&q=80)
+![A machine hall in raking light](https://images.unsplash.com/photo-1562045289-8e02d9a3a61f?w=1600&q=80)
 
 ---
 
@@ -46,7 +46,7 @@ Every product in the range answers the same question: how far is this from where
 That is why the range looks narrow from outside and why the moat is real. A competitor can copy the instrument. Copying ==eleven years of calibration data== is a different exercise.
 
 <!-- ainsi: full size=full -->
-![A calibration bench under hard light](https://images.unsplash.com/photo-1725733618919-f45972c90229?w=1600&q=80)
+![A calibration bench under hard light](https://images.unsplash.com/photo-1748399965427-d5630f707096?w=1600&q=80)
 
 ---
 

@@ -7,7 +7,7 @@ coverLogo: assets/kaari-lockup.svg
 
 <!-- ainsi: layout header -->
 
-<!-- ainsi: prose align=right -->
+<!-- ainsi: prose size=large align=right -->
 # StudioKaari
 
 Selected work, 2024 to 2026

@@ -2,7 +2,8 @@
    gap between them would read as two separate pieces of work */
 .ainsi-roadmap table { border-collapse: separate; border-spacing: 0 .3em; }
 .ainsi-roadmap th, .ainsi-roadmap td { border-bottom: 0; padding: 0; }
-.ainsi-roadmap__row { width: 1%; padding-right: .8em; white-space: nowrap; font-weight: var(--ainsi-strong); }
+/* th, so the reset above outranks a bare class here: the gutter has to be written on the cell */
+.ainsi-roadmap th.ainsi-roadmap__row { width: 1%; padding-right: 1em; white-space: nowrap; font-weight: var(--ainsi-strong); }
 .ainsi-roadmap__period {
     font: var(--ainsi-strong) .75em/1 var(--ainsi-font-mono);
     text-transform: uppercase; letter-spacing: .08em;

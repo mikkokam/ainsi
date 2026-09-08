@@ -8,6 +8,12 @@
     letter-spacing: -.045em;
     line-height: .88;
     max-width: 14ch;
+    /* the title is printed into the photograph rather than laid on it: overlay lets the picture
+       come through the letters, and the glow is what keeps their edges when the picture behind
+       them is pale. Exclusion reads stronger and holds contrast anywhere, but it inverts the
+       ground into the type, which is a harder effect than this cover wants */
+    mix-blend-mode: overlay;
+    text-shadow: 0 0 42px rgb(0 0 0 / 65%);
 }
 [data-layout="header"] p {
     font-family: var(--ainsi-font-mono);
@@ -16,8 +22,5 @@
 }
 
 @media screen and (max-width: 900px) {
-    /* the cover is a photograph under a dark scrim, so the type is white here rather than the
-   accent's ink, which this theme sets dark for its lime */
-[data-layout="header"] { color: #fff; }
-[data-layout="header"] h1 { font-size: 3em; }
+    [data-layout="header"] h1 { font-size: 3em; }
 }

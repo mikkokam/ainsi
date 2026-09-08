@@ -15,6 +15,12 @@ Six decks, six themes, each built from the markdown beside it. They open in the 
 - **[Aava Ranta](https://mikkokam.github.io/ainsi/samples/aava/aava.html)**, the `darkroom` theme: a photographer's selected work, black ground, flush contact sheets, one grotesque. [Source](samples/aava/aava.md).
 - **[Meridian Instruments](https://mikkokam.github.io/ainsi/samples/meridian/meridian.html)**, the `swiss` theme: a capital markets day on a twelve-column grid, Helvetica, red and yellow, photographs in black and white. [Source](samples/meridian/meridian.md).
 
+Two of them, the same engine and the same grammar:
+
+![The Meridian cover: a headline in Helvetica across a black and white machine hall, a red rule above it](docs/screenshots/swiss.jpg)
+
+![A contact sheet in the darkroom theme: eight frames flush against each other on black, numbered underneath](docs/screenshots/darkroom.jpg)
+
 ## Authoring
 
 The loop: write `deck.md` with your agent in a folder on your machine, run `ainsi deck.md`, and a browser opens on the deck. Everything either of you does from then on lands in that one file. The agent rewrites a page while you are looking at it and the view reloads; you retype a line in the studio and the agent's next read sees it. There is no second copy of the document, so there is no split brain, nothing to sync and nothing to import. The same file opens in any markdown editor, and goes to anyone who has never heard of this tool.
