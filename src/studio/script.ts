@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, markerOf, move, movePage, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, markerOf, move, movePage, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, control, divider, drill, dropdown, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -529,11 +529,9 @@ function openPageMenu(section: HTMLElement, at: DOMRect): void {
     const index = doc.pages.indexOf(page);
     const before = doc.pages[index - 1];
     const after = doc.pages[index + 1];
-    if (before || after) {
-        menu.append(divider());
-        if (before) menu.append(iconButton("up", "Move page up", false, () => splice(movePage(doc.source, page, before))));
-        if (after) menu.append(iconButton("down", "Move page down", false, () => splice(movePage(doc.source, page, after))));
-    }
+    menu.append(divider(), iconButton("code", "Edit source", false, () => void openRaw(index)));
+    if (before) menu.append(iconButton("up", "Move page up", false, () => splice(movePage(doc.source, page, before))));
+    if (after) menu.append(iconButton("down", "Move page down", false, () => splice(movePage(doc.source, page, after))));
 
     menu.append(divider(), iconButton("trash", "Delete page", false, () => splice(removePage(doc.source, page))));
 
@@ -1080,17 +1078,27 @@ function openEditor(target: HTMLElement, options: EditorOptions): void {
 /*
  * Raw mode. Inline, not split: the source replaces the rendered deck, one toggle. The buffer
  * is the same kind of state as a block textarea, alive while open, dead on commit; a commit
- * is a whole-file replace through the hash guard, so the server learns nothing new.
+ * is a replace through the hash guard, so the server learns nothing new.
+ *
+ * A page number opens it over that page's slice instead of the file, for the common case of
+ * splicing the page you are looking at rather than finding it in a deck's worth of markdown.
  */
 let discardArmed: ReturnType<typeof setTimeout> | undefined;
 
-async function openRaw(): Promise<void> {
+async function openRaw(index?: number): Promise<void> {
     if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
     // refetched rather than trusted: a held reload means the module's copy can be stale
     doc = await (await fetch("/__doc")).json();
 
+    // by number, because the refetch may have brought new ids: a page keeps its place in the
+    // deck across an edit somewhere else, and a deck that lost the page has nothing to open
+    const page = index === undefined ? undefined : doc.pages[index];
+    if (index !== undefined && !page) return hint("that page is gone", true);
+    const range = page ? pageSpan(doc.source, page) : { start: 0, end: doc.source.length };
+    const initial = doc.source.slice(range.start, range.end);
+
     const view = new EditorView({
-        doc: doc.source,
+        doc: initial,
         extensions: [
             minimalSetup,
             markdown(),
@@ -1109,7 +1117,7 @@ async function openRaw(): Promise<void> {
     save.setAttribute("data-primary", "");
     const container = h("div", { class: "ainsi-studio__raw" },
         h("div", { class: "ainsi-studio__rawbar" },
-            h("span", { class: "ainsi-studio__rawname" }, doc.file),
+            h("span", { class: "ainsi-studio__rawname" }, page ? `${doc.file} · page ${index! + 1}` : doc.file),
             h("span", { class: "ainsi-studio__rawgap" }),
             barButton("Cancel", "esc", () => cancelRaw()),
             save),
@@ -1132,18 +1140,18 @@ async function openRaw(): Promise<void> {
     async function commitRaw(): Promise<void> {
         if (container.hasAttribute("data-committing")) return;
         const text = view.state.doc.toString();
-        if (text === doc.source) return shut();
+        if (text === initial) return shut();
         // frozen, not closed, until the rebuilt page arrives; same reasoning as the block editor
         container.setAttribute("data-committing", "");
         view.contentDOM.setAttribute("contenteditable", "false");
         hint("saving…");
         if (chrome?.kind === "raw") chrome.holds = false;
-        await splice({ start: 0, end: doc.source.length, text });
+        await splice({ ...range, text });
     }
 
     function cancelRaw(): void {
         if (container.hasAttribute("data-committing")) return;
-        if (view.state.doc.toString() !== doc.source && !discardArmed) {
+        if (view.state.doc.toString() !== initial && !discardArmed) {
             hint("unsaved changes; esc again to discard");
             discardArmed = setTimeout(() => (discardArmed = undefined), 1600);
             return;

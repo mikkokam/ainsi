@@ -34,12 +34,6 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## Editing one page's source (feat)
-
-`E` opens the whole file, so getting to the page you were looking at means scrolling a deck's worth of markdown to find it. The page rail's menu is where the page-scoped version belongs: Edit source, opening raw mode over that page's slice of the file and nothing else.
-
-The slice already exists. Every page's entities carry offsets, and the block editor at `openAt` already splices a range rather than the whole document, so a page editor is the same machinery with the page's first and last offsets instead of a block's. The whole-deck editor stays as it is, for frontmatter and for a change that crosses pages.
-
 # Later
 
 ## A generated reference (feat)

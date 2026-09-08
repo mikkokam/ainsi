@@ -171,7 +171,7 @@ export function withAlert(md: string, kind: string, to: string | null): string {
     return to ? `> [!${to.toUpperCase()}]\n${body}` : body;
 }
 
-interface Span { start: number; end: number }
+export interface Span { start: number; end: number }
 
 /** what a block occupies: its directive line through the marker closing it */
 const spanOf = (target: Target): Span => ({ start: target.directive?.start ?? target.start, end: target.terminator?.end ?? target.end });
@@ -179,10 +179,10 @@ const spanOf = (target: Target): Span => ({ start: target.directive?.start ?? ta
 /**
  * What a page occupies: every directive line standing above its first entity through its last.
  * A `PageTarget` starts at the entity, so a component directive governing the page's opening
- * block sits outside it, and a page moved by that offset would leave the directive behind.
+ * block sits outside it, and a page moved or edited by that offset would leave it behind.
  * An end marker there closes the page before and stays with it.
  */
-function pageSpan(source: string, page: PageTarget): Span {
+export function pageSpan(source: string, page: PageTarget): Span {
     let start = page.directive?.start ?? page.first;
     for (;;) {
         let at = start;

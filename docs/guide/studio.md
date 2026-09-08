@@ -16,7 +16,7 @@ Move up and Move down sit beside the delete, and swap the block with its neighbo
 
 The page has its own rail one scope up, at the page's top-left corner: the grip carries the page's layout and its props, ⌥ click on it adds a page below, and so does the plus beside it. The page menu moves pages the same way, taking the layout directive along and writing the break a directive alone was holding open.
 
-`E` opens the whole file's source in a code editor, for when a splice is faster than a form. Escape closes whatever is open.
+`E` opens the whole file's source in a code editor, for when a splice is faster than a form. **Edit source** on the page menu opens the same editor over one page's slice, which is what you want when the page you are splicing is the one on screen. Escape closes whatever is open.
 
 ## Images
 
