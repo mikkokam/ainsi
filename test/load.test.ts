@@ -167,6 +167,8 @@ test("columns is boxes without the chrome: one column per item, a bold run as it
     expect(html).toContain('<ul class="ainsi-columns" data-ainsi="columns">');
     expect(html).toContain('<li class="ainsi-columns__column"><span class="ainsi-columns__title">Fast</span><span class="ainsi-columns__body">ships in a day</span></li>');
     expect(html).toContain('<li class="ainsi-columns__column"><span class="ainsi-columns__body">plain second</span></li>');
+    const wrapped = build("# T\n\n<!-- ainsi: columns -->\n- **Fast**\n  ships in a day\n", { registry, layouts, themeCss: "" }).html;
+    expect(wrapped).toContain('<span class="ainsi-columns__title">Fast</span><span class="ainsi-columns__body">ships in a day</span>');
     const numbered = build("# T\n\n<!-- ainsi: columns -->\n1. one\n2. two\n", { registry, layouts, themeCss: "" }).html;
     expect(numbered).toContain('<ol class="ainsi-columns ainsi-columns--ordered" data-ainsi="columns">');
 });

@@ -43,5 +43,9 @@ export const labelled = (list: Entity, inline: (node: any) => string): [string, 
         const para = li.children?.find((c: any) => c.type === "paragraph") ?? li;
         const [first, ...rest] = para.children ?? [];
         if (first?.type !== "strong") return ["", inline(para).trim()];
+        // a title written on its own line leaves a break at the head of the body, which renders as
+        // a blank line above it and reads as a spacing bug in every labelled component
+        while (rest[0]?.type === "break" || (rest[0]?.type === "text" && !rest[0].value.trim())) rest.shift();
+        if (rest[0]?.type === "text") rest[0] = { ...rest[0], value: rest[0].value.replace(/^[^\S\n]*\n\s*/, "") };
         return [inline(first).trim(), inline({ ...para, children: rest }).trim()];
     });
