@@ -25,11 +25,3 @@
 @media screen and (max-width: 900px) {
     .ainsi-page::before { right: 1rem; bottom: 1rem; width: 60px; height: 17px; }
 }
-
-/*
- * The engine's .6em under an h1 is measured in body ems, which is thin under a heading half
- * again the body size and a template that leaves room around everything.
- */
-.ainsi-page :is(article, .ainsi-prose) > :is(h1, .ainsi-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) {
-    margin-top: calc(var(--ainsi-em) * .8);
-}

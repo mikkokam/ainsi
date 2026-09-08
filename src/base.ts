@@ -113,10 +113,10 @@ body[data-numbers="off"][data-present] .ainsi-number { display: none; }
    A sized or coloured prose wrapper is looked through: what it ends with sets the space after
    it, what it starts with the space before, so a heading given a colour does not move. */
 .ainsi-page :is(article, .ainsi-prose) > :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .55); }
-.ainsi-page :is(article, .ainsi-prose) > :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .45); }
+.ainsi-page :is(article, .ainsi-prose) > :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .6); }
 .ainsi-page :is(article, .ainsi-prose) > :is(p, ul, ol, blockquote, pre, .ainsi-prose:has(> :is(p, ul, ol, blockquote, pre):last-child)):not([data-ainsi]) + :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):first-child)) { margin-top: calc(var(--ainsi-em) * 1); }
 /* a page title carries more weight than a heading in a document, so the air under it says so */
-.ainsi-page :is(article, .ainsi-prose) > :is(h1, .ainsi-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .6); }
+.ainsi-page :is(article, .ainsi-prose) > :is(h1, .ainsi-prose:has(> h1:last-child)) + :is(p, ul, ol, blockquote, pre, .ainsi-prose):not([data-ainsi]) { margin-top: calc(var(--ainsi-em) * .9); }
 .ainsi-page article > :is(h1, .ainsi-prose:has(> h1:last-child)) + [data-ainsi] { margin-top: calc(var(--ainsi-gap) * 1.5); }
 .ainsi-page article > :is(h2, h3, h4, h5, .ainsi-prose:has(> :is(h2, h3, h4, h5):last-child)) + [data-ainsi] { margin-top: calc(var(--ainsi-gap) * 1.2); }
 .ainsi-page article > .ainsi-prose > :last-child { margin-bottom: 0; }
