@@ -6,6 +6,8 @@ Name one with a directive, `<!-- ainsi: boxes stretch -->`, or let the [heuristi
 
 Props are listed with their defaults. Unknown props are passed through and ignored, so a typo is silent: check the warning line, not the page.
 
+Every component below whose content is prose also takes `text`, one of `small`, `normal` or `large`, a step off the page's size on the theme's own scale. It is a step, not a measurement: the theme decides what small is, and a theme swap carries it. `figures`, `full` and `alert` do not take it, because their size is already their own: a figure's display size, a picture's share of the page, an aside that speaks a step below the body by design.
+
 ## Lists
 
 Six components take a list, one item per row, and read a leading `**bold**` run as that item's title. Any blocks before the list, a heading and a paragraph say, stay where they are and render normally.

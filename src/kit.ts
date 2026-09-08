@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /** What a component author imports. Everything else is theirs. */
 export type { Component, ComponentDefinition, RenderContext } from "./registry";
 export type { Entity } from "./types";
@@ -30,6 +32,13 @@ export function img(image: Image, className?: string): string {
 function escapeAttr(value: string): string {
     return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
+
+/**
+ * The one size a deck may name on a component: a step on the theme's scale, never a
+ * measurement. Spread into a component's props where its content is prose a reader reads;
+ * a picture and a figure have their own sizes and this is not one of them.
+ */
+export const textSize = { text: z.enum(["small", "normal", "large"]).default("normal") };
 
 export const listOf = (entities: Entity[]): Entity | undefined => entities.find(e => e.kind === "list");
 

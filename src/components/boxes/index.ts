@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { labelled, listOf, type ComponentDefinition } from "../../kit";
+import { labelled, listOf, textSize, type ComponentDefinition } from "../../kit";
 
 export default {
     about: "a list, one card per item; a leading **bold** run is the card title",
     accepts: entities => !!listOf(entities),
     props: z.object({
+        ...textSize,
         /** false: boxes take a shared width and wrap. true: they grow to fill the row. */
         stretch: z.boolean().default(false),
     }).passthrough(),

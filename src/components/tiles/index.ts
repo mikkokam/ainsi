@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { imageOf, img, labelled, listOf, type ComponentDefinition } from "../../kit";
+import { imageOf, img, labelled, listOf, textSize, type ComponentDefinition } from "../../kit";
 
 /**
  * A list laid out as a field of tiles: pictures, or text, or both. One flow, a grid, whose
@@ -29,6 +29,7 @@ export default {
     about: "a list as a field of tiles: pictures or text, in a grid or packed into columns",
     accepts: entities => !!listOf(entities),
     props: z.object({
+        ...textSize,
         /** 0 asks for the count's own answer; anything else is that many columns */
         columns: z.number().int().min(0).max(6).default(0),
         /** true fills each cell and clips what does not fit; false keeps every picture whole */

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { kinds, type ComponentDefinition } from "../../kit";
+import { kinds, textSize, type ComponentDefinition } from "../../kit";
 
 export default {
     about: "a table: the header names the columns, the first column labels the rows, each further column is a panel",
     accepts: kinds("table"),
-    props: z.object({}).passthrough(),
+    props: z.object({ ...textSize }).passthrough(),
     splittable: false,
     density: ["regular", "tight"],
     render: ctx => {

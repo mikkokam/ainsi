@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { labelled, listOf, type ComponentDefinition } from "../../kit";
+import { labelled, listOf, textSize, type ComponentDefinition } from "../../kit";
 
 /** a two-by-two: four items, quadrants in reading order, top-left first; optional axis labels */
 export default {
     about: "a list of exactly four items as a two-by-two, top-left first; a leading **bold** run is the quadrant title; axes name the x and y",
     accepts: entities => (listOf(entities)?.node.children?.length ?? 0) === 4,
     props: z.object({
+        ...textSize,
         x: z.string().default(""),
         y: z.string().default(""),
     }).passthrough(),

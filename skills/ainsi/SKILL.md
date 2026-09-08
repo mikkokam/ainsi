@@ -82,6 +82,8 @@ Pictures keep their proportions and are never cropped unless `crop` says so: eac
 
 `alert` is the callout blockquote and takes no props.
 
+Every component whose content is prose also takes `text=small|normal|large`, one step off the page's size on the theme's scale. Not `figures`, `full` or `alert`, whose sizes are their own.
+
 A component that does not accept what follows it warns and falls back to the heuristic rather than failing the build, so check the warnings when a block comes out looking like plain prose.
 
 ## Layouts
@@ -96,7 +98,7 @@ A component that does not accept what follows it warns and falls back to the heu
 
 A page that overflows steps its type down within the range the theme allows, then splits at a block boundary, then splits inside a block that declares itself splittable, which is `prose` and `agenda` only. A page that exhausts all of that renders overflowing and says so in a warning rather than clipping silently.
 
-The lever a deck has over this is content: fewer items, shorter titles, an earlier `---`. Never a font size, and never CSS in the deck.
+The lever a deck has over this is content: fewer items, shorter titles, an earlier `---`, and at most a block's `text` step. Never a font size, and never CSS in the deck.
 
 ## Diagrams
 

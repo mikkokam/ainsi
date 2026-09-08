@@ -137,6 +137,9 @@ body[data-numbers="off"][data-present] .ainsi-number { display: none; }
     white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;
 }
 .ainsi-page pre code { font-size: inherit; color: inherit; }
+/* a block's text a step off the page's, named by the deck and sized by the theme's scale */
+.ainsi-page [data-text="small"] { font-size: .83em; }
+.ainsi-page [data-text="large"] { font-size: 1.2em; }
 .ainsi-page img { max-width: 100%; height: auto; display: block; }
 /*
  * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9

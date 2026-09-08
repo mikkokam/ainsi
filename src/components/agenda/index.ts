@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { labelled, listOf, type ComponentDefinition } from "../../kit";
+import { labelled, listOf, textSize, type ComponentDefinition } from "../../kit";
 
 /** an order of business, one row per item; a numbered list wears its numerals down the left */
 export default {
     about: "a list as an agenda, one row per item; a numbered list wears its numerals; a leading **bold** run is the item title",
     accepts: entities => !!listOf(entities),
-    props: z.object({}).passthrough(),
+    props: z.object({ ...textSize }).passthrough(),
     splittable: true,
     density: ["regular", "tight"],
     render: ctx => {

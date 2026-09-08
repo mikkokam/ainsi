@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { labelled, listOf, type ComponentDefinition } from "../../kit";
+import { labelled, listOf, textSize, type ComponentDefinition } from "../../kit";
 
 /** boxes without the chrome: each item a column of plain text, a leading bold run its title */
 export default {
     about: "a list, one column per item, no cards; a leading **bold** run is the column title",
     accepts: entities => !!listOf(entities),
-    props: z.object({}).passthrough(),
+    props: z.object({ ...textSize }).passthrough(),
     splittable: false,
     density: ["regular", "tight"],
     render: ctx => {

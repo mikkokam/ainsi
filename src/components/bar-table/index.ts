@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { kinds, plainText, type ComponentDefinition } from "../../kit";
+import { kinds, plainText, textSize, type ComponentDefinition } from "../../kit";
 
 /**
  * A column reads as numeric when most of its cells parse; one number among words is a stray,
@@ -9,7 +9,7 @@ import { kinds, plainText, type ComponentDefinition } from "../../kit";
 export default {
     about: "a table where every numeric column draws a bar behind its values; those columns take the width and the rest stay as narrow as their text",
     accepts: kinds("table"),
-    props: z.object({}).passthrough(),
+    props: z.object({ ...textSize }).passthrough(),
     splittable: false,
     density: ["regular", "tight"],
     render: ctx => {

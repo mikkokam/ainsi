@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { kinds, plainText, type ComponentDefinition } from "../../kit";
+import { kinds, plainText, textSize, type ComponentDefinition } from "../../kit";
 
 /**
  * The header names the periods, the first column names the rows, and a cell with anything in
@@ -10,7 +10,7 @@ import { kinds, plainText, type ComponentDefinition } from "../../kit";
 export default {
     about: "a table as a roadmap: the header names the periods, the first column names the rows, and any cell with text in it becomes a filled block",
     accepts: kinds("table"),
-    props: z.object({}).passthrough(),
+    props: z.object({ ...textSize }).passthrough(),
     splittable: false,
     density: ["regular", "tight"],
     render: ctx => {

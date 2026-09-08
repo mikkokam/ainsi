@@ -119,13 +119,20 @@ export function render(
                     return owner ? `<span data-ainsi-entity="${owner.id}">${inlineHtml(node)}</span>` : inlineHtml(node);
                 }
                 : inlineHtml;
-            const rendered = registry.get(block.component)!.render({
+            const raw = registry.get(block.component)!.render({
                 entities: block.entities,
                 props: block.props,
                 html: entityHtml,
                 inline,
                 text: plainText,
             });
+            // the deck's one say over a component's type: an attribute on the root the component
+            // already marks, so no wrapper appears between the layout and the block it selects
+            const step = block.props.text;
+            const rendered = step === "small" || step === "large"
+                ? raw.replace(' data-ainsi="', ` data-text="${step}" data-ainsi="`)
+                : raw;
+
             // the fallback handle covers only what the component did not render entity by
             // entity, so the edit unit stays the entity and never grows to the whole block.
             // An image the component placed itself is found by its src, so the handle sits
