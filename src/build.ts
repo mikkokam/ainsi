@@ -97,7 +97,14 @@ export function render(
     const diagnostics: Diagnostic[] = [];
 
     // page numbers are reassigned here, not carried from assembly, so a fit split renumbers for free
-    const numbered = pages.map((page, index) => ({ ...page, index }));
+    // a section page carries its own ordinal rather than counting itself in CSS: presentation
+    // mode hides every other page with display:none, and a hidden page increments no counter
+    let sections = 0;
+    const numbered = pages.map((page, index) => ({
+        ...page,
+        index,
+        section: page.layout === "section" ? ++sections : 0,
+    }));
 
     const usedComponents = new Set(numbered.flatMap(p => p.blocks.map(b => b.component)));
     const usedLayouts = new Set(numbered.map(p => p.layout));
@@ -165,7 +172,11 @@ export function render(
         }
         // the solver's two outputs ride on the section: the type scale it settled on, and
         // the admission that it ran out of ladder. Both are absent on a page that just fits.
-        const step = page.scale === 1 ? "" : ` style="--ainsi-step:${page.scale}"`;
+        const vars = [
+            page.scale === 1 ? null : `--ainsi-step:${page.scale}`,
+            page.section ? `--ainsi-section:'${String(page.section).padStart(2, "0")}'` : null,
+        ].filter(Boolean);
+        const step = vars.length ? ` style="${vars.join(";")}"` : "";
         const overflow = page.overflow ? " data-overflow" : "";
         // the page's stable address: its first heading, slugged. Page numbers move on every
         // fit split, so a link written as #page-3 would drift; a heading slug survives it.

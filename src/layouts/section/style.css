@@ -1,14 +1,13 @@
 /*
  * The divider between chapters: a numeral at the top, the title at the bottom, nothing else.
  * The ground comes from its tone prop (accent by default), painted by the engine's tone rules.
- * Sections count themselves: an increment with no reset scopes the counter to the page and
- * its following siblings, so the third section page says 03 wherever it sits in the deck.
+ * The numeral arrives from the build as --ainsi-section: the viewer hides all but the current
+ * page while presenting, and a display:none page counts for nothing in CSS.
  */
-[data-layout="section"] { counter-increment: ainsi-section; }
 [data-layout="section"] main { display: flex; }
 [data-layout="section"] article { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
 [data-layout="section"] article::before {
-    content: counter(ainsi-section, decimal-leading-zero);
+    content: var(--ainsi-section, "");
     font-family: var(--ainsi-font-display);
     font-size: 6em; line-height: 1; font-weight: 700; letter-spacing: -.02em;
     opacity: .22;
