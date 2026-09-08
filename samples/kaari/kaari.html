@@ -403,20 +403,22 @@ figcaption, small { font-family: var(--ainsi-font-mono); font-size: .68em; lette
 .ainsi-page:has(main .ainsi-full)::before { filter: brightness(0) invert(1); }
 
 /* the cover wears its own mark, top left, where the title is not */
+.ainsi-page[data-layout="header"] { --kaari-mark-top: 2.2rem; --kaari-mark-height: 66px; }
 .ainsi-page[data-layout="header"]::before {
-    top: 2.2rem; bottom: auto; left: var(--ainsi-pad); right: auto;
+    top: var(--kaari-mark-top); bottom: auto; left: var(--ainsi-pad); right: auto;
     background-position: left center;
-    width: 92px; height: 66px;
+    width: 92px; height: var(--kaari-mark-height);
     background-image: var(--ainsi-logo-cover);
 }
-/* a cover that starts its text at the top begins under the mark, not through it: the two
-   numbers above put the mark's foot at 6.3rem, and the title clears it */
-.ainsi-page[data-layout="header"] main[data-align="start"] { padding-top: 7.6rem; }
+/* a cover that starts its text at the top would start behind the mark: it begins below it */
+.ainsi-page[data-layout="header"] main[data-align="start"] {
+    padding-top: calc(var(--kaari-mark-top) + var(--kaari-mark-height) + 2.4rem);
+}
 
 @media screen and (max-width: 900px) {
     .ainsi-page::before { right: 1.2rem; bottom: 1rem; width: 30px; height: 17px; }
-    .ainsi-page[data-layout="header"]::before { top: 1.4rem; width: 62px; height: 44px; }
-    .ainsi-page[data-layout="header"] main[data-align="start"] { padding-top: 5.2rem; }
+    .ainsi-page[data-layout="header"] { --kaari-mark-top: 1.4rem; --kaari-mark-height: 44px; }
+    .ainsi-page[data-layout="header"]::before { width: 62px; }
 }
 /* layouts and components, styled through the tokens above */
 /* No index.ts: a layout is a stylesheet, inheriting the default template. */
@@ -1043,9 +1045,12 @@ body[data-present] .ainsi-page[data-current] mark {
 }
 @keyframes ainsi-lightbox-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* the affordance, where a click opens rather than edits or turns the page */
-body.ainsi:not([data-ainsi-studio]) .ainsi-page img { cursor: zoom-in; }
-body.ainsi:not([data-ainsi-studio]) .ainsi-page[data-layout="header"] .ainsi-full img { cursor: inherit; }
+/* the affordance, where a click opens rather than edits or turns the page. Presenting is the
+   player again whatever the deck is running in, so the studio gets it too once it is presenting */
+body.ainsi:not([data-ainsi-studio]) .ainsi-page img,
+body.ainsi[data-present] .ainsi-page img { cursor: zoom-in; }
+body.ainsi:not([data-ainsi-studio]) .ainsi-page[data-layout="header"] .ainsi-full img,
+body.ainsi[data-present] .ainsi-page[data-layout="header"] .ainsi-full img { cursor: inherit; }
 
 @media (prefers-reduced-motion: reduce) { .ainsi-lightbox { animation: none; } }
 @media print { .ainsi-lightbox { display: none !important; } }

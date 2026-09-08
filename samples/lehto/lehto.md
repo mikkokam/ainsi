@@ -39,6 +39,7 @@ Four benches, one kiln, sixty pieces a year
 <!-- ainsi: layout split side=left size=third -->
 # What a machine cannot
 
+<!-- ainsi: prose size=small -->
 A dining table with a mitred frame and drawbored joints takes a joiner eleven days.
 The same table, dowelled and screwed, takes a factory eleven minutes.
 Both will be in the room for a year; only one will still be in use in twenty.
@@ -47,8 +48,7 @@ So the question we ask first is how long the piece has to last, and the second i
 Underfloor heating and a sixteen-metre window are harder on a table than any customer.
 
 > [!WARNING]
-> Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors.
-A piece shipped to a coastal house in Spain is made to a different number.
+> Every piece leaves the kiln at 7% moisture, cut for a Finnish winter indoors. A piece shipped to a coastal house in Spain is made to a different number.
 
 ![A joiner cutting a mortise by hand](https://images.unsplash.com/photo-1617873228868-f64a54e91a01?q=80&w=1200&auto=format&fit=crop)
 
@@ -95,13 +95,14 @@ A piece shipped to a coastal house in Spain is made to a different number.
 | Birch       | 1 210    | 4.1%              | 8 weeks   | 61          |
 | Pine, aged  | 380      | 4.8%              | 6 weeks   | 42          |
 
+<!-- ainsi: prose size=small -->
 Movement is the column that decides a design. Ash is harder than oak and cheaper, and it moves half a percent more, which is a drawer that binds in February and a joint we have to cut differently.
 
 ---
 
 # Workshop and factory, honestly
 
-<!-- ainsi: comparison -->
+<!-- ainsi: comparison text=small -->
 |              | A workshop piece                    | A factory piece                  |
 | ------------ | ----------------------------------- | -------------------------------- |
 | Joints       | Cut to the board in front of us      | Cut to a tolerance, then glued   |
