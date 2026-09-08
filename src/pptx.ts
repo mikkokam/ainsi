@@ -1,13 +1,14 @@
 import PptxGenJS from "pptxgenjs";
-import { openFit, type FitSession } from "./fit";
+import { openFit, place, type FitSession } from "./fit";
 import type { Diagnostic } from "./types";
 
 /**
- * An editable PPTX is the deck in two layers: everything non-text screenshotted as one
- * background picture per page (panels, images, rules, pseudo-content, shadows — exactly as
- * chromium painted them), and every run of text lifted out as a native PowerPoint text box
- * at the same coordinates, same size, colour, weight and alignment. The client gets a file
- * where any line can be clicked and retyped, and the design cannot be broken because it is
+ * An editable PPTX is the deck in three layers: everything non-text screenshotted as one
+ * background picture per page (panels, rules, pseudo-content, shadows — exactly as chromium
+ * painted them), each photograph screenshotted again on its own so it arrives as a picture a
+ * client can select, move or replace, and every run of text lifted out as a native PowerPoint
+ * text box at the same coordinates, same size, colour, weight and alignment. The client gets a
+ * file where any line can be clicked and retyped, and the design cannot be broken because it is
  * pixels underneath.
  *
  * The html handed in is the fitted deck without the viewer, like `pdf` gets: the ground must
@@ -47,6 +48,12 @@ interface Box {
     runs: Run[];
 }
 
+/** A photograph lifted out of the ground: px page-relative box and a base64 png. */
+interface Photo {
+    x: number; y: number; w: number; h: number;
+    png: string;
+}
+
 /** The theme's mark on a page, rasterised: px page-relative box and a base64 png. */
 interface Mark {
     x: number; y: number; w: number; h: number;
@@ -58,8 +65,9 @@ interface PageDump {
     pw: number;
     ph: number;
     boxes: Box[];
+    photos: Photo[];
     mark?: Mark;
-    /** base64 png of the page with every lifted glyph and the mark transparent */
+    /** base64 png of the page with every lifted glyph, picture and the mark transparent */
     shot: string;
 }
 
@@ -84,19 +92,32 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
     try {
         // the print sheet is the export: no corner radius, no shadow, like the pdf
         await page.emulateMedia({ media: "print" });
-        await page.setContent(html, { waitUntil: "load" });
-        await page.evaluate(() => document.fonts.ready);
+        if (!await place(page, html)) {
+            diagnostics.push({
+                level: "warn",
+                message: `pictures were still loading after 90s; ${path} was written without them`,
+            });
+        }
 
         const count = await page.evaluate(() => document.querySelectorAll(".ainsi-page").length);
         const dumps: PageDump[] = [];
         for (let index = 0; index < count; index++) {
             const { pw, ph, boxes } = await page.evaluate(walk, index);
             const mark = await page.evaluate(lift, index).catch(() => undefined);
-            await page.evaluate(hide, { index, mark: !!mark });
             const handle = (await page.$$(".ainsi-page"))[index]!;
+            // the pictures come off the page while they are still painted, and the ground is
+            // shot after they have gone, so nothing is carried twice
+            const cuts = await page.evaluate(cut, index);
+            const cutouts = await handle.$$(".ainsi-cut");
+            const photos: Photo[] = [];
+            for (let i = 0; i < cuts.length && i < cutouts.length; i++) {
+                const png = (await cutouts[i]!.screenshot({ type: "png" }).catch(() => undefined))?.toString("base64");
+                if (png) photos.push({ ...cuts[i]!, png });
+            }
+            await page.evaluate(hide, { index, mark: !!mark });
             const shot = (await handle.screenshot({ type: "png" })).toString("base64");
             await page.evaluate(restore, index);
-            dumps.push({ pw, ph, boxes, mark, shot });
+            dumps.push({ pw, ph, boxes, photos, mark, shot });
         }
 
         const fonts = await resolveFonts(page, dumps);
@@ -110,6 +131,13 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
             const scale = SLIDE_W / dump.pw;
             const slide = deck.addSlide();
             slide.addImage({ data: "image/png;base64," + dump.shot, x: 0, y: 0, w: SLIDE_W, h: SLIDE_W * (dump.ph / dump.pw) });
+            // above the ground, below the words: a picture is behind a caption written over it
+            for (const photo of dump.photos) {
+                slide.addImage({
+                    data: "image/png;base64," + photo.png,
+                    x: photo.x * scale, y: photo.y * scale, w: photo.w * scale, h: photo.h * scale,
+                });
+            }
             if (dump.mark) {
                 const { x, y, w, h, png } = dump.mark;
                 slide.addImage({ data: "image/png;base64," + png, x: x * scale, y: y * scale, w: w * scale, h: h * scale });
@@ -278,6 +306,46 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
 }
 
 /**
+ * Runs in the page: the pictures that can leave the ground without changing as they go, tagged
+ * for the screenshot pass and returned in the order the tags will be found again. What is lifted
+ * is the picture as chromium painted it, so a corner radius and a crop travel with it; what
+ * cannot travel is anything painted outside the picture's own box or over it — a box-shadow,
+ * which goes when the picture is blanked and has nowhere to live in the cut-out, and a
+ * pseudo-element scrim, which would end up on top of the picture it is meant to darken. Those
+ * stay in the ground, which is where they look right. The cover under its scrim is that case.
+ */
+function cut(index: number): { x: number; y: number; w: number; h: number }[] {
+    const section = document.querySelectorAll<HTMLElement>(".ainsi-page")[index]!;
+    const pageRect = section.getBoundingClientRect();
+    const painted = (el: Element, part: "::before" | "::after"): boolean => {
+        const content = getComputedStyle(el, part).content;
+        return content !== "none" && content !== "normal";
+    };
+
+    const rects: { x: number; y: number; w: number; h: number }[] = [];
+    for (const img of section.querySelectorAll<HTMLImageElement>("img")) {
+        const style = getComputedStyle(img);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        if (style.filter !== "none" || style.mixBlendMode !== "normal" || parseFloat(style.opacity) < 1) continue;
+        if (style.clipPath !== "none" || style.transform !== "none" || style.boxShadow !== "none") continue;
+        const rect = img.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+
+        let held = false;
+        for (let el: Element | null = img.parentElement; el && el !== section && !held; el = el.parentElement) {
+            const above = getComputedStyle(el);
+            held = painted(el, "::before") || painted(el, "::after")
+                || above.mixBlendMode !== "normal" || parseFloat(above.opacity) < 1;
+        }
+        if (held) continue;
+
+        img.classList.add("ainsi-cut");
+        rects.push({ x: rect.left - pageRect.left, y: rect.top - pageRect.top, w: rect.width, h: rect.height });
+    }
+    return rects;
+}
+
+/**
  * Runs in the page. The theme's mark is the page's own ::before when it paints an image: a
  * pseudo has no node to lift, so it is redrawn through a canvas at the size and place the
  * background painted it, with the pseudo's filter and opacity applied (a one-colour mark
@@ -328,12 +396,13 @@ async function lift(index: number): Promise<Mark | undefined> {
     return { x, y, w, h, png: canvas.toDataURL("image/png").split(",")[1]! };
 }
 
-/** Runs in the page: lifted glyphs, inline chip fills and a lifted mark go transparent for the screenshot. */
+/** Runs in the page: lifted glyphs, inline chip fills, lifted pictures and a lifted mark go transparent for the screenshot. */
 function hide({ index, mark }: { index: number; mark: boolean }): void {
     const style = document.createElement("style");
     style.id = "ainsi-shot";
     style.textContent = ".ainsi-shot .ainsi-lift { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important }\n"
         + ".ainsi-shot main :is(mark, code, kbd, samp):not(pre *) { background: transparent !important; box-shadow: none !important; border-color: transparent !important }"
+        + "\n.ainsi-shot .ainsi-cut { visibility: hidden !important }"
         + (mark ? "\n.ainsi-shot::before { visibility: hidden !important }" : "");
     document.head.append(style);
     document.querySelectorAll(".ainsi-page")[index]!.classList.add("ainsi-shot");
@@ -341,7 +410,9 @@ function hide({ index, mark }: { index: number; mark: boolean }): void {
 
 function restore(index: number): void {
     document.getElementById("ainsi-shot")?.remove();
-    document.querySelectorAll(".ainsi-page")[index]!.classList.remove("ainsi-shot");
+    const page = document.querySelectorAll(".ainsi-page")[index]!;
+    page.classList.remove("ainsi-shot");
+    for (const img of page.querySelectorAll(".ainsi-cut")) img.classList.remove("ainsi-cut");
 }
 
 /**

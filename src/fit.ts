@@ -103,6 +103,33 @@ async function hold(page: import("playwright-core").Page): Promise<void> {
 /** The measuring box: the design width of a page, and height enough that nothing else clips. */
 const VIEWPORT = { width: 1280, height: 900 };
 
+/** How long a page may wait for its pictures and its faces before it is used anyway. */
+const SETTLE = 90_000;
+
+/**
+ * Put the html in a page and wait for what changes its layout: the pictures, and the faces the
+ * type is set in. `setContent` with `waitUntil: "load"` does both in one call and throws the
+ * whole export away when one remote image is slow, which is the ordinary case for a deck that
+ * links its photographs rather than embedding them. Here a slow picture costs a warning and a
+ * measurement taken without it, never the export.
+ *
+ * Returns false when the wait ran out. Only the first call pays it: `hold` keeps every remote
+ * response for the session, so a picture that arrived once is in memory for every pass after.
+ *
+ * A failed image counts as settled, because `complete` is true once a load has errored, so a
+ * deck with a dead url waits for the request to fail rather than for the budget to run out.
+ */
+export async function place(page: import("playwright-core").Page, html: string): Promise<boolean> {
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    try {
+        await page.waitForFunction(() => [...document.images].every(image => image.complete), undefined, { timeout: SETTLE });
+        await page.evaluate(() => document.fonts.ready);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export async function fit(
     pages: Page[],
     title: string,
@@ -124,7 +151,7 @@ export async function fit(
     const exhausted = new Set<number>();
 
     try {
-        const measurer = measure(browserPage, render, title, settings, options);
+        const measurer = measure(browserPage, render, title, settings, options, diagnostics);
         const floor = await measurer.floor(current);
 
         // every pass either shrinks a page's type, cuts one page in two, or gives up on one.
@@ -268,12 +295,20 @@ function measure(
     title: string,
     settings: Settings,
     options: BuildOptions,
+    diagnostics: Diagnostic[],
 ): Measurer {
     // measured without the viewer: it never affects layout height, and skipping it keeps
     // every pass fast
+    let warned = false;
     const show = async (pages: Page[]): Promise<void> => {
         const { html } = render(pages, title, settings, { ...options, viewer: undefined });
-        await browserPage.setContent(html, { waitUntil: "load" });
+        if (await place(browserPage, html) || warned) return;
+        warned = true;
+        diagnostics.push({
+            level: "warn",
+            message: "pictures were still loading after 90s, so the pages were measured without them; "
+                + "a page that overflows in the export is why",
+        });
     };
 
     /*

@@ -1,4 +1,4 @@
-import { openFit, type FitSession } from "./fit";
+import { openFit, place, type FitSession } from "./fit";
 import type { Diagnostic } from "./types";
 
 /**
@@ -40,9 +40,12 @@ export async function pdf(html: string, path: string, session?: FitSession, imag
         return { written: false, diagnostics };
     }
     try {
-        await page.setContent(html, { waitUntil: "load" });
-        // a web font still loading at "load" prints as its fallback
-        await page.evaluate(() => document.fonts.ready);
+        if (!await place(page, html)) {
+            diagnostics.push({
+                level: "warn",
+                message: `pictures were still loading after 90s; ${path} was printed without them`,
+            });
+        }
         if (images !== "full") await downscale(page, PRESETS[images]);
         await page.pdf({ path, preferCSSPageSize: true, printBackground: true });
     } finally {
