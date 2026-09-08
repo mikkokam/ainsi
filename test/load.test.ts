@@ -209,3 +209,10 @@ test("prose colours by the theme's ink names only", async () => {
     const bad = build("# T\n\n<!-- ainsi: prose color=#ff0000 -->\nwords\n", { registry, layouts, themeCss: "" });
     expect(bad.diagnostics.some(d => d.message.includes("bad props"))).toBe(true);
 });
+
+test("the plugin's version is the package's, because a stale one is what the marketplace serves", async () => {
+    const root = resolve(import.meta.dir, "..");
+    const plugin = await Bun.file(resolve(root, ".claude-plugin/plugin.json")).json();
+    const pkg = await Bun.file(resolve(root, "package.json")).json();
+    expect(plugin.version).toBe(pkg.version);
+});
