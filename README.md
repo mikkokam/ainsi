@@ -118,7 +118,7 @@ Fourteen components, each a markdown list or table with a comment naming it, so 
 
 Four layouts decide the page around them: `default`, `header` for a title or a photo ground, `section` for a divider, `split` for text beside an image. [Themes add their own](docs/guide/themes.md#layouts).
 
-![An index page of four pictures, each at its own aspect ratio, in a second theme](docs/screenshots/tiles.jpg)
+![A field of four pictures, each drawn at its own aspect ratio rather than cropped to a grid, in a second theme](docs/screenshots/tiles.jpg)
 
 ## The guide
 
