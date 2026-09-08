@@ -48,7 +48,7 @@ export default {
 
 /**
  * The first number in the cell, so a unit, a currency mark or a thousands space rides along:
- * `5`, `5 tok/s`, `18%` and `€2 400` all measure. A space or a comma inside the digits is a
+ * `5`, `5 tok/s`, `18%` and `2 400€` all measure. A space or a comma inside the digits is a
  * separator, a trailing comma or point with digits after it is the decimal.
  */
 function number(text: string): number | undefined {

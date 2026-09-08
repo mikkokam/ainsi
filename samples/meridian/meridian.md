@@ -53,7 +53,7 @@ That is why the range looks narrow from outside and why the moat is real. A comp
 # The decade in four numbers
 
 <!-- ainsi: figures -->
-- **€612m** revenue, 2025, from €188m in 2016
+- **612 M€** revenue, 2025, from 188 M€ in 2016
 - **34%** gross margin, unchanged across the decade
 - **11** production sites, down from nineteen
 - **1** customer lost to a competitor on measurement accuracy
@@ -73,10 +73,10 @@ Where the next hundred million goes
 <!-- ainsi: bar-table -->
 | Programme | Capital | Share | Payback |
 | --- | --- | --- | --- |
-| Calibration data platform | €44m | 44% | 3.1 yrs |
-| Site consolidation | €31m | 31% | 2.4 yrs |
-| Optical range extension | €18m | 18% | 4.8 yrs |
-| Working capital | €7m | 7% | n/a |
+| Calibration data platform | 44 M€ | 44% | 3.1 yrs |
+| Site consolidation | 31 M€ | 31% | 2.4 yrs |
+| Optical range extension | 18 M€ | 18% | 4.8 yrs |
+| Working capital | 7 M€ | 7% | n/a |
 
 ---
 
@@ -109,10 +109,10 @@ Where the next hundred million goes
 # What we want to be held to
 
 <!-- ainsi: boxes -->
-1. **Revenue** €780m to €820m by 2029, organic
+1. **Revenue** 780 M€ to 820 M€ by 2029, organic
 2. **Gross margin** 34% or better, every year, no exceptions
 3. **Sites** seven by 2028, and we will name them
-4. **Buyback** €25m a year while the leverage stays under 1.5x
+4. **Buyback** 25 M€ a year while the leverage stays under 1.5x
 
 <!-- ainsi: end -->
 

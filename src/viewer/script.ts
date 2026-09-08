@@ -236,6 +236,7 @@ function start(): void {
         presenting = true;
         index = nearest();
         document.body.setAttribute("data-present", "");
+        document.body.setAttribute("data-turn", "forward");
         play.innerHTML = icons.x;
         play.title = play.ariaLabel = "Leave presentation";
         document.documentElement.requestFullscreen?.().catch(() => {});
@@ -246,6 +247,7 @@ function start(): void {
     function stop(): void {
         presenting = false;
         document.body.removeAttribute("data-present");
+        document.body.removeAttribute("data-turn");
         play.innerHTML = icons.play;
         play.title = play.ariaLabel = `Present (${MOD}⏎)`;
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -271,9 +273,12 @@ function start(): void {
         label();
     }
 
+    /* which way the deck is going, for a theme that turns the page rather than swapping it:
+       CSS sees only which page is current, never where the last one was */
     function go(to: number, jump = false): void {
         const clamped = Math.max(0, Math.min(pages.length - 1, to));
         if (clamped === index && !jump) return;
+        document.body.setAttribute("data-turn", clamped < index ? "back" : "forward");
         index = clamped;
         if (presenting) show();
         else pages[index]?.scrollIntoView({ behavior: "smooth", block: "start" });

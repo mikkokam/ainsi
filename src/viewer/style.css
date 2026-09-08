@@ -168,6 +168,38 @@ body[data-present] .ainsi-page[data-current] {
     border-radius: 0; box-shadow: none;
     transform: translate(-50%, -50%) scale(var(--ainsi-present-scale, 1));
 }
+/*
+ * The turn. A page arrives on an axis rather than appearing, from the side the deck is
+ * travelling towards, which the script names on the body as data-turn. Only the arriving page
+ * can move: the one leaving is display:none from the instant it stops being current, and
+ * nothing hidden that way animates. The incoming face covers it, so the turn reads whole.
+ *
+ * Pace and curve are the theme's, through --ainsi-motion and --ainsi-ease, so a deck that
+ * should not move sets the token to 0s rather than unpicking these rules.
+ *
+ * The keyframes restate the centring and the scale above, because an animated transform
+ * replaces the rule's, and perspective() sits inside the transform rather than on the body,
+ * which would make the body the containing block for every fixed page. No fill: the settled
+ * page is back on the rule's transform, so a resize mid-deck is answered the usual way.
+ */
+/* the narrow screen gets the reading form: a page that fills it and does not turn */
+@media screen and (min-width: 901px) {
+    body[data-present][data-turn="forward"] .ainsi-page[data-current] {
+        animation: ainsi-turn-forward var(--ainsi-motion) var(--ainsi-ease);
+    }
+    body[data-present][data-turn="back"] .ainsi-page[data-current] {
+        animation: ainsi-turn-back var(--ainsi-motion) var(--ainsi-ease);
+    }
+}
+@keyframes ainsi-turn-forward {
+    from { opacity: 0; transform: perspective(2400px) translate(-40%, -50%) scale(var(--ainsi-present-scale, 1)) rotateY(42deg) translateZ(-360px); }
+    to { opacity: 1; transform: perspective(2400px) translate(-50%, -50%) scale(var(--ainsi-present-scale, 1)) rotateY(0) translateZ(0); }
+}
+@keyframes ainsi-turn-back {
+    from { opacity: 0; transform: perspective(2400px) translate(-60%, -50%) scale(var(--ainsi-present-scale, 1)) rotateY(-42deg) translateZ(-360px); }
+    to { opacity: 1; transform: perspective(2400px) translate(-50%, -50%) scale(var(--ainsi-present-scale, 1)) rotateY(0) translateZ(0); }
+}
+
 /* while presenting the strip all but disappears until asked for */
 body[data-present] .ainsi-toolbar { background: rgb(20 24 29 / 55%); border-color: rgb(255 255 255 / 10%); opacity: .1; }
 body[data-present] .ainsi-toolbar:hover,
@@ -186,21 +218,23 @@ body[data-present] .ainsi-menu__item:hover:not(:disabled) { background: rgb(255 
 
 /*
  * Entrance. A page arriving under presentation settles rather than snaps: the blocks rise
- * and clear, each a little after the one above it. Duration and easing are theme tokens, so
- * a theme can make it brisk, slow, or nothing at all by setting --ainsi-motion to 0s.
+ * and clear, each a little after the one above it, the first as the turn above lands. Duration
+ * and easing are theme tokens, so a theme can make it brisk, slow, or nothing at all by
+ * setting --ainsi-motion to 0s. A ground is not a block: it is the page's own surface and is
+ * there when the page arrives, so .ainsi-full sits this out.
  */
 @keyframes ainsi-rise {
     from { opacity: 0; transform: translateY(16px) scale(.994); }
     to { opacity: 1; transform: none; }
 }
 
-body[data-present] .ainsi-page[data-current] article > * {
-    animation: ainsi-rise var(--ainsi-motion) var(--ainsi-ease) backwards;
+body[data-present] .ainsi-page[data-current] article > *:not(.ainsi-full) {
+    animation: ainsi-rise var(--ainsi-motion) var(--ainsi-ease) calc(var(--ainsi-motion) * .45) backwards;
 }
-body[data-present] .ainsi-page[data-current] article > *:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .18); }
-body[data-present] .ainsi-page[data-current] article > *:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .32); }
-body[data-present] .ainsi-page[data-current] article > *:nth-child(4) { animation-delay: calc(var(--ainsi-motion) * .44); }
-body[data-present] .ainsi-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--ainsi-motion) * .54); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(2) { animation-delay: calc(var(--ainsi-motion) * .60); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(3) { animation-delay: calc(var(--ainsi-motion) * .72); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(4) { animation-delay: calc(var(--ainsi-motion) * .82); }
+body[data-present] .ainsi-page[data-current] article > *:nth-child(n+5) { animation-delay: calc(var(--ainsi-motion) * .90); }
 
 /*
  * Highlights draw on rather than arrive painted: once the blocks are settling, each mark

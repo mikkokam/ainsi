@@ -20,7 +20,11 @@ A bare `theme: acme` names a theme shipped in this repo: `default` is the warm e
     theme: ../brand/house
     ---
 
-So a client's brand lives in the client's repo, next to the decks that use it, and never in this one. Copy `themes/default/` as the starting point; it is the theme every other one layers on.
+So a client's brand lives in the client's repo, next to the decks that use it, and never in this one.
+
+Start by copying a whole theme folder rather than writing one from nothing: `themes/default/` if the deck is editorial, otherwise whichever shipped theme is nearest what the brand already looks like. Then edit. A theme is small enough that reading one is faster than reading this page.
+
+What carries over from the default theme is its tokens and only its tokens. `variables.css` from `themes/default/` is placed under every other theme's, so a theme declares what it changes and inherits the rest, and a token added to the contract later never leaves an older theme short. Nothing else is inherited: `styles.css` and `layouts/` are the theme's own, and a copied theme keeps only what its folder actually contains. Overriding a token is one declaration in your `variables.css`, which wins by coming second.
 
 ## The token contract
 
@@ -42,7 +46,7 @@ Space and shape: `--ainsi-gap`, `--ainsi-pad`, `--ainsi-radius`, `--ainsi-border
 
 Material: `--ainsi-shadow`, `--ainsi-blur`. Depth is a theme's call, not a component's.
 
-Motion: `--ainsi-motion`, `--ainsi-ease`, how the deck moves when presented, down to not at all.
+Motion: `--ainsi-motion`, `--ainsi-ease`, how the deck moves when presented, down to not at all. See [Motion](#motion).
 
 ## A default logo
 
@@ -64,6 +68,28 @@ It may not reach inside a component. A selector containing `__` is a component's
     theme styles.css reaches inside a component: ".ainsi-tiles__caption"; use a token or a layout
 
 The rule holds because a component's markup is its own business and will change. If a component's look cannot be reached through a token, that is a missing token, and adding one is a change to `src/tokens.ts` and every theme, deliberately.
+
+## Motion
+
+Presentation motion belongs to the viewer, not to a theme, so every deck has it whatever theme it wears. What a theme sets is the pace, through two tokens the whole sequence is written in terms of:
+
+    --ainsi-motion: 420ms;                        /* one beat */
+    --ainsi-ease: cubic-bezier(.16, 1, .3, 1);    /* the curve every part shares */
+
+Three things move. A page arrives on the Y axis from the side the deck is travelling towards, over one beat. The blocks on it rise and clear one after another, the first as the turn lands, at roughly half a beat apart, with everything past the fourth block sharing the last delay. Any `mark` on the page then draws left to right like a highlighter pass. The theme sets one number and all three follow it: `swiss` at 200ms is brisk, `default` at 700ms is slow, `--ainsi-motion: 0s` is a deck that does not move at all.
+
+The hooks, for a theme writing its own: `data-present` and `data-turn="forward" | "back"` on the body, `data-current` on the page. Every layout renders `main > article`, so the blocks a theme would restage are that element's children.
+
+### Replacing it
+
+Override the viewer's rules in `styles.css`. Theme CSS is emitted before the viewer's, so an override has to out-specify it: write `body.ainsi[data-present]` where the viewer writes `body[data-present]`.
+
+    body.ainsi[data-present] .ainsi-page[data-current] { animation: none; }
+    body.ainsi[data-present] .ainsi-page[data-current] article > * { animation: none; }
+
+Two constraints hold whatever a theme writes in place of it. Only the arriving page can move: the one leaving is `display: none` from the instant it stops being current, and nothing hidden that way can be animated. And a page's keyframes have to restate the viewer's own centring and scale, `translate(-50%, -50%) scale(var(--ainsi-present-scale, 1))`, because an animated transform replaces the rule's, not adds to it.
+
+The narrow screen presents the reading form, one page filling the display, so the turn is scoped to `min-width: 901px` and a theme's replacement should be too. `prefers-reduced-motion: reduce` drops all of it to a plain cut, and a theme that adds its own motion adds a line to that block as well.
 
 ## Layouts
 

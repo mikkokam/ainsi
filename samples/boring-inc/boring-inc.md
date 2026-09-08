@@ -37,9 +37,9 @@ Revenue ahead of plan, margin behind it
 # The quarter in four numbers
 
 <!-- ainsi: figures -->
-- **€184.2m** group revenue, up 6.1% on Q3 2025
+- **184.2 M€** group revenue, up 6.1% on Q3 2025
 - **11.4%** operating margin, 60 basis points below plan
-- **€21.0m** operating profit, flat year on year
+- **21.0 M€** operating profit, flat year on year
 - **94 days** cash conversion cycle, four days worse than Q2
 
 ---
@@ -55,7 +55,7 @@ Volume carried the quarter. Price did not: the average contract value fell 2.3% 
 Margin went where the discount went. Nothing in the cost base deteriorated, which is the one piece of good news in the sentence.
 
 > [!CAUTION]
-> A further 1.100 contracts renew before March. At Q3 discounting €4.8m of annual revenue at risk.
+> A further 1.100 contracts renew before March. At Q3 discounting 4.8 M€ of annual revenue at risk.
 
 <!-- ainsi: full size=full -->
 ![Harbour](https://images.unsplash.com/photo-1565167808479-08dcdbb1d6d7?w=1600&q=80)
@@ -67,9 +67,9 @@ Margin went where the discount went. Nothing in the cost base deteriorated, whic
 <!-- ainsi: bar-table text=large -->
 | Unit | Revenue Q3 | Growth | Margin |
 | --- | --- | --- | --- |
-| Industrial Services | €82.4m | 4.1% | 14.2% |
-| Logistics | €61.8m | 11.7% | 8.9% |
-| Facilities | €40.0m | 1.2% | 10.6% |
+| Industrial Services | 82.4 M€ | 4.1% | 14.2% |
+| Logistics | 61.8 M€ | 11.7% | 8.9% |
+| Facilities | 40.0 M€ | 1.2% | 10.6% |
 
 ---
 
@@ -80,7 +80,7 @@ Eleven per cent growth on a book that was shrinking two years ago, and it came f
 
 The margin is the problem. Sub-nine per cent in a unit that plans at twelve means the growth is being delivered by subcontractors at rates negotiated when we had no alternative.
 
-Insourcing the Turku hub is the single largest margin action available to us this year. It costs €3.2m and returns it in fourteen months.
+Insourcing the Turku hub is the single largest margin action available to us this year. It costs 3.2 M€ and returns it in fourteen months.
 
 <!-- ainsi: full size=full -->
 ![Pallets and racking in a distribution warehouse](https://images.unsplash.com/photo-1553413077-190dd305871c?w=1600&q=80)
@@ -98,9 +98,9 @@ Fourteen of twenty-two actions complete
 # What has landed
 
 <!-- ainsi: boxes -->
-1. **Procurement consolidation** €4.1m annualised, ahead of the €3.5m target
-2. **Property footprint** three sites closed, €1.8m, one lease still in dispute
-3. **Contractor rates** renegotiated across Industrial Services, €2.2m
+1. **Procurement consolidation** 4.1 M€ annualised, ahead of the 3.5 M€ target
+2. **Property footprint** three sites closed, 1.8 M€, one lease still in dispute
+3. **Contractor rates** renegotiated across Industrial Services, 2.2 M€
 4. **IT estate** flat, and the migration slipped a quarter
 
 ---
@@ -131,8 +131,8 @@ Fourteen of twenty-two actions complete
 # What we are asking the board to confirm
 
 <!-- ainsi: timeline -->
-1. **Guidance held** full-year revenue €735m to €745m, margin 11.5% to 12.0%
-2. **Turku insourcing approved** €3.2m capital, payback fourteen months
+1. **Guidance held** full-year revenue 735 M€ to 745 M€, margin 11.5% to 12.0%
+2. **Turku insourcing approved** 3.2 M€ capital, payback fourteen months
 3. **Pricing floor** no renewal below 92% of list without unit head sign-off
 
 &nbsp;

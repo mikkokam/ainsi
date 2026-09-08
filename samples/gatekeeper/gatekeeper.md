@@ -100,9 +100,9 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 <!-- ainsi: striped-table -->
 | Plan       | Governed calls | Retention | Per month |
 | ---------- | -------------- | --------- | --------- |
-| Team       | 2M             | 12 months | €490      |
-| Business   | 20M            | 3 years   | €2 400    |
-| Regulated  | 100M           | 7 years   | €7 900    |
+| Team       | 2M             | 12 months | 490€     |
+| Business   | 20M            | 3 years   | 2 400€   |
+| Regulated  | 100M           | 7 years   | 7 900€   |
 | Sovereign  | unmetered      | 7 years   | on ask    |
 
 ---
@@ -174,8 +174,8 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 | Tier       | Workspaces | Monthly Requests | Retention & Compliance | Price        |
 | ---------- | ---------- | ---------------- | ---------------------- | ------------ |
-| Team       | 3          | Up to 500k reqs  | 90-day signed logs     | 490 € / mo   |
-| Business   | 10         | Up to 5M reqs    | 2-year audit vault     | 1 450 € / mo |
+| Team       | 3          | Up to 500k reqs  | 90-day signed logs     | 490€ / mo   |
+| Business   | 10         | Up to 5M reqs    | 2-year audit vault     | 1 450€ / mo |
 | Enterprise | Unlimited  | Custom volume    | 7-year vault + VPC     | Custom       |
 
 ---

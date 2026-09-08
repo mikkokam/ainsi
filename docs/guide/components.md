@@ -78,7 +78,7 @@ The table with a band behind every other row, which is what carries the eye acro
 
 ### bar-table
 
-The table with a bar behind the values of every numeric column, scaled to that column's largest. A column counts as numeric when most of its cells parse, and a cell parses when it starts with a number: `5`, `5 tok/s`, `18%` and `€2 400` all measure, while `unmetered` stays text. Numeric columns take the width; the rest stay as narrow as their text.
+The table with a bar behind the values of every numeric column, scaled to that column's largest. A column counts as numeric when most of its cells parse, and a cell parses when it starts with a number: `5`, `5 tok/s`, `18%` and `2 400€` all measure, while `unmetered` stays text. Numeric columns take the width; the rest stay as narrow as their text.
 
 ### roadmap
 
