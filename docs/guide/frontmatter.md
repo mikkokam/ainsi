@@ -46,7 +46,7 @@ Page numbers on every page but the cover. `off` hides them from print, export an
 
 ## logo and coverLogo
 
-`logo` is the deck's mark, `coverLogo` the one a cover wears when a brand has two, a white version for a photographic ground being the usual reason. A cover with no `coverLogo` falls back to `logo`.
+`logo` is the deck's mark, `coverLogo` the one a cover wears when a brand has two, a white version for a photographic ground being the usual reason. A cover with no `coverLogo` falls back to `logo`, and a deck that names neither wears whatever mark its theme defaults to, which for a house theme is the house one: see [A default logo](themes.md#a-default-logo).
 
 Both take a path beside the deck, an absolute path, or a URL. A missing file is a warning, not an error, and the deck builds without a mark.
 

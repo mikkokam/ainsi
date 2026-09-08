@@ -6,11 +6,12 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 ## Demo - exported HTML player
 
-Three decks, three themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
+Four decks, four themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
 
 - **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/acme/acme.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/acme/acme.md).
 - **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/portfolio/portfolio.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/portfolio/portfolio.md).
 - **[Lehto & Mänty](https://mikkokam.github.io/ainsi/samples/lehto/lehto.html)**, the `default` theme: a workshop pitching bespoke furniture, tables and figures carrying most of it. [Source](samples/lehto/lehto.md).
+- **[Boring Inc.](https://mikkokam.github.io/ainsi/samples/boring/boring.html)**, the `boring` theme: a quarterly operating review in the corporate template, wearing the theme's own logo rather than one the deck names. [Source](samples/boring/boring.md).
 
 ## Authoring
 

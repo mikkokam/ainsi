@@ -1,8 +1,8 @@
 /*
- * The house style of no house: Arial, a dark blue, and nothing else decided. What a deck looks
- * like when the person making it changed none of the defaults. It is here to show that the
- * corporate template is a theme like any other, so a deck can wear one without being written
- * for one.
+ * The house style of no house: Arial, a dark blue, a mark in the corner, and nothing else
+ * decided. What a deck looks like when the person making it changed none of the defaults. It
+ * is here to show that the corporate template is a theme like any other, so a deck can wear
+ * one without being written for one.
  */
 :root {
     --ainsi-ink: #000000;
@@ -13,6 +13,13 @@
     --ainsi-accent-ink: #ffffff;
     --ainsi-rule: #bfbfbf;
     --ainsi-surface: #f2f2f2;
+
+    /* identity: the theme has a default logo, and a deck swaps it per deck from its frontmatter.
+       Inlined because the engine emits one self-contained html and a relative url() in a <style>
+       block would resolve against the output file, not this stylesheet.
+       Sources: themes/boring/assets/boring-logo.svg and themes/boring/assets/boring-mark.svg */
+    --ainsi-logo: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNzYgNDAiIHdpZHRoPSIxNzYiIGhlaWdodD0iNDAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbD0iQm9yaW5nIEluYy4iPgogICAgPHJlY3QgeD0iMCIgeT0iNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMWYzODY0Ii8+CiAgICA8dGV4dCB4PSIxNiIgeT0iMjcuNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiPkI8L3RleHQ+CiAgICA8dGV4dCB4PSI0MiIgeT0iMjciIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE3IiBmb250LXdlaWdodD0iNzAwIiBsZXR0ZXItc3BhY2luZz0iMS4yIiBmaWxsPSIjMWYzODY0IiB0ZXh0TGVuZ3RoPSIxMzAiIGxlbmd0aEFkanVzdD0ic3BhY2luZ0FuZEdseXBocyI+Qk9SSU5HIElOQy48L3RleHQ+Cjwvc3ZnPgo=");
+    --ainsi-logo-cover: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkJvcmluZyBJbmMuIj4KICAgIDxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgZmlsbD0iIzFmMzg2NCIvPgogICAgPHRleHQgeD0iMzIiIHk9IjQ4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsIEhlbHZldGljYSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0NCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2ZmZmZmZiI+QjwvdGV4dD4KPC9zdmc+Cg==");
 
     --ainsi-info: #2e74b5;
     --ainsi-ok: #217346;

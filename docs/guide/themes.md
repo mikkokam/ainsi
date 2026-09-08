@@ -14,7 +14,7 @@ Only `variables.css` is required. The default theme's tokens sit under every oth
 
 ## Using one beside your deck
 
-A bare `theme: acme` names a theme shipped in this repo: `default` is the warm editorial one every other layers on, `acme` a product-pitch grotesque, `portfolio` a picture-led one, and `boring` the corporate template, Arial on white on a major third, for a deck that has to look like everyone else's. Anything with a slash or a leading dot is yours, resolved beside the deck:
+A bare `theme: acme` names a theme shipped in this repo: `default` is the warm editorial one every other layers on, `acme` a product-pitch grotesque, `portfolio` a picture-led one, and `boring` the corporate template, Arial on white on a major third, carrying its own logo, for a deck that has to look like everyone else's. Anything with a slash or a leading dot is yours, resolved beside the deck:
 
     ---
     theme: ../brand/house
@@ -32,7 +32,7 @@ The accent is a ground carrying `--ainsi-accent-ink`, and an ink in its own righ
 
 Status: `--ainsi-info`, `--ainsi-ok`, `--ainsi-notice`, `--ainsi-warn`, `--ainsi-danger`. What informative, good, notable, careful and stop look like. Alerts are the first to ask.
 
-Identity: `--ainsi-logo`, `--ainsi-logo-cover`. Set from the deck's [frontmatter](frontmatter.md#logo-and-coverlogo); the theme decides where they sit.
+Identity: `--ainsi-logo`, `--ainsi-logo-cover`. Set from the deck's [frontmatter](frontmatter.md#logo-and-coverlogo) or, for a house theme, defaulted here; the theme decides where they sit. See [A default logo](#a-default-logo).
 
 Type: `--ainsi-font`, `--ainsi-font-display`, `--ainsi-font-mono`, `--ainsi-strong`, `--ainsi-size`, `--ainsi-leading`.
 
@@ -43,6 +43,17 @@ Space and shape: `--ainsi-gap`, `--ainsi-pad`, `--ainsi-radius`, `--ainsi-border
 Material: `--ainsi-shadow`, `--ainsi-blur`. Depth is a theme's call, not a component's.
 
 Motion: `--ainsi-motion`, `--ainsi-ease`, how the deck moves when presented, down to not at all.
+
+## A default logo
+
+A theme built for one company puts the mark in `variables.css` and no deck written against it has to name a file. The deck's frontmatter still wins, because the engine sets both tokens as an inline style on `<body>` and `:root` loses to that, so one theme serves the house deck and a co-branded one without a second folder.
+
+Inline the file as a data URI rather than pointing at it. The engine emits one self-contained HTML, and a relative `url()` in that `<style>` block resolves against the output file, not against the stylesheet it was written in:
+
+    --ainsi-logo: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0i...");
+    --ainsi-logo-cover: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0i...");
+
+Keep the source files in the theme folder and say in a comment which ones they are, or the next person to change the mark has a base64 string and nowhere to go. `themes/boring/` does this: `assets/boring-logo.svg` is the wordmark every page wears, `assets/boring-mark.svg` the monogram the cover wears larger.
 
 ## styles.css
 
