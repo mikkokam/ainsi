@@ -8,27 +8,20 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 Six decks, six themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
 
-- **[Acme Gatekeeper](https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html)**, the `acme` theme: a product pitch, seventeen pages, most of the components. [Source](samples/gatekeeper/gatekeeper.md).
-- **[Studio Kaari](https://mikkokam.github.io/ainsi/samples/kaari/kaari.html)**, the `portfolio` theme: a work portfolio, pictures at their own proportions. [Source](samples/kaari/kaari.md).
-- **[Lehto & Mänty](https://mikkokam.github.io/ainsi/samples/lehto/lehto.html)**, the `default` theme: a workshop pitching bespoke furniture, tables and figures carrying most of it. [Source](samples/lehto/lehto.md).
-- **[Boring Inc.](https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html)**, the `boring` theme: a quarterly operating review in the corporate template, wearing the theme's own logo rather than one the deck names. [Source](samples/boring-inc/boring-inc.md).
-- **[Aava Ranta](https://mikkokam.github.io/ainsi/samples/aava/aava.html)**, the `darkroom` theme: a photographer's selected work, black ground, flush contact sheets, one grotesque. [Source](samples/aava/aava.md).
-- **[Meridian Instruments](https://mikkokam.github.io/ainsi/samples/meridian/meridian.html)**, the `swiss` theme: a capital markets day on a twelve-column grid, Helvetica, red and yellow, photographs in black and white. [Source](samples/meridian/meridian.md).
-
-Six covers, one engine and one grammar. Click one to open the deck:
-
 <table>
 <tr>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><img src="docs/screenshots/covers/gatekeeper.jpg" alt="The Acme Gatekeeper cover: a headline over a photograph of a meeting room"></a><br><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><b>Acme Gatekeeper</b></a><br><code>acme</code></td>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><img src="docs/screenshots/covers/kaari.jpg" alt="The Studio Kaari cover: the studio name over a face in hard light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><b>Studio Kaari</b></a><br><code>portfolio</code></td>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><img src="docs/screenshots/covers/lehto.jpg" alt="The Lehto and M&auml;nty cover: a workshop bench room in morning light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><b>Lehto &amp; M&auml;nty</b></a><br><code>default</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><img src="docs/screenshots/covers/gatekeeper.jpg" alt="The Acme Gatekeeper cover: a headline over a photograph of a meeting room"></a><br><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><b>Acme Gatekeeper</b></a><br><code>acme</code> · <a href="samples/gatekeeper/gatekeeper.md">source</a></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><img src="docs/screenshots/covers/kaari.jpg" alt="The Studio Kaari cover: the studio name over a face in hard light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><b>Studio Kaari</b></a><br><code>portfolio</code> · <a href="samples/kaari/kaari.md">source</a></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><img src="docs/screenshots/covers/lehto.jpg" alt="The Lehto and M&auml;nty cover: a workshop bench room in morning light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><b>Lehto &amp; M&auml;nty</b></a><br><code>default</code> · <a href="samples/lehto/lehto.md">source</a></td>
 </tr>
 <tr>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><img src="docs/screenshots/covers/boring-inc.jpg" alt="The Boring Inc. cover: a title and a rule on white, the corporate template"></a><br><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><b>Boring Inc.</b></a><br><code>boring</code></td>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><img src="docs/screenshots/covers/aava.jpg" alt="The Aava Ranta cover: a photographer's name on a black and white portrait"></a><br><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><b>Aava Ranta</b></a><br><code>darkroom</code></td>
-<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><img src="docs/screenshots/covers/meridian.jpg" alt="The Meridian cover: Helvetica across a black and white machine hall"></a><br><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><b>Meridian Instruments</b></a><br><code>swiss</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><img src="docs/screenshots/covers/boring-inc.jpg" alt="The Boring Inc. cover: a title and a rule on white, the corporate template"></a><br><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><b>Boring Inc.</b></a><br><code>boring</code> · <a href="samples/boring-inc/boring-inc.md">source</a></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><img src="docs/screenshots/covers/aava.jpg" alt="The Aava Ranta cover: a photographer's name on a black and white portrait"></a><br><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><b>Aava Ranta</b></a><br><code>darkroom</code> · <a href="samples/aava/aava.md">source</a></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><img src="docs/screenshots/covers/meridian.jpg" alt="The Meridian cover: Helvetica across a black and white machine hall"></a><br><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><b>Meridian Instruments</b></a><br><code>swiss</code> · <a href="samples/meridian/meridian.md">source</a></td>
 </tr>
 </table>
+
+A product pitch, a design studio's selected work, a furniture workshop, a quarterly operating review, a photographer's portfolio and a capital markets day. Acme Gatekeeper is the one to read first: seventeen pages and most of the components.
 
 ## Authoring
 
