@@ -34,13 +34,13 @@ The markdown says what a block is (a timeline, a comparison) and what shape a pa
 
 ![Four figures with captions, set in a serif on warm paper](docs/screenshots/default.jpg)
 
-![The same four figures, set in a grotesque on white](docs/screenshots/acme.jpg)
+![The same four figures in the corporate template: Arial, dark blue, hung from the top of the page](docs/screenshots/boring.jpg)
 
 **Flow**
 
-Add --- to split a page.
+Add `---` to split a page.
 
-Optional --fit tries to flow pages automatically: Too much on a slide and the solver steps the type down within the range the theme allows, then splits at the natural seam. When it genuinely cannot fit, it tells you instead of quietly cropping.
+Optional `--fit` tries to flow pages automatically: Too much on a slide and the solver steps the type down within the range the theme allows, then splits at the natural seam. When it genuinely cannot fit, it tells you instead of quietly cropping.
 
     <!-- ainsi: timeline axis=horizontal -->     a run of blocks
     <!-- ainsi:layout header align=center -->    the page it sits on
