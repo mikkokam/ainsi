@@ -85,7 +85,14 @@ export function serve(options: ServeOptions): Server {
                         clients.add(controller);
                         controller.write(": open\n\n");
                         await controller.flush();
-                        await new Promise(() => {});
+                        // parked on the disconnect rather than on nothing. A navigated-away
+                        // page leaves a controller that may take any number of pushes to
+                        // error, or never error at all, and a pull that never returns is one
+                        // stop() waits on for as long as the browser holds the connection.
+                        await new Promise<void>(gone => request.signal.addEventListener("abort", () => {
+                            clients.delete(controller);
+                            gone();
+                        }));
                     },
                 }), { headers: { "content-type": "text/event-stream", "cache-control": "no-cache" } });
             }
@@ -122,6 +129,19 @@ export function serve(options: ServeOptions): Server {
     const ECHO = 400;
     let echo = 0;
 
+    /*
+     * Every client is written to on its own, never in one awaited loop. A flush to a page that
+     * has gone away can hang rather than throw, and in a loop that hang holds up the push the
+     * live page is waiting on, which surfaces as a reload that never arrives.
+     */
+    function post(message: string): void {
+        for (const client of clients) {
+            void (async () => {
+                try { client.write(message); await client.flush(); } catch { clients.delete(client); }
+            })();
+        }
+    }
+
     function schedule(what: string, own = false): void {
         if (own) echo = Date.now() + ECHO;
         clearTimeout(pending);
@@ -130,9 +150,7 @@ export function serve(options: ServeOptions): Server {
             try {
                 html = await rebuild();
                 build++;
-                for (const client of clients) {
-                    try { client.write("data: reload\n\n"); await client.flush(); } catch { clients.delete(client); }
-                }
+                post("data: reload\n\n");
             } catch (error) {
                 // the last good html stays served: a deck mid-edit should not blank the browser
                 console.error(`build failed: ${String(error)}`);
@@ -159,11 +177,7 @@ export function serve(options: ServeOptions): Server {
         }
     }
 
-    const heartbeat = setInterval(() => {
-        for (const client of clients) {
-            try { client.write(": ping\n\n"); void client.flush(); } catch { clients.delete(client); }
-        }
-    }, PING);
+    const heartbeat = setInterval(() => post(": ping\n\n"), PING);
 
     return {
         url: `http://localhost:${server.port}`,

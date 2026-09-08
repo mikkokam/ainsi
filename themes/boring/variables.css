@@ -1,8 +1,8 @@
 /*
  * The house style of no house: Arial, a dark blue, a mark in the corner, and nothing else
- * decided. What a deck looks like when the person making it changed none of the defaults. It
- * is here to show that the corporate template is a theme like any other, so a deck can wear
- * one without being written for one.
+ * decided. What a deck looks like when nobody changed a setting in PowerPoint. It is here to
+ * show that the corporate template is a theme like any other, so a deck can wear one without
+ * being written for one.
  */
 :root {
     --ainsi-ink: #000000;
@@ -45,7 +45,4 @@
 
     /* a figure is a number in a sentence here, not a headline: the component's own cap, lowered */
     --ainsi-figures-max: 1.8em;
-
-    --ainsi-motion: 0ms;
-    --ainsi-ease: linear;
 }

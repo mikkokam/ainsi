@@ -11,6 +11,7 @@ theme: boring
 
 Boring Inc. Group Performance and Outlook
 
+<!-- ainsi: prose size=small -->
 Prepared by Corporate Planning · 8 September 2026
 
 ---
@@ -43,7 +44,8 @@ Revenue ahead of plan, margin behind it
 
 ---
 
-<!-- ainsi: layout split side=right size=two-thirds -->
+<!-- ainsi: layout split side=right size=two-thirds tone=soft -->
+<!-- ainsi: prose size=small -->
 # Growth is real, and it is being bought
 
 <!-- ainsi: prose size=small -->
@@ -52,8 +54,8 @@ Volume carried the quarter. Price did not: the average contract value fell 2.3% 
 <!-- ainsi: prose size=small -->
 Margin went where the discount went. Nothing in the cost base deteriorated, which is the one piece of good news in the sentence.
 
-> [!NOTE]
-> A further 1.100 contracts renew before March. At Q3 discounting that is €4.8m of annual revenue at risk.
+> [!CAUTION]
+> A further 1.100 contracts renew before March. At Q3 discounting €4.8m of annual revenue at risk.
 
 <!-- ainsi: full size=full -->
 ![Harbour](https://images.unsplash.com/photo-1565167808479-08dcdbb1d6d7?w=1600&q=80)
@@ -62,7 +64,7 @@ Margin went where the discount went. Nothing in the cost base deteriorated, whic
 
 # The three units
 
-<!-- ainsi: bar-table -->
+<!-- ainsi: bar-table text=large -->
 | Unit | Revenue Q3 | Growth | Margin |
 | --- | --- | --- | --- |
 | Industrial Services | €82.4m | 4.1% | 14.2% |
