@@ -13,7 +13,7 @@
 .ainsi-matrix__cell:nth-child(1), .ainsi-matrix__cell:nth-child(2) { border-bottom-width: var(--ainsi-border); }
 .ainsi-matrix__cell:nth-child(1), .ainsi-matrix__cell:nth-child(3) { border-right-width: var(--ainsi-border); }
 .ainsi-matrix__title { font-weight: var(--ainsi-strong); }
-.ainsi-matrix__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+.ainsi-matrix__body { color: var(--ainsi-ink-soft); }
 .ainsi-matrix__x, .ainsi-matrix__y {
     font: var(--ainsi-strong) .75em/1 var(--ainsi-font-mono);
     text-transform: uppercase; letter-spacing: .08em;

@@ -645,7 +645,7 @@ body[data-present] [data-current][data-layout="header"] .ainsi-full img {
 }
 .ainsi-timeline--numbered .ainsi-timeline__marker::before { content: counter(ainsi-step); }
 .ainsi-timeline__label { font-weight: var(--ainsi-strong); font-variant-numeric: tabular-nums; }
-.ainsi-timeline__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+.ainsi-timeline__body { color: var(--ainsi-ink-soft); }
 
 @media screen and (max-width: 900px) {
     .ainsi-timeline--horizontal { grid-auto-flow: row; }
@@ -808,7 +808,7 @@ body[data-present] [data-current] .ainsi-comparison__column:nth-child(n+3) { ani
     border-radius: var(--ainsi-radius) 0 var(--ainsi-radius) 0;
 }
 .ainsi-boxes__title { font-weight: var(--ainsi-strong); }
-.ainsi-boxes__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+.ainsi-boxes__body { color: var(--ainsi-ink-soft); }
 
 @keyframes ainsi-boxes-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -835,7 +835,7 @@ body[data-present] [data-current] .ainsi-boxes__box:nth-child(n+4) { animation-d
 .ainsi-matrix__cell:nth-child(1), .ainsi-matrix__cell:nth-child(2) { border-bottom-width: var(--ainsi-border); }
 .ainsi-matrix__cell:nth-child(1), .ainsi-matrix__cell:nth-child(3) { border-right-width: var(--ainsi-border); }
 .ainsi-matrix__title { font-weight: var(--ainsi-strong); }
-.ainsi-matrix__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+.ainsi-matrix__body { color: var(--ainsi-ink-soft); }
 .ainsi-matrix__x, .ainsi-matrix__y {
     font: var(--ainsi-strong) .75em/1 var(--ainsi-font-mono);
     text-transform: uppercase; letter-spacing: .08em;
@@ -1182,7 +1182,7 @@ body[data-present] .ainsi-page[data-current] mark {
 <p>Four benches, one kiln, sixty pieces a year</p></article></main>
 <span class="ainsi-number" aria-hidden="true">3</span>
 </section>
-<section class="ainsi-page" id="what-a-machine-cannot" data-page="4" data-layout="split">
+<section class="ainsi-page" id="what-a-machine-cannot" data-page="4" data-layout="split" style="--ainsi-step:0.96">
 <main data-side="left" data-size="third"><article><h1>What a machine cannot</h1>
 <p>A dining table with a mitred frame and drawbored joints takes a joiner eleven days.<br>
 The same table, dowelled and screwed, takes a factory eleven minutes.<br>
@@ -1247,7 +1247,7 @@ A piece shipped to a coastal house in Spain is made to a different number.</p>
 </ol></article></main>
 <span class="ainsi-number" aria-hidden="true">6</span>
 </section>
-<section class="ainsi-page" id="four-pieces-from-this-year" data-page="7" data-layout="default">
+<section class="ainsi-page" id="four-pieces-from-this-year" data-page="7" data-layout="default" style="--ainsi-step:0.92">
 <main><article><h1>Four pieces from this year</h1>
 
 <ul class="ainsi-tiles" data-ainsi="tiles" data-crop="false" style="--ainsi-tiles-columns: 4; --ainsi-tiles-cap: 15.00em">
@@ -1270,7 +1270,7 @@ A piece shipped to a coastal house in Spain is made to a different number.</p>
 </ul></article></main>
 <span class="ainsi-number" aria-hidden="true">7</span>
 </section>
-<section class="ainsi-page" id="what-each-species-does-after-it-leaves-us" data-page="8" data-layout="default">
+<section class="ainsi-page" id="what-each-species-does-after-it-leaves-us" data-page="8" data-layout="default" style="--ainsi-step:0.84">
 <main><article><h1>What each species does after it leaves us</h1>
 <div class="ainsi-bar-table" data-ainsi="bar-table">
 <table>
@@ -1286,7 +1286,7 @@ A piece shipped to a coastal house in Spain is made to a different number.</p>
 <p>Movement is the column that decides a design. Ash is harder than oak and cheaper, and it moves half a percent more, which is a drawer that binds in February and a joint we have to cut differently.</p></article></main>
 <span class="ainsi-number" aria-hidden="true">8</span>
 </section>
-<section class="ainsi-page" id="workshop-and-factory-honestly" data-page="9" data-layout="default">
+<section class="ainsi-page" id="workshop-and-factory-honestly" data-page="9" data-layout="default" style="--ainsi-step:0.92">
 <main><article><h1>Workshop and factory, honestly</h1>
 <div class="ainsi-comparison" data-ainsi="comparison">
     <div class="ainsi-comparison__column">
@@ -1365,7 +1365,7 @@ A piece shipped to a coastal house in Spain is made to a different number.</p>
 </div></article></main>
 <span class="ainsi-number" aria-hidden="true">11</span>
 </section>
-<section class="ainsi-page" id="three-commissions-and-what-each-taught" data-page="12" data-layout="default">
+<section class="ainsi-page" id="three-commissions-and-what-each-taught" data-page="12" data-layout="default" style="--ainsi-step:0.88">
 <main><article><h1>Three commissions and what each taught</h1>
 
 <ol class="ainsi-boxes ainsi-boxes--ordered" data-ainsi="boxes" data-stretch="false">
@@ -1380,7 +1380,7 @@ A piece shipped to a coastal house in Spain is made to a different number.</p>
 <p>Sixteen weeks, four decisions, one of them yours alone</p></article></main>
 <span class="ainsi-number" aria-hidden="true">13</span>
 </section>
-<section class="ainsi-page" id="where-a-smaller-budget-should-go" data-page="14" data-layout="default">
+<section class="ainsi-page" id="where-a-smaller-budget-should-go" data-page="14" data-layout="default" style="--ainsi-step:0.88">
 <main><article><h1>Where a smaller budget should go</h1>
 
 <div class="ainsi-matrix ainsi-matrix--axes" data-ainsi="matrix">

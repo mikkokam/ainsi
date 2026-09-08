@@ -29,7 +29,7 @@
 }
 .ainsi-timeline--numbered .ainsi-timeline__marker::before { content: counter(ainsi-step); }
 .ainsi-timeline__label { font-weight: var(--ainsi-strong); font-variant-numeric: tabular-nums; }
-.ainsi-timeline__body { color: var(--ainsi-ink-soft); font-size: .92em; }
+.ainsi-timeline__body { color: var(--ainsi-ink-soft); }
 
 @media screen and (max-width: 900px) {
     .ainsi-timeline--horizontal { grid-auto-flow: row; }
