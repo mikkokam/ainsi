@@ -1,0 +1,46 @@
+/*
+ * A photographer's theme: the pictures are the only colour on the page. Everything the theme
+ * draws is paper white, near-black or a grey between them, so a print on this ground is the
+ * one thing a reader's eye can land on. The accent is that same white, which is why it works
+ * as an ink and as a ground both.
+ */
+:root {
+    --ainsi-ink: #f0efec;
+    --ainsi-ink-soft: #8d8b86;
+    --ainsi-ground: #0b0b0b;
+    --ainsi-shell: #000000;
+    --ainsi-accent: #e8e6e1;
+    --ainsi-accent-ink: #0b0b0b;
+    --ainsi-rule: #2b2a27;
+    --ainsi-surface: #171614;
+    --ainsi-tint: #232220;
+
+    /* muted enough to sit on black without becoming the brightest thing on a page of prints */
+    --ainsi-info: #7fa4c8;
+    --ainsi-ok: #82ab8b;
+    --ainsi-notice: #a999c8;
+    --ainsi-warn: #c8ab74;
+    --ainsi-danger: #c87b74;
+
+    /* one grotesque, at three weights. A second face on a page of photographs is a third
+       thing competing with the two that matter, the print and the caption under it. */
+    --ainsi-font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --ainsi-font-display: var(--ainsi-font);
+    --ainsi-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 600;
+    --ainsi-size: 21px;
+    --ainsi-leading: 1.5;
+    --ainsi-step-min: 0.75;
+
+    --ainsi-gap: 1.3rem;
+    --ainsi-pad: 6%;
+    /* nothing on this page has a corner: a print is a rectangle and a grid of them is flush */
+    --ainsi-radius: 0;
+    --ainsi-border: 1px;
+
+    --ainsi-shadow: none;
+    --ainsi-blur: 0px;
+
+    --ainsi-motion: 320ms;
+    --ainsi-ease: cubic-bezier(.16, 1, .3, 1);
+}

@@ -34,6 +34,22 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
+## A picture opens (feat)
+
+A deck of photographs is read on a laptop, and the reader's instinct on any picture worth looking at is to click it. Nothing happens. The picture stays at whatever size the page gave it, which on a tiles field is a sixth of the width, and the only way to see one properly is to open the image url by hand.
+
+Clicking a picture should lift it over the page: the frame at the page's own radius on a scrim, the rest of the deck dimmed behind it, and a click anywhere closing it. It belongs to the player rather than the studio, because the person it is for is whoever was sent the html, and it ships in the file the way presenting and the grid already do. Escape closes it too, and it never opens while an editor is open.
+
+Done is a click on any picture in the reading view and in presenting, one overlay, no library, and a printed page that shows no sign it exists.
+
+## A cropped field cannot be stepped down (defect)
+
+`tiles` caps a picture's height in em, so the fit solver's type step takes the field down with everything else and a page that is a little too tall becomes a page that fits. Under `crop` that cap is `none`: the cell's height comes from its width, the width comes from the column count, and the type step moves neither. A cropped field that overflows is therefore clipped and warned about rather than reduced, which is the one outcome the ladder exists to avoid.
+
+Seen on a photographer's contact sheet: six pictures, three columns, and the page missed by about a tenth. Four columns fit, but choosing the column count to satisfy the solver is the author doing the solver's job.
+
+The fix is a cap that survives cropping: the cell keeps its aspect ratio and takes a `max-height` in em the same way an uncropped picture does, so the row shrinks when the type does. Done is a page like that one fitting at three columns, and no warning.
+
 # Later
 
 ## A generated reference (feat)

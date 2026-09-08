@@ -1,0 +1,4 @@
+/* the divider is a plate: the title small at the foot, the numeral large above it */
+[data-layout="section"] article { justify-content: flex-end; }
+[data-layout="section"] article::before { font-size: 4.5em; font-weight: 400; opacity: .35; }
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 1.5em; letter-spacing: -.01em; }

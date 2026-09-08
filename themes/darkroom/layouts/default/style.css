@@ -1,0 +1,4 @@
+/* a grid of prints is a contact sheet: flush, no gutter, the frames touching as they do on film */
+[data-layout="default"] .ainsi-tiles { --ainsi-tiles-gap: 0; }
+/* the page holds its blocks from the top, so a short page does not float its label to the middle */
+[data-layout="default"] article { justify-content: flex-start; }
