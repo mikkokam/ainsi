@@ -262,3 +262,31 @@ body[data-present] .ainsi-page[data-current] mark {
 @media print {
     .ainsi-toolbar, .ainsi-overview, .ainsi-keys { display: none; }
 }
+
+/*
+ * A picture over the deck. The frame takes the page's own radius, so a theme with square
+ * corners opens a square picture; the ground is dark whatever the deck's paper is, because
+ * what is being looked at is the photograph and not the page it came from.
+ */
+.ainsi-lightbox {
+    position: fixed; inset: 0; z-index: 120;
+    display: flex; align-items: center; justify-content: center;
+    padding: 3vmin;
+    background: rgb(8 9 11 / 88%);
+    cursor: zoom-out;
+    animation: ainsi-lightbox-in 160ms ease-out both;
+}
+.ainsi-lightbox img {
+    width: auto; height: auto;
+    max-width: 100%; max-height: 100%;
+    border-radius: var(--ainsi-radius);
+    box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+}
+@keyframes ainsi-lightbox-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* the affordance, where a click opens rather than edits or turns the page */
+body.ainsi:not([data-ainsi-studio]) .ainsi-page img { cursor: zoom-in; }
+body.ainsi:not([data-ainsi-studio]) .ainsi-page[data-layout="header"] .ainsi-full img { cursor: inherit; }
+
+@media (prefers-reduced-motion: reduce) { .ainsi-lightbox { animation: none; } }
+@media print { .ainsi-lightbox { display: none !important; } }

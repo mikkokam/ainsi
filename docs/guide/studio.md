@@ -46,6 +46,8 @@ The PPTX is the deck in two layers: everything that is not text is one backgroun
 
 ⌘⏎ presents from the current slide, Ctrl+Enter where there is no ⌘. Arrows move, ⌘ arrows jump to the first or last, ⌘G is the grid, Escape leaves. Blocks arrive in order as you reach a page; `prefers-reduced-motion` turns that off.
 
+Clicking a picture lifts it over the deck at the page's own radius, and a click anywhere puts it back. It works while reading and while presenting, but not in the studio, where a click on a picture is an edit.
+
 Hold ⌘ to see the shortcuts for whatever mode you are in.
 
 These work in a built deck too. The toolbar and the grid ship with the file, so the HTML you send presents the same way on someone else's machine, offline.

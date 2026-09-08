@@ -190,6 +190,44 @@ function start(): void {
         overview = undefined;
     }
 
+    /*
+     * A picture opens. Clicking one lifts it over the deck at the page's own radius and a
+     * click anywhere puts it back, which is the first thing anyone tries on a deck of
+     * photographs. The header's ground is excluded: there the picture is the page, and
+     * opening it would leave a cover with nowhere left to click to move on.
+     */
+    let lightbox: HTMLDivElement | undefined;
+
+    function openLightbox(source: HTMLImageElement): void {
+        closeMenu();
+        lightbox = document.createElement("div");
+        lightbox.className = "ainsi-lightbox";
+        const picture = document.createElement("img");
+        picture.src = source.currentSrc || source.src;
+        picture.alt = source.alt;
+        lightbox.append(picture);
+        document.body.append(lightbox);
+    }
+
+    function closeLightbox(): void {
+        lightbox?.remove();
+        lightbox = undefined;
+    }
+
+    /* capture, so the click never reaches the page turn behind it */
+    addEventListener("click", event => {
+        if (lightbox) { event.preventDefault(); event.stopPropagation(); return closeLightbox(); }
+        // in the studio a click on a picture is an edit; presenting is the player again
+        if (document.body.hasAttribute("data-ainsi-studio") && !presenting) return;
+        const target = event.target as HTMLElement;
+        if (target.closest?.(".ainsi-overview")) return;      // a thumbnail is a slide, not a picture
+        const image = target.closest?.<HTMLImageElement>(".ainsi-page img");
+        if (!image || image.closest('[data-layout="header"] .ainsi-full')) return;
+        event.preventDefault();
+        event.stopPropagation();
+        openLightbox(image);
+    }, true);
+
     function label(): void {
         count.textContent = presenting ? `${index + 1}/${pages.length}` : "";
     }
@@ -269,6 +307,7 @@ function start(): void {
     function shortcuts(): { mode: string; rows: Row[] } {
         const studio = document.body.hasAttribute("data-ainsi-studio");
         if ((document.activeElement as HTMLElement | null)?.closest?.("input, textarea, [contenteditable]")) return { mode: "Editing", rows: [] };
+        if (lightbox) return { mode: "Picture", rows: [["esc", "close"]] };
         if (overview) return { mode: "Grid", rows: [["← → ↑ ↓", "move"], ["⏎", "open slide"], ["esc", "close"]] };
         if (presenting) return { mode: "Presenting", rows: [["← →", "previous / next"], [`${MOD} ← →`, "first / last"], [`${MOD} G`, "grid"], ["esc", "leave"]] };
         return { mode: studio ? "Studio" : "Player", rows: [[`${MOD} ⏎`, "present from this slide"], [`${MOD} G`, "grid"]] };
@@ -312,11 +351,13 @@ function start(): void {
         release();     // any other key while the modifier is down is a chord, not a request for the list
         if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
         if (event.key === "Escape") {
+            if (lightbox) return closeLightbox();
             if (panel) return closeMenu();
             if (overview) return closeOverview();
             if (presenting) return stop();
             return;
         }
+        if (lightbox) return;       // the deck is behind a picture; nothing moves until it is put back
         if (chord(event) && event.key.toLowerCase() === "g") { event.preventDefault(); return overview ? closeOverview() : openOverview(); }
         if (chord(event) && event.key === "Enter") { event.preventDefault(); return presenting ? stop() : begin(); }
         if (overview) return overviewKey(event);
