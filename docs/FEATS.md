@@ -34,14 +34,6 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## Moving a block or a page (feat)
-
-Nothing in the studio moves anything. `edits.ts` has `remove`, `removePage`, `relayout` and `retag`, so a block can become something else or go, and cannot go anywhere. Reordering a deck today means raw mode and cutting text, which is the one edit people do most often while writing.
-
-A move is two splices against offsets the pipeline already computes, so it is a `move` in `edits.ts` beside the rest, headlessly testable and callable by an agent. Done is Move up and Move down in the block menu and the page menu: one function, four menu items, works from the keyboard, and works on a page whose neighbour is off screen, which is where a drag gesture is least use.
-
-Drag comes after, on top of the same function, and is a larger piece of work than it looks: hit-testing, an insertion marker, autoscroll, and the grid as a second surface with its own drop targets. Not a reason to delay the menu items.
-
 ## Editing one page's source (feat)
 
 `E` opens the whole file, so getting to the page you were looking at means scrolling a deck's worth of markdown to find it. The page rail's menu is where the page-scoped version belongs: Edit source, opening raw mode over that page's slice of the file and nothing else.

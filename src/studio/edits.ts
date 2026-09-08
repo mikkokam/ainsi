@@ -170,3 +170,55 @@ export function withAlert(md: string, kind: string, to: string | null): string {
     const body = quote.trim() ? quote : ">";
     return to ? `> [!${to.toUpperCase()}]\n${body}` : body;
 }
+
+interface Span { start: number; end: number }
+
+/** what a block occupies: its directive line through the marker closing it */
+const spanOf = (target: Target): Span => ({ start: target.directive?.start ?? target.start, end: target.terminator?.end ?? target.end });
+
+/**
+ * What a page occupies: every directive line standing above its first entity through its last.
+ * A `PageTarget` starts at the entity, so a component directive governing the page's opening
+ * block sits outside it, and a page moved by that offset would leave the directive behind.
+ * An end marker there closes the page before and stays with it.
+ */
+function pageSpan(source: string, page: PageTarget): Span {
+    let start = page.directive?.start ?? page.first;
+    for (;;) {
+        let at = start;
+        while (at > 0 && /\s/.test(source[at - 1]!)) at--;
+        const line = /(<!--\s*ainsi\b[^>]*-->)[ \t]*$/.exec(source.slice(0, at));
+        if (!line || /^<!--\s*ainsi\s*:?\s*end\b/.test(line[1]!)) return { start, end: page.last };
+        start = at - line[1]!.length;
+    }
+}
+
+/**
+ * Two neighbouring spans swapped, as one splice over the pair rather than two writes: the
+ * write path takes one range against one hash, and a move landing half of itself is a
+ * corrupted file. `between` decides what separates them afterwards; keeping it is the default.
+ */
+function swap(source: string, one: Span, two: Span, between: (was: string) => string = was => was): Splice {
+    const [a, b] = one.start <= two.start ? [one, two] : [two, one];
+    const text = source.slice(b.start, b.end) + between(source.slice(a.end, b.start)) + source.slice(a.start, a.end);
+    return { start: a.start, end: b.end, text };
+}
+
+/**
+ * A block and its neighbour swapped, either way round. The gap between them is kept, unless
+ * it holds no blank line: a heading and the paragraph glued under it are two blocks, and
+ * swapping them without one would make a list swallow the paragraph as a continuation line.
+ */
+export function move(source: string, block: Target, neighbour: Target): Splice {
+    return swap(source, spanOf(block), spanOf(neighbour), was => (/\n[ \t]*\n/.test(was) ? was : "\n\n"));
+}
+
+/**
+ * Two pages swapped. A page whose layout directive is its only break leaves an implicit one
+ * behind when it moves down, so the pair gets an explicit `---` unless the page now second
+ * carries a directive of its own. Writing a break where one already resolved changes nothing.
+ */
+export function movePage(source: string, page: PageTarget, neighbour: PageTarget): Splice {
+    const [a, b] = page.first <= neighbour.first ? [page, neighbour] : [neighbour, page];
+    return swap(source, pageSpan(source, a), pageSpan(source, b), was => (a.held || /(^|\n)---[ \t]*(\n|$)/.test(was) ? was : "\n\n---\n\n"));
+}

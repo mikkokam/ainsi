@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, markerOf, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, markerOf, move, movePage, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, control, divider, drill, dropdown, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -468,6 +468,15 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
         }, closeMenu));
     }
 
+    // where it sits: a swap with the neighbour above or below, never across a page break.
+    // Only the moves that exist are drawn, so the first block has no dead Move up.
+    const [above, below] = beside(target, block);
+    if (above || below) {
+        menu.append(divider());
+        if (above) menu.append(iconButton("up", "Move up", false, () => splice(move(doc.source, target, above))));
+        if (below) menu.append(iconButton("down", "Move down", false, () => splice(move(doc.source, target, below))));
+    }
+
     menu.append(divider(), iconButton("trash", "Delete", false, () => splice(remove(doc.source, target))));
     document.body.append(menu);
     place(menu, at);
@@ -517,6 +526,15 @@ function openPageMenu(section: HTMLElement, at: DOMRect): void {
             change(page.layout, { ...page.props, [field.name]: cleared ? undefined : value });
         }, closeMenu));
     }
+    const index = doc.pages.indexOf(page);
+    const before = doc.pages[index - 1];
+    const after = doc.pages[index + 1];
+    if (before || after) {
+        menu.append(divider());
+        if (before) menu.append(iconButton("up", "Move page up", false, () => splice(movePage(doc.source, page, before))));
+        if (after) menu.append(iconButton("down", "Move page down", false, () => splice(movePage(doc.source, page, after))));
+    }
+
     menu.append(divider(), iconButton("trash", "Delete page", false, () => splice(removePage(doc.source, page))));
 
     document.body.append(menu);
@@ -565,6 +583,26 @@ function targetFor(entity: DocEntity, block: DocBlock): Target {
         ...(block.directive ? { directive: block.directive } : {}),
         ...(block.terminator ? { terminator: block.terminator } : {}),
     };
+}
+
+/**
+ * What a move may swap this target with: the units on the same page, above and below. A unit
+ * is what a menu addresses, a governed block whole and an ungoverned entity on its own, so
+ * moving a paragraph inside a run of prose reorders the run rather than jumping the block.
+ */
+function beside(target: Target, block: DocBlock): [Target | undefined, Target | undefined] {
+    const page = doc.pages.find(p => p.ids.includes(block.ids[0]!));
+    if (!page) return [undefined, undefined];
+    const units: Target[] = [];
+    for (const one of doc.blocks.filter(b => page.ids.includes(b.ids[0]!))) {
+        const ids = one.origin === "directive" ? [one.ids[0]!] : one.ids;
+        for (const id of ids) {
+            const entity = doc.entities.find(e => e.id === id);
+            if (entity) units.push(targetFor(entity, one));
+        }
+    }
+    const i = units.findIndex(u => u.start === target.start);
+    return i < 0 ? [undefined, undefined] : [units[i - 1], units[i + 1]];
 }
 
 /** the props worth writing: those that differ from the schema's own defaults */

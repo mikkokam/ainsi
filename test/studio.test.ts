@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { addPage, alertOf, directiveLine, markerOf, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
+import { addPage, alertOf, directiveLine, markerOf, move, movePage, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
 
 const registry = await load([BUILTIN]);
 const layouts = await loadLayouts([LAYOUTS]);
@@ -187,4 +187,54 @@ test("removePage takes the break before a last page, and leaves frontmatter's cl
     expect(apply(two, removePage(two, pageOf(two, 1)))).toBe("# One");
     const only = "---\ntheme: default\n---\n\n# Only";
     expect(apply(only, removePage(only, pageOf(only, 0)))).toBe("---\ntheme: default\n---");
+});
+
+test("move swaps a block with its neighbour and keeps what separated them", () => {
+    const source = "# Page\n\nfirst\n\nsecond\n";
+    const down = apply(source, move(source, targetOf(source, 1), targetOf(source, 2)));
+    expect(down).toBe("# Page\n\nsecond\n\nfirst\n");
+    expect(apply(source, move(source, targetOf(source, 2), targetOf(source, 1)))).toBe(down);
+});
+
+test("a moved block takes its directive and its end marker along", () => {
+    const source = "<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n\nafter\n";
+    const after = apply(source, move(source, targetOf(source, 0), targetOf(source, 1)));
+    expect(after).toBe("after\n\n<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n");
+    expect(blocksOf(after)).toEqual([["prose", 1], ["boxes", 1]]);
+});
+
+test("movePage swaps two pages and keeps the break between them", () => {
+    const source = "# One\n\na\n\n---\n\n<!-- ainsi: layout section -->\n# Two\n\nb\n";
+    const after = apply(source, movePage(source, pageOf(source, 0), pageOf(source, 1)));
+    expect(after).toBe("<!-- ainsi: layout section -->\n# Two\n\nb\n\n---\n\n# One\n\na\n");
+    const { pages } = assemble(after, { registry, layouts });
+    expect(pages.map(p => p.layout)).toEqual(["section", "default"]);
+});
+
+test("movePage writes the break a layout directive was holding open, so the pages stay two", () => {
+    const source = "# One\n\n<!-- ainsi: layout header -->\n# Two\n";
+    const after = apply(source, movePage(source, pageOf(source, 0), pageOf(source, 1)));
+    expect(after).toBe("<!-- ainsi: layout header -->\n# Two\n\n---\n\n# One\n");
+    expect(assemble(after, { registry, layouts }).pages.length).toBe(2);
+});
+
+test("move parts blocks that were glued together, so neither absorbs the other", () => {
+    const source = "# One\nsaid\n\n- a\n- b\n";
+    const after = apply(source, move(source, targetOf(source, 1), targetOf(source, 0)));
+    expect(after).toBe("said\n\n# One\n\n- a\n- b\n");
+    expect(parse(after).doc.entities.map(e => e.kind)).toEqual(["paragraph", "heading", "list"]);
+});
+
+test("a moved page takes the directives standing above its first entity", () => {
+    const source = "# One\n\n---\n\n<!-- ainsi: agenda -->\n1. a\n2. b\n";
+    const after = apply(source, movePage(source, pageOf(source, 1), pageOf(source, 0)));
+    expect(after).toBe("<!-- ainsi: agenda -->\n1. a\n2. b\n\n---\n\n# One\n");
+    const { pages } = assemble(after, { registry, layouts });
+    expect(pages.map(p => p.blocks[0]!.component)).toEqual(["agenda", "prose"]);
+});
+
+test("a moved page leaves the end marker that closes the page before it", () => {
+    const source = "<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n\n---\n\n# Two\n";
+    const after = apply(source, movePage(source, pageOf(source, 1), pageOf(source, 0)));
+    expect(after).toBe("# Two\n\n---\n\n<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n");
 });

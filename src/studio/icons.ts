@@ -24,6 +24,8 @@ export const icons = {
     panelRight: wrap(`<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/>`),
     alignTop: wrap(`<path d="M5 3h14"/><path d="m18 13-6-6-6 6"/><path d="M12 7v14"/>`),
     alignBottom: wrap(`<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>`),
+    up: wrap(`<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>`),
+    down: wrap(`<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>`),
     trash: wrap(`<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`),
 };
 

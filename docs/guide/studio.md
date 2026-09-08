@@ -12,7 +12,9 @@ A rail appears at the block's top-left corner while the pointer is over it: a gr
 
 The block menu is what this block is, what it can become, and its props. Converting a list to a `timeline` writes the directive; changing `axis` rewrites that directive's props. Deleting takes the directive with the block.
 
-The page has its own rail one scope up, at the page's top-left corner: the grip carries the page's layout and its props, ⌥ click on it adds a page below, and so does the plus beside it.
+Move up and Move down sit beside the delete, and swap the block with its neighbour on the same page. What moves is what the menu addresses: a block a directive governs moves whole, directive and end marker with it, while a paragraph inside a run of ordinary markdown moves on its own, so reordering within the run is the same gesture. Only the moves that exist are drawn, so the first block on a page offers no Move up.
+
+The page has its own rail one scope up, at the page's top-left corner: the grip carries the page's layout and its props, ⌥ click on it adds a page below, and so does the plus beside it. The page menu moves pages the same way, taking the layout directive along and writing the break a directive alone was holding open.
 
 `E` opens the whole file's source in a code editor, for when a splice is faster than a form. Escape closes whatever is open.
 
