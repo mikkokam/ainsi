@@ -10,8 +10,8 @@
     text-align: left;
     text-wrap: initial;
 }
-.ainsi-page h1 { font-size: 3.157em; font-weight: 700; line-height: .92; letter-spacing: -.035em; }
-.ainsi-page h2 { font-size: 2.369em; font-weight: 700; line-height: .96; letter-spacing: -.03em; }
+.ainsi-page h1 { font-size: 3.157em; font-weight: 700; line-height: .88; letter-spacing: -.022em; }
+.ainsi-page h2 { font-size: 2.369em; font-weight: 700; line-height: .92; letter-spacing: -.018em; }
 .ainsi-page h3 { font-size: 1.333em; font-weight: 700; letter-spacing: -.02em; }
 /* below h3 a heading is a label on the grid, not a smaller headline */
 .ainsi-page h4, .ainsi-page h5 {

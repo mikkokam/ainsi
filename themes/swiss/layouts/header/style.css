@@ -3,8 +3,8 @@
  * into black and white, so the only colour on it is the rule above the title.
  */
 [data-layout="header"] main { justify-content: flex-end; }
-[data-layout="header"] h1 { font-size: 3.157em; line-height: .92; letter-spacing: -.035em; }
-[data-layout="header"] p { font-size: .9em; opacity: 1; margin-top: .9em; max-width: 46ch; }
+[data-layout="header"] h1 { font-size: 3.157em; line-height: .88; letter-spacing: -.022em; }
+[data-layout="header"] p { font-size: .9em; opacity: 1; margin-top: .9em; }
 [data-layout="header"] article > :first-child::before {
     content: ""; display: block;
     width: 5.5rem; height: 8px; margin-bottom: 1.1rem;

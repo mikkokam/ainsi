@@ -9,4 +9,4 @@
     color: var(--ainsi-accent); opacity: 1;
     margin-bottom: .06em;
 }
-[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 3.157em; letter-spacing: -.035em; }
+[data-layout="section"] h1, [data-layout="section"] h2 { font-size: 3.157em; letter-spacing: -.022em; }
