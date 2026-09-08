@@ -14,24 +14,40 @@ Three decks, three themes, each built from the markdown beside it. They open in 
 
 The loop: write `deck.md` with your agent in a folder on your machine, run `ainsi deck.md`, and a browser opens on the deck. Everything either of you does from then on lands in that one file. The agent rewrites a page while you are looking at it and the view reloads; you retype a line in the studio and the agent's next read sees it. There is no second copy of the document, so there is no split brain, nothing to sync and nothing to import. The same file opens in any markdown editor, and goes to anyone who has never heard of this tool.
 
-That is the case for markdown over a slide format. A deck here is a few kilobytes of what you actually say. The same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, the rest spacing, run properties and theme parts, so an agent asked to edit one spends its context on how a bullet is indented and loses the thread of the argument you needed the deck to make. Keeping the deck in markdown keeps the context tight and the attention, yours and the agent's, on what is said.
+## Powerpoint is a terrible tool for AI
 
-When the deck has to leave your machine it leaves as a result, not as a project: one self-contained HTML page with the images embedded, which presents full-screen, prints and reads as a document on a phone; or a PDF; or an editable PPTX for whoever wants to carry on in PowerPoint. Nothing runs but your machine, there is no service and no account, and the deck stays a `.md` file with an `.html` file beside it.
+That is the case for markdown over a slide format. A deck here is a few kilobytes of what you actually say. The same deck as a `.pptx` is a zip of XML in which the words are a small fraction of the bytes, the rest spacing, run properties and theme parts, so an agent asked to edit one *spends its context* on how a bullet is indented and loses the thread of the argument you needed the deck to make.
 
-The markdown says what a block is (a timeline, a comparison) and what shape a page takes, never what either looks like. A theme decides that, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/acme/acme.md`, unchanged, under two of the themes in this repo:
+Keeping the deck in markdown keeps the context tight and the attention, yours and the agent's, on what is said.
+
+## Export
+
+When the deck has to leave your machine it leaves as a result, not as a project: one 
+**self-contained HTML** page with the images embedded, which presents full-screen, prints and fits the screen on a phone; or a **PDF**; or an **editable PPTX** for whoever wants to carry on in PowerPoint (poor them).
+Nothing runs but your machine, there is no service and no account, and the deck stays a `.md` file with an `.html` file beside it as an export, not the source.
+
+## Layouts and components
+
+The markdown says what a block is (a timeline, a comparison) and what shape a page takes. A theme decides the look, and a theme is a folder. Swapping it rebrands every deck you have ever written, untouched. One page of `samples/acme/acme.md`, unchanged, under two of the themes in this repo:
 
 ![Four figures with captions, set in a serif on warm paper](docs/screenshots/default.jpg)
 
 ![The same four figures, set in a grotesque on white](docs/screenshots/acme.jpg)
 
-Pages are computed, not authored. Too much on a slide and the solver steps the type down within the range the theme allows, then splits at the natural seam. When it genuinely cannot fit, it tells you instead of quietly cropping.
+**Flow**
+
+Add --- to split a page.
+
+Optional --fit tries to flow pages automatically: Too much on a slide and the solver steps the type down within the range the theme allows, then splits at the natural seam. When it genuinely cannot fit, it tells you instead of quietly cropping.
 
     <!-- ainsi: timeline axis=horizontal -->     a run of blocks
     <!-- ainsi:layout header align=center -->    the page it sits on
 
-The last mile is visual, so there is a studio: a browser page over the same file, where you click a block and change what it is, edit the text, try another theme. The agent writes what is said, you settle how it lands, and neither of you leaves the `.md`.
+## GUI
 
-Claude Code is the first-class client. The repo ships as a plugin whose skill teaches the grammar and the build loop, so the agent produces a deck in the house look and argues with you about the content instead of the formatting.
+The last mile is visual, so there is a **studio**: a browser page over the same file, where you right click a block and change what it is, edit the text, try another theme. The agent writes what is said, you settle how it lands, and neither of you leaves the `.md`.
+
+**Claude Code** is the first-class client. The repo ships as a plugin whose skill teaches the grammar and the build loop, so the agent produces a deck in the house look and argues with you about the **content** instead of the formatting.
 
 Version 1.0.
 
