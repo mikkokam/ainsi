@@ -54,7 +54,7 @@ Margin went where the discount went. Nothing in the cost base deteriorated, whic
 > A further 1.100 contracts renew before March. At Q3 discounting that is €4.8m of annual revenue at risk.
 
 <!-- ainsi: full size=full -->
-![A meeting room in a glass office block, empty chairs around a long table](https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80)
+![Harbour](https://images.unsplash.com/photo-1565167808479-08dcdbb1d6d7?w=1600&q=80)
 
 ---
 
