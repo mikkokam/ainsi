@@ -143,7 +143,7 @@ VP of Engineering, Series B Fintech (Stockholm)
 
 <!-- ainsi: matrix x="effort to adopt" y="impact on risk" -->
 - **Prompt guidelines** cheap, and nobody follows them
-- **ACME: Gateway policy** one URL swap, every call governed
+- **Gateway policy** one URL swap, every call governed
 - **Manual audits** weeks of work per review
 - **Model retraining** months, and the risk moves elsewhere
 
