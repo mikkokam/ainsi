@@ -159,6 +159,11 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
                 const sideways = box.rotate === 90 || box.rotate === 270;
                 const w = (sideways ? box.h : box.w) * scale + 0.05;
                 const h = (sideways ? box.w : box.h) * scale;
+                // ppt measures text a shade wider than chromium, so a box cut to the width the
+                // line actually took wraps its last word onto a line of its own. A block the
+                // deck set on one line is told not to wrap at all rather than given slack to
+                // guess at; a block that already wraps keeps its own breaks by keeping its width
+                const oneLine = box.h < box.linePx * 1.5;
                 slide.addText(texts, {
                     x: (box.x + box.w / 2) * scale - w / 2,
                     y: (box.y + box.h / 2) * scale - h / 2,
@@ -167,6 +172,7 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
                     valign: "top",
                     margin: 0,
                     inset: 0,
+                    ...(oneLine ? { wrap: false } : {}),
                     lineSpacing: Math.round(box.linePx * scale * 72 * 10) / 10,
                     ...(box.rotate ? { rotate: box.rotate } : {}),
                     ...(box.bullet ? { bullet: { code: "2022", indent: 8 } } : {}),

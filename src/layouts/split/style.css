@@ -17,6 +17,9 @@
 [data-layout="split"] article > .ainsi-full {
     position: absolute; inset: 0 auto 0 0;
     width: var(--ainsi-split); height: 100%; margin: 0;
+    /* the ground is a crop: a picture taller than the pane is cut by it, and never counted as
+       the page running out of room, which would have the fit solver split a page in two */
+    overflow: hidden;
 }
 [data-layout="split"] article > .ainsi-full img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
 /* out of flow: no rhythm rule may move the ground, whatever specificity base grows to */
