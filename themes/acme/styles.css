@@ -2,10 +2,26 @@
  * The escape hatch: what no token should carry. Fonts, a scale ratio, a texture.
  * It may not reach inside a component; the loader reports it if it tries.
  */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;680&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Funnel+Display:wght@400..800&family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap");
 
-.ainsi-page h1 { letter-spacing: -.035em; }
-.ainsi-page h2 { letter-spacing: -.02em; }
+/*
+ * Three faces, each with one job. Funnel Display carries the headings; DM Sans carries the
+ * words, because a display face set at body size for six lines is a page nobody reads; Space
+ * Mono carries the small print, the one place a deck may look like the tooling it describes.
+ *
+ * Headings sit at 600, not the browser's bold. A display face at 700 across a slide-width
+ * line is a wall, and the size is already saying which line is the heading.
+ */
+.ainsi-page h1, .ainsi-page h2, .ainsi-page h3, .ainsi-page h4, .ainsi-page h5 {
+    font-family: var(--ainsi-font-display);
+    font-weight: 600;
+}
+figcaption, small, kbd { font-family: var(--ainsi-font-mono); font-size: .72em; letter-spacing: .02em; }
+code { font-family: var(--ainsi-font-mono); font-size: .84em; }
+
+/* Funnel Display is drawn wide and open; Inter's tracking would close it up */
+.ainsi-page h1 { letter-spacing: -.02em; }
+.ainsi-page h2 { letter-spacing: -.01em; }
 
 /* brand mark: the wordmark in the corner of every page; the header layout swaps in the A */
 .ainsi-page::before {

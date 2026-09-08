@@ -7,6 +7,7 @@ coverLogo: assets/acme-a-logo.png
 
 <!-- ainsi:layout header -->
 
+<!-- ainsi: prose size=huge -->
 # Acme ==Gatekeeper==
 
 Enforcement and policy solution for production AI

@@ -8,17 +8,17 @@
     --ainsi-rule: #d8dee5;
     --ainsi-surface: #f6f8fa;
 
-    --ainsi-font: "Inter", system-ui, -apple-system, sans-serif;
-    --ainsi-font-display: var(--ainsi-font);
-    --ainsi-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --ainsi-strong: 680;
+    --ainsi-font: "DM Sans", system-ui, -apple-system, sans-serif;
+    --ainsi-font-display: "Funnel Display", "DM Sans", system-ui, sans-serif;
+    --ainsi-font-mono: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --ainsi-strong: 700;
     --ainsi-size: 23px;
     --ainsi-leading: 1.4;
     --ainsi-step-min: 0.8;
 
     --ainsi-gap: 1.75rem;
     --ainsi-pad: 6%;
-    --ainsi-radius: 0;
+    --ainsi-radius: 6px;
     --ainsi-border: 1px;
 
     --ainsi-shadow: 0 1px 3px rgb(0 0 0 / 12%);
