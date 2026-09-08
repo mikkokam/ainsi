@@ -36,6 +36,8 @@ The markdown says what a block is (a timeline, a comparison) and what shape a pa
 
 ![The same four figures in the corporate template: Arial, dark blue, hung from the top of the page](docs/screenshots/boring.jpg)
 
+The figures are not merely recoloured: `boring` lowers `--ainsi-figures-max`, the cap the figures component sets its own display size against, so a figure reads as a number in a sentence rather than a headline. That is the whole of a theme's reach into a component. A theme may set the tokens a component publishes and it may style the page around it, but it may not select into its markup, and the build warns when a stylesheet tries.
+
 **Flow**
 
 Add `---` to split a page.

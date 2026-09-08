@@ -36,6 +36,9 @@
     --ainsi-shadow: none;
     --ainsi-blur: 0px;
 
+    /* a figure is a number in a sentence here, not a headline: the component's own cap, lowered */
+    --ainsi-figures-max: 1.8em;
+
     --ainsi-motion: 0ms;
     --ainsi-ease: linear;
 }

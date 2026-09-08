@@ -1,6 +1,7 @@
 /* two shared rows, values over captions, one column per figure, so every caption starts on
    the same line. One size for the row: display type stepped down until the longest figure
-   fits its share of the width. */
+   fits its share of the width, and never past --ainsi-figures-max, which a theme may lower
+   to make a figure a number in the text rather than a headline. */
 .ainsi-figures {
     list-style: none; margin: 0; padding: 0;
     container-type: inline-size;
@@ -13,7 +14,7 @@
     align-self: end; min-width: 0;
     font-family: var(--ainsi-font-display);
     font-weight: var(--ainsi-strong);
-    font-size: min(3.4em, calc(100cqw / var(--ainsi-figures-count, 3) / (var(--ainsi-figures-chars, 3) * .62)));
+    font-size: min(var(--ainsi-figures-max, 3.4em), calc(100cqw / var(--ainsi-figures-count, 3) / (var(--ainsi-figures-chars, 3) * .62)));
     line-height: 1.05; letter-spacing: -.02em;
     color: var(--ainsi-accent);
     white-space: nowrap;
