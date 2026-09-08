@@ -14,7 +14,7 @@ The block menu is what this block is, what it can become, and its props. Convert
 
 The page has its own rail one scope up, at the page's top-left corner: the grip carries the page's layout and its props, ⌥ click on it adds a page below, and so does the plus beside it.
 
-`E` opens the whole page's source in a code editor, for when a splice is faster than a form. Escape closes whatever is open.
+`E` opens the whole file's source in a code editor, for when a splice is faster than a form. Escape closes whatever is open.
 
 ## Images
 
