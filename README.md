@@ -15,11 +15,20 @@ Six decks, six themes, each built from the markdown beside it. They open in the 
 - **[Aava Ranta](https://mikkokam.github.io/ainsi/samples/aava/aava.html)**, the `darkroom` theme: a photographer's selected work, black ground, flush contact sheets, one grotesque. [Source](samples/aava/aava.md).
 - **[Meridian Instruments](https://mikkokam.github.io/ainsi/samples/meridian/meridian.html)**, the `swiss` theme: a capital markets day on a twelve-column grid, Helvetica, red and yellow, photographs in black and white. [Source](samples/meridian/meridian.md).
 
-Two of them, the same engine and the same grammar:
+Six covers, one engine and one grammar. Click one to open the deck:
 
-![The Meridian cover: a headline in Helvetica across a black and white machine hall, a red rule above it](docs/screenshots/swiss.jpg)
-
-![A contact sheet in the darkroom theme: eight frames flush against each other on black, numbered underneath](docs/screenshots/darkroom.jpg)
+<table>
+<tr>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><img src="docs/screenshots/covers/gatekeeper.jpg" alt="The Acme Gatekeeper cover: a headline over a photograph of a meeting room"></a><br><a href="https://mikkokam.github.io/ainsi/samples/gatekeeper/gatekeeper.html"><b>Acme Gatekeeper</b></a><br><code>acme</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><img src="docs/screenshots/covers/kaari.jpg" alt="The Studio Kaari cover: the studio name over a face in hard light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/kaari/kaari.html"><b>Studio Kaari</b></a><br><code>portfolio</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><img src="docs/screenshots/covers/lehto.jpg" alt="The Lehto and M&auml;nty cover: a workshop bench room in morning light"></a><br><a href="https://mikkokam.github.io/ainsi/samples/lehto/lehto.html"><b>Lehto &amp; M&auml;nty</b></a><br><code>default</code></td>
+</tr>
+<tr>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><img src="docs/screenshots/covers/boring-inc.jpg" alt="The Boring Inc. cover: a title and a rule on white, the corporate template"></a><br><a href="https://mikkokam.github.io/ainsi/samples/boring-inc/boring-inc.html"><b>Boring Inc.</b></a><br><code>boring</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><img src="docs/screenshots/covers/aava.jpg" alt="The Aava Ranta cover: a photographer's name on a black and white portrait"></a><br><a href="https://mikkokam.github.io/ainsi/samples/aava/aava.html"><b>Aava Ranta</b></a><br><code>darkroom</code></td>
+<td width="33%" align="center"><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><img src="docs/screenshots/covers/meridian.jpg" alt="The Meridian cover: Helvetica across a black and white machine hall"></a><br><a href="https://mikkokam.github.io/ainsi/samples/meridian/meridian.html"><b>Meridian Instruments</b></a><br><code>swiss</code></td>
+</tr>
+</table>
 
 ## Authoring
 
@@ -119,6 +128,10 @@ Fourteen components, each a markdown list or table with a comment naming it, so 
 Four layouts decide the page around them: `default`, `header` for a title or a photo ground, `section` for a divider, `split` for text beside an image. [Themes add their own](docs/guide/themes.md#layouts).
 
 ![A field of four pictures, each drawn at its own aspect ratio rather than cropped to a grid, in a second theme](docs/screenshots/tiles.jpg)
+
+The same component under a theme that asked for the opposite: `crop` trims every picture to one cell, and the theme's own layout takes the gutter to zero, so the field reads as a contact sheet rather than an index.
+
+![A contact sheet in the darkroom theme: eight frames flush against each other on black, numbered underneath](docs/screenshots/darkroom.jpg)
 
 ## The guide
 
