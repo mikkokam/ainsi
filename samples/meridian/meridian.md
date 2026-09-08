@@ -34,11 +34,13 @@ Instruments that measure what nobody else can
 
 ---
 
-<!-- ainsi: layout split side=right size=half -->
+<!-- ainsi: layout split side=right size=third -->
+<!-- ainsi: prose color=accent -->
 #### What we make
 
 # Four instruments, one measurement problem
 
+<!-- ainsi: prose size=large -->
 Every product in the range answers the same question: how far is this from where it should be, to a tolerance nobody else can hold at production speed.
 
 That is why the range looks narrow from outside and why the moat is real. A competitor can copy the instrument. Copying ==eleven years of calibration data== is a different exercise.
@@ -90,17 +92,17 @@ Where the next hundred million goes
 
 ---
 
-<!-- ainsi: layout split side=left size=third -->
+<!-- ainsi: layout split side=left size=half -->
 #### The risk we are asked about most
 
 # If the data platform slips, the margin story slips with it
 
-It is one programme carrying nearly half the capital and most of the case. We have said so rather than spreading it across four line items that would each look survivable.
-
-The mitigation is that the platform ships in three parts and the first is already in production at two sites. A slip moves the third part, not the first.
+<!-- ainsi: columns -->
+- It is one programme carrying nearly half the capital and most of the case. We have said so rather than spreading it across four line items that would each look survivable.
+- The mitigation is that the platform ships in three parts and the first is already in production at two sites. A slip moves the third part, not the first.
 
 <!-- ainsi: full size=full -->
-![A control room at night](https://images.unsplash.com/photo-1557104878-24bf6e92da73?w=1600&q=80)
+![A control room at night](https://images.unsplash.com/photo-1630087220212-f6d16e857b5a?w=1600&q=80)
 
 ---
 

@@ -9,4 +9,10 @@
     color: var(--ainsi-accent); opacity: 1;
     margin-bottom: .06em;
 }
+/* the numeral is the accent on paper only. On a coloured ground the accent is the ground's
+   neighbour and vibrates against it, red on yellow worst of all, so there it is the page's
+   own ink: white on the red and the black, black on the yellow. */
+[data-layout="section"] main:is([data-tone="accent"], [data-tone="inverse"], [data-tone="soft"]) article::before {
+    color: inherit;
+}
 [data-layout="section"] h1, [data-layout="section"] h2 { font-size: 3.157em; letter-spacing: -.022em; }

@@ -42,6 +42,13 @@ figcaption, small { font-size: .62em; letter-spacing: .02em; }
     background: var(--ainsi-logo) no-repeat left center / contain;
     pointer-events: none;
 }
+/* the mark is a two-colour lockup on paper. On a coloured ground it goes to one, for the same
+   reason the section's numeral does: its red square is either invisible on the red or fighting
+   the yellow. One filter each way, so a deck still ships one file for its mark. */
+.ainsi-page:has(> main[data-tone="accent"])::before,
+.ainsi-page:has(> main[data-tone="inverse"])::before { filter: brightness(0) invert(1); }
+.ainsi-page:has(> main[data-tone="soft"])::before { filter: brightness(0); }
+
 @media screen and (max-width: 900px) {
     .ainsi-page::before { left: 1.2rem; top: 1rem; width: 64px; height: 17px; }
 }
