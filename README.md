@@ -4,7 +4,7 @@ Presentations in markdown, for agent-first work on local files, with a GUI for t
 
 ![The studio: a cover page open, its title selected, the block toolbar above it](docs/screenshots/studio.jpg)
 
-## Demo
+## Demo - exported HTML player
 
 Three decks, three themes, each built from the markdown beside it. They open in the browser: ⌘⏎ presents, ⌘G is the grid, and the same file reads as a document on a phone.
 
