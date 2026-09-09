@@ -11,8 +11,8 @@ One engine and three consumers of it. Everything else follows from that.
       │ cli  │            │ player │          │ studio  │
       └──────┘            └────────┘          └─────────┘
      writes a file        ships inside         dev server only,
-     headless, the        the deck; chrome     never in a deck. ALSO A DESKTOP APP
-     agent's surface      injected at runtime
+     headless, the        the deck; chrome     never in a deck; the
+     agent's surface      injected at runtime  app is a window on it
 
 ## Where things run
 
@@ -21,10 +21,11 @@ One engine and three consumers of it. Everything else follows from that.
 | engine | anywhere JS runs     | no                       | no                |
 | cli    | Bun                  | only for `--fit` and PDF | no                |
 | player | the viewer's browser | is one                   | **yes**           |
-| studio | Bun + a browser      | is one                   | no                |
-| studio | electrobun app       | no                       | no                |
+| studio | Bun + a browser      | is one, or brings one    | no                |
 
-`playwright-core` is an optional dependency that ships no browser binary. `build.ts` never imports it — there is a test — so a plain build on a machine that has never seen chromium works and stays fast.
+`playwright-core` ships no browser binary and `build.ts` never imports it, so a build on a machine that has never seen chromium works. A missing browser is one diagnostic and unchanged pages, never a throw.
+
+`[decision]` Discovery never runs code. Components and layouts are named by a static import list; themes are CSS, read from disk. `load.ts` still scans folders, and that is the last of it.
 
 ## Surface: the CLI
 
