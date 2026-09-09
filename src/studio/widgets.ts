@@ -169,9 +169,35 @@ export const barButton = (text: string, key: string, onClick: () => void): HTMLE
 export function place(bar: HTMLElement, at: DOMRect): void {
     const { width, height } = bar.getBoundingClientRect();
     const left = Math.max(8, Math.min(at.left, innerWidth - width - 8));
-    const top = at.top - height - 8 >= 8 ? at.top - height - 8 : Math.min(at.bottom + 8, innerHeight - height - 8);
+    const above = at.top - height - 8;
+    const below = Math.min(at.bottom + 8, innerHeight - height - 8);
+    // above the target when there is room, below it when there is not, and below whatever is
+    // fixed in the way when neither is clear: the room above a page is the window's corner,
+    // which the viewer's toolbar is already sitting in
+    let top = above >= 8 && !clash({ left, top: above, width, height }) ? above : below;
+    const hit = clash({ left, top, width, height });
+    if (hit) top = hit.bottom + GAP;
     bar.style.left = `${left}px`;
     bar.style.top = `${top}px`;
+}
+
+/** the air left between something placed against the page and the chrome it had to clear */
+export const GAP = 6;
+
+/*
+ * What is fixed to the window rather than laid out against the page: the viewer's toolbar, and
+ * the filename field when it stands alone. A rect inside one of them is not free space, so
+ * anything positioned against the page asks here and moves instead of stacking.
+ */
+export function clash(box: { left: number; top: number; width: number; height: number }): DOMRect | undefined {
+    for (const fixed of document.querySelectorAll<HTMLElement>(".ainsi-toolbar, body > .ainsi-studio__file")) {
+        const rect = fixed.getBoundingClientRect();
+        if (!rect.width) continue;
+        const clear = box.left >= rect.right || box.left + box.width <= rect.left
+            || box.top >= rect.bottom || box.top + box.height <= rect.top;
+        if (!clear) return rect;
+    }
+    return undefined;
 }
 
 export function mark(area: HTMLTextAreaElement, marker: string): void {

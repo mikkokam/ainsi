@@ -47,10 +47,24 @@ interface Box { left: number; top: number; right: number; bottom: number }
 const overlap = (a: Box | null, b: Box | null) =>
     !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 
-test.skipIf(!chromium)("no rail is placed under the viewer's toolbar, at any window size", async () => {
+test.skipIf(!chromium)("nothing the studio places lands under the viewer's toolbar", async () => {
     const { chromium: browserType } = await import("playwright-core");
     const server = await studio();
     const browser = await browserType.launch(process.env.AINSI_CHROMIUM ? { executablePath: process.env.AINSI_CHROMIUM } : {});
+
+    /** every piece of studio chrome positioned against the page, and the toolbar fixed over it */
+    const measure = (page: import("playwright-core").Page) => page.evaluate(() => {
+        const box = (el: Element) => {
+            const e = el as HTMLElement;
+            if (e.hidden) return null;
+            const { left, top, right, bottom, width } = e.getBoundingClientRect();
+            return width ? { left, top, right, bottom } : null;
+        };
+        return {
+            toolbar: box(document.querySelector(".ainsi-toolbar")!),
+            placed: [...document.querySelectorAll(".ainsi-studio__rail, .ainsi-studio__bar")].map(box),
+        };
+    });
 
     // wide enough that the page is letterboxed, and tight enough that it fills the window
     for (const viewport of [{ width: 1440, height: 900 }, { width: 1000, height: 560 }, { width: 700, height: 420 }]) {
@@ -62,24 +76,21 @@ test.skipIf(!chromium)("no rail is placed under the viewer's toolbar, at any win
         const first = (await page.locator(".ainsi-page").first().boundingBox())!;
         await page.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
         await page.mouse.move(first.x + 10, first.y + 10);
-        await page.waitForFunction(() => [...document.querySelectorAll(".ainsi-studio__rail")].some(r => !(r as HTMLElement).hidden));
+        const grip = page.locator('.ainsi-studio__rail:not([hidden]) [title^="Page layout"]');
+        await grip.waitFor();
 
-        const { toolbar, rails } = await page.evaluate(() => {
-            const box = (el: Element | null) => {
-                const e = el as HTMLElement | null;
-                if (!e || e.hidden) return null;
-                const { left, top, right, bottom, width } = e.getBoundingClientRect();
-                return width ? { left, top, right, bottom } : null;
-            };
-            return {
-                toolbar: box(document.querySelector(".ainsi-toolbar")),
-                rails: [...document.querySelectorAll(".ainsi-studio__rail")].map(box),
-            };
-        });
+        const hovering = await measure(page);
+        expect(hovering.toolbar).not.toBeNull();
+        expect(hovering.placed.some(Boolean)).toBe(true);
+        for (const chrome of hovering.placed) expect(overlap(chrome, hovering.toolbar)).toBe(false);
 
-        expect(toolbar).not.toBeNull();
-        expect(rails.some(Boolean)).toBe(true);
-        for (const rail of rails) expect(overlap(rail, toolbar)).toBe(false);
+        // the page bar opens above what it governs, and the top of a page is the toolbar's corner
+        await grip.click();
+        await page.waitForSelector(".ainsi-studio__bar");
+        const opened = await measure(page);
+        expect(opened.placed.filter(Boolean).length).toBeGreaterThan(hovering.placed.filter(Boolean).length - 1);
+        for (const chrome of opened.placed) expect(overlap(chrome, opened.toolbar)).toBe(false);
+
         await page.close();
     }
 

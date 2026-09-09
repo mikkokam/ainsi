@@ -26,7 +26,7 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { ALERT_KINDS, addPage, alertOf, markerOf, move, movePage, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
-import { barButton, control, divider, drill, dropdown, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
+import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
 
 interface DocEntity { id: string; kind: string; start: number; end: number; md: string; accepted: string[] }
 interface DocBlock {
@@ -128,25 +128,15 @@ traceReport();
     location.reload();
 };
 
-/** the air kept between a rail and whatever it had to drop below */
-const CLEAR = 6;
-
 /*
- * The viewer's toolbar is fixed in the top-left corner and a rail wants the top-left corner of
- * whatever it points at, so on a page that fills the window those are the same place and the
- * two stack. A rail that would land inside fixed chrome drops below it instead. Called after
- * the rail is shown, so its height is its real one and the correction lands in the same paint.
+ * A rail wants the top-left corner of whatever it points at, which on a page that fills the
+ * window is the corner the viewer's toolbar is fixed in. One that would land inside fixed
+ * chrome drops below it. Called after the rail is shown, so its height is its real one and the
+ * correction lands in the same paint as the placement.
  */
 function belowChrome(rail: HTMLElement): void {
-    const own = rail.getBoundingClientRect();
-    let top = own.top;
-    for (const fixed of document.querySelectorAll<HTMLElement>(".ainsi-toolbar, body > .ainsi-studio__file")) {
-        const rect = fixed.getBoundingClientRect();
-        if (!rect.width) continue;
-        const clears = own.right <= rect.left || own.left >= rect.right || top + own.height <= rect.top || top >= rect.bottom;
-        if (!clears) top = rect.bottom + CLEAR;
-    }
-    rail.style.top = `${top}px`;
+    const hit = clash(rail.getBoundingClientRect());
+    if (hit) rail.style.top = `${hit.bottom + GAP}px`;
 }
 
 /*
