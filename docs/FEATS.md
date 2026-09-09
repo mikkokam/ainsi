@@ -14,7 +14,7 @@ The last unbuilt rung of the ladder, and the least urgent. Scale, block boundary
 
 ## Measurement of islands (defect)
 
-The fit solver measures static markup, and an island that changes size when it mounts makes that measurement a lie. The invariant is written down and nothing enforces it.
+The fit solver measures static markup, and an island that changes size when it mounts makes that measurement a lie.
 
 Cheap now that the machinery exists: `openFit` already holds a page open and `measure` already renders one page and reads its overflow. Measure a page, mount, measure again, report any block that moved.
 

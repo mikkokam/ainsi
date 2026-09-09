@@ -128,6 +128,27 @@ traceReport();
     location.reload();
 };
 
+/** the air kept between a rail and whatever it had to drop below */
+const CLEAR = 6;
+
+/*
+ * The viewer's toolbar is fixed in the top-left corner and a rail wants the top-left corner of
+ * whatever it points at, so on a page that fills the window those are the same place and the
+ * two stack. A rail that would land inside fixed chrome drops below it instead. Called after
+ * the rail is shown, so its height is its real one and the correction lands in the same paint.
+ */
+function belowChrome(rail: HTMLElement): void {
+    const own = rail.getBoundingClientRect();
+    let top = own.top;
+    for (const fixed of document.querySelectorAll<HTMLElement>(".ainsi-toolbar, body > .ainsi-studio__file")) {
+        const rect = fixed.getBoundingClientRect();
+        if (!rect.width) continue;
+        const clears = own.right <= rect.left || own.left >= rect.right || top + own.height <= rect.top || top >= rect.bottom;
+        if (!clears) top = rect.bottom + CLEAR;
+    }
+    rail.style.top = `${top}px`;
+}
+
 /*
  * The file name in the toolbar, editable: blur or Enter renames the deck on disk, the same
  * write-through the content gets, applied to the path. The server retargets its watcher and
@@ -227,6 +248,7 @@ async function init(): Promise<void> {
         rail.style.left = `${Math.max(4, rect.left - 26)}px`;
         rail.style.top = `${rect.top}px`;
         rail.hidden = false;
+        belowChrome(rail);
     });
     addEventListener("scroll", () => (rail.hidden = true), { passive: true });
 
@@ -264,6 +286,7 @@ async function init(): Promise<void> {
         pageRail.style.left = `${Math.max(4, rect.left - 26)}px`;
         pageRail.style.top = `${Math.max(4, rect.top)}px`;
         pageRail.hidden = false;
+        belowChrome(pageRail);
     });
     addEventListener("scroll", () => (pageRail.hidden = true), { passive: true });
 

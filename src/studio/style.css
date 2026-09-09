@@ -228,9 +228,10 @@ body[data-ainsi-edit]:not([data-present]) [data-layout="split"] main:not(:has(.a
     background: rgb(0 0 0 / 55%); color: #fff;
     pointer-events: none;
 }
-/* the header's title sits at the bottom, so its badge goes up; the split's goes on the empty half */
+/* the header's title sits at the bottom, so its badge goes up, and to the right: the viewer's
+   toolbar is fixed in the top-left corner and a full-bleed page puts that corner under it */
 body[data-ainsi-edit]:not([data-present]) [data-layout="header"] main:not(:has(.ainsi-full))::after {
-    bottom: auto; top: 1.2rem;
+    bottom: auto; top: 1.2rem; left: auto; right: 1.2rem;
 }
 body[data-ainsi-edit]:not([data-present]) [data-layout="split"] main:not(:has(.ainsi-full))::after {
     content: "no image on this page yet — an image block fills this half";
