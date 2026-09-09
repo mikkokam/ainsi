@@ -16,6 +16,11 @@ body[data-ainsi-edit]:not([data-present]) [data-ainsi-selected] {
     outline-offset: 3px;
     border-radius: 2px;
 }
+/* a page is already a rectangle with an edge, so its selection sits just outside that edge */
+body[data-ainsi-edit]:not([data-present]) .ainsi-page[data-ainsi-selected] {
+    outline-offset: 6px;
+    border-radius: 0;
+}
 
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }

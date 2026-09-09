@@ -80,13 +80,14 @@ let chrome: Chrome | undefined;
  * The handle is the element, not an id, because a rebuild replaces the document and a
  * selection does not survive one. What survives a rebuild is the file, which is the point.
  */
-let selected: HTMLElement | undefined;
+interface Selection { kind: "block" | "page"; handle: HTMLElement }
+let selected: Selection | undefined;
 
-function select(handle: HTMLElement | undefined): void {
-    if (selected === handle) return;
-    selected?.removeAttribute("data-ainsi-selected");
-    selected = handle;
-    selected?.setAttribute("data-ainsi-selected", "");
+function select(handle: HTMLElement | undefined, kind: Selection["kind"] = "block"): void {
+    if (selected?.handle === handle) return;
+    selected?.handle.removeAttribute("data-ainsi-selected");
+    selected = handle ? { kind, handle } : undefined;
+    handle?.setAttribute("data-ainsi-selected", "");
 }
 let pendingReload = false;
 
@@ -221,7 +222,7 @@ async function init(): Promise<void> {
         event.preventDefault();
         if (event.altKey) return insertAfter(target, range.end);
         // the first click picks the block and shows what can be done to it; the second says do
-        if (selected === target) edit(target, range, "end");
+        if (selected?.handle === target) edit(target, range, "end");
         else { select(target); openMenu(target, target.getBoundingClientRect()); }
     });
 
@@ -254,8 +255,9 @@ async function init(): Promise<void> {
         if (document.body.hasAttribute("data-present")) return;
         event.preventDefault();
         if (event.key === "Escape") { select(undefined); if (chrome?.kind === "menu") shut(); return; }
-        const range = rangeOf(selected);
-        if (range) edit(selected, range, "end");
+        if (selected.kind === "page") return;
+        const range = rangeOf(selected.handle);
+        if (range) edit(selected.handle, range, "end");
     });
 
     // the toolbar and insertion from a visible door: a rail at the block's top-left corner
@@ -310,8 +312,9 @@ async function init(): Promise<void> {
     pageGrip.addEventListener("click", event => {
         event.stopPropagation();
         if (!pageAt) return;
-        if (event.altKey) insertPage(pageAt);
-        else openPageMenu(pageAt, pageGrip.getBoundingClientRect());
+        if (event.altKey) return insertPage(pageAt);
+        select(pageAt, "page");
+        openPageMenu(pageAt, pageGrip.getBoundingClientRect());
     });
     pagePlus.addEventListener("click", event => { event.stopPropagation(); if (pageAt) insertPage(pageAt); });
     // the rail sits outside the page, so the pointer crosses the shell on its way over;
@@ -666,10 +669,43 @@ async function clipboard(verb: "copy" | "cut" | "paste"): Promise<void> {
         return;
     }
     if (!selected) return hint("Nothing selected", true, 2000);
-    const range = rangeOf(selected);
+    if (selected.kind === "page") return pageClipboard(verb, selected.handle);
+    const range = rangeOf(selected.handle);
     if (!range) return;
     if (verb === "paste") return paste(range);
-    return copy(range, verb === "cut" ? selected : undefined);
+    return copy(range, verb === "cut" ? selected.handle : undefined);
+}
+
+/*
+ * The same three verbs on a whole page. A page's markdown is its blocks and the directives
+ * that govern them, which `pageSpan` already knows how to bound, so this is the block case
+ * with a wider span and a break written in front of what it pastes.
+ */
+async function pageClipboard(verb: "copy" | "cut" | "paste", section: HTMLElement): Promise<void> {
+    const page = pageOf(section);
+    if (!page) return;
+
+    if (verb === "paste") {
+        let text: string;
+        try {
+            text = (await navigator.clipboard.readText()).trim();
+        } catch {
+            return hint("The browser would not give the clipboard", true, 4000);
+        }
+        if (!text) return hint("Nothing on the clipboard", true, 2500);
+        return splice(addPage(page, text));
+    }
+
+    const span = pageSpan(doc.source, page);
+    try {
+        await navigator.clipboard.writeText(doc.source.slice(span.start, span.end).trim());
+    } catch {
+        return hint("The browser would not give the clipboard", true, 4000);
+    }
+    if (verb === "copy") return hint("Page copied", false, 1200);
+    select(undefined);
+    splice(removePage(doc.source, page));
+    hint("Page cut", false, 1200);
 }
 
 /** what a selected block puts on the clipboard: its markdown, and nothing about the studio */
@@ -708,9 +744,13 @@ async function paste(range: Range): Promise<void> {
  * which is the only answer that does not need a question asked first.
  */
 function insertHere(): void {
+    if (selected?.kind === "page" && pageOf(selected.handle)) {
+        insertPage(selected.handle);
+        return;
+    }
     if (selected) {
-        const range = rangeOf(selected);
-        if (range) insertAfter(selected, range.end);
+        const range = rangeOf(selected.handle);
+        if (range) insertAfter(selected.handle, range.end);
         return;
     }
     const page = pageInView();
@@ -736,7 +776,14 @@ function pageInView(): string | undefined {
 
 function deleteSelection(): void {
     if (!selected) return hint("Nothing selected", true, 2000);
-    const target = targetOf(selected);
+    if (selected.kind === "page") {
+        const page = pageOf(selected.handle);
+        if (!page) return;
+        select(undefined);
+        splice(removePage(doc.source, page));
+        return;
+    }
+    const target = targetOf(selected.handle);
     if (!target) return;
     select(undefined);
     splice(remove(doc.source, target));

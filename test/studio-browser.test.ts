@@ -266,3 +266,63 @@ test.skipIf(!chromium)("delete takes the selected block out of the file", async 
     expect(after).toContain("Ensimmäinen kappale.");
     await studio.stop();
 }, 60_000);
+
+/** the page rail's grip, which is how a page is picked up */
+async function selectPage(page: Page, n: number) {
+    const box = (await page.locator(".ainsi-page").nth(n).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + 10, box.y + 10);
+    const grip = page.locator('.ainsi-studio__rail:not([hidden]) [title^="Page layout"]');
+    await grip.waitFor();
+    await grip.click();
+}
+
+test.skipIf(!chromium)("a page is selected from its own grip, not from a block inside it", async () => {
+    const studio = await open();
+    await selectPage(studio.page, 0);
+    expect(await count(studio.page, ".ainsi-page[data-ainsi-selected]")).toBe(1);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a page copies as every block on it, directives and all", async () => {
+    const studio = await open();
+    await selectPage(studio.page, 0);
+    await command(studio.page, "copy");
+    const held = await clipboard(studio.page, t => t.length > 0);
+    expect(held).toContain("# Otsikko");
+    expect(held).toContain("Ensimmäinen kappale.");
+    expect(held).toContain("Toinen kappale.");
+    expect(held).not.toContain("Toinen sivu");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a pasted page becomes a page, with the break in front of it", async () => {
+    const studio = await open();
+    await selectPage(studio.page, 0);
+    await command(studio.page, "copy");
+    await clipboard(studio.page, t => t.length > 0);
+    await command(studio.page, "paste");
+
+    const after = await until(studio.source, t => t.split("# Otsikko").length === 3);
+    expect(after.split("# Otsikko").length - 1).toBe(2);
+    // the copy sits between the page it came from and the one that followed
+    expect(after.indexOf("Toinen sivu")).toBeGreaterThan(after.lastIndexOf("# Otsikko"));
+    const pages = await until(() => count(studio.page, ".ainsi-page"), n => n === 3);
+    expect(pages).toBe(3);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("cutting a page takes the whole page and its break", async () => {
+    const studio = await open();
+    await selectPage(studio.page, 1);
+    await command(studio.page, "cut");
+
+    const after = await until(studio.source, t => !t.includes("Toinen sivu"));
+    expect(after).not.toContain("Toinen sivu");
+    expect(after).not.toContain("Kolmas kappale.");
+    expect(after).toContain("# Otsikko");
+    expect(after.trim().endsWith("---")).toBe(false);
+    const pages = await until(() => count(studio.page, ".ainsi-page"), n => n === 1);
+    expect(pages).toBe(1);
+    await studio.stop();
+}, 60_000);
