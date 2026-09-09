@@ -116,6 +116,21 @@ ApplicationMenu.setApplicationMenu([
         label: "Insert",
         submenu: [{ label: "Block…", action: "insert", accelerator: "cmd+shift+n" }],
     },
+    {
+        label: "View",
+        submenu: [
+            { label: "Reading", action: "reading" },
+            { label: "Grid", action: "grid", accelerator: "cmd+g" },
+        ],
+    },
+    {
+        /* from here, not from the beginning: the deck is open at a page for a reason */
+        label: "Slideshow",
+        submenu: [
+            { label: "Play", action: "present", accelerator: "cmd+enter" },
+            { label: "Play from Start", action: "present-from-start", accelerator: "cmd+shift+enter" },
+        ],
+    },
     { label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "toggleFullScreen" }] },
 ]);
 

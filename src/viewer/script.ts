@@ -301,6 +301,20 @@ function start(): void {
     addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && presenting) stop(); });
 
     /*
+     * The same door the studio has, for what belongs to the player. A native menu cannot reach
+     * presenting or the grid through the studio: a built deck presents with no server anywhere
+     * near it, and it carries this script and not that one.
+     */
+    document.addEventListener("ainsi:command", event => {
+        switch ((event as CustomEvent).detail as string) {
+            case "present": if (!presenting) begin(); break;
+            case "present-from-start": if (!presenting) begin(); go(0, true); break;
+            case "grid": if (overview) closeOverview(); else openOverview(); break;
+            case "reading": if (overview) closeOverview(); if (presenting) stop(); break;
+        }
+    });
+
+    /*
      * The shortcut list: a translucent card bottom-left, shown while the chord modifier is
      * down (the iPad convention). Built per mode on each show;
      * the studio, when present, adds its own rows over the same event the menu uses.

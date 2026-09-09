@@ -326,3 +326,39 @@ test.skipIf(!chromium)("cutting a page takes the whole page and its break", asyn
     expect(pages).toBe(1);
     await studio.stop();
 }, 60_000);
+
+test.skipIf(!chromium)("the grid command opens and closes the overview", async () => {
+    const studio = await open();
+    await command(studio.page, "grid");
+    expect(await until(() => count(studio.page, ".ainsi-overview"), n => n === 1)).toBe(1);
+    await command(studio.page, "grid");
+    expect(await until(() => count(studio.page, ".ainsi-overview"), n => n === 0)).toBe(0);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("play presents from the page in view, and from start goes to the first", async () => {
+    const studio = await open();
+    // the second page in view, so from-here and from-start cannot agree by accident
+    await studio.page.locator(".ainsi-page").nth(1).scrollIntoViewIfNeeded();
+    await command(studio.page, "present");
+    expect(await until(() => studio.page.evaluate(() => document.body.hasAttribute("data-present")), on => on)).toBe(true);
+    const here = await studio.page.evaluate(() => document.querySelector("[data-current]")?.id);
+
+    await command(studio.page, "present-from-start");
+    const first = await until(
+        () => studio.page.evaluate(() => document.querySelector("[data-current]")?.id),
+        id => id !== here,
+    );
+    expect(first).toBe(await studio.page.evaluate(() => document.querySelector(".ainsi-page")?.id));
+    expect(first).not.toBe(here);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("reading leaves both the grid and the presentation", async () => {
+    const studio = await open();
+    await command(studio.page, "present");
+    await until(() => studio.page.evaluate(() => document.body.hasAttribute("data-present")), on => on);
+    await command(studio.page, "reading");
+    expect(await until(() => studio.page.evaluate(() => document.body.hasAttribute("data-present")), on => !on)).toBe(false);
+    await studio.stop();
+}, 60_000);

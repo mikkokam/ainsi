@@ -94,9 +94,11 @@ The File menu holds New, Open, Export, Print and Close, Edit holds the clipboard
 
 Print was in the menu and did nothing, and is gone. The command ran `window.print()`, which the app's webview ignores, and the Electrobun SDK has no print call either, so there is no native path to swap in. Printing from the app needs the shell to gain one; until then the answer is Export a PDF, which works. A browser tab keeps its own ⌘P, which was never ours.
 
-View and Slideshow are missing and are nearly free, but not from where the other commands come. Overview and presenting belong to the viewer, not the studio, because a built deck presents with no server anywhere near it. So the viewer grows its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatches, and the app reaches presenting the same way it reaches an export. `[decision]` Play means from the page in view. Play from start is the second item, not the first, because the deck is open at a page for a reason.
+View and Slideshow landed, from the viewer rather than the studio: a built deck presents with no server anywhere near it, so the viewer grew its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatched. `[decision]` Play means from the page in view, and Play from Start is the second item, because a deck is open at a page for a reason.
 
 Edit's clipboard items and an Insert menu landed with selection. What is left in Edit is Select All, which is still the webview's role and selects text rather than blocks.
+
+What is left of this row: the window's own toolbar, and Save As. The menus are there.
 
 File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.
 
