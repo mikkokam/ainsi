@@ -42,19 +42,49 @@ Seen on a photographer's contact sheet: six pictures, three columns, and the pag
 
 The fix is a cap that survives cropping: the cell keeps its aspect ratio and takes a `max-height` in em the same way an uncropped picture does, so the row shrinks when the type does. Done is a page like that one fitting at three columns, and no warning.
 
+## Copy and paste a page (feat)
+
+A slide cannot be moved. Every other deck tool does this and it is the first thing anyone reaches for, and the pieces are already here: `describePages` hands the studio each page's `first` and `last` source offsets and its layout directive's span, so copying is a slice of the markdown and pasting is a splice at another page's `last`, through the same hashed write every other edit goes through. Nothing serialises HTML back to markdown, so the invariant above is untouched.
+
+Right-click a page and copy it, right-click another and paste after it. This is the studio, not the shell, so it works in a browser tab exactly as it works in the app. The clipboard carries plain markdown, which costs nothing and means a slide pastes into any editor and markdown from anywhere pastes into a deck.
+
+`[guess]` A page that exists only because of a layout directive has no `---` in front of it, so pasting after one introduces a break the author never wrote. That reads as the right answer and is cheap to reverse if it is not. A snippet copied out of another deck can name an image beside that deck or a component only that theme defines: paste it as written and let the diagnostics say what is missing, rather than rewriting paths on the way in. Done is a page moved within one deck and between two, and the markdown afterwards being what a person would have typed.
+
+# The engine stops scanning
+
+## Static registries (feat)
+
+`load.ts` learns what components and layouts exist by reading its own folder and importing the TypeScript it finds there, and builds every component script and both chrome bundles with `Bun.build` while the server runs. That works in a checkout and has no equivalent anywhere else: a compiled binary, an app bundle, a browser-only build, a sandbox that may not execute what it enumerates. It is the only part of loading that runs code to learn what exists, and everything else on this list waits behind it.
+
+The answer is not a manifest. A declared list of what a folder holds is a second copy of the folder, and it drifts. A static import list is the manifest and cannot drift, because it is the thing that runs: one module naming every component and layout, which a bundler follows and tree-shakes and a compiled binary carries without reading anything. The runtime `Bun.build` calls go with it, into the build.
+
+The line is that code is static and data is dynamic. Components and layouts are code and become imports. Themes are CSS and stay read from disk, which is what keeps a theme folder beside a deck working; every shipped theme's layout overrides are already CSS only, so no theme loses anything it has.
+
+Refused: `--components <dir>` loading a folder of TypeScript at runtime. It is the one feature that needs code discovery, nothing in this repo uses it, and keeping it would keep the whole mechanism for its sake. A component is still a folder; it is registered by an import rather than found by a scan. Going with it: re-importing an edited component on a watch, so a component edit needs the studio restarted, where a theme edit still does not.
+
+Done is `bun build --compile` producing a binary that renders every sample deck with no repo beside it. `ARCHITECTURE.md` owes one sentence saying folder scanning is gone and what that excludes, and the maintainer writes it.
+
 # The desktop shell
 
-A native window over the studio the CLI already serves, under `desktop/electrobun`. It starts `ainsi` rooted at home with `--port 0`, reads the URL off its stdout and points a webview at it, so it does not know what a deck is and every feature the studio grows arrives in the app for free. Opening a deck is the studio's own chooser doing it; the File menu is a second door, and it restarts the studio because the root is fixed when the studio starts. Every other native menu item dispatches `ainsi:command` into the page and the studio runs it, so the two menus are one implementation and the shell never learns an endpoint.
+A native window over the studio the CLI already serves, under `desktop/electrobun`. It starts `ainsi` rooted at home with `--port 0`, reads the URL off its stdout and points a webview at it, so it does not know what a deck is and every feature the studio grows arrives in the app for free. Every native menu item but Open dispatches `ainsi:command` into the page and the studio runs it, so the two menus are one implementation and the shell never learns an endpoint.
 
-It is a dev tool: it runs the checkout it was built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
+It is a dev tool until the row above lands: it runs the checkout it was built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
 
-## An app that runs on a machine with no checkout (feat)
+## One executable, two entry points (feat)
 
-The shell bakes in the path to this repo and spawns `bun src/cli.ts` from it. That is the whole reason it is dev-only, and it is one thing: `load.ts` learns what components and themes exist by reading its own folder and importing the TypeScript it finds there, which a bundled app has no equivalent of. This is the real consumer the manifest question below was waiting for; it should be answered before any of this is attempted, not during.
+The app spawns `bun src/cli.ts` from a path baked in at build time, so it runs on one machine, and the CLI is a checkout with a `bun` in front of it. One artefact should be both. The app bundle already carries a Bun and the bundled code, so a shim on `PATH` execs that same Bun against that same code with your arguments: one 60 MB runtime rather than two, and it goes around the launcher, which swallows argv. That is also what makes a brew formula possible.
 
-The spawn goes with it. Electrobun's main process is Bun, so the studio can be imported rather than started: no port, no URL parsed off stdout, no stdin held open to kill an orphan, no second Bun in the bundle. `serve.ts` is already a transport handed a `rebuild` and a list of roots, so what changes is who calls it.
+The grammar changes with it, and this is the breaking change the major version is for. `ainsi` opens a window. `ainsi deck.md` opens a window on that deck, which is what Open With and a double-click do too. `ainsi serve [deck.md]` is what v1 does today, under a name: it prints a URL and opens nothing. `ainsi build` is untouched, because that is the agent's surface and agents already have it. Verbs for modes and flags for options, so no `-serve`. `ainsi deck.md` with no display fails saying `serve` or `build`, the way the no-terminal guard does now.
 
-Done is an `.app` a person can be handed that opens a deck with no bun, no repo and no `bun install` anywhere on the machine.
+Refused: claiming `.md` as the default handler, which would make every markdown file on the machine open a presentation tool. Open With and an explicit association are enough. Depends on static registries. Done is a brew formula, and `ainsi build deck.md` working on a machine with no bun and no checkout.
+
+## The app knows it is an app (feat)
+
+The studio serves one page whether it is in a browser tab or a native window, so the app shows the web chooser, which is a landing page a window with a File menu does not need, and puts its chrome over the deck. The shell already announces itself in `AINSI_HOST`; the server putting that on the body as a data attribute is the whole mechanism, and the chrome branches on it.
+
+On desktop the chooser goes, and Open With and File ▸ Open replace it. `[guess]` a launch with no deck shows an empty window and its toolbar, not a recents list, because recents is state and the studio holds none.
+
+The chrome moves into a toolbar along the top rather than sitting over the content. One constraint decides how far that goes: studio chrome is injected at runtime and never ships in a deck, so a studio toolbar is free, while the viewer's toolbar ships inside the built HTML and is in the print path, so anything moved there has to stay invisible to print, to export and to measurement.
 
 ## Measurement without a separate browser (feat)
 
@@ -69,6 +99,26 @@ Depends on nothing above; blocks the shipping app only if the shipping app is ex
 `desktop/electrobun` is pinned to Electrobun `2.0.2-beta.17` because the stable template catalog is broken against the Hutch its npm bootstrap installs. The SDK also arrives from a projected devkit rather than npm, so it is not in a lockfile the way every other dependency here is.
 
 Nothing is wrong today and the shell works. This is a row so that the pin is not mistaken for a choice: when stable resolves, move to it and say so.
+
+# A deck is a URL
+
+## Home, and a deck at its path (feat)
+
+The studio is already a Bun server driving watch, rebuild, reload over a file, so hosting it is a container, one mounted folder as the root, and the same loop. Remote agents keep their door: git as transport first, or one HTTP pair, GET returns the markdown and PUT replaces it, which is the whole remote API because the write model is already whole-file. An MCP wrapper over that pair is an afternoon whenever it is wanted and not before; building the remote door before there is a remote is the over-engineering to refuse.
+
+Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `ainsi serve deck.md` starts it and deep-links into the deck's URL, `ainsi serve` and the container start at `/`.
+
+Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what `/__new` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
+
+Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.ainsi`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
+
+Done: the container serves home and deck URLs off one mounted folder, a remote writer can read and replace a file through one of the doors above, and a cold restart loses nothing because nothing was held.
+
+## Several decks at once (feat)
+
+Two presentations side by side is the thing a window makes obvious and the current design cannot do: the studio has one deck at a time, the root is fixed when it starts, and the File menu restarts it to move. Two windows today would be two servers, two ports and two watchers over the same folder.
+
+It is not a separate feat so much as the last consequence of the row above. Once a deck is a URL, a second window is a second URL against one studio, the File menu stops restarting anything, and the desktop app and the hosted studio stop being two designs. Done is two decks open in two windows, an edit in one leaving the other alone, and closing either leaving the studio up.
 
 # Later
 
@@ -94,18 +144,6 @@ The build: on the reload event fetch the page, parse it, replace only the `.ains
 
 Nice to have. Opens when the agent-writes-while-presenting flow is in daily use and the drop starts to grate, not before.
 
-## Hosted studio (feat)
-
-The studio is already a Bun server driving watch, rebuild, reload over a file, so hosting it is a container, one mounted folder as the root, and the same loop. Remote agents keep their door: git as transport first, or one HTTP pair, GET returns the markdown and PUT replaces it, which is the whole remote API because the write model is already whole-file. An MCP wrapper over that pair is an afternoon whenever it is wanted and not before; building the remote door before there is a remote is the over-engineering to refuse.
-
-Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `ainsi deck.md` starts it and deep-links into the deck's URL, the container starts at `/`.
-
-Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what bare `ainsi` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
-
-Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.ainsi`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
-
-Done: the container serves home and deck URLs off one mounted folder, a remote writer can read and replace a file through one of the doors above, and a cold restart loses nothing because nothing was held.
-
 ## Multi-user editing (feat)
 
 Two humans typing in the same deck at once, which nothing today supports and nothing today needs. Deferred deliberately, not dropped: as long as the file stays the only mutation point, a CRDT arrives as a retrofit behind that door. The service holds the document as one CRDT text, a file write from any writer is text-diffed into it, a live client's edits export back to the file. Plain markdown makes the retrofit lossless because a whole-file text diff reconstructs everything; there is no rich schema or live editor state to migrate.
@@ -122,10 +160,3 @@ A memo and a deck from the same markdown. A directive naming a deck component me
 
 Cheaper answers exist and should be tried first: a shared component vocabulary across both output kinds, or a directive that carries a target, `<!-- ainsi deck: timeline -->`. Not worth deciding until a second projection is actually wanted.
 
-## Do themes and components need a manifest (question)
-
-Discovery is `readdir` plus dynamic `import` in `load.ts`: a component is known by scanning a folder and executing its `index.ts`, a theme by reading its files off disk. That is the one part of loading that assumes a filesystem and runs code to learn what exists, and both assumptions fail anywhere without Bun and a disk: a browser-only build, a hosted studio, a sandbox that may not execute what it enumerates. Today nothing hits this, because every consumer of the component list, including the Studio palette and a theme picker, sits behind the dev server that already loaded them.
-
-A manifest would be a declared list, per root or per pack, of what exists and what shape it takes, so enumeration stops requiring execution. The cost is a second copy of facts the folders already state, which drifts, which is the argument that has kept it out so far.
-
-Answered when a real consumer without a filesystem shows up, not before. The deliverable is one sentence in `ARCHITECTURE.md` either committing to folder scanning as the only discovery and naming the environments that excludes, or naming the manifest as the port and what it carries.
