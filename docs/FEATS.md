@@ -60,6 +60,18 @@ Right-click a page and copy it, right-click another and paste after it. This is 
 
 `[guess]` A page that exists only because of a layout directive has no `---` in front of it, so pasting after one introduces a break the author never wrote. That reads as the right answer and is cheap to reverse if it is not. A snippet copied out of another deck can name an image beside that deck or a component only that theme defines: paste it as written and let the diagnostics say what is missing, rather than rewriting paths on the way in. Done is a page moved within one deck and between two, and the markdown afterwards being what a person would have typed.
 
+## Hand this deck to an agent (feat)
+
+The tedious half of asking an agent about a deck is saying where it is. One menu item that puts a line on the clipboard naming the file and what it is removes that, and it is the whole feature: you paste, and the conversation starts on the right file.
+
+`[guess]` One line, not a paragraph: what the file is, the skill that reads it, and the absolute path. A canned prompt longer than that reads as spam in someone else's terminal and dates faster than the thing it describes. `[guess]` One item rather than a submenu of copy targets, until a second target is actually wanted; the deck is what an agent edits, and the html and the pdf are what a person receives.
+
+The studio does not know the path today. `/__doc` carries the file's base name, so it would carry the full one, which widens what a page on localhost can read out of the server by one string it already prints to its own console. `navigator.clipboard.writeText` is enough in a browser because localhost is a secure context, and the app can fall back to the native clipboard if its webview disagrees.
+
+The app gets two more for free and one not at all. Reveal in Finder is one SDK call. A native share sheet is not: there is no `NSSharingServicePicker` in the shell's SDK, so exporting a pdf and sending it somewhere is not a thing this can offer until the shell grows one.
+
+Refused: making this an MCP server, a socket, or anything an agent has to be configured to find. The clipboard is the integration, and that it needs no protocol, no config and no daemon is the reason it is worth building now. The hosted studio row already says an MCP wrapper is an afternoon whenever one is wanted; this does not bring that forward.
+
 # The engine stops scanning
 
 ## The chrome and the component scripts still bundle at run time (feat)
