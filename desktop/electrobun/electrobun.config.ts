@@ -16,7 +16,7 @@ export default {
     app: {
         name: "ainsi",
         identifier: "dev.ainsi.studio",
-        version: "1.3.0",
+        version: "2.0.0-beta.1",
     },
     build: {
         // the shell spawns bun, reads its stdout and holds the child; real Bun, not a
