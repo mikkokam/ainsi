@@ -1,0 +1,21 @@
+[package]
+name = "ainsi-tauri"
+version = "1.3.0"
+edition = "2021"
+description = "Native window over the ainsi studio"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+which = "7"
+
+[dependencies]
+tauri = { version = "2", features = [] }
+rfd = "0.15"
+
+[[bin]]
+name = "ainsi"
+path = "src/main.rs"
+
+[profile.release]
+strip = true
+lto = true

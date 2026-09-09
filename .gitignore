@@ -18,3 +18,11 @@ bun.lock
 
 # built decks; the html beside a sample is the demo, a pdf is not
 *.pdf
+
+# desktop shells: toolchain projections and build output
+desktop/*/.hutch/
+desktop/*/build/
+desktop/tauri/target/
+desktop/*/hutch.lock
+desktop/.*.hutch-template.lock
+desktop/tauri/gen/

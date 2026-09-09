@@ -33,8 +33,10 @@ const fail = (message: string): never => {
 
 if (inputs.length > 1) fail(`one deck at a time; got ${inputs.length}\n${USAGE}`);
 if (building && !input) fail(USAGE);
-// an agent or a pipe wants a file, never a server it cannot see; the answer is the command that gives one
-if (!building && !process.stdout.isTTY) fail(`ainsi ${input ?? ""} opens the studio, which needs a terminal.\nTo write a file: ainsi build ${input ?? "deck.md"}`);
+// an agent or a pipe wants a file, never a server it cannot see; the answer is the command that
+// gives one. A desktop shell is the third case: no terminal, and a window that will show the URL.
+const host = process.env.AINSI_HOST;
+if (!building && !host && !process.stdout.isTTY) fail(`ainsi ${input ?? ""} opens the studio, which needs a terminal.\nTo write a file: ainsi build ${input ?? "deck.md"}`);
 
 const flag = (name: string): string | undefined => {
     const i = args.indexOf(name);
@@ -530,10 +532,20 @@ const server = serve({
 
 console.log(`studio on ${server.url}`);
 
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.on(signal, async () => {
-        await server.stop();
-        await session?.close();
-        process.exit(0);
-    });
+async function shutdown(): Promise<never> {
+    await server.stop();
+    await session?.close();
+    process.exit(0);
 }
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) process.on(signal, shutdown);
+
+/*
+ * A desktop host holds the studio open through stdin and writes nothing down it. Its end
+ * closing is the window being gone, including when the host was killed outright and no signal
+ * ever reached here, and a studio nobody can open should not keep its port or its browser.
+ */
+if (host) void (async () => {
+    for await (const _ of Bun.stdin.stream()) { /* nothing is ever said, only the closing */ }
+    await shutdown();
+})();

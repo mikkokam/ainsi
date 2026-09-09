@@ -1,0 +1,9 @@
+{
+    "name": "ainsi-electrobun",
+    "private": true,
+    "version": "0.0.0",
+    "description": "Native window over the ainsi studio",
+    "devDependencies": {
+        "@types/bun": "latest"
+    }
+}
