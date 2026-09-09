@@ -42,9 +42,19 @@ Seen on a photographer's contact sheet: six pictures, three columns, and the pag
 
 The fix is a cap that survives cropping: the cell keeps its aspect ratio and takes a `max-height` in em the same way an uncropped picture does, so the row shrinks when the type does. Done is a page like that one fitting at three columns, and no warning.
 
+## Selecting without a cursor (feat)
+
+There is no state between hovering a block and typing in it. Click a paragraph and the caret is already inside; click an image and its properties are already open. That reads fine until a menu wants to say Copy, Cut or Insert, at which point every one of them has to ask what it would act on and there is no answer.
+
+One state fixes all of them. A single click selects: the block takes an outline and its bar, and there is no caret. Enter or a second click puts the caret in. Escape returns to selected, Escape again deselects. An image behaves the same way, so the properties panel opens on Enter rather than on the first click.
+
+`[decision]` With a selection the commands are ours; with a caret they are the text field's. That one sentence settles the cases that otherwise multiply. Copy and cut act on the selected block and put its markdown on the clipboard. Paste inserts after the selection and never replaces it, because replacing is a destructive default and there is no way to ask. Insert puts the new block after the selection, or at the end of the page in view when nothing is selected. Inside a caret, the browser's own copy and paste are untouched.
+
+The rows below wait on this: a page cannot be copied until a page can be selected, and an Edit menu without it is a row of items that do nothing. Done is a block selected with one click, copied with the keyboard, and pasted into another deck as markdown a person would have typed.
+
 ## Copy and paste a page (feat)
 
-A slide cannot be moved. Every other deck tool does this and it is the first thing anyone reaches for, and the pieces are already here: `describePages` hands the studio each page's `first` and `last` source offsets and its layout directive's span, so copying is a slice of the markdown and pasting is a splice at another page's `last`, through the same hashed write every other edit goes through. Nothing serialises HTML back to markdown, so the invariant above is untouched.
+A slide cannot be moved. Every other deck tool does this and it is the first thing anyone reaches for. It waits on the row above, because copying a page means selecting one first, and the rest of the pieces are already here: `describePages` hands the studio each page's `first` and `last` source offsets and its layout directive's span, so copying is a slice of the markdown and pasting is a splice at another page's `last`, through the same hashed write every other edit goes through. Nothing serialises HTML back to markdown, so the invariant above is untouched.
 
 Right-click a page and copy it, right-click another and paste after it. This is the studio, not the shell, so it works in a browser tab exactly as it works in the app. The clipboard carries plain markdown, which costs nothing and means a slide pastes into any editor and markdown from anywhere pastes into a deck.
 
@@ -94,9 +104,25 @@ The studio serves one page whether it is in a browser tab or a native window, so
 
 A launch with no deck shows a landing page: themes across the top, and beneath them the decks you have been in. This replaces an earlier guess that it should show an empty window, on the grounds that recents is state and the studio holds none. It is not state. Ordering markdown files under the root by mtime is a recents list, derived from disk each time, which is what the home page below already specifies.
 
+It is one component, served to a browser tab and to a window alike, and it is quiet: type, rules, and the theme tiles carrying the only colour on the page, which is the themes' own. Whatever else earns a place there earns it later, and the candidates are settings, which do not exist yet, and a button that reveals the themes folder, which does. Refused: anything that needs a second screen to explain.
+
 Hiding the chrome is what makes the gap visible: every action it holds has to exist as a native item, and `Theme…` already does not. It has no command name, so on a desktop with the chrome hidden there is no way to change a theme. Whether the answer is a native submenu listing the themes or a command that opens the studio's own drill is part of this row.
 
 The chrome moves into a toolbar along the top rather than sitting over the content. One constraint decides how far that goes: studio chrome is injected at runtime and never ships in a deck, so a studio toolbar is free, while the viewer's toolbar ships inside the built HTML and is in the print path, so anything moved there has to stay invisible to print, to export and to measurement.
+
+## The menus the app is missing (feat)
+
+The File menu holds New, Open, Export, Print and Close, Edit holds the clipboard roles plus two studio commands, and that is all of it. Four things are wrong with that and one of them is live now.
+
+Print is in the menu and does nothing. `window.print()` is what the command runs, and the app's webview does not honour it. A menu item that does nothing is worse than a missing one, so it goes until printing works, which on this shell means finding whether the webview can print at all rather than assuming it can.
+
+View and Slideshow are missing and are nearly free, but not from where the other commands come. Overview and presenting belong to the viewer, not the studio, because a built deck presents with no server anywhere near it. So the viewer grows its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatches, and the app reaches presenting the same way it reaches an export. `[decision]` Play means from the page in view. Play from start is the second item, not the first, because the deck is open at a page for a reason.
+
+Edit's clipboard items and an Insert menu wait on selection, above. Until that lands they are items that grey out or lie.
+
+File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.
+
+`[guess]` Save As is the same primitive as the deck export and as picking a theme: all three copy what a deck references into a folder that is not the one it is in. If that turns out to be true it is written once and called three times, and if it does not, Save As is a copy of one markdown file and quietly breaks every relative image in it.
 
 ## One way to make a deck (feat)
 
