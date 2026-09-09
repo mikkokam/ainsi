@@ -1,4 +1,4 @@
-import { readdir } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { Layouts, Registry, type Component, type ComponentDefinition, type Layout, type LayoutDefinition } from "./registry";
 import { MARK } from "./mark";
@@ -237,10 +237,20 @@ export const loadStart = async () => (await Bun.file(join(import.meta.dir, "stud
 /** Studio chrome: the editing layer the dev server injects. Never in a deck. */
 export const loadStudio = (diagnostics: Diagnostic[] = []) => chrome("studio", diagnostics);
 
+/*
+ * Held until the folder changes. The studio's script pulls in CodeMirror, which is fifteen
+ * milliseconds of bundling against a rebuild that is otherwise about ten, and a rebuild runs
+ * on every commit. The cache is what lets the folder be watched without paying for the watch.
+ */
+const bundled = new Map<string, { stamp: number; chrome: { css: string; script: string } }>();
+
 async function chrome(name: string, diagnostics: Diagnostic[]): Promise<{ css: string; script: string }> {
     const dir = resolve(import.meta.dir, name);
-    const css = (await readIfPresent(join(dir, "style.css"))) ?? "";
+    const stamp = await newest(dir);
+    const held = bundled.get(name);
+    if (held && held.stamp === stamp) return held.chrome;
 
+    const css = (await readIfPresent(join(dir, "style.css"))) ?? "";
     const built = await Bun.build({
         entrypoints: [join(dir, "script.ts")],
         target: "browser",
@@ -248,11 +258,24 @@ async function chrome(name: string, diagnostics: Diagnostic[]): Promise<{ css: s
         minify: true,
     });
     if (!built.success) {
+        // not cached: the next rebuild should try again rather than serve the failure back
         diagnostics.push({ level: "warn", message: `${name} failed to build; no chrome emitted` });
         return { css, script: "" };
     }
-    return { css, script: (await built.outputs[0]!.text()).trim() };
+
+    const result = { css, script: (await built.outputs[0]!.text()).trim() };
+    bundled.set(name, { stamp, chrome: result });
+    return result;
+}
+
+/** the newest mtime in a folder, its own included so a deletion counts; chrome is one level deep */
+async function newest(dir: string): Promise<number> {
+    const stamps = await Promise.all([dir, ...(await readdir(dir)).map(entry => join(dir, entry))]
+        .map(path => stat(path).then(s => s.mtimeMs).catch(() => 0)));
+    return Math.max(...stamps);
 }
 
 export const BUILTIN = resolve(import.meta.dir, "components");
 export const LAYOUTS = resolve(import.meta.dir, "layouts");
+/** the chrome folders, so a dev server editing them rebuilds the way it does for a component */
+export const CHROME = [resolve(import.meta.dir, "viewer"), resolve(import.meta.dir, "studio")];

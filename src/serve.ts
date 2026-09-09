@@ -64,8 +64,14 @@ export function serve(options: ServeOptions): Server {
     let html = options.initial;
 
     const clients = new Set<ReadableStreamDirectController>();
-    /** bumped on every successful rebuild; a page carries the number it was served with */
-    let build = 0;
+    /*
+     * Bumped on every successful rebuild; a page carries the number it was served with and
+     * reloads on reconnect when the server has moved past it. Seeded from the clock rather
+     * than from zero, so a server that restarted is never mistaken for the one that served
+     * the page: under `bun --watch` every source edit is a restart, and a fresh count would
+     * land back on the number the open page already has.
+     */
+    let build = Date.now();
 
     const server = Bun.serve({
         port,

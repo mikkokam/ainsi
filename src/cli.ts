@@ -8,7 +8,7 @@ import { parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
+import { BUILTIN, CHROME, LAYOUTS, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -141,7 +141,6 @@ let doc = {
 let currentTheme = "default";
 /** AINSI_TRACE=1 adds the round trip either side of a rebuild: the write, and the browser's own view of it */
 const trace = !!process.env.AINSI_TRACE;
-const studio = editing ? await loadStudio() : undefined;
 
 /*
  * Where a rebuild's milliseconds went. The studio holds the editor's "saving…" until the
@@ -174,6 +173,9 @@ async function build(): Promise<{ html: string; roots: string[] }> {
     clock.mark("load");
 
     let viewer = args.includes("--no-viewer") ? undefined : await loadViewer(diagnostics);
+    // both chromes are read and bundled per rebuild, not once: they are watched like a
+    // component, so editing the studio's own css or script reloads the browser
+    const studio = editing ? await loadStudio(diagnostics) : undefined;
     clock.mark("chrome");
     if (studio) {
         viewer = {
@@ -422,7 +424,7 @@ const server = serve({
     deck,
     port,
     initial: first.html,
-    roots: [BUILTIN, LAYOUTS, ...first.roots],
+    roots: [BUILTIN, LAYOUTS, ...CHROME, ...first.roots],
     rebuild: async () => (await build()).html,
     route: editing ? async (request, url) => {
         // before a deck is chosen the studio is the start page, and only browsing, opening

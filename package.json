@@ -7,6 +7,9 @@
         "ainsi": "src/cli.ts"
     },
     "scripts": {
+        "dev": "bun --watch src/cli.ts",
+        "app": "cd desktop/electrobun && PATH=\"$HOME/.hutch/bin:$PATH\" hutch electrobun dev",
+        "app:build": "cd desktop/electrobun && PATH=\"$HOME/.hutch/bin:$PATH\" hutch electrobun build --env=stable",
         "test": "bun test"
     },
     "dependencies": {

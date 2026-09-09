@@ -134,6 +134,11 @@ The same component under a theme that asked for the opposite: `crop` trims every
 
     bun install                       # the full tree, browser wrapper included
     bun test
+    bun run dev samples/aava/aava.md  # the studio in a browser, hot
+    bun run app                       # the desktop app, built and launched
+    bun run app:build                 # the same app as a .app and a .dmg
+
+`dev` runs the studio under `bun --watch`. A deck edit and an edit to the studio's own css or script push a reload to the open page; an edit to the engine restarts the process, and the page reloads when it reconnects and finds the build has moved.
 
 The studio prints each rebuild's milliseconds by phase, and the browser console reports any commit round trip over 600 ms: write, rebuild, reload. `localStorage.setItem("ainsi:trace", "1")` reports every one, and `AINSI_TRACE=1` adds the server's side of the write.
 
