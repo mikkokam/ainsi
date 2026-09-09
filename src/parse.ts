@@ -117,12 +117,25 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
  * them, so a walk that only looked at an entity's own node and its first child found the
  * standalone ones and missed every one inside a list, which is most of them.
  */
-export function images(entities: Entity[]): { url: string; set(url: string): void }[] {
-    const found: { url: string; set(url: string): void }[] = [];
+export interface Picture {
+    url: string;
+    /** replace it in the tree, for a render that swallows the file */
+    set(url: string): void;
+    /** where `![alt](url)` sits in the source, for a rewrite that keeps the markdown */
+    span?: { start: number; end: number };
+}
+
+export function images(entities: Entity[]): Picture[] {
+    const found: Picture[] = [];
     const visit = (node: any): void => {
         if (!node || typeof node !== "object") return;
         if (node.type === "image" && typeof node.url === "string") {
-            found.push({ url: node.url, set: (url: string) => { node.url = url; } });
+            const at = node.position;
+            found.push({
+                url: node.url,
+                set: (url: string) => { node.url = url; },
+                ...(at ? { span: { start: at.start.offset, end: at.end.offset } } : {}),
+            });
         }
         for (const child of node.children ?? []) visit(child);
     };

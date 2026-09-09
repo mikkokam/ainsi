@@ -84,6 +84,8 @@ ApplicationMenu.setApplicationMenu([
                     { label: "PDF, full-resolution images", action: "pdf:full" },
                     { type: "separator" },
                     { label: "PPTX, editable", action: "pptx" },
+                    { type: "separator" },
+                    { label: "Deck and its files…", action: "zip" },
                 ],
             },
             { type: "separator" },

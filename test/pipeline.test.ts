@@ -152,6 +152,7 @@ test("a newline inside a paragraph is a line break; a blank line is still a new 
 test("images() finds one inside a list, which is where figures and tiles put them", () => {
     const { doc } = parse("# T\n\n<!-- ainsi: figures -->\n\n- ![a](one.png)\n- ![b](two.png)\n\n![c](three.png)\n");
     expect(images(doc.entities).map(i => i.url)).toEqual(["one.png", "two.png", "three.png"]);
+    expect(images(doc.entities).every(i => i.span)).toBe(true);
 });
 
 test("an image's url is rewritten through the node the walk handed back", () => {

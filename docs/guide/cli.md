@@ -3,7 +3,7 @@
 Two commands: the bare one opens the [studio](studio.md), `build` writes a file and exits.
 
     ainsi [deck.md] [--port 4321]
-    ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]
+    ainsi build <deck.md> [-o out.html|out.pdf|out.zip] [--to html|pdf|zip] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]
 
 ## ainsi
 
@@ -25,6 +25,9 @@ With stdout piped, the studio refuses to start and prints the build command inst
     ainsi build deck.md -o out.pdf    # the format follows the extension
     ainsi build deck.md --fit         # measure and fit before writing the html
     ainsi build deck.md --no-viewer   # no toolbar, for a headless render
+    ainsi build deck.md --to zip      # deck.zip: the markdown and what it references
+
+`--to zip` writes the deck rather than a rendering of it: the markdown, the images it uses, its logos, and its theme when the theme is a folder beside it. Unpack it and there is an ordinary deck folder, which is the one artefact someone else can keep editing. A reference that already sits inside the deck's folder keeps the path it has; only what reaches outside is copied in and relinked. Nothing else in the folder travels, so a built `deck.html` or another deck beside it stays behind.
 
 `--to` and `-o` must agree, and either one decides the format. A PDF always fits first, since printing unfitted pages loses their overflow silently.
 

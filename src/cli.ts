@@ -6,6 +6,7 @@ import { END, group } from "./group";
 import { fit, openFit, type FitSession } from "./fit";
 import { images, parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
+import { pack } from "./pack";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
 import { CHROME, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
@@ -17,13 +18,14 @@ const argv = process.argv.slice(2);
 const building = argv[0] === "build";
 const args = building ? argv.slice(1) : argv;
 const VALUED = new Set(["-o", "--to", "--port"]);
+const FORMATS = ["html", "pdf", "zip"] as const;
 const inputs = args.filter((a, i) => !a.startsWith("-") && !VALUED.has(args[i - 1] ?? ""));
 const input = inputs[0];
 
 const USAGE = [
     "usage: ainsi [deck.md] [--port 4321]",
     "           opens the studio; without a deck, on the chooser: open one here, or make one",
-    "       ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]",
+    "       ainsi build <deck.md> [-o out.html|out.pdf|out.zip] [--to html|pdf|zip] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]",
     "           writes the file beside the deck and exits",
 ].join("\n");
 const fail = (message: string): never => {
@@ -73,14 +75,16 @@ const sibling = (ext: string): string => {
 };
 const target = flag("-o");
 const to = flag("--to");
-if (to && !["html", "pdf"].includes(to)) fail(`--to takes html or pdf; got "${to}"`);
+if (to && !FORMATS.includes(to as typeof FORMATS[number])) fail(`--to takes ${FORMATS.join(", ")}; got "${to}"`);
 if (target && to && extname(target).slice(1) !== to) fail(`-o ${target} and --to ${to} disagree`);
 const pdfFlag = args.find(a => a === "--pdf" || a.startsWith("--pdf="));
-const format: "html" | "pdf" = building && (to === "pdf" || extname(target ?? "").toLowerCase() === ".pdf" || pdfFlag) ? "pdf" : "html";
+const format: typeof FORMATS[number] = building && (to === "zip" || extname(target ?? "").toLowerCase() === ".zip") ? "zip"
+    : building && (to === "pdf" || extname(target ?? "").toLowerCase() === ".pdf" || pdfFlag) ? "pdf" : "html";
 const printing = format === "pdf";
 let output = deck ? (target && format === "html" ? resolve(target) : sibling(".html")) : "";
 let pdfOutput = deck ? (target && format === "pdf" ? resolve(target) : sibling(".pdf")) : "";
 let pptxOutput = deck ? sibling(".pptx") : "";
+let zipOutput = deck ? (target && format === "zip" ? resolve(target) : sibling(".zip")) : "";
 const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
 if (printing && !PDF_IMAGES.includes(pdfImages)) fail(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
 // a pdf of unfitted pages loses their overflow silently, so printing always fits first
@@ -347,6 +351,10 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
     }
 }
 
+/** whatever this platform calls to hand a file or a folder to the person at the machine */
+const opener = (): string[] =>
+    process.platform === "darwin" ? ["open"] : process.platform === "win32" ? ["cmd", "/c", "start", ""] : ["xdg-open"];
+
 /** point the studio at another deck: the outputs, the watch and the editor follow it */
 function retarget(next: string): void {
     const first = deck === undefined;
@@ -354,6 +362,7 @@ function retarget(next: string): void {
     output = sibling(".html");
     pdfOutput = sibling(".pdf");
     pptxOutput = sibling(".pptx");
+    zipOutput = sibling(".zip");
     server.retarget(deck);
     server.changed(basename(deck), true);
     if (first) console.log(`-> ${deck}`);
@@ -412,6 +421,19 @@ async function exportPptx(): Promise<{ written: boolean; diagnostics: Diagnostic
     return { written: written.written, diagnostics };
 }
 
+/*
+ * A packed deck is not a rendered one: it is the markdown and what it references, so it skips
+ * the pipeline entirely rather than building a page nobody asked for.
+ */
+if (building && format === "zip") {
+    const diagnostics: Diagnostic[] = [];
+    const packed = await pack(deck!, diagnostics);
+    await Bun.write(zipOutput, packed.bytes);
+    for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
+    console.log(`${packed.name}/ -> ${zipOutput}`);
+    process.exit(0);
+}
+
 const first = deck ? await build() : { html: await loadStart(), roots: [] as string[] };
 
 if (!editing) {
@@ -448,17 +470,25 @@ const server = serve({
             if (!written) return new Response(diagnostics.map(d => d.message).join("\n") || "pdf failed", { status: 500 });
             console.log(`-> ${pdfOutput}`);
             // the person asked from a browser on this machine, so the answer lands in their viewer
-            const opener = process.platform === "darwin" ? ["open"] : process.platform === "win32" ? ["cmd", "/c", "start", ""] : ["xdg-open"];
-            Bun.spawn([...opener, pdfOutput], { stdout: "ignore", stderr: "ignore" }).unref();
+            Bun.spawn([...opener(), pdfOutput], { stdout: "ignore", stderr: "ignore" }).unref();
             return Response.json({ path: pdfOutput });
+        }
+        if (url.pathname === "/__zip" && request.method === "POST") {
+            const diagnostics: Diagnostic[] = [];
+            const packed = await pack(deck!, diagnostics);
+            await Bun.write(zipOutput, packed.bytes);
+            for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
+            console.log(`${packed.name}/ -> ${zipOutput}`);
+            // the deck is for sending on, so the answer is its folder open rather than the file
+            Bun.spawn([...opener(), dirname(zipOutput)], { stdout: "ignore", stderr: "ignore" }).unref();
+            return Response.json({ path: zipOutput });
         }
         if (url.pathname === "/__pptx" && request.method === "POST") {
             const { written, diagnostics } = await exportPptx();
             for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
             if (!written) return new Response(diagnostics.map(d => d.message).join("\n") || "pptx failed", { status: 500 });
             console.log(`-> ${pptxOutput}`);
-            const opener = process.platform === "darwin" ? ["open"] : process.platform === "win32" ? ["cmd", "/c", "start", ""] : ["xdg-open"];
-            Bun.spawn([...opener, pptxOutput], { stdout: "ignore", stderr: "ignore" }).unref();
+            Bun.spawn([...opener(), pptxOutput], { stdout: "ignore", stderr: "ignore" }).unref();
             return Response.json({ path: pptxOutput });
         }
         if (url.pathname === "/__edit" && request.method === "POST") {

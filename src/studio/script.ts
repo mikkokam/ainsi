@@ -321,6 +321,7 @@ async function init(): Promise<void> {
         else if (name === "source") openRaw();
         else if (name === "settings") openDeck();
         else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);
+        else if (name === "zip") void exportTo("/__zip", `${base}.zip`);
         else if (name.startsWith("pdf")) void exportTo(`/__pdf?images=${name.slice(4) || "screen"}`, `${base}.pdf`);
     });
 
@@ -705,6 +706,9 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
         menuItem("PDF, full-resolution images", write("/__pdf?images=full", `${base}.pdf`)),
         h("div", { class: "ainsi-menu__rule" }),
         menuItem(`PPTX, editable, as ${base}.pptx`, write("/__pptx", `${base}.pptx`)),
+        h("div", { class: "ainsi-menu__rule" }),
+        // the deck itself: what someone else needs in order to keep writing it
+        menuItem(`Deck and its files, as ${base}.zip`, write("/__zip", `${base}.zip`)),
     );
 }
 

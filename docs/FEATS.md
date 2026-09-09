@@ -154,25 +154,13 @@ This does not reopen the static registry decision. A theme is CSS and that decis
 
 `[guess]` A tile is drawn from `--ainsi-ink`, `--ainsi-accent` and `--ainsi-ground` read out of the theme's own `variables.css`, rather than from a rendered sample. A rendering has no build step to happen at for a theme installed thirty seconds ago, and three tokens is a truer picture of a theme than one sample page anyway. Also wanted, and one button rather than a paragraph of explanation: reveal the themes folder.
 
-## Export the deck itself (feat)
-
-The built html is the artefact that travels and the markdown is the one people want to keep editing, so there is no way to hand someone a deck they can carry on writing. The folder is the deck, and the export is that folder with only what the deck actually references in it: `deck.md`, `assets/`, `theme/` when the theme is a relative one, compressed.
-
-The walk already exists. `inlineImages` visits every image entity to base64 it at build time; this is the same walk copying instead. A bare theme name is not copied, because that means a theme every ainsi has, and copying it would put a second `swiss` on the recipient's machine. Links are rewritten only where they reach outside the folder, an absolute path or a `../`, because the markdown is what the recipient reads and an export that reformats every link arrives worse than it left.
-
-`[decision]` The archive is a courier, not a format. Nothing ever reads it as an archive: you unpack it and there is an ordinary deck folder, plain text and images, editable by anything. That is the whole difference from a `.pptx`, which is only ever read as a zip and holds XML nobody wants. Refused with it: any manifest, index or metadata file inside the archive. The folder layout is the manifest.
-
-`[guess]` A zip rather than a tar.gz, because the person receiving a deck is often not a developer and a zip opens with a double-click on every machine there is. Measured on a three-file deck: zip 29278 bytes against tar.gz 28635, so size does not decide it. `Bun.Archive` writes tar and tar.gz and no zip, but `Bun.deflateSync(data, { windowBits: -15 })` is raw deflate, which is exactly what a zip entry stores, so a writer is about sixty lines and a CRC32 table with no dependency. Prototyped and checked: `unzip -t` passes, macOS Archive Utility unpacks it to the right tree, and the files come back byte-identical.
-
-One trap for whoever builds it: `Bun.write(path, archive)` silently ignores `compress`, so it writes a plain tar under a `.tar.gz` name. `Bun.Archive.write(path, files, opts)` and `archive.bytes()` both honour it. Only relevant if the guess above flips.
-
 ## Sending one file (question)
 
 A built `.html` is self-contained: the theme's CSS is inlined and every local image is base64 at build time. A `.md` is not, and never was. Send one markdown file and the recipient gets it without its images and, if it names a theme beside it, without its look.
 
 Nothing is broken here and nothing may need building. The question is whether the studio should say so at the moment it matters, and where. A deck that names a relative theme or references a local image is a deck whose markdown does not travel alone, which the engine already knows at build time and reports to nobody.
 
-The deliverable is a sentence in `ARCHITECTURE.md` about which artefact is the portable one, or a diagnostic, or the finding that people already understand this and it needs neither. Also open: a theme's font `@import` is a network fetch, so a built deck read offline falls back to system type, which is the one part of "self-contained" that is not.
+`--to zip` now packs the deck and what it references, so there is an answer to give. The question left is whether the studio should say so unprompted, at the moment it matters, and where. The deliverable is a sentence in `ARCHITECTURE.md` about which artefact is the portable one, or a diagnostic, or the finding that people already understand this and it needs neither. Also open: a theme's font `@import` is a network fetch, so a built deck read offline falls back to system type, which is the one part of "self-contained" that is not.
 
 ## Measurement without a separate browser (feat)
 

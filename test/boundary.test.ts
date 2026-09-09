@@ -20,7 +20,7 @@ import { join, relative, resolve } from "node:path";
 const SRC = resolve(import.meta.dir, "..", "src");
 
 /** The platform boundary. These modules exist to touch a platform; nothing else may. */
-const ADAPTERS = new Set(["cli.ts", "load.ts", "serve.ts", "fit.ts", "pdf.ts", "pptx.ts"]);
+const ADAPTERS = new Set(["cli.ts", "load.ts", "serve.ts", "fit.ts", "pdf.ts", "pptx.ts", "pack.ts"]);
 
 /** The player. Browser code by nature, so the rules below do not describe it. */
 const CONSUMERS = new Set(["viewer"]);
