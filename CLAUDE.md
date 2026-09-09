@@ -17,3 +17,6 @@ Building or opening a sample writes `<sample>.html` beside it, and those files a
 The studio refuses to start without a terminal, so an agent or a pipe is told to run `ainsi build` instead. A script that needs it anyway sets `AINSI_HOST`, pipes stdin, and holds that pipe open: the studio exits when it closes.
 
 Tests that need a browser skip when there is none rather than failing, so a green run on a machine without chromium is not a full run.
+
+
+When developing, do not try to do screenshots on your own. instead do the change that you asked and then send a heads up to the user to do the testing - The user probably already has the development server running and the browser open so they can comment.

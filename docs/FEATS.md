@@ -78,13 +78,41 @@ The grammar changes with it, and this is the breaking change the major version i
 
 Refused: claiming `.md` as the default handler, which would make every markdown file on the machine open a presentation tool. Open With and an explicit association are enough. Depends on static registries. Done is a brew formula, and `ainsi build deck.md` working on a machine with no bun and no checkout.
 
+## `~/.ainsi`, and what may never live there (feat)
+
+Two things below want somewhere to keep a preference: the last folder a deck was saved into, and a folder of your own themes. Neither can use web storage, because the app runs the studio on `--port 0` and the origin is a different `localhost:NNNNN` every launch, so anything in `localStorage` is wiped between sessions and appears to work exactly once. The server is the only writer either surface has in common, so preferences go through an endpoint and land in `~/.ainsi/`.
+
+`[invariant]` Nothing a deck needs in order to render may live there. The moment a deck depends on a file in `~/.ainsi` to look right, decks stop being portable and the folder is a database. Preferences and installed themes are the line: a deck naming a theme you have and a stranger does not degrades to the default with a warning, which is the same thing that happens today when a theme folder beside a deck is missing.
+
+Plain files, one per thing, readable and editable by hand. Refused: SQLite, which is a database for six scalars and puts a binary in the one folder whose appeal is that you can open it.
+
+Not this: the scroll position and the reopen target, which are already `sessionStorage` under `ainsi-scroll` and `ainsi-reopen` and belong there. They exist to survive the full reload the studio does on every rebuild, seconds apart, in one tab. A file would cost a write and a read per rebuild and would leak between two windows on the same deck.
+
 ## The app knows it is an app (feat)
 
-The studio serves one page whether it is in a browser tab or a native window, so the app shows the web chooser, which is a landing page a window with a File menu does not need, and puts its chrome over the deck. The shell already announces itself in `AINSI_HOST`; the server putting that on the body as a data attribute is the whole mechanism, and the chrome branches on it.
+The studio serves one page whether it is in a browser tab or a native window, so the app shows the web chooser, which is written for a browser, and puts its chrome over the deck. The shell already announces itself in `AINSI_HOST`; the server putting that on the body as a data attribute is the whole mechanism, and the chrome branches on it.
 
-On desktop the chooser goes, and Open With and File ▸ Open replace it. `[guess]` a launch with no deck shows an empty window and its toolbar, not a recents list, because recents is state and the studio holds none.
+A launch with no deck shows a landing page: themes across the top, and beneath them the decks you have been in. This replaces an earlier guess that it should show an empty window, on the grounds that recents is state and the studio holds none. It is not state. Ordering markdown files under the root by mtime is a recents list, derived from disk each time, which is what the home page below already specifies.
 
 The chrome moves into a toolbar along the top rather than sitting over the content. One constraint decides how far that goes: studio chrome is injected at runtime and never ships in a deck, so a studio toolbar is free, while the viewer's toolbar ships inside the built HTML and is in the print path, so anything moved there has to stay invisible to print, to export and to measurement.
+
+## One way to make a deck (feat)
+
+`New presentation` writes `untitled.md` into whatever folder the studio is rooted at, which for an app launched from an icon is the person's home directory. Nobody asked for that file and nobody asked for it there.
+
+Not saving until asked is not available, and the reason is sharper than the render. A deck's images and its own theme folder resolve relative to the deck, so a draft written somewhere temporary and moved later is not a deferral, it is a rename that breaks every relative path in it. A drafts folder the app owns is the same problem plus a folder nobody asked for.
+
+So a theme tile is the gesture: click one, get a native save panel with the name filled in and the folder defaulted to the last one used, and Enter is enough. The theme is one frontmatter line and the most reversible thing in the file, which is why it is a reasonable first question. File ▸ New opens the same picker, because two gestures that both create a deck are two behaviours that will drift. The browser has no native panel and should not pretend to: there the picker leads to the folder drill-down and a name field, which is what the chooser already is.
+
+## Where your own themes live (feat)
+
+A theme of yours lives in `themes/` in the checkout. After the shipping app there is no checkout and the shipped themes are inside the bundle, so a brand theme has nowhere to be. This is a hole the shipping app opens rather than one that exists today.
+
+A user themes folder under `~/.ainsi`, scanned alongside the shipped set, and an **Install a theme** button beside the tiles that validates a folder and copies it in. The deck still names it as a bare word, so no machine path enters the document. Yours wins a name collision with a shipped theme, because overriding is the reason you would reuse the name.
+
+This does not reopen the static registry decision. A theme is CSS and that decision keeps data read from disk; every shipped theme's layout overrides are already CSS only, so a theme folder is never executed.
+
+`[guess]` A tile is drawn from `--ainsi-ink`, `--ainsi-accent` and `--ainsi-ground` read out of the theme's own `variables.css`, rather than from a rendered sample. A rendering has no build step to happen at for a theme installed thirty seconds ago, and three tokens is a truer picture of a theme than one sample page anyway. Also wanted, and one button rather than a paragraph of explanation: reveal the themes folder.
 
 ## Measurement without a separate browser (feat)
 
@@ -108,7 +136,7 @@ The studio is already a Bun server driving watch, rebuild, reload over a file, s
 
 Everything is a URL. Home is `/`, a deck is its path under the root, opening is navigation and closing is the back button or a home link top-left beside the filename field, so no session object exists and "what was open" is the browser's history, not the server's problem. The CLI and the container are the same server: `ainsi serve deck.md` starts it and deep-links into the deck's URL, `ainsi serve` and the container start at `/`.
 
-Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button doing what `/__new` does. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
+Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button. The mtime order is the recents list, and it is why no recents list is ever written down. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
 
 Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.ainsi`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
 
