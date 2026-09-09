@@ -52,6 +52,9 @@ export interface Layout extends LayoutDefinition {
     css?: string;
 }
 
+/** A component or layout as the engine is handed it: what it is called, what it does, its css. */
+export interface Entry<D> { name: string; definition: D; css?: string }
+
 export class Registry {
     private readonly map = new Map<string, Component>();
 

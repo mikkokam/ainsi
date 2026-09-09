@@ -4,8 +4,8 @@ import { paginate } from "../src/paginate";
 import { group } from "../src/group";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 
-const defaults = await load(BUILTIN);
-const layouts = await loadLayouts([LAYOUTS]);
+const defaults = await load();
+const layouts = await loadLayouts();
 import { build } from "../src/build";
 import type { Diagnostic } from "../src/types";
 
@@ -141,8 +141,8 @@ test("an image is its own full block; the text after it flows on, never an aside
 });
 
 test("a newline inside a paragraph is a line break; a blank line is still a new block", async () => {
-    const registry = await load(BUILTIN);
-    const layouts = await loadLayouts([LAYOUTS]);
+    const registry = await load();
+    const layouts = await loadLayouts();
     const { html } = build("one\nline two\n\nnext block\n", { registry, layouts, themeCss: "" });
     expect(html).toContain("<p>one<br>\nline two</p>");
     expect(html).toContain("<p>next block</p>");

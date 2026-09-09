@@ -62,17 +62,13 @@ Right-click a page and copy it, right-click another and paste after it. This is 
 
 # The engine stops scanning
 
-## Static registries (feat)
+## The chrome and the component scripts still bundle at run time (feat)
 
-`load.ts` learns what components and layouts exist by reading its own folder and importing the TypeScript it finds there, and builds every component script and both chrome bundles with `Bun.build` while the server runs. That works in a checkout and has no equivalent anywhere else: a compiled binary, an app bundle, a browser-only build, a sandbox that may not execute what it enumerates. It is the only part of loading that runs code to learn what exists, and everything else on this list waits behind it.
+Discovery is static now, but two things still call `Bun.build` while the server runs: the viewer's and the studio's `script.ts`, and a component's own `script.ts` if it has one. Neither is discovery, both are builds of a known input, and both need the file on disk, which a compiled binary does not have.
 
-The answer is not a manifest. A declared list of what a folder holds is a second copy of the folder, and it drifts. A static import list is the manifest and cannot drift, because it is the thing that runs: one module naming every component and layout, which a bundler follows and tree-shakes and a compiled binary carries without reading anything. The runtime `Bun.build` calls go with it, into the build.
+The chrome is two known entrypoints and moves into the build with everything else the executable needs. A component script is the harder half, because a component is a folder and the thing shipped has to be browser JS rather than the TypeScript that produced it: either a build step emits it beside the component and the list imports it as text, or components stop carrying scripts. Nothing shipped has one today, so the choice can wait, but the islands defect above assumes they exist and would go with them.
 
-The line is that code is static and data is dynamic. Components and layouts are code and become imports. Themes are CSS and stay read from disk, which is what keeps a theme folder beside a deck working; every shipped theme's layout overrides are already CSS only, so no theme loses anything it has.
-
-`--components <dir>` is already gone, and with it the only caller that ever handed `load` more than one root. What remains to remove is the scan itself. Going with it: re-importing an edited component on a watch, so a component edit will need the studio restarted, where a theme edit still will not.
-
-Done is `bun build --compile` producing a binary that renders every sample deck with no repo beside it.
+Blocks the compiled binary and nothing else. `load.ts` keeps a `root` argument only for this; when it lands, that argument goes too.
 
 # The desktop shell
 

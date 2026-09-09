@@ -4,8 +4,8 @@ import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme } from "../src/load";
 import { build } from "../src/build";
 import type { Diagnostic } from "../src/types";
 
-const registry = await load(BUILTIN);
-const layouts = await loadLayouts([LAYOUTS]);
+const registry = await load();
+const layouts = await loadLayouts();
 const THEMES = resolve(import.meta.dir, "../themes");
 
 test("layouts are discovered by folder and default is always present", () => {
@@ -63,7 +63,7 @@ test("an unknown page layout warns and leaves the page on the deck's own", () =>
 });
 
 test("a layout that drops the content is reported", async () => {
-    const bad = await loadLayouts([LAYOUTS]);
+    const bad = await loadLayouts();
     bad.register({ name: "lossy", props: layouts.get("default")!.props, render: () => "<main></main>" });
     const { diagnostics } = build("<!-- ainsi:layout lossy -->\n\n# T\n\na\n", { registry, layouts: bad, themeCss: "" });
     expect(diagnostics.some(d => d.message.includes("dropped the content"))).toBe(true);
@@ -129,7 +129,7 @@ test("layout props reach a css-only layout as data attributes", () => {
 });
 
 test("a theme adds to a layout it did not write rather than replacing it", async () => {
-    const themed = await loadLayouts([LAYOUTS, resolve(THEMES, "acme/layouts")]);
+    const themed = await loadLayouts(resolve(THEMES, "acme/layouts"));
     const css = themed.get("header")!.css!;
     expect(css).toContain("[data-layout=\"header\"] .ainsi-full");   // the engine's
     expect(css).toContain("text-transform: uppercase");            // the theme's

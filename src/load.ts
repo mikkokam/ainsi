@@ -1,60 +1,43 @@
 import { readdir, stat } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
-import { Layouts, Registry, type Component, type ComponentDefinition, type Layout, type LayoutDefinition } from "./registry";
+import { Layouts, Registry, type Component, type ComponentDefinition, type Entry, type Layout, type LayoutDefinition } from "./registry";
 import { MARK } from "./mark";
 import type { Diagnostic } from "./types";
+import { COMPONENTS } from "./components/index";
+import { LAYOUTS as SHIPPED } from "./layouts/index";
 
 const SCRIPTS = ["script.tsx", "script.ts", "script.jsx", "script.js"];
 
-/** A component is a folder. Its name is the folder name, so nothing inside restates it. */
-export interface LoadOptions {
-    /** bypass the module cache, so a watcher picks up an edited component */
-    fresh?: boolean;
-}
-
-export async function load(root: string, diagnostics: Diagnostic[] = [], options: LoadOptions = {}): Promise<Registry> {
+/**
+ * A component is a folder, and `components/index.ts` is the list of them. That list is the
+ * manifest: it cannot drift from what exists because it is what runs, and nothing here reads
+ * a directory or imports what it found in one.
+ *
+ * A script still goes through the bundler, which needs the folder on disk. That is a build of
+ * a known input rather than discovery, and it moves into the build with the chrome.
+ */
+export async function load(entries: Entry<ComponentDefinition>[] = COMPONENTS, diagnostics: Diagnostic[] = [], root = BUILTIN): Promise<Registry> {
     const registry = new Registry();
-    const dir = resolve(root);
 
-    let entries: string[];
-    try {
-        entries = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
-    } catch {
-        diagnostics.push({ level: "warn", message: `component root not found: ${dir}` });
-        return registry;
-    }
-
-    for (const name of entries.sort()) {
-        const folder = join(dir, name);
-        const entry = join(folder, "index.ts");
-        if (!(await Bun.file(entry).exists())) {
-            diagnostics.push({ level: "warn", message: `${name}/ has no index.ts; skipped` });
-            continue;
-        }
-
-        const module = await import(fresh(entry, options));
-        const definition: ComponentDefinition | undefined = module.default;
+    for (const entry of entries) {
+        const { name, definition } = entry;
+        // a text import keeps the file's trailing newline; a stylesheet is trimmed either way
+        const css = entry.css?.trim() || undefined;
         if (!definition?.render) {
-            diagnostics.push({ level: "warn", message: `${name}/index.ts default-exports no render; skipped` });
+            diagnostics.push({ level: "warn", message: `${name} exports no render; skipped` });
             continue;
         }
-
-        const css = await readIfPresent(join(folder, "style.css"));
         if (css) checkScope(name, css, diagnostics);
 
         registry.register({
             ...definition,
             name,
             ...(css ? { css } : {}),
-            ...(await bundle(folder, name, diagnostics)),
+            ...(await bundle(join(root, name), name, diagnostics)),
         } as Component);
     }
 
     return registry;
-}
-
-function fresh(path: string, options: LoadOptions): string {
-    return options.fresh ? `${path}?t=${Date.now()}` : path;
 }
 
 async function readIfPresent(path: string): Promise<string | undefined> {
@@ -111,49 +94,58 @@ for (const root of document.querySelectorAll('[data-ainsi="${name}"]')) mount(ro
 }
 
 /**
- * A layout is a folder too, but a separate registry: a component takes a span of entities,
- * a layout takes a whole page. The engine ships the defaults so a deck naming one cannot be
- * broken by a theme that lacks it; a theme replaces one by using the same folder name.
+ * A layout takes a whole page where a component takes a run of entities, so it keeps its own
+ * registry. The engine ships the four, in `layouts/index.ts`; a theme adds nothing but css,
+ * against a name the engine already has.
  */
-export async function loadLayouts(roots: string[], diagnostics: Diagnostic[] = [], options: LoadOptions = {}): Promise<Layouts> {
+export async function loadLayouts(themeLayouts?: string, diagnostics: Diagnostic[] = []): Promise<Layouts> {
     const layouts = new Layouts();
 
-    for (const root of roots) {
-        const dir = resolve(root);
-        let entries: string[];
-        try {
-            entries = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
-        } catch {
-            continue;                                   // a theme with no layouts/ is the normal case
+    // default first: every other layout inherits it unless it ships its own render
+    for (const entry of [...SHIPPED].sort((a, b) => Number(b.name === "default") - Number(a.name === "default"))) {
+        const { name, definition } = entry;
+        const css = entry.css?.trim() || undefined;
+        const inherited = definition.render ? definition : { ...layouts.get("default"), ...definition };
+        if (!inherited?.render) {
+            diagnostics.push({ level: "warn", message: `layout ${name} has no render and no default to inherit; skipped` });
+            continue;
         }
-
-        // default first: every other layout inherits it unless it ships its own index.ts
-        for (const name of entries.sort((a, b) => Number(b === "default") - Number(a === "default"))) {
-            const folder = join(dir, name);
-            const entry = join(folder, "index.ts");
-            const inherited = layouts.get(name);
-
-            let definition: LayoutDefinition | undefined = inherited ?? layouts.get("default");
-            if (await Bun.file(entry).exists()) {
-                // an index.ts without a render declares props only; the template is inherited
-                const own = (await import(fresh(entry, options))).default;
-                definition = own?.render ? own : definition ? { ...definition, ...own } : undefined;
-            }
-            if (!definition?.render) {
-                diagnostics.push({ level: "warn", message: `layout ${name}/ has no index.ts and no default to inherit; skipped` });
-                continue;
-            }
-
-            const own = await readIfPresent(join(folder, "style.css"));
-            if (own) checkLayoutScope(name, own, diagnostics);
-            // a theme's layout css adds to the engine's rather than replacing it
-            const css = [inherited?.css, own].filter(Boolean).join("\n");
-
-            layouts.register({ ...definition, name, ...(css ? { css } : {}) } as Layout);
-        }
+        if (css) checkLayoutScope(name, css, diagnostics);
+        layouts.register({ ...inherited, name, ...(css ? { css } : {}) } as Layout);
     }
 
+    if (themeLayouts) await themeOverrides(themeLayouts, layouts, diagnostics);
     return layouts;
+}
+
+/*
+ * A theme's layouts folder is css and nothing else. It is read at run time because it is data,
+ * and a theme beside a deck is a deck's own; what it may not do is arrive with code, so an
+ * index.ts in there is reported rather than run.
+ */
+async function themeOverrides(dir: string, layouts: Layouts, diagnostics: Diagnostic[]): Promise<void> {
+    let names: string[];
+    try {
+        names = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
+    } catch {
+        return;                                     // a theme with no layouts/ is the normal case
+    }
+
+    for (const name of names.sort()) {
+        const own = await readIfPresent(join(dir, name, "style.css"));
+        if (await Bun.file(join(dir, name, "index.ts")).exists()) {
+            diagnostics.push({ level: "warn", message: `theme layout ${name}/ ships an index.ts, which is not loaded; a theme is css` });
+        }
+        const base = layouts.get(name);
+        if (!base) {
+            diagnostics.push({ level: "warn", message: `theme styles a layout the engine does not have: ${name}` });
+            continue;
+        }
+        if (!own) continue;
+        checkLayoutScope(name, own, diagnostics);
+        // a theme's layout css adds to the engine's rather than replacing it
+        layouts.register({ ...base, name, css: [base.css, own].filter(Boolean).join("\n") } as Layout);
+    }
 }
 
 /**

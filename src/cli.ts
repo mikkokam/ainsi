@@ -8,7 +8,7 @@ import { parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { BUILTIN, CHROME, LAYOUTS, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
+import { CHROME, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -370,8 +370,8 @@ function under(root: string, at: unknown): string | undefined {
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = themePath(themeName, dirname(deck!));
     const theme = await loadTheme(themeDir, diagnostics);
-    const registry = await load(BUILTIN, diagnostics, { fresh: editing });
-    const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: editing });
+    const registry = await load(undefined, diagnostics);
+    const layouts = await loadLayouts(theme.layouts, diagnostics);
     return { themeDir, theme, registry, layouts };
 }
 
@@ -424,7 +424,9 @@ const server = serve({
     deck,
     port,
     initial: first.html,
-    roots: [BUILTIN, LAYOUTS, ...CHROME, ...first.roots],
+    // the chrome and the theme, and nothing else: components and layouts are imported now, so
+    // a change to one needs the process restarted and a watch over them could not honour it
+    roots: [...CHROME, ...first.roots],
     rebuild: async () => (await build()).html,
     route: editing ? async (request, url) => {
         // before a deck is chosen the studio is the start page, and only browsing, opening

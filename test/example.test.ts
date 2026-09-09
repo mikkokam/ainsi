@@ -4,7 +4,7 @@ import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme, themeDir } from "../src
 import { build } from "../src/build";
 import { parse } from "../src/parse";
 
-const registry = await load(BUILTIN);
+const registry = await load();
 
 const SAMPLES = ["gatekeeper", "lehto", "kaari", "boring-inc", "aava", "meridian"];
 
@@ -13,7 +13,7 @@ async function sample(name: string) {
     const source = await Bun.file(resolve(dir, `${name}.md`)).text();
     const settings = parse(source).doc.settings;
     const theme = await loadTheme(themeDir(settings.theme, dir));
-    const layouts = await loadLayouts([LAYOUTS, theme.layouts]);
+    const layouts = await loadLayouts(theme.layouts);
     return { source, settings, dir, result: build(source, { registry, layouts, themeCss: theme.css }) };
 }
 
