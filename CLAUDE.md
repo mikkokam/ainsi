@@ -18,6 +18,8 @@ The studio refuses to start without a terminal, so an agent or a pipe is told to
 
 Tests that need a browser skip when there is none rather than failing, so a green run on a machine without chromium is not a full run.
 
+One version, four places. Three of them are `package.json`, `.claude-plugin/plugin.json` and `desktop/electrobun/electrobun.config.ts`, and a test fails when they disagree, so bumping one means bumping all three. The fourth is the git tag, which no test can see: tag after those three land, never before, so a tag and a bundle never claim different things. A plugin claiming a version the tool does not have hands an agent a grammar the binary cannot render; an app bundle doing it is worse, because by then it is on someone else's machine.
+
 Every studio action needs a name, because it has two triggers. The studio's own chrome is written for a browser and the app hides it, so an action reachable only from a button in that chrome does not exist on the desktop. Give it a case in the `ainsi:command` handler and have the button call the same function; the app's menu item then dispatches the name and the behaviour stays in one place. A click handler written inline has no name and the app cannot offer it.
 
 
