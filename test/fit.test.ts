@@ -5,7 +5,7 @@ import { fit } from "../src/fit";
 import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme } from "../src/load";
 import type { Page } from "../src/types";
 
-const registry = await load([BUILTIN]);
+const registry = await load(BUILTIN);
 const layouts = await loadLayouts([LAYOUTS]);
 const theme = await loadTheme(resolve(import.meta.dir, "../themes/default"));
 // real theme tokens, not "": with none, --ainsi-size and --ainsi-pad are invalid var() calls

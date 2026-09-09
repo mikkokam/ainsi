@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts, loadViewer } from "../src/load";
 import { build } from "../src/build";
 
-const registry = await load([BUILTIN]);
+const registry = await load(BUILTIN);
 const layouts = await loadLayouts([LAYOUTS]);
 const viewer = await loadViewer();
 const md = "# One\n\na\n\n---\n\n# Two\n\nb\n";

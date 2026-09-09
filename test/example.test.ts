@@ -4,7 +4,7 @@ import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme, themeDir } from "../src
 import { build } from "../src/build";
 import { parse } from "../src/parse";
 
-const registry = await load([BUILTIN]);
+const registry = await load(BUILTIN);
 
 const SAMPLES = ["gatekeeper", "lehto", "kaari", "boring-inc", "aava", "meridian"];
 

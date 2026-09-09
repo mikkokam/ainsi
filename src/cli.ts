@@ -16,14 +16,14 @@ import type { ZodTypeAny } from "zod";
 const argv = process.argv.slice(2);
 const building = argv[0] === "build";
 const args = building ? argv.slice(1) : argv;
-const VALUED = new Set(["-o", "--to", "--port", "--components"]);
+const VALUED = new Set(["-o", "--to", "--port"]);
 const inputs = args.filter((a, i) => !a.startsWith("-") && !VALUED.has(args[i - 1] ?? ""));
 const input = inputs[0];
 
 const USAGE = [
-    "usage: ainsi [deck.md] [--port 4321] [--components <dir>]",
+    "usage: ainsi [deck.md] [--port 4321]",
     "           opens the studio; without a deck, on the chooser: open one here, or make one",
-    "       ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer] [--components <dir>]",
+    "       ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]",
     "           writes the file beside the deck and exits",
 ].join("\n");
 const fail = (message: string): never => {
@@ -81,7 +81,6 @@ const printing = format === "pdf";
 let output = deck ? (target && format === "html" ? resolve(target) : sibling(".html")) : "";
 let pdfOutput = deck ? (target && format === "pdf" ? resolve(target) : sibling(".pdf")) : "";
 let pptxOutput = deck ? sibling(".pptx") : "";
-const componentRoots = args.flatMap((a, i) => (a === "--components" && args[i + 1] ? [resolve(args[i + 1]!)] : []));
 const pdfImages = (pdfFlag?.split("=")[1] ?? "screen") as PdfImages;
 if (printing && !PDF_IMAGES.includes(pdfImages)) fail(`--pdf takes ${PDF_IMAGES.join(", ")}; got "${pdfImages}"`);
 // a pdf of unfitted pages loses their overflow silently, so printing always fits first
@@ -239,7 +238,7 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         console.log(`  page ${page.index + 1} [${page.layout}]${fitted}: ${blocks}`);
     }
 
-    return { html: result.html, roots: [themeDir, ...componentRoots] };
+    return { html: result.html, roots: [themeDir] };
 }
 
 /** every block with what governs it: its directive and end marker, and the heuristic's pick */
@@ -369,7 +368,7 @@ function under(root: string, at: unknown): string | undefined {
 async function stack(themeName: string, diagnostics: Diagnostic[]) {
     const themeDir = themePath(themeName, dirname(deck!));
     const theme = await loadTheme(themeDir, diagnostics);
-    const registry = await load([BUILTIN, ...componentRoots], diagnostics, { fresh: editing });
+    const registry = await load(BUILTIN, diagnostics, { fresh: editing });
     const layouts = await loadLayouts([LAYOUTS, theme.layouts], diagnostics, { fresh: editing });
     return { themeDir, theme, registry, layouts };
 }

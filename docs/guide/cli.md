@@ -2,8 +2,8 @@
 
 Two commands: the bare one opens the [studio](studio.md), `build` writes a file and exits.
 
-    ainsi [deck.md] [--port 4321] [--components <dir>]
-    ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer] [--components <dir>]
+    ainsi [deck.md] [--port 4321]
+    ainsi build <deck.md> [-o out.html|out.pdf] [--to html|pdf] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]
 
 ## ainsi
 
@@ -29,8 +29,6 @@ With stdout piped, the studio refuses to start and prints the build command inst
 `--to` and `-o` must agree, and either one decides the format. A PDF always fits first, since printing unfitted pages loses their overflow silently.
 
 `--pdf=screen` is the default and downsamples images to what the page actually shows. `--pdf=compact` goes further, `--pdf=full` keeps them at full resolution for print.
-
-`--components <dir>` adds a folder of [your own components](components.md#your-own) to the registry for this build. Repeat it for more than one.
 
 ## Reading the output
 

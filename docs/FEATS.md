@@ -60,9 +60,9 @@ The answer is not a manifest. A declared list of what a folder holds is a second
 
 The line is that code is static and data is dynamic. Components and layouts are code and become imports. Themes are CSS and stay read from disk, which is what keeps a theme folder beside a deck working; every shipped theme's layout overrides are already CSS only, so no theme loses anything it has.
 
-Refused: `--components <dir>` loading a folder of TypeScript at runtime. It is the one feature that needs code discovery, nothing in this repo uses it, and keeping it would keep the whole mechanism for its sake. A component is still a folder; it is registered by an import rather than found by a scan. Going with it: re-importing an edited component on a watch, so a component edit needs the studio restarted, where a theme edit still does not.
+`--components <dir>` is already gone, and with it the only caller that ever handed `load` more than one root. What remains to remove is the scan itself. Going with it: re-importing an edited component on a watch, so a component edit will need the studio restarted, where a theme edit still will not.
 
-Done is `bun build --compile` producing a binary that renders every sample deck with no repo beside it. `ARCHITECTURE.md` owes one sentence saying folder scanning is gone and what that excludes, and the maintainer writes it.
+Done is `bun build --compile` producing a binary that renders every sample deck with no repo beside it.
 
 # The desktop shell
 
@@ -159,4 +159,3 @@ A list renders as written, bullets or numbers, until a directive names timeline 
 A memo and a deck from the same markdown. A directive naming a deck component means nothing in a document vocabulary, and the file cannot hold two answers. The overlay design that was cut would solve it, at the cost of reintroducing block naming.
 
 Cheaper answers exist and should be tried first: a shared component vocabulary across both output kinds, or a directive that carries a target, `<!-- ainsi deck: timeline -->`. Not worth deciding until a second projection is actually wanted.
-

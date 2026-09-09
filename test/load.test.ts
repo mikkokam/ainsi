@@ -9,69 +9,67 @@ const BAD = resolve(import.meta.dir, "fixtures/bad");
 const layouts = await loadLayouts([LAYOUTS]);
 
 test("components are discovered by scanning folders, not by a barrel file", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     expect(registry.names().sort()).toEqual(
         ["agenda", "alert", "bar-table", "boxes", "columns", "comparison", "figures", "full", "matrix", "prose", "roadmap", "striped-table", "tiles", "timeline"],
     );
 });
 
 test("a component's name is its folder name and is stated nowhere else", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const source = await Bun.file(resolve(BUILTIN, "timeline/index.ts")).text();
     expect(registry.get("timeline")).toBeDefined();
     expect(source).not.toContain('name:');
 });
 
-test("a third-party root registers alongside the builtins", async () => {
-    const registry = await load([BUILTIN, FIXTURES]);
-    expect(registry.get("callout")).toBeDefined();
-    expect(registry.names().length).toBe(15);
-});
-
-test("a later root overrides a builtin of the same name", async () => {
-    const registry = await load([BUILTIN, FIXTURES]);
-    const { html } = build("<!-- ainsi: callout tone=alert -->\n\nvaroitus\n", { registry, layouts, themeCss: "" });
-    expect(html).toContain('class="ainsi-callout ainsi-callout--alert"');
-});
-
 test("style.css that escapes its own class is reported", async () => {
     const diagnostics: Diagnostic[] = [];
-    await load([BAD], diagnostics);
+    await load(BAD, diagnostics);
     expect(diagnostics.some(d => d.message.includes("escapes its scope") && d.message.includes("h1"))).toBe(true);
 });
 
 test("a component may react to ambient state without escaping its scope", async () => {
     const diagnostics: Diagnostic[] = [];
-    const registry = await load([FIXTURES], diagnostics);
+    const registry = await load(FIXTURES, diagnostics);
     expect(registry.get("callout")!.css).toContain("body[data-present]");
     expect(diagnostics).toEqual([]);
 });
 
 test("script.ts is bundled and scoped to its own component's roots", async () => {
-    const registry = await load([BUILTIN, FIXTURES]);
+    const registry = await load(FIXTURES);
     const script = registry.get("callout")!.script!;
     expect(script).toContain('[data-ainsi="callout"]');
     expect(script).not.toContain("export");          // bundled to an iife, not a module
     expect(script).not.toContain(": HTMLElement");   // typescript stripped
 });
 
-test("only the css and script of components a deck uses are emitted", async () => {
-    const registry = await load([BUILTIN, FIXTURES]);
+test("only the css of components a deck uses is emitted", async () => {
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: timeline -->\n- Q1: a\n- Q2: b\n", { registry, layouts, themeCss: "" });
     expect(html).toContain(".ainsi-timeline__step");
-    expect(html).not.toContain(".ainsi-callout");
-    expect(html).not.toContain('[data-ainsi="callout"]');
+    expect(html).not.toContain(".ainsi-roadmap");
 });
 
+test("a component's script ships only when a deck uses that component", async () => {
+    // the fixture root holds the only script.ts anywhere, so it is both halves of this: a deck
+    // on it gets a mount call, and a deck on the builtins gets no script at all
+    const withScript = await load(FIXTURES);
+    const used = build("<!-- ainsi: callout -->\n\nsana\n", { registry: withScript, layouts, themeCss: "" });
+    expect(used.html).toContain('[data-ainsi="callout"]');
+
+    const builtins = await load(BUILTIN);
+    const other = build("# T\n\n<!-- ainsi: timeline -->\n- Q1: a\n- Q2: b\n", { registry: builtins, layouts, themeCss: "" });
+    expect(other.html).not.toContain("querySelectorAll");
+});
 test("a directive naming nothing registered warns and renders anyway", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html, diagnostics } = build("<!-- ainsi: nonesuch -->\n\n- a\n- b\n", { registry, layouts, themeCss: "" });
     expect(diagnostics.some(d => d.message.includes("unknown component"))).toBe(true);
     expect(html).toContain("<li");
 });
 
 test("a component used many times emits its css and script exactly once", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const md = "# Yksi\n\n<!-- ainsi: timeline -->\n- Q1: a\n- Q2: b\n\n---\n\n# Kaksi\n\n<!-- ainsi: timeline -->\n- Q3: c\n- Q4: d\n\n---\n\n# Kolme\n\n<!-- ainsi: timeline -->\n- Q5: e\n- Q6: f\n";
     const { html, pages } = build(md, { registry, layouts, themeCss: "" });
 
@@ -81,7 +79,7 @@ test("a component used many times emits its css and script exactly once", async 
 });
 
 test("the one script mounts once per instance", async () => {
-    const registry = await load([BUILTIN, FIXTURES]);
+    const registry = await load(FIXTURES);
     const script = registry.get("callout")!.script!;
     // one generated entry, looping every root; the component itself never touches document
     expect(script.match(/document\.querySelectorAll/g)?.length).toBe(1);
@@ -89,7 +87,7 @@ test("the one script mounts once per instance", async () => {
 });
 
 test("a label is a leading bold run and nothing else is read as structure", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: timeline -->\n- **Q1** [a](https://x.test) thing\n- Q2: colon stays\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<span class="ainsi-timeline__label">Q1</span>');
     expect(html).toContain('<span class="ainsi-timeline__body"><a href="https://x.test">a</a> thing</span>');
@@ -98,7 +96,7 @@ test("a label is a leading bold run and nothing else is read as structure", asyn
 });
 
 test("prose adds a wrapper only for a size, and the size is a scale step, not a heading", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const plain = build("# T\n\nwords\n", { registry, layouts, themeCss: "" }).html;
     expect(plain).not.toContain('class="ainsi-prose');
     const sized = build("# T\n\n<!-- ainsi: prose size=huge -->\nwords\n", { registry, layouts, themeCss: "" }).html;
@@ -108,7 +106,7 @@ test("prose adds a wrapper only for a size, and the size is a scale step, not a 
 });
 
 test("boxes over a numbered list is an ol, so the numbers survive", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: boxes -->\n1. one\n2. two\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<ol class="ainsi-boxes ainsi-boxes--ordered"');
     const plain = build("# T\n\n<!-- ainsi: boxes -->\n- one\n- two\n", { registry, layouts, themeCss: "" }).html;
@@ -116,14 +114,14 @@ test("boxes over a numbered list is an ol, so the numbers survive", async () => 
 });
 
 test("timeline over a numbered list carries the numbers on its markers", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: timeline -->\n1. **Plan** a\n2. **Build** b\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<ol class="ainsi-timeline ainsi-timeline--horizontal ainsi-timeline--numbered"');
     expect(build("# T\n\n<!-- ainsi: timeline -->\n- Q1: a\n- Q2: b\n", { registry, layouts, themeCss: "" }).html).toContain('<ol class="ainsi-timeline ainsi-timeline--horizontal"');
 });
 
 test("a quote signs itself: a dashed last line inside the blockquote is the attribution, with no component", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html, pages } = build("# T\n\n> said\n>\n> — Who\n\nafter\n", { registry, layouts, themeCss: "" });
     expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose"]);
     expect(html).toContain('<figure class="ainsi-quote"><blockquote>');
@@ -134,7 +132,7 @@ test("a quote signs itself: a dashed last line inside the blockquote is the attr
 });
 
 test("a GitHub alert is its own block with the marker lifted into a title", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const md = "# T\n\nbefore\n\n> [!WARNING]\n> Mind the ==gap==, and `keep` it.\n>\n> Second paragraph.\n\nafter\n";
     const { html, pages } = build(md, { registry, layouts, themeCss: "" });
     expect(pages[0]!.blocks.map(b => b.component)).toEqual(["prose", "alert", "prose"]);
@@ -148,21 +146,21 @@ test("a GitHub alert is its own block with the marker lifted into a title", asyn
 });
 
 test("==words== is a highlight, in prose and inside a component's own text", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\nsay ==this== and a == b stays\n\n<!-- ainsi: boxes -->\n- **One** ==hot==\n", { registry, layouts, themeCss: "" });
     expect(html).toContain("say <mark>this</mark> and a == b stays");
     expect(html).toContain('<span class="ainsi-boxes__body"><mark>hot</mark></span>');
 });
 
 test("prose aligns a block without touching its text", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const html = build("# T\n\n<!-- ainsi: prose align=center -->\nwords\n\n<!-- ainsi: prose size=large align=right -->\nmore\n", { registry, layouts, themeCss: "" }).html;
     expect(html).toContain('<div class="ainsi-prose ainsi-prose--center">');
     expect(html).toContain('<div class="ainsi-prose ainsi-prose--large ainsi-prose--right">');
 });
 
 test("columns is boxes without the chrome: one column per item, a bold run as its title", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: columns -->\n- **Fast** ships in a day\n- plain second\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<ul class="ainsi-columns" data-ainsi="columns">');
     expect(html).toContain('<li class="ainsi-columns__column"><span class="ainsi-columns__title">Fast</span><span class="ainsi-columns__body">ships in a day</span></li>');
@@ -174,7 +172,7 @@ test("columns is boxes without the chrome: one column per item, a bold run as it
 });
 
 test("figures: the bold run is the figure, any text; the row takes one size from its longest", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: figures -->\n- **5** things\n- **$500 000** a year\n- **200 Mtok/s** peak\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('style="--ainsi-figures-count: 3; --ainsi-figures-chars: 10"');
     expect(html).toContain('<span class="ainsi-figures__value">200 Mtok/s</span>');
@@ -182,7 +180,7 @@ test("figures: the bold run is the figure, any text; the row takes one size from
 });
 
 test("matrix takes exactly four items and names its axes from props", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const four = build("# T\n\n<!-- ainsi: matrix x=\"effort\" y=\"impact\" -->\n- **A** a\n- **B** b\n- **C** c\n- **D** d\n", { registry, layouts, themeCss: "" });
     expect(four.pages[0]!.blocks[1]!.component).toBe("matrix");
     expect(four.html).toContain('<span class="ainsi-matrix__x">effort</span>');
@@ -192,7 +190,7 @@ test("matrix takes exactly four items and names its axes from props", async () =
 });
 
 test("agenda numbers its rows with two digits", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const { html } = build("# T\n\n<!-- ainsi: agenda -->\n1. **Open** where we are\n2. **Plan** where next\n", { registry, layouts, themeCss: "" });
     expect(html).toContain('<ol class="ainsi-agenda"');
     expect(html).toContain('<span class="ainsi-agenda__number">01</span>');
@@ -203,7 +201,7 @@ test("agenda numbers its rows with two digits", async () => {
 });
 
 test("prose colours by the theme's ink names only", async () => {
-    const registry = await load([BUILTIN]);
+    const registry = await load(BUILTIN);
     const html = build("# T\n\n<!-- ainsi: prose color=accent caps -->\nlabel\n", { registry, layouts, themeCss: "" }).html;
     expect(html).toContain('<div class="ainsi-prose ainsi-prose--caps ainsi-prose--accent">');
     const bad = build("# T\n\n<!-- ainsi: prose color=#ff0000 -->\nwords\n", { registry, layouts, themeCss: "" });

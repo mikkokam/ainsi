@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readdir } from "node:fs/promises";
 import { BUILTIN, LAYOUTS, THEMES, load, loadLayouts, loadTheme, themeDir } from "../src/load";
 
-const defaults = await load([BUILTIN]);
+const defaults = await load(BUILTIN);
 const layouts = await loadLayouts([LAYOUTS]);
 import { TOKENS } from "../src/tokens";
 import { BASE_CSS } from "../src/base";

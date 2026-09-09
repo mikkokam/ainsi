@@ -4,7 +4,7 @@ import { BUILTIN, LAYOUTS, load, loadLayouts, loadTheme } from "../src/load";
 import { build } from "../src/build";
 import type { Diagnostic } from "../src/types";
 
-const registry = await load([BUILTIN]);
+const registry = await load(BUILTIN);
 const layouts = await loadLayouts([LAYOUTS]);
 const THEMES = resolve(import.meta.dir, "../themes");
 

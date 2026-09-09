@@ -6,53 +6,48 @@ import type { Diagnostic } from "./types";
 
 const SCRIPTS = ["script.tsx", "script.ts", "script.jsx", "script.js"];
 
-/**
- * A component is a folder. Its name is the folder name, so nothing inside restates it.
- * Point this at as many roots as you like; later roots override earlier ones by name.
- */
+/** A component is a folder. Its name is the folder name, so nothing inside restates it. */
 export interface LoadOptions {
     /** bypass the module cache, so a watcher picks up an edited component */
     fresh?: boolean;
 }
 
-export async function load(roots: string[], diagnostics: Diagnostic[] = [], options: LoadOptions = {}): Promise<Registry> {
+export async function load(root: string, diagnostics: Diagnostic[] = [], options: LoadOptions = {}): Promise<Registry> {
     const registry = new Registry();
+    const dir = resolve(root);
 
-    for (const root of roots) {
-        const dir = resolve(root);
-        let entries: string[];
-        try {
-            entries = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
-        } catch {
-            diagnostics.push({ level: "warn", message: `component root not found: ${dir}` });
+    let entries: string[];
+    try {
+        entries = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
+    } catch {
+        diagnostics.push({ level: "warn", message: `component root not found: ${dir}` });
+        return registry;
+    }
+
+    for (const name of entries.sort()) {
+        const folder = join(dir, name);
+        const entry = join(folder, "index.ts");
+        if (!(await Bun.file(entry).exists())) {
+            diagnostics.push({ level: "warn", message: `${name}/ has no index.ts; skipped` });
             continue;
         }
 
-        for (const name of entries.sort()) {
-            const folder = join(dir, name);
-            const entry = join(folder, "index.ts");
-            if (!(await Bun.file(entry).exists())) {
-                diagnostics.push({ level: "warn", message: `${name}/ has no index.ts; skipped` });
-                continue;
-            }
-
-            const module = await import(fresh(entry, options));
-            const definition: ComponentDefinition | undefined = module.default;
-            if (!definition?.render) {
-                diagnostics.push({ level: "warn", message: `${name}/index.ts default-exports no render; skipped` });
-                continue;
-            }
-
-            const css = await readIfPresent(join(folder, "style.css"));
-            if (css) checkScope(name, css, diagnostics);
-
-            registry.register({
-                ...definition,
-                name,
-                ...(css ? { css } : {}),
-                ...(await bundle(folder, name, diagnostics)),
-            } as Component, { replace: true });
+        const module = await import(fresh(entry, options));
+        const definition: ComponentDefinition | undefined = module.default;
+        if (!definition?.render) {
+            diagnostics.push({ level: "warn", message: `${name}/index.ts default-exports no render; skipped` });
+            continue;
         }
+
+        const css = await readIfPresent(join(folder, "style.css"));
+        if (css) checkScope(name, css, diagnostics);
+
+        registry.register({
+            ...definition,
+            name,
+            ...(css ? { css } : {}),
+            ...(await bundle(folder, name, diagnostics)),
+        } as Component);
     }
 
     return registry;

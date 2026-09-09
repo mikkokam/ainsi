@@ -11,7 +11,7 @@ One engine and three consumers of it. Everything else follows from that.
       │ cli  │            │ player │          │ studio  │
       └──────┘            └────────┘          └─────────┘
      writes a file        ships inside         dev server only,
-     headless, the        the deck; chrome     never in a deck
+     headless, the        the deck; chrome     never in a deck. ALSO A DESKTOP APP
      agent's surface      injected at runtime
 
 ## Where things run
@@ -22,8 +22,9 @@ One engine and three consumers of it. Everything else follows from that.
 | cli    | Bun                  | only for `--fit` and PDF | no                |
 | player | the viewer's browser | is one                   | **yes**           |
 | studio | Bun + a browser      | is one                   | no                |
+| studio | electrobun app       | no                       | no                |
 
-`playwright-core` is an optional dependency that ships no browser binary. `build.ts` never imports it — there is a test — so a plain build on a machine that has never seen chromium works and stays fast. A missing browser degrades to one diagnostic and unchanged pages, never a thrown error.
+`playwright-core` is an optional dependency that ships no browser binary. `build.ts` never imports it — there is a test — so a plain build on a machine that has never seen chromium works and stays fast.
 
 ## Surface: the CLI
 

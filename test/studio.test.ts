@@ -4,7 +4,7 @@ import { assemble } from "../src/build";
 import { parse } from "../src/parse";
 import { addPage, alertOf, directiveLine, markerOf, move, movePage, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
 
-const registry = await load([BUILTIN]);
+const registry = await load(BUILTIN);
 const layouts = await loadLayouts([LAYOUTS]);
 
 const apply = (source: string, splice: { start: number; end: number; text: string }) =>
