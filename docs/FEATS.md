@@ -94,6 +94,8 @@ The studio serves one page whether it is in a browser tab or a native window, so
 
 A launch with no deck shows a landing page: themes across the top, and beneath them the decks you have been in. This replaces an earlier guess that it should show an empty window, on the grounds that recents is state and the studio holds none. It is not state. Ordering markdown files under the root by mtime is a recents list, derived from disk each time, which is what the home page below already specifies.
 
+Hiding the chrome is what makes the gap visible: every action it holds has to exist as a native item, and `Theme…` already does not. It has no command name, so on a desktop with the chrome hidden there is no way to change a theme. Whether the answer is a native submenu listing the themes or a command that opens the studio's own drill is part of this row.
+
 The chrome moves into a toolbar along the top rather than sitting over the content. One constraint decides how far that goes: studio chrome is injected at runtime and never ships in a deck, so a studio toolbar is free, while the viewer's toolbar ships inside the built HTML and is in the print path, so anything moved there has to stay invisible to print, to export and to measurement.
 
 ## One way to make a deck (feat)

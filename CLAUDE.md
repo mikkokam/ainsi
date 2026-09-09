@@ -18,5 +18,7 @@ The studio refuses to start without a terminal, so an agent or a pipe is told to
 
 Tests that need a browser skip when there is none rather than failing, so a green run on a machine without chromium is not a full run.
 
+Every studio action needs a name, because it has two triggers. The studio's own chrome is written for a browser and the app hides it, so an action reachable only from a button in that chrome does not exist on the desktop. Give it a case in the `ainsi:command` handler and have the button call the same function; the app's menu item then dispatches the name and the behaviour stays in one place. A click handler written inline has no name and the app cannot offer it.
+
 
 When developing, do not try to do screenshots on your own. instead do the change that you asked and then send a heads up to the user to do the testing - The user probably already has the development server running and the browser open so they can comment.
