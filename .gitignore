@@ -22,7 +22,6 @@ bun.lock
 # desktop shells: toolchain projections and build output
 desktop/*/.hutch/
 desktop/*/build/
-desktop/tauri/target/
 desktop/*/hutch.lock
 desktop/.*.hutch-template.lock
-desktop/tauri/gen/
+desktop/*/artifacts/

@@ -42,29 +42,33 @@ Seen on a photographer's contact sheet: six pictures, three columns, and the pag
 
 The fix is a cap that survives cropping: the cell keeps its aspect ratio and takes a `max-height` in em the same way an uncropped picture does, so the row shrinks when the type does. Done is a page like that one fitting at three columns, and no warning.
 
-# The desktop shells
+# The desktop shell
 
-Two native windows over the studio the CLI already serves, under `desktop/`: one Tauri, one Electrobun. Both start `ainsi` rooted at home with `--port 0`, read the URL off its stdout and point a webview at it, so neither knows what a deck is and every feature the studio grows arrives in both for free. Opening a deck is the studio's own chooser doing it; the File menu is a second door, and it restarts the studio because the root is fixed when the studio starts. Every other native menu item dispatches `ainsi:command` into the page and the studio runs it, so the two menus are one implementation and a shell never learns an endpoint. Both are dev tools: they run the checkout they were built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
+A native window over the studio the CLI already serves, under `desktop/electrobun`. It starts `ainsi` rooted at home with `--port 0`, reads the URL off its stdout and points a webview at it, so it does not know what a deck is and every feature the studio grows arrives in the app for free. Opening a deck is the studio's own chooser doing it; the File menu is a second door, and it restarts the studio because the root is fixed when the studio starts. Every other native menu item dispatches `ainsi:command` into the page and the studio runs it, so the two menus are one implementation and the shell never learns an endpoint.
 
-## Which shell survives (question)
-
-Both are built and both work, which is the point of having two. Tauri bundles to 5.2 MB and a 2.0 MB dmg against Electrobun's 66 MB, and its toolchain is stable; Electrobun's stable template catalog is broken against the Hutch it installs, so `desktop/electrobun` is pinned to `2.0.2-beta.17`, and its own SDK ships from a downloaded devkit rather than npm. Against that, Electrobun's main process is Bun, which is the runtime the engine is written in, and it is the only one of the two that could ever host the studio in-process instead of spawning it.
-
-Answered by using both for a week, not by argument, and the deliverable is one `[decision]` sentence in ARCHITECTURE plus the other folder deleted. Nothing else should depend on either until it is answered.
+It is a dev tool: it runs the checkout it was built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
 
 ## An app that runs on a machine with no checkout (feat)
 
-Both shells bake in the path to this repo and spawn `bun src/cli.ts` from it. That is the whole reason they are dev-only, and it is one thing: `load.ts` learns what components and themes exist by reading its own folder and importing the TypeScript it finds there, which a bundled app has no equivalent of. This is the real consumer the manifest question below was waiting for; it should be answered before any of this is attempted, not during.
+The shell bakes in the path to this repo and spawns `bun src/cli.ts` from it. That is the whole reason it is dev-only, and it is one thing: `load.ts` learns what components and themes exist by reading its own folder and importing the TypeScript it finds there, which a bundled app has no equivalent of. This is the real consumer the manifest question below was waiting for; it should be answered before any of this is attempted, not during.
+
+The spawn goes with it. Electrobun's main process is Bun, so the studio can be imported rather than started: no port, no URL parsed off stdout, no stdin held open to kill an orphan, no second Bun in the bundle. `serve.ts` is already a transport handed a `rebuild` and a list of roots, so what changes is who calls it.
 
 Done is an `.app` a person can be handed that opens a deck with no bun, no repo and no `bun install` anywhere on the machine.
 
 ## Measurement without a separate browser (feat)
 
-`--fit`, PDF and PPTX all go through `playwright-core` and a chromium the person installed themselves, which is a reasonable thing to ask of a checkout and an impossible one to ask of someone who double-clicked an icon. Today the shells inherit the CLI's degradation: no browser, one diagnostic, unfitted pages.
+`--fit`, PDF and PPTX all go through `playwright-core` and a chromium the person installed themselves, which is a reasonable thing to ask of a checkout and an impossible one to ask of someone who double-clicked an icon. Today the shell inherits the CLI's degradation: no browser, one diagnostic, unfitted pages.
 
-Both shells already contain a webview that lays out the same html the solver measures. Driving that instead of launching a second browser drops the dependency, the 150 MB it would otherwise cost to bundle, and the divergence between what was measured and what is shown. The `FitSession` port already exists and hides which browser is behind it, so this is a second implementation of it rather than a change to the solver.
+The shell already contains a webview that lays out the same html the solver measures. Driving that instead of launching a second browser drops the dependency, the 150 MB it would otherwise cost to bundle, and the divergence between what was measured and what is shown. The `FitSession` port already exists and hides which browser is behind it, so this is a second implementation of it rather than a change to the solver.
 
 Depends on nothing above; blocks the shipping app only if the shipping app is expected to export.
+
+## The beta pin (defect)
+
+`desktop/electrobun` is pinned to Electrobun `2.0.2-beta.17` because the stable template catalog is broken against the Hutch its npm bootstrap installs. The SDK also arrives from a projected devkit rather than npm, so it is not in a lockfile the way every other dependency here is.
+
+Nothing is wrong today and the shell works. This is a row so that the pin is not mistaken for a choice: when stable resolves, move to it and say so.
 
 # Later
 
