@@ -93,14 +93,28 @@ ApplicationMenu.setApplicationMenu([
         ],
     },
     {
+        /*
+         * Cut, copy and paste are the studio's rather than the webview's roles: a role acts on
+         * a text selection, and most of the time what is selected here is a block. The studio
+         * hands the verb back to the field when a caret is in one.
+         */
         label: "Edit",
         submenu: [
-            { role: "undo" }, { role: "redo" }, { type: "separator" },
-            { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" },
+            { role: "undo" }, { role: "redo" },
+            { type: "separator" },
+            { label: "Cut", action: "cut", accelerator: "cmd+x" },
+            { label: "Copy", action: "copy", accelerator: "cmd+c" },
+            { label: "Paste", action: "paste", accelerator: "cmd+v" },
+            { label: "Delete", action: "delete" },
+            { role: "selectAll" },
             { type: "separator" },
             { label: "Edit Source", action: "source" },
             { label: "Deck Settings…", action: "settings" },
         ],
+    },
+    {
+        label: "Insert",
+        submenu: [{ label: "Block…", action: "insert", accelerator: "cmd+shift+n" }],
     },
     { label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "toggleFullScreen" }] },
 ]);

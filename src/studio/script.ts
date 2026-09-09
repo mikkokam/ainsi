@@ -71,6 +71,23 @@ let doc: Doc = { hash: "", source: "", file: "", layout: "default", entities: []
  */
 interface Chrome { kind: "block" | "raw" | "menu"; holds: boolean; close(): void }
 let chrome: Chrome | undefined;
+
+/*
+ * The state between hovering something and typing in it. A click selects, a second click or
+ * Enter puts the caret in, Escape steps back out. Everything a menu can act on hangs off this:
+ * with a selection the commands are the studio's, and with a caret they are the text field's.
+ *
+ * The handle is the element, not an id, because a rebuild replaces the document and a
+ * selection does not survive one. What survives a rebuild is the file, which is the point.
+ */
+let selected: HTMLElement | undefined;
+
+function select(handle: HTMLElement | undefined): void {
+    if (selected === handle) return;
+    selected?.removeAttribute("data-ainsi-selected");
+    selected = handle;
+    selected?.setAttribute("data-ainsi-selected", "");
+}
 let pendingReload = false;
 
 function show(next: Chrome): void {
@@ -193,6 +210,7 @@ async function init(): Promise<void> {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
         const target = handleAt(event.target as HTMLElement);
         if (!target) {
+            select(undefined);
             if (chrome?.kind === "menu") shut();
             else if (onMark(event)) { event.preventDefault(); openDeck(); }
             else if (onEmptyGround(event)) event.preventDefault();
@@ -201,8 +219,43 @@ async function init(): Promise<void> {
         const range = rangeOf(target);
         if (!range) return;
         event.preventDefault();
-        if (event.altKey) insertAfter(target, range.end);
-        else edit(target, range, "end");
+        if (event.altKey) return insertAfter(target, range.end);
+        // the first click picks the block and shows what can be done to it; the second says do
+        if (selected === target) edit(target, range, "end");
+        else { select(target); openMenu(target, target.getBoundingClientRect()); }
+    });
+
+    /*
+     * The clipboard, on what is selected. A block's markdown is what goes on it, so a slide
+     * pastes into any editor and markdown from anywhere pastes into a deck, and nothing here
+     * knows what a block means. With a caret in a field these keys belong to the field, which
+     * is what the guard is.
+     */
+    document.addEventListener("keydown", event => {
+        if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+        const key = event.key.toLowerCase();
+        if (key !== "c" && key !== "x" && key !== "v") return;
+        if (chrome?.kind === "block" || chrome?.kind === "raw") return;
+        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+        if (document.body.hasAttribute("data-present")) return;
+        if (!selected) return;
+        event.preventDefault();
+        void clipboard(key === "c" ? "copy" : key === "x" ? "cut" : "paste");
+    });
+
+    /*
+     * Enter opens what is selected and Escape lets it go. Both are ignored while anything is
+     * typing, where the key belongs to the field, and while presenting, where nothing is.
+     */
+    document.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== "Escape") return;
+        if (!selected || chrome?.kind === "block" || chrome?.kind === "raw") return;
+        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+        if (document.body.hasAttribute("data-present")) return;
+        event.preventDefault();
+        if (event.key === "Escape") { select(undefined); if (chrome?.kind === "menu") shut(); return; }
+        const range = rangeOf(selected);
+        if (range) edit(selected, range, "end");
     });
 
     // the toolbar and insertion from a visible door: a rail at the block's top-left corner
@@ -322,6 +375,9 @@ async function init(): Promise<void> {
         else if (name === "settings") openDeck();
         else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);
         else if (name === "zip") void exportTo("/__zip", `${base}.zip`);
+        else if (name === "copy" || name === "cut" || name === "paste") void clipboard(name);
+        else if (name === "insert") insertHere();
+        else if (name === "delete") deleteSelection();
         else if (name.startsWith("pdf")) void exportTo(`/__pdf?images=${name.slice(4) || "screen"}`, `${base}.pdf`);
     });
 
@@ -598,6 +654,102 @@ function neighbours(entity: DocEntity): (string | undefined)[] {
 }
 
 /** a governed block is addressed as a whole; a heuristic one at the entity clicked */
+/*
+ * Copy, cut and paste on the selection. A caret inside a field takes precedence and gets the
+ * browser's own, because a native menu item with an accelerator has no other way to reach the
+ * field it is over; with no caret and no selection there is nothing to act on and it says so.
+ */
+async function clipboard(verb: "copy" | "cut" | "paste"): Promise<void> {
+    const focused = document.activeElement as HTMLElement | null;
+    if (focused?.closest?.("input, textarea, [contenteditable]")) {
+        document.execCommand(verb);
+        return;
+    }
+    if (!selected) return hint("Nothing selected", true, 2000);
+    const range = rangeOf(selected);
+    if (!range) return;
+    if (verb === "paste") return paste(range);
+    return copy(range, verb === "cut" ? selected : undefined);
+}
+
+/** what a selected block puts on the clipboard: its markdown, and nothing about the studio */
+async function copy(range: Range, cutting?: HTMLElement): Promise<void> {
+    try {
+        await navigator.clipboard.writeText(range.md);
+    } catch {
+        return hint("The browser would not give the clipboard", true, 4000);
+    }
+    if (!cutting) return hint("Copied", false, 1200);
+    const target = targetOf(cutting);
+    if (!target) return;
+    select(undefined);
+    splice(remove(doc.source, target));
+    hint("Cut", false, 1200);
+}
+
+/*
+ * Paste lands after the selection and never over it. Replacing is a destructive default and
+ * there is no way to ask, and undo is a commit rather than a keystroke, so the cheap mistake
+ * has to be the recoverable one.
+ */
+async function paste(range: Range): Promise<void> {
+    let text: string;
+    try {
+        text = (await navigator.clipboard.readText()).trim();
+    } catch {
+        return hint("The browser would not give the clipboard", true, 4000);
+    }
+    if (!text) return hint("Nothing on the clipboard", true, 2500);
+    splice({ start: range.end, end: range.end, text: `\n\n${text}` });
+}
+
+/*
+ * Insert goes after the selection, or at the end of the page in view when nothing is selected,
+ * which is the only answer that does not need a question asked first.
+ */
+function insertHere(): void {
+    if (selected) {
+        const range = rangeOf(selected);
+        if (range) insertAfter(selected, range.end);
+        return;
+    }
+    const page = pageInView();
+    const last = page && doc.pages.find(p => p.ids.includes(page));
+    if (!last) return hint("Nothing selected", true, 2000);
+    const anchor = document.querySelector<HTMLElement>(`[data-ainsi-entity="${last.ids.at(-1)}"]`);
+    if (anchor) insertAfter(anchor, last.last);
+}
+
+/** the id of the first entity on the page nearest the middle of the window */
+function pageInView(): string | undefined {
+    const middle = innerHeight / 2;
+    let nearest: { id: string; away: number } | undefined;
+    for (const section of document.querySelectorAll<HTMLElement>(".ainsi-page")) {
+        const id = section.querySelector<HTMLElement>("[data-ainsi-entity]")?.dataset.ainsiEntity;
+        if (!id) continue;
+        const box = section.getBoundingClientRect();
+        const away = Math.abs(box.top + box.height / 2 - middle);
+        if (!nearest || away < nearest.away) nearest = { id, away };
+    }
+    return nearest?.id;
+}
+
+function deleteSelection(): void {
+    if (!selected) return hint("Nothing selected", true, 2000);
+    const target = targetOf(selected);
+    if (!target) return;
+    select(undefined);
+    splice(remove(doc.source, target));
+}
+
+/** the target a splice needs, for the entity or span a handle stands for */
+function targetOf(handle: HTMLElement): Target | undefined {
+    const id = handle.dataset.ainsiEntity ?? handle.dataset.ainsiSpan?.split(" ")[0];
+    const entity = doc.entities.find(e => e.id === id);
+    const block = doc.blocks.find(b => entity && b.ids.includes(entity.id));
+    return entity && block ? targetFor(entity, block) : undefined;
+}
+
 function targetFor(entity: DocEntity, block: DocBlock): Target {
     const governed = block.origin === "directive";
     const first = governed ? doc.entities.find(e => e.id === block.ids[0])! : entity;

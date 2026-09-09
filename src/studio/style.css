@@ -9,6 +9,14 @@ body[data-ainsi-edit]:not([data-present]) [data-ainsi-span]:not([data-ainsi-enti
     cursor: text;
 }
 
+/* what is selected, which is a block picked but not being typed in: a solid edge against the
+   dashed one hover draws, so the two states are not the same shape in two colours */
+body[data-ainsi-edit]:not([data-present]) [data-ainsi-selected] {
+    outline: 2px solid #1f6feb;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }
 

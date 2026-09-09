@@ -42,19 +42,9 @@ Seen on a photographer's contact sheet: six pictures, three columns, and the pag
 
 The fix is a cap that survives cropping: the cell keeps its aspect ratio and takes a `max-height` in em the same way an uncropped picture does, so the row shrinks when the type does. Done is a page like that one fitting at three columns, and no warning.
 
-## Selecting without a cursor (feat)
-
-There is no state between hovering a block and typing in it. Click a paragraph and the caret is already inside; click an image and its properties are already open. That reads fine until a menu wants to say Copy, Cut or Insert, at which point every one of them has to ask what it would act on and there is no answer.
-
-One state fixes all of them. A single click selects: the block takes an outline and its bar, and there is no caret. Enter or a second click puts the caret in. Escape returns to selected, Escape again deselects. An image behaves the same way, so the properties panel opens on Enter rather than on the first click.
-
-`[decision]` With a selection the commands are ours; with a caret they are the text field's. That one sentence settles the cases that otherwise multiply. Copy and cut act on the selected block and put its markdown on the clipboard. Paste inserts after the selection and never replaces it, because replacing is a destructive default and there is no way to ask. Insert puts the new block after the selection, or at the end of the page in view when nothing is selected. Inside a caret, the browser's own copy and paste are untouched.
-
-The rows below wait on this: a page cannot be copied until a page can be selected, and an Edit menu without it is a row of items that do nothing. Done is a block selected with one click, copied with the keyboard, and pasted into another deck as markdown a person would have typed.
-
 ## Copy and paste a page (feat)
 
-A slide cannot be moved. Every other deck tool does this and it is the first thing anyone reaches for. It waits on the row above, because copying a page means selecting one first, and the rest of the pieces are already here: `describePages` hands the studio each page's `first` and `last` source offsets and its layout directive's span, so copying is a slice of the markdown and pasting is a splice at another page's `last`, through the same hashed write every other edit goes through. Nothing serialises HTML back to markdown, so the invariant above is untouched.
+A block moves now, and a page does not. Selecting a block, copying it and pasting it after another landed; a page has no selection of its own, so the same three verbs have nothing to name. The rest of the pieces are already here: `describePages` hands the studio each page's `first` and `last` source offsets and its layout directive's span, so copying is a slice of the markdown and pasting is a splice at another page's `last`, through the same hashed write every other edit goes through. Nothing serialises HTML back to markdown, so the invariant above is untouched.
 
 Right-click a page and copy it, right-click another and paste after it. This is the studio, not the shell, so it works in a browser tab exactly as it works in the app. The clipboard carries plain markdown, which costs nothing and means a slide pastes into any editor and markdown from anywhere pastes into a deck.
 
@@ -126,7 +116,7 @@ Print was in the menu and did nothing, and is gone. The command ran `window.prin
 
 View and Slideshow are missing and are nearly free, but not from where the other commands come. Overview and presenting belong to the viewer, not the studio, because a built deck presents with no server anywhere near it. So the viewer grows its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatches, and the app reaches presenting the same way it reaches an export. `[decision]` Play means from the page in view. Play from start is the second item, not the first, because the deck is open at a page for a reason.
 
-Edit's clipboard items and an Insert menu wait on selection, above. Until that lands they are items that grey out or lie.
+Edit's clipboard items and an Insert menu landed with selection. What is left in Edit is Select All, which is still the webview's role and selects text rather than blocks.
 
 File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.
 
