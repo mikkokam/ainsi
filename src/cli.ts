@@ -4,7 +4,7 @@ import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
 import { END, group } from "./group";
 import { fit, openFit, type FitSession } from "./fit";
-import { parse } from "./parse";
+import { images, parse } from "./parse";
 import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
@@ -331,20 +331,19 @@ async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Prom
  */
 async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<void> {
     const seen = new Map<string, string | undefined>();
-    for (const entity of pages.flatMap(p => p.blocks).flatMap(b => b.entities)) {
-        const node = entity.node.type === "image" ? entity.node : entity.node.children?.[0];
-        if (node?.type !== "image" || !node.url || /^(https?:|data:)/.test(node.url)) continue;
-        if (!seen.has(node.url)) {
-            const file = Bun.file(resolve(dirname(deck!), node.url));
+    for (const image of images(pages.flatMap(p => p.blocks).flatMap(b => b.entities))) {
+        if (/^(https?:|data:)/.test(image.url)) continue;
+        if (!seen.has(image.url)) {
+            const file = Bun.file(resolve(dirname(deck!), image.url));
             if (await file.exists()) {
-                seen.set(node.url, `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`);
+                seen.set(image.url, `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`);
             } else {
-                diagnostics.push({ level: "warn", message: `image not found beside the deck: ${node.url}` });
-                seen.set(node.url, undefined);
+                diagnostics.push({ level: "warn", message: `image not found beside the deck: ${image.url}` });
+                seen.set(image.url, undefined);
             }
         }
-        const url = seen.get(node.url);
-        if (url) node.url = url;
+        const inlined = seen.get(image.url);
+        if (inlined) image.set(inlined);
     }
 }
 

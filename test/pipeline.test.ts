@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parse } from "../src/parse";
+import { images, parse } from "../src/parse";
 import { paginate } from "../src/paginate";
 import { group } from "../src/group";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
@@ -147,4 +147,16 @@ test("a newline inside a paragraph is a line break; a blank line is still a new 
     expect(html).toContain("<p>one<br>\nline two</p>");
     expect(html).toContain("<p>next block</p>");
     expect(build("`a\nb`\n", { registry, layouts, themeCss: "" }).html).not.toContain("<br>");
+});
+
+test("images() finds one inside a list, which is where figures and tiles put them", () => {
+    const { doc } = parse("# T\n\n<!-- ainsi: figures -->\n\n- ![a](one.png)\n- ![b](two.png)\n\n![c](three.png)\n");
+    expect(images(doc.entities).map(i => i.url)).toEqual(["one.png", "two.png", "three.png"]);
+});
+
+test("an image's url is rewritten through the node the walk handed back", () => {
+    const { doc } = parse("- ![a](one.png)\n");
+    const [found] = images(doc.entities);
+    found!.set("data:image/png;base64,AAA");
+    expect(images(doc.entities).map(i => i.url)).toEqual(["data:image/png;base64,AAA"]);
 });

@@ -112,6 +112,24 @@ export function parse(source: string): { doc: Source; diagnostics: Diagnostic[] 
     return { doc: { settings, entities, directives }, diagnostics };
 }
 
+/*
+ * Every image a run of entities holds, at any depth. `figures` and `tiles` take a list of
+ * them, so a walk that only looked at an entity's own node and its first child found the
+ * standalone ones and missed every one inside a list, which is most of them.
+ */
+export function images(entities: Entity[]): { url: string; set(url: string): void }[] {
+    const found: { url: string; set(url: string): void }[] = [];
+    const visit = (node: any): void => {
+        if (!node || typeof node !== "object") return;
+        if (node.type === "image" && typeof node.url === "string") {
+            found.push({ url: node.url, set: (url: string) => { node.url = url; } });
+        }
+        for (const child of node.children ?? []) visit(child);
+    };
+    for (const entity of entities) visit(entity.node);
+    return found;
+}
+
 /**
  * FNV-1a, six hex digits. Deliberately not `Bun.hash`: this module is engine, and the engine
  * has to run wherever a renderer does. Ids are internal — no content file and no output ever
