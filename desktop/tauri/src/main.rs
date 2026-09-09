@@ -6,14 +6,16 @@ use std::process::{Child, Command, Stdio};
 use std::sync::mpsc;
 use std::sync::Mutex;
 
+use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 /*
  * The desktop shell: a native window over the studio the CLI already serves.
  *
- * Nothing about the deck is understood here. The shell asks for a file, starts the studio
- * beside it and points a webview at it, so every feature the studio grows arrives in the app
- * without a line changing on this side.
+ * Nothing about the deck is understood here. The shell starts the studio and points a webview
+ * at it, so every feature the studio grows arrives in the app without a line changing on this
+ * side. Even opening a deck is the studio's own chooser doing it; the File menu is a second
+ * door for a deck that lives somewhere the chooser cannot reach.
  */
 
 const REPO: &str = env!("AINSI_REPO");
@@ -27,47 +29,30 @@ const GIVE_UP: std::time::Duration = std::time::Duration::from_secs(20);
 struct Studio(Mutex<Option<Child>>);
 
 fn main() {
-    // AINSI_DECK skips the dialog: how the shell is tested, and how a deck opens from a
-    // terminal. The same door as the other shell, whose launcher swallows argv.
-    let picked = match std::env::var_os("AINSI_DECK") {
-        Some(given) => PathBuf::from(given),
-        None => match pick() {
-            Some(chosen) => chosen,
-            None => return,
-        },
-    };
-    let deck = picked.extension().is_some_and(|e| e == "md").then(|| picked.clone());
-    let root = match &deck {
-        Some(file) => file.parent().unwrap().to_path_buf(),
-        None => picked.clone(),
-    };
+    // AINSI_DECK skips straight to a deck: how the shell is tested, and how one opens from a
+    // terminal. Otherwise the studio starts on its own chooser, rooted at home rather than at
+    // the working directory, which is `/` for anything launched from an icon.
+    let deck = std::env::var_os("AINSI_DECK").map(PathBuf::from);
+    let home = PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| "/".into()));
+    let root = deck.as_deref().and_then(Path::parent).unwrap_or(&home).to_path_buf();
 
     let (mut child, url) = match start(deck.as_deref(), &root) {
         Ok(started) => started,
-        Err(why) => {
-            rfd::MessageDialog::new()
-                .set_title("ainsi")
-                .set_description(&why)
-                .set_level(rfd::MessageLevel::Error)
-                .show();
-            return;
-        }
+        Err(why) => return complain(&why),
     };
-
-    let title = deck
-        .as_ref()
-        .and_then(|d| d.file_name())
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| "ainsi".into());
 
     let built = tauri::Builder::default()
         .setup(move |app| {
-            let window = WebviewWindowBuilder::new(app, "studio", WebviewUrl::External(url.parse()?))
-                .title(&title)
-                .inner_size(1440.0, 900.0);
-            #[cfg(target_os = "macos")]
-            let window = window.title_bar_style(tauri::TitleBarStyle::Overlay);
-            window.build()?;
+            app.set_menu(menu(app.handle())?)?;
+            app.on_menu_event(|app, event| {
+                if event.id() == "open" {
+                    open(app.clone());
+                }
+            });
+            WebviewWindowBuilder::new(app, "studio", WebviewUrl::External(url.parse()?))
+                .title("ainsi")
+                .inner_size(1440.0, 900.0)
+                .build()?;
             Ok(())
         })
         .build(tauri::generate_context!());
@@ -91,16 +76,97 @@ fn main() {
     }
 }
 
-/// A markdown file opens straight into it; a folder opens the studio's own chooser under it,
-/// which is where New deck lives.
-fn pick() -> Option<PathBuf> {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/".into());
-    rfd::FileDialog::new()
-        .set_title("Open a deck")
-        .set_directory(&home)
-        .add_filter("markdown", &["md"])
-        .pick_file()
-        .or_else(|| rfd::FileDialog::new().set_directory(&home).pick_folder())
+/// The standard mac menus, which a window holding a text editor needs for copy and paste,
+/// plus the one item that is ours.
+fn menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let about = Submenu::with_items(
+        app,
+        "ainsi",
+        true,
+        &[
+            &PredefinedMenuItem::about(app, None, Some(AboutMetadata::default()))?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::hide(app, None)?,
+            &PredefinedMenuItem::quit(app, None)?,
+        ],
+    )?;
+    let file = Submenu::with_items(
+        app,
+        "File",
+        true,
+        &[&MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?],
+    )?;
+    let edit = Submenu::with_items(
+        app,
+        "Edit",
+        true,
+        &[
+            &PredefinedMenuItem::undo(app, None)?,
+            &PredefinedMenuItem::redo(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::cut(app, None)?,
+            &PredefinedMenuItem::copy(app, None)?,
+            &PredefinedMenuItem::paste(app, None)?,
+            &PredefinedMenuItem::select_all(app, None)?,
+        ],
+    )?;
+    let window = Submenu::with_items(
+        app,
+        "Window",
+        true,
+        &[
+            &PredefinedMenuItem::minimize(app, None)?,
+            &PredefinedMenuItem::maximize(app, None)?,
+            &PredefinedMenuItem::fullscreen(app, None)?,
+        ],
+    )?;
+    Menu::with_items(app, &[&about, &file, &edit, &window])
+}
+
+/*
+ * Opening moves the root, and the root is fixed when the studio starts, so this restarts it.
+ * A second server on the old root would be a second writer over the same files; a restart
+ * costs about a second and there is nothing to carry across, because the studio holds no
+ * document state.
+ *
+ * The dialog is blocking, so it runs off the main thread: the menu event arrives on the
+ * thread the window is drawn from, and holding that up freezes the window behind the panel.
+ */
+fn open(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/".into());
+        // a folder opens the chooser under it, which is where New presentation lives
+        let picked = rfd::FileDialog::new()
+            .set_title("Open a deck")
+            .set_directory(&home)
+            .add_filter("markdown", &["md"])
+            .pick_file()
+            .or_else(|| rfd::FileDialog::new().set_directory(&home).pick_folder());
+        let Some(picked) = picked else { return };
+
+        let deck = picked.extension().is_some_and(|e| e == "md").then(|| picked.clone());
+        let root = deck.as_deref().and_then(Path::parent).unwrap_or(&picked).to_path_buf();
+        match start(deck.as_deref(), &root) {
+            Ok((next, url)) => {
+                let Some(window) = app.get_webview_window("studio") else { return };
+                if window.navigate(url.parse().expect("the studio said where it was")).is_err() {
+                    return;
+                }
+                if let Some(mut old) = app.state::<Studio>().0.lock().unwrap().replace(next) {
+                    let _ = old.kill();
+                }
+            }
+            Err(why) => complain(&why),
+        }
+    });
+}
+
+fn complain(why: &str) {
+    rfd::MessageDialog::new()
+        .set_title("ainsi")
+        .set_description(why)
+        .set_level(rfd::MessageLevel::Error)
+        .show();
 }
 
 /*
