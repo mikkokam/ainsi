@@ -110,11 +110,23 @@ So a theme tile is the gesture: click one, get a native save panel with the name
 
 A theme of yours lives in `themes/` in the checkout. After the shipping app there is no checkout and the shipped themes are inside the bundle, so a brand theme has nowhere to be. This is a hole the shipping app opens rather than one that exists today.
 
-A user themes folder under `~/.ainsi`, scanned alongside the shipped set, and an **Install a theme** button beside the tiles that validates a folder and copies it in. The deck still names it as a bare word, so no machine path enters the document. Yours wins a name collision with a shipped theme, because overriding is the reason you would reuse the name.
+A library under `~/.ainsi/themes`, and an **Install a theme** button beside the tiles that validates a folder and copies it in. Picking one for a deck copies that folder beside the deck and writes `theme: ./acme`, so nothing ever points into `~/.ainsi` and the invariant above holds unchanged. The library is where a theme is kept, never where a deck reads it from.
+
+`[invariant]` A bare name in frontmatter means a theme every ainsi has. A user theme in that namespace would not merely go missing on another machine, it would render the same deck differently on two machines that each have a theme called `acme`, and say nothing. Silent divergence is worse than the absence, which already warns and falls back to the default tokens.
+
+The cost is copies: ten decks on your brand theme are ten folders, and changing the theme changes one of them. That is the right trade for now, because the alternative is ten decks that are wrong somewhere else, and a built deck carries its theme inlined anyway. A sync-from-library gesture is the answer if the copies start to hurt, and not before.
 
 This does not reopen the static registry decision. A theme is CSS and that decision keeps data read from disk; every shipped theme's layout overrides are already CSS only, so a theme folder is never executed.
 
 `[guess]` A tile is drawn from `--ainsi-ink`, `--ainsi-accent` and `--ainsi-ground` read out of the theme's own `variables.css`, rather than from a rendered sample. A rendering has no build step to happen at for a theme installed thirty seconds ago, and three tokens is a truer picture of a theme than one sample page anyway. Also wanted, and one button rather than a paragraph of explanation: reveal the themes folder.
+
+## Sending one file (question)
+
+A built `.html` is self-contained: the theme's CSS is inlined and every local image is base64 at build time. A `.md` is not, and never was. Send one markdown file and the recipient gets it without its images and, if it names a theme beside it, without its look.
+
+Nothing is broken here and nothing may need building. The question is whether the studio should say so at the moment it matters, and where. A deck that names a relative theme or references a local image is a deck whose markdown does not travel alone, which the engine already knows at build time and reports to nobody.
+
+The deliverable is a sentence in `ARCHITECTURE.md` about which artefact is the portable one, or a diagnostic, or the finding that people already understand this and it needs neither. Also open: a theme's font `@import` is a network fetch, so a built deck read offline falls back to system type, which is the one part of "self-contained" that is not.
 
 ## Measurement without a separate browser (feat)
 
