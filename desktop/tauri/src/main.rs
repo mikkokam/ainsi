@@ -44,10 +44,9 @@ fn main() {
     let built = tauri::Builder::default()
         .setup(move |app| {
             app.set_menu(menu(app.handle())?)?;
-            app.on_menu_event(|app, event| {
-                if event.id() == "open" {
-                    open(app.clone());
-                }
+            app.on_menu_event(|app, event| match event.id().as_ref() {
+                "open" => open(app.clone()),
+                name => command(app, name),
             });
             WebviewWindowBuilder::new(app, "studio", WebviewUrl::External(url.parse()?))
                 .title("ainsi")
@@ -76,8 +75,26 @@ fn main() {
     }
 }
 
-/// The standard mac menus, which a window holding a text editor needs for copy and paste,
-/// plus the one item that is ours.
+/*
+ * Everything but Open is the page's own doing: the shell dispatches the command and the studio
+ * runs it with its own progress and its own errors, so a native File menu and the studio's own
+ * menu are one implementation and this side never learns an endpoint.
+ */
+fn command(app: &tauri::AppHandle, name: &str) {
+    let Some(window) = app.get_webview_window("studio") else { return };
+    let _ = window.eval(format!(
+        r#"document.dispatchEvent(new CustomEvent("ainsi:command",{{detail:"{name}"}}))"#
+    ));
+}
+
+/*
+ * The standard mac menus, which a window holding a text editor needs for copy and paste, plus
+ * what is ours.
+ *
+ * There is no Save and no Save As, and adding either would be a lie: an edit is written to the
+ * markdown the moment it is committed, so there has never been anything unsaved to keep. The
+ * nearest real thing is the filename field in the studio's own chrome, which renames.
+ */
 fn menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let about = Submenu::with_items(
         app,
@@ -90,11 +107,31 @@ fn menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             &PredefinedMenuItem::quit(app, None)?,
         ],
     )?;
+    let export = Submenu::with_items(
+        app,
+        "Export",
+        true,
+        &[
+            &MenuItem::with_id(app, "pdf", "PDF", true, Some("CmdOrCtrl+E"))?,
+            &MenuItem::with_id(app, "pdf:compact", "PDF, compact", true, None::<&str>)?,
+            &MenuItem::with_id(app, "pdf:full", "PDF, full-resolution images", true, None::<&str>)?,
+            &PredefinedMenuItem::separator(app)?,
+            &MenuItem::with_id(app, "pptx", "PPTX, editable", true, None::<&str>)?,
+        ],
+    )?;
     let file = Submenu::with_items(
         app,
         "File",
         true,
-        &[&MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?],
+        &[
+            &MenuItem::with_id(app, "new", "New Presentation", true, Some("CmdOrCtrl+N"))?,
+            &MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?,
+            &PredefinedMenuItem::separator(app)?,
+            &export,
+            &MenuItem::with_id(app, "print", "Print…", true, Some("CmdOrCtrl+P"))?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::close_window(app, None)?,
+        ],
     )?;
     let edit = Submenu::with_items(
         app,
@@ -108,6 +145,9 @@ fn menu(app: &tauri::AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             &PredefinedMenuItem::copy(app, None)?,
             &PredefinedMenuItem::paste(app, None)?,
             &PredefinedMenuItem::select_all(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &MenuItem::with_id(app, "source", "Edit Source", true, None::<&str>)?,
+            &MenuItem::with_id(app, "settings", "Deck Settings…", true, None::<&str>)?,
         ],
     )?;
     let window = Submenu::with_items(

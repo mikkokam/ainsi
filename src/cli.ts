@@ -494,7 +494,9 @@ const server = serve({
         }
         if (url.pathname === "/__new" && request.method === "POST") {
             const { at } = await request.json();
-            const dir = under(browseRoot, at);
+            // no folder named means beside the deck that is open: what a File menu asks for,
+            // having no idea where in the tree the chooser last was
+            const dir = at === undefined && deck ? dirname(deck) : under(browseRoot, at);
             if (!dir) return new Response("outside the folder the studio was started in", { status: 403 });
             retarget(await untitled(dir));
             return Response.json({ file: basename(deck!) });

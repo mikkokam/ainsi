@@ -80,7 +80,10 @@
         location.reload();
     }
     const open = path => repoint("/__open", { path });
-    document.getElementById("new").addEventListener("click", () => repoint("/__new", { at }));
+    const make = () => repoint("/__new", { at });
+    document.getElementById("new").addEventListener("click", make);
+    // a desktop shell's File menu reaches this page the same way it reaches the studio's
+    document.addEventListener("ainsi:command", event => { if (event.detail === "new") make(); });
 
     browse();
 </script>

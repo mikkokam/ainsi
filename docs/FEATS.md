@@ -44,7 +44,7 @@ The fix is a cap that survives cropping: the cell keeps its aspect ratio and tak
 
 # The desktop shells
 
-Two native windows over the studio the CLI already serves, under `desktop/`: one Tauri, one Electrobun. Both start `ainsi` rooted at home with `--port 0`, read the URL off its stdout and point a webview at it, so neither knows what a deck is and every feature the studio grows arrives in both for free. Opening a deck is the studio's own chooser doing it; the File menu is a second door, and it restarts the studio because the root is fixed when the studio starts. Both are dev tools: they run the checkout they were built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
+Two native windows over the studio the CLI already serves, under `desktop/`: one Tauri, one Electrobun. Both start `ainsi` rooted at home with `--port 0`, read the URL off its stdout and point a webview at it, so neither knows what a deck is and every feature the studio grows arrives in both for free. Opening a deck is the studio's own chooser doing it; the File menu is a second door, and it restarts the studio because the root is fixed when the studio starts. Every other native menu item dispatches `ainsi:command` into the page and the studio runs it, so the two menus are one implementation and a shell never learns an endpoint. Both are dev tools: they run the checkout they were built against, baked in at build time, and the studio's exports still need the chromium `playwright install` puts there.
 
 ## Which shell survives (question)
 

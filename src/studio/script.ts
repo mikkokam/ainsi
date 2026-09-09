@@ -296,6 +296,22 @@ async function init(): Promise<void> {
         );
     });
 
+    /*
+     * A desktop shell has a native menu bar and no way into this page but an event. What its
+     * File menu runs is what this menu runs, so the two are one implementation and a shell
+     * never learns an endpoint.
+     */
+    document.addEventListener("ainsi:command", event => {
+        const name = (event as CustomEvent).detail as string;
+        const base = doc.file.replace(/\.[^.]+$/, "");
+        if (name === "new") void repoint("/__new", {});
+        else if (name === "print") print();
+        else if (name === "source") openRaw();
+        else if (name === "settings") openDeck();
+        else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);
+        else if (name.startsWith("pdf")) void exportTo(`/__pdf?images=${name.slice(4) || "screen"}`, `${base}.pdf`);
+    });
+
     document.addEventListener("ainsi:keys", event => {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
@@ -670,17 +686,7 @@ async function themeDrill(panel: HTMLElement): Promise<void> {
  */
 function exportDrill(panel: HTMLElement, close: () => void): void {
     const base = doc.file.replace(/\.[^.]+$/, "");
-    const write = (path: string, target: string) => async () => {
-        close();
-        hint(`Writing ${target}…`);
-        try {
-            const response = await fetch(path, { method: "POST" });
-            if (response.ok) hint(`Wrote ${target}`, false, 2500);
-            else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
-        } catch {
-            hint("Export failed: server unreachable", true, 6000);
-        }
-    };
+    const write = (path: string, target: string) => async () => { close(); await exportTo(path, target); };
     drill(panel, "Export",
         menuItem(`PDF, as ${base}.pdf`, write("/__pdf?images=screen", `${base}.pdf`)),
         menuItem("PDF, compact", write("/__pdf?images=compact", `${base}.pdf`)),
@@ -688,6 +694,19 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
         h("div", { class: "ainsi-menu__rule" }),
         menuItem(`PPTX, editable, as ${base}.pptx`, write("/__pptx", `${base}.pptx`)),
     );
+}
+
+/** The export itself, apart from the menu that asks for it: a desktop shell's File menu wants
+ *  the same write and the same hints, and neither should be a second copy of this. */
+async function exportTo(path: string, target: string): Promise<void> {
+    hint(`Writing ${target}…`);
+    try {
+        const response = await fetch(path, { method: "POST" });
+        if (response.ok) hint(`Wrote ${target}`, false, 2500);
+        else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
+    } catch {
+        hint("Export failed: server unreachable", true, 6000);
+    }
 }
 
 /*

@@ -56,20 +56,59 @@ async function open(): Promise<void> {
     window.webview.loadURL(next.url);
 }
 
+/*
+ * Everything but Open is the page's own doing: the shell dispatches the command and the
+ * studio runs it with its own progress and its own errors, so a native File menu and the
+ * studio's own menu are one implementation and this side never learns an endpoint.
+ *
+ * There is no Save and no Save As, and adding either would be a lie: an edit is written to
+ * the markdown the moment it is committed, so there has never been anything unsaved to keep.
+ * The nearest real thing is the filename field in the studio's own chrome, which renames.
+ */
+const command = (name: string) =>
+    window.webview.executeJavascript(`document.dispatchEvent(new CustomEvent("ainsi:command",{detail:${JSON.stringify(name)}}))`);
+
 ApplicationMenu.setApplicationMenu([
     { label: "ainsi", submenu: [{ role: "about" }, { type: "separator" }, { role: "hide" }, { role: "quit" }] },
-    { label: "File", submenu: [{ label: "Open…", action: "open", accelerator: "cmd+o" }] },
+    {
+        label: "File",
+        submenu: [
+            { label: "New Presentation", action: "new", accelerator: "cmd+n" },
+            { label: "Open…", action: "open", accelerator: "cmd+o" },
+            { type: "separator" },
+            {
+                label: "Export",
+                submenu: [
+                    { label: "PDF", action: "pdf", accelerator: "cmd+e" },
+                    { label: "PDF, compact", action: "pdf:compact" },
+                    { label: "PDF, full-resolution images", action: "pdf:full" },
+                    { type: "separator" },
+                    { label: "PPTX, editable", action: "pptx" },
+                ],
+            },
+            { label: "Print…", action: "print", accelerator: "cmd+p" },
+            { type: "separator" },
+            { role: "close" },
+        ],
+    },
     {
         label: "Edit",
         submenu: [
             { role: "undo" }, { role: "redo" }, { type: "separator" },
             { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" },
+            { type: "separator" },
+            { label: "Edit Source", action: "source" },
+            { label: "Deck Settings…", action: "settings" },
         ],
     },
     { label: "Window", submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "toggleFullScreen" }] },
 ]);
+
 ApplicationMenu.on("application-menu-clicked", event => {
-    if ((event as { data?: { action?: string } }).data?.action === "open") void open();
+    const action = (event as { data?: { action?: string } }).data?.action;
+    if (!action) return;
+    if (action === "open") void open();
+    else command(action);
 });
 
 // the studio outlives its window otherwise: it is a bun process holding a port
