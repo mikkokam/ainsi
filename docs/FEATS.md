@@ -114,7 +114,7 @@ The chrome moves into a toolbar along the top rather than sitting over the conte
 
 The File menu holds New, Open, Export, Print and Close, Edit holds the clipboard roles plus two studio commands, and that is all of it. Four things are wrong with that and one of them is live now.
 
-Print is in the menu and does nothing. `window.print()` is what the command runs, and the app's webview does not honour it. A menu item that does nothing is worse than a missing one, so it goes until printing works, which on this shell means finding whether the webview can print at all rather than assuming it can.
+Print was in the menu and did nothing, and is gone. The command ran `window.print()`, which the app's webview ignores, and the Electrobun SDK has no print call either, so there is no native path to swap in. Printing from the app needs the shell to gain one; until then the answer is Export a PDF, which works. A browser tab keeps its own ⌘P, which was never ours.
 
 View and Slideshow are missing and are nearly free, but not from where the other commands come. Overview and presenting belong to the viewer, not the studio, because a built deck presents with no server anywhere near it. So the viewer grows its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatches, and the app reaches presenting the same way it reaches an export. `[decision]` Play means from the page in view. Play from start is the second item, not the first, because the deck is open at a page for a reason.
 

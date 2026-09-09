@@ -318,7 +318,6 @@ async function init(): Promise<void> {
         const name = (event as CustomEvent).detail as string;
         const base = doc.file.replace(/\.[^.]+$/, "");
         if (name === "new") void repoint("/__new", {});
-        else if (name === "print") print();
         else if (name === "source") openRaw();
         else if (name === "settings") openDeck();
         else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);

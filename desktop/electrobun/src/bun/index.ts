@@ -86,7 +86,6 @@ ApplicationMenu.setApplicationMenu([
                     { label: "PPTX, editable", action: "pptx" },
                 ],
             },
-            { label: "Print…", action: "print", accelerator: "cmd+p" },
             { type: "separator" },
             { role: "close" },
         ],
