@@ -39,3 +39,4 @@ desktop/*/artifacts/
 desktop/*/.cottontail-tmp/
 design_handoff_ainsi_chrome/
 design_handoff_ainsi_chrome 2/
+.cottontail-tmp/
