@@ -855,13 +855,31 @@ function startDrag(event: MouseEvent, handle: HTMLElement): void {
     const from = { x: event.clientX, y: event.clientY };
     let dragging = false;
     let over: HTMLElement | undefined;
+    /** which side of what it is over, so a block can reach the top of a page and not only the end */
+    let side: "before" | "after" = "after";
 
     const line = h("div", { class: "ainsi-studio__drop-line" });
 
+    /*
+     * Anywhere on a page answers, not only the blocks themselves. A pointer between two of them
+     * or out in a margin still means somewhere, and a line that vanished there made the drag
+     * look like it had stopped.
+     */
     const under = (x: number, y: number): HTMLElement | undefined => {
         const at = document.elementFromPoint(x, y) as HTMLElement | null;
-        const found = at && handleAt(at);
-        return found && found !== handle ? found : undefined;
+        const direct = at && handleAt(at);
+        if (direct && direct !== handle) return direct;
+        const section = at?.closest?.<HTMLElement>(".ainsi-page");
+        if (!section) return undefined;
+        let best: HTMLElement | undefined;
+        let nearest = Infinity;
+        for (const candidate of section.querySelectorAll<HTMLElement>("[data-ainsi-entity], [data-ainsi-span]:not([data-ainsi-entity])")) {
+            if (candidate === handle || candidate.contains(handle) || handle.contains(candidate)) continue;
+            const box = candidate.getBoundingClientRect();
+            const away = y < box.top ? box.top - y : y > box.bottom ? y - box.bottom : 0;
+            if (away < nearest) { nearest = away; best = candidate; }
+        }
+        return best;
     };
 
     const moved = (move: MouseEvent): void => {
@@ -870,14 +888,18 @@ function startDrag(event: MouseEvent, handle: HTMLElement): void {
             dragging = true;
             document.body.append(line);
             document.body.setAttribute("data-ainsi-dragging", "");
+            // what is being carried, dimmed where it still is, so the drag is visible before it
+            // is over anywhere it could land
+            handle.setAttribute("data-ainsi-carried", "");
         }
         over = under(move.clientX, move.clientY);
         if (!over) return void (line.hidden = true);
         const box = over.getBoundingClientRect();
+        side = move.clientY < box.top + box.height / 2 ? "before" : "after";
         line.hidden = false;
         line.style.left = `${box.left}px`;
         line.style.width = `${box.width}px`;
-        line.style.top = `${box.bottom + 2}px`;
+        line.style.top = `${side === "before" ? box.top - 3 : box.bottom + 1}px`;
     };
 
     const dropped = (): void => {
@@ -885,10 +907,11 @@ function startDrag(event: MouseEvent, handle: HTMLElement): void {
         removeEventListener("mouseup", dropped);
         line.remove();
         document.body.removeAttribute("data-ainsi-dragging");
+        handle.removeAttribute("data-ainsi-carried");
         if (!dragging || !over) return;
         const held = targetOf(handle);
         const onto = targetOf(over);
-        const splicing = held && onto && moveTo(doc.source, held, onto);
+        const splicing = held && onto && moveTo(doc.source, held, onto, side);
         if (splicing) splice(splicing);
     };
 

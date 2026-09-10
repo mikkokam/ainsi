@@ -35,6 +35,8 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-page[data-ainsi-selected] {
 body[data-ainsi-dragging] [data-ainsi-entity]:hover,
 body[data-ainsi-dragging] [data-ainsi-span]:hover { outline: none !important; }
 body[data-ainsi-dragging] { cursor: grabbing; }
+/* the block being carried, left where it is until the drop says otherwise */
+[data-ainsi-carried] { opacity: 0.3; transition: opacity .12s ease; }
 .ainsi-studio__grip[title^="Block menu"] { cursor: grab; }
 
 .ainsi-studio--hidden { display: none !important; }

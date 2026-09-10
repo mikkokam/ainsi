@@ -509,19 +509,56 @@ async function grip(page: Page, on: ReturnType<typeof paragraph>) {
     return (await handle.boundingBox())!;
 }
 
-test.skipIf(!chromium)("a block dragged onto another lands after it", async () => {
-    const studio = await open();
-    const from = await grip(studio.page, paragraph(studio.page, 0));
-    const onto = (await paragraph(studio.page, 1).boundingBox())!;
-
-    await studio.page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+/** picks a block up by its grip and drops it on the given fraction of another block's height */
+async function drag(studio: Awaited<ReturnType<typeof open>>, from: number, onto: number, at: number) {
+    const handle = await grip(studio.page, paragraph(studio.page, from));
+    const box = (await paragraph(studio.page, onto).boundingBox())!;
+    await studio.page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
     await studio.page.mouse.down();
-    await studio.page.mouse.move(onto.x + onto.width / 2, onto.y + onto.height / 2, { steps: 12 });
-    expect(await count(studio.page, ".ainsi-studio__drop-line")).toBe(1);
+    await studio.page.mouse.move(box.x + box.width / 2, box.y + box.height * at, { steps: 12 });
+    const line = await studio.page.locator(".ainsi-studio__drop-line").boundingBox();
     await studio.page.mouse.up();
+    return { line, box };
+}
+
+test.skipIf(!chromium)("dropping on the lower half of a block lands after it", async () => {
+    const studio = await open();
+    const { line, box } = await drag(studio, 0, 1, 0.8);
+    expect(line!.y).toBeGreaterThan(box.y + box.height / 2);
 
     const after = await until(studio.source, t => t.indexOf("Toinen kappale.") < t.indexOf("Ensimmäinen kappale."));
     expect(after.indexOf("Toinen kappale.")).toBeLessThan(after.indexOf("Ensimmäinen kappale."));
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("dropping on the upper half lands before it, which is how a block reaches the top", async () => {
+    const studio = await open();
+    const { line, box } = await drag(studio, 1, 0, 0.2);
+    expect(line!.y).toBeLessThan(box.y + box.height / 2);
+
+    const after = await until(studio.source, t => t.indexOf("Toinen kappale.") < t.indexOf("Ensimmäinen kappale."));
+    expect(after.indexOf("Toinen kappale.")).toBeLessThan(after.indexOf("Ensimmäinen kappale."));
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a drop that would change nothing does not write the file", async () => {
+    const studio = await open();
+    const before = await studio.source();
+    await drag(studio, 0, 1, 0.2);      // just above the block it already sits above
+    await Bun.sleep(700);
+    expect(await studio.source()).toBe(before);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("the block being carried is dimmed where it still is", async () => {
+    const studio = await open();
+    const handle = await grip(studio.page, paragraph(studio.page, 0));
+    await studio.page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await studio.page.mouse.down();
+    await studio.page.mouse.move(handle.x + 200, handle.y + 60, { steps: 8 });
+    expect(await count(studio.page, "[data-ainsi-carried]")).toBe(1);
+    await studio.page.mouse.up();
+    expect(await until(() => count(studio.page, "[data-ainsi-carried]"), n => n === 0)).toBe(0);
     await studio.stop();
 }, 60_000);
 

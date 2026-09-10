@@ -261,3 +261,13 @@ test("a block dragged upwards lands straight after what it was dropped on", () =
 test("a block dropped on itself is not a move", () => {
     expect(moveTo(four, block(four, "B"), block(four, "B"))).toBeUndefined();
 });
+
+test("a block dropped before the one it already precedes is not a move", () => {
+    // the ordinary way to land here: a pointer a little above the next block
+    expect(moveTo(four, block(four, "A"), block(four, "B"), "before")).toBeUndefined();
+});
+
+test("dropped before a block, it lands ahead of it", () => {
+    expect(apply(four, moveTo(four, block(four, "D"), block(four, "B"), "before")!)).toBe("A\n\nD\n\nB\n\nC");
+    expect(apply(four, moveTo(four, block(four, "A"), block(four, "D"), "before")!)).toBe("B\n\nC\n\nA\n\nD");
+});

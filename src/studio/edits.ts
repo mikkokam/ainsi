@@ -214,20 +214,29 @@ function swap(source: string, one: Span, two: Span, between: (was: string) => st
  * neighbours, which is what the up and down buttons want; a drag lands anywhere, so the whole
  * region between the two is rewritten in one splice rather than a swap repeated.
  */
-export function moveTo(source: string, block: Target, target: Target, gap = "\n\n"): Splice | undefined {
+export function moveTo(source: string, block: Target, target: Target, side: "before" | "after" = "after", gap = "\n\n"): Splice | undefined {
     const from = spanOf(block);
     const to = spanOf(target);
     if (from.start === to.start) return undefined;
     const held = source.slice(from.start, from.end);
+    const onto = source.slice(to.start, to.end);
 
     if (from.start < to.start) {
-        // downwards: what followed it closes up, and the block lands past the target
+        // downwards: what followed it closes up, and the block lands beside the target
         const between = source.slice(from.end, to.start).replace(/^\s+/, "");
-        return { start: from.start, end: to.end, text: `${between}${source.slice(to.start, to.end)}${gap}${held}` };
+        const text = side === "after" ? `${between}${onto}${gap}${held}` : `${between}${held}${gap}${onto}`;
+        return settled(source, { start: from.start, end: to.end, text });
     }
-    // upwards: the block lands straight after the target, and what was between follows it
+    // upwards: the block lands beside the target, and what was between follows it
     const between = source.slice(to.end, from.start);
-    return { start: to.start, end: from.end, text: `${source.slice(to.start, to.end)}${gap}${held}${between}`.replace(/\s+$/, "") };
+    const text = side === "after" ? `${onto}${gap}${held}${between}` : `${held}${gap}${onto}${between}`;
+    return settled(source, { start: to.start, end: from.end, text: text.replace(/\s+$/, "") });
+}
+
+/** a move that changes nothing is not a move: dropping a block just above the one it already
+ *  sits above is the ordinary way to land here, and it should not write the file */
+function settled(source: string, splice: Splice): Splice | undefined {
+    return source.slice(splice.start, splice.end) === splice.text ? undefined : splice;
 }
 
 export function move(source: string, block: Target, neighbour: Target): Splice {
