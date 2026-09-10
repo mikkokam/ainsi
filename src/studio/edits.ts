@@ -193,6 +193,23 @@ export function pageSpan(source: string, page: PageTarget): Span {
     }
 }
 
+/** the run of directive lines a target's span opens with, as text */
+const runOf = (source: string, target: Target): string =>
+    target.directive ? source.slice(target.directive.start, target.start) : "";
+
+const LAYOUT = /<!--\s*ainsi\s*:?\s*layout\b/;
+
+/**
+ * A layout directive sets the page it sits on, so it may neither travel with a block that
+ * moves nor be pushed down the page by one landing above it: either puts a page boundary in
+ * the middle of the page it opened. A move that would do it is refused rather than performed,
+ * because the alternative is reordering a directive run the author wrote.
+ */
+export function strands(source: string, block: Target, target: Target, side: "before" | "after"): boolean {
+    if (LAYOUT.test(runOf(source, block))) return true;
+    return side === "before" && LAYOUT.test(runOf(source, target));
+}
+
 /**
  * Two neighbouring spans swapped, as one splice over the pair rather than two writes: the
  * write path takes one range against one hash, and a move landing half of itself is a
@@ -336,4 +353,57 @@ export function toList(list: Items): string {
         const marker = list.ordered ? `${counts[depth]}.` : "-";
         return `${"  ".repeat(depth)}${marker} ${text}`;
     }).join("\n");
+}
+
+/*
+ * The deck's own settings: the frontmatter, edited a line at a time. A comment, a key this
+ * build has never heard of and the order the lines were written in all survive an edit, which
+ * is what a panel of fields over someone else's file has to promise.
+ */
+export const MATTER = /^---\n([\s\S]*?)\n---\n*/;   // the blank lines after it go with it; the commit writes its own
+
+/** every key the parser reads, with what it means when the line is absent */
+export const SETTINGS = [
+    { key: "theme", name: "theme", kind: "choice", fallback: "default" },
+    { key: "layout", name: "layout", kind: "choice", fallback: "default" },
+    { key: "ratio", name: "ratio", kind: "choice", fallback: "16:9" },
+    { key: "numbers", name: "page numbers", kind: "switch", fallback: "on", options: ["on", "off"] },
+    { key: "h1StartsPage", name: "h1 starts a page", kind: "switch", fallback: "false", options: ["true", "false"] },
+    { key: "logo", name: "logo", kind: "picture", fallback: "" },
+    { key: "coverLogo", name: "cover logo", kind: "picture", fallback: "" },
+] as const;
+
+/** the ratios worth offering; a deck may still say any w:h and the field keeps it */
+export const RATIOS = ["16:9", "16:10", "3:2", "4:3", "1:1"];
+
+/** the value on a `key: value` line, or the fallback when the deck does not say */
+export function matterValue(lines: string[], key: string, fallback: string): string {
+    const line = lines.find(one => one.startsWith(`${key}:`));
+    return line === undefined ? fallback : line.slice(key.length + 1).trim();
+}
+
+
+/** a frontmatter line this panel does not own: a comment, or a key from a build that knew more */
+export const isOther = (line: string): boolean => !SETTINGS.some(setting => line.startsWith(`${setting.key}:`));
+
+/*
+ * The block back, a line at a time: a key at its fallback loses its line, a key that changed
+ * keeps its place in the file, and a key that is new goes at the end. Everything this panel
+ * does not own is copied through untouched, which is what makes it safe to open on a deck
+ * whose frontmatter says more than this build knows about.
+ */
+export function writeMatter(lines: string[], values: Map<string, string>): string {
+    const out = lines.filter(line => {
+        const owner = SETTINGS.find(setting => line.startsWith(`${setting.key}:`));
+        return !owner || values.get(owner.key) !== owner.fallback;
+    }).map(line => {
+        const owner = SETTINGS.find(setting => line.startsWith(`${setting.key}:`));
+        return owner ? `${owner.key}: ${values.get(owner.key)}` : line;
+    });
+    for (const setting of SETTINGS) {
+        const value = values.get(setting.key)!;
+        if (value === setting.fallback || lines.some(line => line.startsWith(`${setting.key}:`))) continue;
+        out.push(`${setting.key}: ${value}`);
+    }
+    return out.join("\n");
 }

@@ -36,13 +36,11 @@ This supersedes the round-trip editing question, which asked for a writer that c
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
 
-## A dragged block carries the page's layout with it (defect)
+## A directive run has no order (feat)
 
-`SKILL.md` says a layout directive sets the page it sits on, for that page only. The studio's move does not read it that way: `spanOf` takes a block's whole leading directive run, so a block whose run includes a `layout` line drags the page boundary along when it moves.
+A page's layout directive and a block's component directive can be written in either order above the same block, and nothing says which owns what. The studio therefore cannot move a block past that run: a move that would carry a layout directive out of the page it opens, or push it down the page, is refused with a hint rather than performed, because the alternative is rewriting a line the author placed.
 
-Reproduced on `samples/gatekeeper`, page five. Its run is `prose size=small caps`, then `layout split side=right tone=inverse`, then the `#####` eyebrow. Dragging the `#` above that eyebrow moves the layout directive into the middle of the page, `paginate` flushes where it now sits, and the deck goes from seventeen pages to eighteen: one holding the `#` alone, the next holding everything else. The same fault is in the up and down buttons, which share `spanOf`.
-
-Two fixes, and they differ in what they do to bytes the author wrote. The narrow one clamps the drop: a block may not land above a page's layout directive, and a move that would strand one is refused rather than performed, which is the idiom the list editor already uses. The full one gives the directive run an order — layout first, because it owns the page, then the component directives that own the block — and lets a move insert between them, at the cost of rewriting a line the author placed. Done is the gatekeeper drag leaving seventeen pages, and a test on the pure `moveTo` that says so.
+Refusing is right until a run has an order. Give it one — layout first because it owns the page, then the component directives that own the block — and a move can insert between them, at which point `strands` in `edits.ts` narrows to the case it cannot fix rather than the case it cannot tell apart. Done is dragging gatekeeper's `#` above its eyebrow and getting seventeen pages with the two swapped.
 
 ## A cropped field cannot be stepped down (defect)
 
@@ -182,7 +180,6 @@ Everything is a URL. Home is `/`, a deck is its path under the root, opening is 
 
 Home is a list, not a desktop: a type-to-filter field, md files ordered by mtime with their path beneath, and one New deck button. The mtime order is the recents list, and it is why no recents list is ever written down. All of it derived from disk each request; the server stores nothing. The audience is people driving Claude on local files and terminal-first devs who know markdown and hate PPT, so the intuitions to serve are files, URLs, and type-to-find, never a ribbon or a document manager.
 
-Refused: the desktop metaphor; thumbnails, because a hundred stale renders on a launcher is its own project; multi-root and an add-repo list, until one mount stops being enough, at which point it is one JSON list under `~/.ainsi`; any auth layer while the bind address is localhost or the tailnet, where a password prompt is theatre.
 
 Done: the container serves home and deck URLs off one mounted folder, a remote writer can read and replace a file through one of the doors above, and a cold restart loses nothing because nothing was held.
 

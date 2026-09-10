@@ -1,4 +1,6 @@
 import { readdir, stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { Layouts, Registry, type Component, type ComponentDefinition, type Entry, type Layout, type LayoutDefinition } from "./registry";
 import { MARK } from "./mark";
@@ -167,14 +169,22 @@ function checkLayoutScope(name: string, css: string, diagnostics: Diagnostic[]):
 
 export const DEFAULT_THEME = resolve(import.meta.dir, "..", "themes", "default");
 export const THEMES = resolve(import.meta.dir, "..", "themes");
+/** themes of your own, installed rather than shipped; a deck may name one and degrade without it */
+export const USER_THEMES = join(homedir(), ".ainsi", "themes");
 
 /**
- * A bare name is one of the themes shipped here; anything with a slash or a leading dot is a
- * folder of the deck's own, resolved beside the deck the way its images and logo are, so a
- * deck and the theme it is written against move as one thing.
+ * A bare name is one of the themes shipped here, or one of yours under `~/.ainsi/themes`;
+ * anything with a slash or a leading dot is a folder of the deck's own, resolved beside the deck
+ * the way its images and logo are, so a deck and the theme it is written against move as one
+ * thing.
  */
 export function themeDir(name: string, deckDir: string): string {
-    return name.startsWith(".") || name.includes("/") ? resolve(deckDir, name) : join(THEMES, name);
+    if (name.startsWith(".") || name.includes("/")) return resolve(deckDir, name);
+    // a shipped name stays shipped: a deck that renders one way here and another way on a
+    // machine that happens to hold a theme of the same name is worse than a name you cannot take
+    const shipped = join(THEMES, name);
+    const yours = join(USER_THEMES, name);
+    return !existsSync(shipped) && existsSync(yours) ? yours : shipped;
 }
 
 /**

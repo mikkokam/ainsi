@@ -14,7 +14,9 @@ const bun = which("bun") ?? "bun";
 
 export default {
     app: {
-        name: "ainsi",
+        // the wordmark is lower case; the name of the thing is not, and this is the name the
+        // menu bar and the bundle are called by
+        name: "Ainsi",
         identifier: "dev.ainsi.studio",
         version: "2.0.0-beta.1",
     },

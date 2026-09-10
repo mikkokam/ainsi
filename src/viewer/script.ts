@@ -37,6 +37,20 @@ function start(): void {
     addEventListener("pointerdown", awake, { passive: true });
     awake();
 
+    /*
+     * A toggle says what pressing it does next, not what it did: an open grid offers reading.
+     * The svg is replaced rather than the whole content, because the studio appends its own
+     * word beside it in the desktop titlebar and that word follows the icon.
+     */
+    function retitle(element: HTMLButtonElement, name: IconName, label: string): void {
+        element.title = label;
+        element.setAttribute("aria-label", label);
+        element.querySelector("svg")?.remove();
+        element.insertAdjacentHTML("afterbegin", icons[name]);
+        const word = element.querySelector(".ainsi-toolbar__label");
+        if (word) word.textContent = label.split(" (")[0] ?? label;
+    }
+
     function button(name: IconName, label: string, onClick: () => void): HTMLButtonElement {
         const element = document.createElement("button");
         element.className = "ainsi-toolbar__button";
@@ -123,6 +137,9 @@ function start(): void {
 
     function openOverview(): void {
         closeMenu();
+        // the button names what pressing it does, so it never wears the active state: "Reading"
+        // lit up says you are reading, which is the one thing you are not
+        retitle(gridButton, "reading", `Reading (${MOD}G)`);
         overview = document.createElement("div");
         overview.className = "ainsi-overview";
         cursor = presenting ? index : nearest();
@@ -188,6 +205,7 @@ function start(): void {
     function closeOverview(): void {
         overview?.remove();
         overview = undefined;
+        retitle(gridButton, "grid", `Grid (${MOD}G)`);
     }
 
     /*
@@ -290,13 +308,45 @@ function start(): void {
      */
     function scale(): void {
         if (!presenting || innerWidth <= 900) return;   // the reading form fills the screen instead
+        document.body.style.setProperty("--ainsi-present-scale", String(Math.min(innerWidth / 1280, innerHeight / designHeight())));
+    }
+
+    /** what a page is tall at its design width, which is the only size anything is measured at */
+    function designHeight(): number {
         const [w, h] = (getComputedStyle(document.body).getPropertyValue("--ainsi-ratio") || "16 / 9")
             .split("/").map(part => Number(part.trim()) || 1);
-        const height = 1280 / (w! / h!);
-        document.body.style.setProperty("--ainsi-present-scale", String(Math.min(innerWidth / 1280, innerHeight / height)));
+        return 1280 / (w! / h!);
+    }
+
+    /*
+     * Reading. The page keeps its design width here too, and the window decides the zoom, so one
+     * design is read at every screen size and what the fit solver measured is what is shown.
+     * Reflowing instead, which is what a percentage width does, leaves the type at its authored
+     * size inside a narrower page and quietly oversizes a deck that was measured to fit.
+     *
+     * Fitted to a fraction of the height rather than all of it, and the fraction is low enough
+     * that a neighbour reads as a page rather than as an edge. That is the argument the reading
+     * view is making: a deck is a continuous story, and a page that fills the window teaches the
+     * opposite. Roughly a quarter of the window goes to the two neighbours and the gaps between.
+     */
+    const READ_FILL = 0.75;
+    function fitReading(): void {
+        if (innerWidth <= 900) return void document.body.removeAttribute("data-ainsi-read");
+        // the page under the reader stays under the reader: a zoom change moves every offset
+        const anchor = presenting ? undefined : pages[nearest()];
+        const was = anchor?.getBoundingClientRect().top ?? 0;
+
+        const style = getComputedStyle(document.body);
+        const gutters = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+        const zoom = Math.min((innerWidth - gutters) / 1280, (innerHeight * READ_FILL) / designHeight());
+        document.body.style.setProperty("--ainsi-read-zoom", String(zoom));
+        document.body.setAttribute("data-ainsi-read", "");
+
+        if (anchor) scrollBy(0, anchor.getBoundingClientRect().top - was);
     }
 
     addEventListener("resize", scale, { passive: true });
+    addEventListener("resize", fitReading, { passive: true });
     addEventListener("resize", fitThumbs, { passive: true });
     addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && presenting) stop(); });
 
@@ -406,6 +456,8 @@ function start(): void {
         if ((event.target as HTMLElement).closest?.("a")) return;
         if (presenting && !panel && !overview && innerWidth > 900) go(index + 1);
     });
+
+    fitReading();
 
     let touch: { x: number; y: number } | undefined;
     addEventListener("touchstart", event => {

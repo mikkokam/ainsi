@@ -6,8 +6,8 @@
  * the deck. Prefix here is --ac-* ("ainsi chrome"). Suggested home: src/chrome/tokens.css,
  * imported by src/studio/style.css and src/viewer/style.css.
  *
- * Dark only. There is no light chrome theme; the one light surface is the source editor,
- * which is a document, not chrome, and carries its own --ac-paper-* tokens below.
+ * Dark only, the source editor included: it is chrome rather than a document, and a white sheet
+ * in a dark app is a second theme to keep in step for the sake of one surface.
  */
 :root {
     /* ---- brand / focus -------------------------------------------------
@@ -16,7 +16,7 @@
        never on a slide — the deck's theme owns colour there. */
     --ac-blue:            #4C8DF6;   /* focus ring, selection, active toggle (on dark) */
     --ac-blue-ink:        #8AB4F8;   /* links and labels on dark */
-    --ac-blue-solid:      #1F6FEB;   /* filled action on a LIGHT surface (source sheet) */
+    --ac-blue-solid:      #1F6FEB;   /* the one filled action in a panel: Save in the source editor */
     --ac-blue-wash:       rgb(76 141 246 / 16%);
     --ac-blue-edge:       rgb(76 141 246 / 45%);
 
@@ -37,7 +37,7 @@
     --ac-glass:           rgb(24 24 28 / 72%);  /* over our own ground ONLY */
     --ac-glass-filter:    blur(24px) saturate(180%);
 
-    --ac-glass-over-content:        rgb(16 16 20 / 90%);
+    --ac-glass-over-content:        rgb(16 16 20 / 72%);
     --ac-glass-over-content-filter: blur(20px) saturate(140%) brightness(.55);
     --ac-glass-over-content-edge:   rgb(255 255 255 / 14%);
     --ac-glass-over-content-shadow: 0 6px 24px rgb(0 0 0 / 35%);
@@ -65,15 +65,6 @@
     --ac-ok:              #4EA86B;   /* saved, skills active */
     --ac-danger:          #E08B84;
     --ac-danger-ink:      #F0A9A3;
-
-    /* ---- one light surface: the source editor -------------------------- */
-    --ac-paper:           #FBFBFD;
-    --ac-paper-raised:    #FFFFFF;
-    --ac-paper-ink:       #1C1C1E;
-    --ac-paper-ink-2:     #6B6B70;
-    --ac-paper-ink-3:     #8A8A90;
-    --ac-paper-line:      #E3E3E8;
-    --ac-paper-comment:   #9A5B28;   /* <!-- ainsi: ... --> in the markdown view */
 
     /* ---- type ----------------------------------------------------------
        Two faces, and the split carries meaning: sans is language, mono is

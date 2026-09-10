@@ -75,7 +75,13 @@ test("the deck prints one page per sheet, sized to its ratio, with no chrome or 
     expect(html).toContain("@page { size: 1280px 960px; margin: 0; }");
     const print = html.slice(html.indexOf("@media print {"), html.indexOf("@media screen"));
     expect(print).toContain("break-after: page");
-    expect(print).toContain('body[data-numbers="off"] .ainsi-number { display: none; }');
+});
+
+test("numbers: off hides the number in every view, not only while presenting", () => {
+    const { html } = build("---\nnumbers: off\n---\n\n# One\n\na\n", { registry, layouts, themeCss: "", viewer });
+    expect(html).toContain('data-numbers="off"');
+    expect(html).toContain('body[data-numbers="off"] .ainsi-number { display: none; }');
+    expect(html).not.toContain('body[data-numbers="off"][data-present]');
 });
 
 test("the reading view is a screen affair: a print laid out on narrow paper must not reflow", () => {

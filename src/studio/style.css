@@ -52,7 +52,7 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     z-index: 70;
     width: max-content;
     min-width: min(92vw, 560px);
-    max-width: min(92vw, 920px);
+    max-width: 92vw;
     max-height: 86vh;
     overflow: auto;
     padding: .6rem;
@@ -65,7 +65,25 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     color: var(--ac-ink-on-content);
 }
 .ainsi-studio__grid { border-collapse: collapse; width: 100%; }
-.ainsi-studio__list { min-width: min(92vw, 520px); max-width: min(92vw, 800px); }
+/* a row holds a markdown line, and an image line is a sentence and a url: 520 put the url off
+   the end of the field, so the floor is what one of those reads at */
+.ainsi-studio__list { min-width: min(92vw, 760px); max-width: 92vw; }
+/* The deck's settings: a field per frontmatter key, in the panel a table and a list open in.
+   Fixed to the window's corner rather than placed against a page, because these rule every page
+   and a panel sitting on one reads as that page's. 72px clears the floating pill in a browser
+   and the app's own strip alike. */
+.ainsi-studio__deck {
+    min-width: min(92vw, 560px); max-width: min(92vw, 680px);
+    top: 72px; left: 20px;
+    /* the panel scrolls nothing: seven rows always fit, and a scroller clips the dropdowns */
+    overflow: visible; max-height: none;
+}
+.ainsi-studio__deckrows { display: flex; flex-direction: column; gap: 3px; padding-top: .3rem; }
+.ainsi-studio__deckrow { display: flex; align-items: center; gap: 8px; min-height: var(--ac-toolbar-btn); }
+.ainsi-studio__deckname { flex: none; width: 9rem; font: var(--ac-text-key); color: var(--ac-ink-on-content-3); }
+.ainsi-studio__deckrow .ainsi-studio__input { flex: 1; width: auto; }
+.ainsi-studio__decknote { font: var(--ac-text-key); color: var(--ac-ink-on-content-3); }
+
 .ainsi-studio__itemhead { display: flex; gap: .15rem; padding-bottom: .35rem; border-bottom: 1px solid rgb(255 255 255 / 10%); margin-bottom: .35rem; }
 .ainsi-studio__item { display: flex; align-items: center; gap: .15rem; padding: 1px 0; }
 .ainsi-studio__item input { flex: 1; min-width: 12ch; }
@@ -86,6 +104,24 @@ body[data-ainsi-dragging] { cursor: grabbing; }
 .ainsi-studio__gridcorner, .ainsi-studio__gridadd { color: var(--ac-ink-on-content-3); text-align: right; padding-right: .3rem !important; white-space: nowrap; }
 .ainsi-studio__gridhead { white-space: nowrap; }
 .ainsi-studio__table .ainsi-studio__imageok { margin-top: .5rem; }
+
+/*
+ * The far side of the landing's fade. A deck is opened by reloading the window onto it, so the
+ * two documents hand over mid-paint. This is a pseudo-element and an animation rather than
+ * anything the script raises: it has to be up on the first frame, and a veil that waits for
+ * JavaScript arrives after the flash it exists to hide. Nothing can leave it stuck, either,
+ * since it lifts on its own whatever the script does.
+ */
+body::after {
+    content: "";
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--ac-ground);
+    pointer-events: none;
+    animation: ainsi-studio-veil 300ms var(--ac-ease) forwards;
+}
+@keyframes ainsi-studio-veil { from { opacity: 1; } to { opacity: 0; } }
+@media print { body::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { body::after { animation-duration: 1ms; } }
 
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }
@@ -129,9 +165,9 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
     padding: 0.6em 0.7em;
     border-style: solid;
-    background: var(--ac-paper);
-    color: var(--ac-paper-ink);
-    box-shadow: 0 10px 32px rgb(0 0 0 / 28%);
+    background: var(--ac-raised);
+    color: var(--ac-ink);
+    box-shadow: var(--ac-shadow-float);
 }
 
 /* an image's form floats where its source would: two fields and a line on local paths */
@@ -165,32 +201,21 @@ body[data-ainsi-dragging] { cursor: grabbing; }
 .ainsi-studio__imageok:hover { filter: brightness(1.06); }
 .ainsi-studio__image .ainsi-studio__imagerow:first-child { padding-right: 2.2rem; }
 
-/* the deck's frontmatter: a block before page one, the page's width, pushing the deck down */
-.ainsi-studio__editor--deck {
-    width: min(1280px, 100%);
-    margin: 1.6rem auto calc(var(--ainsi-gap) * 2);   /* clear of the toolbar strip in the corner */
-    font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
-    padding: 0.6em 0.7em;
-    border-style: solid;
-    background: var(--ac-paper);
-    color: var(--ac-paper-ink);
-}
-
 .ainsi-studio__editor--insert {
     width: 100%;
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
     padding: 0.6em 0.7em;
     border-style: solid;
-    background: var(--ac-paper);
-    color: var(--ac-paper-ink);
+    background: var(--ac-raised);
+    color: var(--ac-ink);
     position: relative;
     z-index: 5;
 }
 
 /*
- * Raw mode, two shapes. A whole-file edit (⇧⌘E) takes the window, as it always has: source
- * is chrome rather than content, so it gets paper tokens rather than the deck's theme. A
- * page's own source (⌥⌘E, or "Edit page source") is a sheet over a scrim instead — the
+ * Raw mode, two shapes. A whole-file edit (⇧⌘E) takes the window, as it always has: source is
+ * chrome rather than content, so it wears the chrome's own dark surfaces rather than the deck's
+ * theme. A page's own source (⌥⌘E, or "Edit page source") is a sheet over a scrim instead — the
  * deck stays visible behind it, because splicing one page is not leaving the deck.
  */
 body[data-ainsi-raw] { overflow: hidden; }
@@ -201,8 +226,9 @@ body[data-ainsi-raw] { overflow: hidden; }
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background: var(--ac-paper);
-    color: var(--ac-paper-ink);
+    background: var(--ac-ground);
+    color: var(--ac-ink);
+    color-scheme: dark;
 }
 .ainsi-studio__raw--sheet {
     display: flex; align-items: center; justify-content: center;
@@ -220,7 +246,7 @@ body[data-ainsi-raw] { overflow: hidden; }
     width: 820px; max-height: 86vh;
     border-radius: var(--ac-r-panel);
     overflow: hidden;
-    background: var(--ac-paper);
+    background: var(--ac-raised);
     box-shadow: var(--ac-shadow-sheet);
 }
 
@@ -230,25 +256,25 @@ body[data-ainsi-raw] { overflow: hidden; }
     align-items: center;
     gap: 12px;
     padding: 11px 14px;
-    border-bottom: 1px solid var(--ac-paper-line);
-    background: var(--ac-paper-raised);
+    border-bottom: 1px solid var(--ac-hairline);
+    background: rgb(255 255 255 / 4%);
     font: 12px/1 var(--ac-font);
 }
 
-.ainsi-studio__rawname { color: var(--ac-paper-ink-3); font: var(--ac-text-mono); }
+.ainsi-studio__rawname { color: var(--ac-ink-3); font: var(--ac-text-mono); }
 .ainsi-studio__rawgap { flex: 1; }
 
 .ainsi-studio__rawbutton {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     height: 30px; padding: 0 14px;
     font: 500 12.5px/1 var(--ac-font);
-    color: var(--ac-paper-ink-2);
-    background: var(--ac-paper-raised);
-    border: 1px solid var(--ac-paper-line);
+    color: var(--ac-ink-2);
+    background: rgb(255 255 255 / 6%);
+    border: 1px solid var(--ac-hairline-strong);
     border-radius: var(--ac-r-control);
     cursor: pointer;
 }
-.ainsi-studio__rawbutton:hover { background: var(--ac-paper); }
+.ainsi-studio__rawbutton:hover { background: var(--ac-hover); color: var(--ac-ink); }
 
 .ainsi-studio__rawbutton[data-primary] {
     color: #fff;
@@ -263,7 +289,7 @@ body[data-ainsi-raw] { overflow: hidden; }
 .ainsi-studio__raw .cm-editor.cm-focused { outline: none; }
 .ainsi-studio__raw .cm-scroller {
     font: 400 13px/1.75 var(--ac-mono);
-    color: var(--ac-paper-ink);
+    color: var(--ac-ink);
     overflow: auto;
 }
 /* a readable measure on a wide window; padding keeps the caret off the edges on a narrow one */
@@ -278,14 +304,31 @@ body[data-ainsi-raw] { overflow: hidden; }
    sheet's size jumping about between pages is worse than empty room under a few lines */
 .ainsi-studio__sheet .cm-editor { min-height: 330px; }
 
+/* CodeMirror draws its own selection, caret and search panel, and its defaults are for paper */
+.ainsi-studio__raw .cm-cursor, .ainsi-studio__raw .cm-dropCursor { border-left-color: var(--ac-ink); }
+.ainsi-studio__raw .cm-selectionBackground,
+.ainsi-studio__raw .cm-content ::selection { background: rgb(76 141 246 / 26%); }
+.ainsi-studio__raw .cm-focused .cm-selectionBackground { background: rgb(76 141 246 / 34%); }
+.ainsi-studio__raw .cm-selectionMatch { background: rgb(255 255 255 / 10%); }
+.ainsi-studio__raw .cm-searchMatch { background: rgb(224 176 84 / 26%); }
+.ainsi-studio__raw .cm-searchMatch-selected { background: rgb(224 176 84 / 50%); }
+.ainsi-studio__raw .cm-panels {
+    background: var(--ac-raised); color: var(--ac-ink);
+    border-top: 1px solid var(--ac-hairline); border-bottom: 1px solid var(--ac-hairline);
+}
+.ainsi-studio__raw .cm-panels input, .ainsi-studio__raw .cm-panels button {
+    color: var(--ac-ink); background: rgb(255 255 255 / 6%);
+    border: 1px solid var(--ac-hairline-strong); border-radius: var(--ac-r-chip);
+}
+
 .ainsi-studio__rawfoot {
     flex: none;
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
     padding: 10px 14px;
-    background: #F7F7FA;
-    border-top: 1px solid var(--ac-paper-line);
+    background: var(--ac-sunken);
+    border-top: 1px solid var(--ac-hairline);
     font: var(--ac-text-key);
-    color: var(--ac-paper-ink-3);
+    color: var(--ac-ink-3);
 }
 .ainsi-studio__rawfootkeys { display: flex; gap: 14px; }
 
@@ -473,6 +516,7 @@ body[data-ainsi-edit]:not([data-present]) [data-layout="split"] main[data-side="
 .ainsi-studio__chip[data-active]:has(.ainsi-studio__swatch) { background: transparent; box-shadow: none; }
 .ainsi-studio__chip[data-active] .ainsi-studio__swatch { border-color: transparent; box-shadow: 0 0 0 1px rgb(255 255 255 / 25%), 0 0 0 3px var(--ac-blue); }
 .ainsi-studio__input {
+    box-sizing: border-box;
     font: 12px/1.3 var(--ac-mono);
     color: var(--ac-ink);
     padding: .25rem .45rem; width: 7rem;
@@ -520,6 +564,10 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button {
     color: var(--ac-ink-on-content);
 }
 body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button:hover { background: var(--ac-hover); color: var(--ac-ink); }
+/* on, in the one colour that means where you are */
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button[data-active] {
+    background: var(--ac-blue-wash); box-shadow: inset 0 0 0 1px var(--ac-blue-edge); color: var(--ac-blue-glyph);
+}
 body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button svg { width: 15px; height: 15px; stroke-width: 1.7; }
 body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__count { color: var(--ac-ink-on-content-3); }
 body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar .ainsi-studio__bardivider { height: 16px; margin: 0 6px; }
@@ -696,4 +744,24 @@ body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-s
 }
 body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-studio__pill:hover {
     background: var(--ac-hover); color: var(--ac-ink);
+}
+/* the hand-off to another document, in the landing's own ground: what fades up behind it is the
+   colour the chooser is already sitting on */
+.ainsi-studio__veil {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--ac-ground);
+    opacity: 0; pointer-events: none;
+    transition: opacity 220ms var(--ac-ease);
+}
+.ainsi-studio__veil[data-leaving] { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .ainsi-studio__veil { transition: none; } }
+
+/* the whole-file editor takes the window, titlebar and all, so while it is open its own bar is
+   the one the lights are drawn over */
+body[data-ainsi-host="electrobun"] .ainsi-studio__sheetfull .ainsi-studio__rawbar {
+    height: var(--ac-titlebar); padding: 0 14px 0 var(--ac-lights);
+    --electrobun-app-region: drag; -webkit-app-region: drag;
+}
+body[data-ainsi-host="electrobun"] .ainsi-studio__sheetfull .ainsi-studio__rawbar button {
+    --electrobun-app-region: no-drag; -webkit-app-region: no-drag;
 }

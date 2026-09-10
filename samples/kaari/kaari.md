@@ -18,6 +18,7 @@ Selected work, 2024 to 2026
 ---
 
 <!-- ainsi: prose size=small caps -->
+<!-- ainsi: layout default tone=inverse -->
 Index
 
 # What \ how
@@ -50,6 +51,7 @@ Index
 ---
 
 <!-- ainsi: prose size=small caps -->
+<!-- ainsi: layout default tone=accent -->
 Motion
 
 # Three across, whole frames
@@ -75,6 +77,7 @@ Motion
 ---
 
 <!-- ainsi: prose size=small caps -->
+<!-- ainsi: layout default tone=soft -->
 Print
 
 # Nothing here was cropped to fit

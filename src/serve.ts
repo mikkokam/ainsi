@@ -53,8 +53,9 @@ export interface Server {
     /** a change a route made itself; pass own for a write this server did, so the watcher's
      *  echo of it does not build the same deck a second time */
     changed(what: string, own?: boolean): void;
-    /** the deck moved: assets resolve beside the new path and the watcher follows it */
-    retarget(deck: string): void;
+    /** the deck moved: assets resolve beside the new path and the watcher follows it.
+     *  Undefined closes it: nothing is watched and the studio is back to its chooser. */
+    retarget(deck: string | undefined): void;
     stop(): Promise<void>;
 }
 
@@ -189,7 +190,7 @@ export function serve(options: ServeOptions): Server {
         url: `http://localhost:${server.port}`,
         changed: schedule,
         retarget(next) {
-            const moved = deck === undefined || dirname(next) !== dirname(deck);
+            const moved = next === undefined || deck === undefined || dirname(next) !== dirname(deck);
             deck = next;
             if (!moved) return;
             deckWatcher?.close();

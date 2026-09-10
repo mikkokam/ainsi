@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { mkdir, readdir, rename } from "node:fs/promises";
+import { cp, mkdir, readdir, rename } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
@@ -10,7 +11,7 @@ import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pack } from "./pack";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { CHROME, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
+import { CHROME, THEMES, USER_THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, EntityKind, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -105,9 +106,12 @@ function themeTokens(css: string): { ground: string; ink: string; accent: string
  * the same installed_plugins.json Claude Code itself writes under the user's home, so a
  * missing or unreadable file just answers false rather than throwing.
  */
+/** where Claude Code keeps what it has installed; the landing offers to show it */
+const PLUGINS = join(homedir(), ".claude", "plugins");
+
 async function skillsInstalled(): Promise<boolean> {
     try {
-        const raw = JSON.parse(await Bun.file(join(homedir(), ".claude", "plugins", "installed_plugins.json")).text());
+        const raw = JSON.parse(await Bun.file(join(PLUGINS, "installed_plugins.json")).text());
         return Object.keys(raw?.plugins ?? {}).some(id => id === "ainsi@ainsi" || id.startsWith("ainsi@"));
     } catch {
         return false;
@@ -419,12 +423,12 @@ async function logoOf(logo: string | undefined, diagnostics: Diagnostic[]): Prom
  * file and the fit pass measures the image at its real height. Remote and data urls pass
  * through. Skipped in the studio, which serves the deck's folder itself.
  */
-async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<void> {
+async function inlineImages(pages: Page[], diagnostics: Diagnostic[], dir = dirname(deck!)): Promise<void> {
     const seen = new Map<string, string | undefined>();
     for (const image of images(pages.flatMap(p => p.blocks).flatMap(b => b.entities))) {
         if (/^(https?:|data:)/.test(image.url)) continue;
         if (!seen.has(image.url)) {
-            const file = Bun.file(resolve(dirname(deck!), image.url));
+            const file = Bun.file(resolve(dir, image.url));
             if (await file.exists()) {
                 seen.set(image.url, `data:${file.type || "image/png"};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`);
             } else {
@@ -435,6 +439,93 @@ async function inlineImages(pages: Page[], diagnostics: Diagnostic[]): Promise<v
         const inlined = seen.get(image.url);
         if (inlined) image.set(inlined);
     }
+}
+
+/*
+ * Every theme by name: the ones shipped here first, then yours under `~/.ainsi/themes`. A name
+ * in both is the shipped one, which is the rule themeDir() resolves by, so the shelf and the
+ * renderer cannot disagree about which folder a name means.
+ */
+async function themeNames(): Promise<{ shipped: string[]; yours: string[] }> {
+    const folders = async (at: string) =>
+        (await readdir(at, { withFileTypes: true }).catch(() => [])).filter(e => e.isDirectory()).map(e => e.name).sort();
+    const shipped = await folders(THEMES);
+    return { shipped, yours: (await folders(USER_THEMES)).filter(name => !shipped.includes(name)) };
+}
+
+/*
+ * The one thing the page cannot do for itself: the native open dialog, which belongs to the
+ * shell. The shell parks on /__shell and the page posts /__shell-ask, so the door is the same
+ * door on both surfaces and neither side learns the other's internals. In a browser nobody is
+ * parked and the page opens its own chooser instead.
+ */
+let parked: ((what: string) => void) | undefined;
+
+/*
+ * A tile on the landing is the page itself, built small. A drawing of a page has to be kept in
+ * step with what the renderer does and never is; this goes through the same assemble and render
+ * a deck does, so a theme that changed shows here as it will on the slide.
+ *
+ * The overrides are the difference between a page in a deck and a page in a tile: no shell
+ * around it, no shadow, and the design width, which the tile scales down to its own.
+ */
+/* `body.ainsi` carries the deck's shell padding and outranks a bare `body`, so the class has to
+   be named here or the page sits inset inside its own thumbnail and the far side is cropped */
+const THUMB_CSS = "html,body,body.ainsi{margin:0;padding:0;background:transparent;overflow:hidden}"
+    + ".ainsi-page{margin:0;border-radius:0;box-shadow:none;width:1280px}";
+/** the last resort, for a theme with no sample to draw and no default sample to borrow */
+const THEME_SAMPLE = "# Aa\n\nBody text at this theme's measure, and a second line under it.\n";
+
+/*
+ * A theme's tile is page one of a real deck written in that theme. A theme is a page's worth of
+ * decisions — a display face against a body face, how a rule sits under a heading, what the
+ * accent is for — and two lines of "Aa" shows almost none of them.
+ *
+ * Which sample belongs to which theme is read from the samples themselves, because each one
+ * already says so in its own frontmatter. A theme with no sample of its own borrows the default
+ * theme's deck and is rendered in its own tokens, so a theme you wrote this morning gets a real
+ * page too rather than the skeleton.
+ */
+const SAMPLES = resolve(import.meta.dir, "..", "samples");
+let byTheme: Map<string, string> | undefined;
+
+async function samples(): Promise<Map<string, string>> {
+    if (byTheme) return byTheme;
+    byTheme = new Map();
+    for (const entry of await readdir(SAMPLES, { withFileTypes: true }).catch(() => [])) {
+        if (!entry.isDirectory()) continue;
+        const file = join(SAMPLES, entry.name, `${entry.name}.md`);
+        const source = await Bun.file(file).text().catch(() => undefined);
+        if (source === undefined) continue;
+        const named = parse(source).doc.settings.theme;
+        if (!byTheme.has(named)) byTheme.set(named, file);
+    }
+    return byTheme;
+}
+
+/** rendered once per theme per process: a tile is redrawn on every visit to the landing */
+const drawn = new Map<string, Promise<Response>>();
+
+async function themeThumb(theme: string): Promise<Response> {
+    const found = await samples();
+    const file = found.get(theme) ?? found.get("default");
+    if (!file) return thumbnail(THEME_SAMPLE, deck ? dirname(deck) : browseRoot, theme);
+    const source = await Bun.file(file).text().catch(() => undefined);
+    if (source === undefined) return thumbnail(THEME_SAMPLE, deck ? dirname(deck) : browseRoot, theme);
+    return thumbnail(source, dirname(file), theme);
+}
+
+async function thumbnail(source: string, dir: string, themeName?: string): Promise<Response> {
+    const diagnostics: Diagnostic[] = [];
+    const parsed = parse(source);
+    const settings = { ...parsed.doc.settings, theme: themeName ?? parsed.doc.settings.theme };
+    const { theme, registry, layouts } = await stack(settings.theme, diagnostics, dir);
+    const options = { registry, layouts, themeCss: theme.css, viewer: { css: THUMB_CSS, script: "" } };
+    const assembled = assemble(source, options);
+    const pages = assembled.pages.slice(0, 1);
+    await inlineImages(pages, diagnostics, dir);
+    const { html } = renderPages(pages, assembled.title, settings, options);
+    return Response.json({ html, ratio: settings.ratio });
 }
 
 /** whatever this platform calls to hand a file or a folder to the person at the machine */
@@ -454,6 +545,17 @@ function retarget(next: string): void {
     if (first) console.log(`-> ${deck}`);
 }
 
+/*
+ * The reverse: no deck, so the studio is its chooser again and nothing beside a deck is
+ * watched. Every output path is derived from the deck's, so they go with it.
+ */
+function release(): void {
+    deck = undefined;
+    output = pdfOutput = pptxOutput = zipOutput = "";
+    server.retarget(undefined);
+    server.changed("the deck closed", true);
+}
+
 /** a path the browser asked for, resolved under the browse root or refused */
 function under(root: string, at: unknown): string | undefined {
     const path = resolve(root, typeof at === "string" ? at : "");
@@ -461,8 +563,8 @@ function under(root: string, at: unknown): string | undefined {
 }
 
 /** the theme and the component and layout registries a build renders through */
-async function stack(themeName: string, diagnostics: Diagnostic[]) {
-    const themeDir = themePath(themeName, dirname(deck!));
+async function stack(themeName: string, diagnostics: Diagnostic[], dir = dirname(deck!)) {
+    const themeDir = themePath(themeName, dir);
     const theme = await loadTheme(themeDir, diagnostics);
     const registry = await load(undefined, diagnostics);
     const layouts = await loadLayouts(theme.layouts, diagnostics);
@@ -542,21 +644,24 @@ const server = serve({
     // the chrome and the theme, and nothing else: components and layouts are imported now, so
     // a change to one needs the process restarted and a watch over them could not honour it
     roots: [...CHROME, ...first.roots],
-    rebuild: async () => stamp((await build()).html),
+    // with no deck the studio is its chooser, and closing one is what puts it back there
+    rebuild: async () => stamp(deck ? (await build()).html : await loadStart()),
     route: editing ? async (request, url) => {
         // before a deck is chosen the studio is the start page, and only browsing, opening
         // and making a deck mean anything
         const CHOOSE = new Response("no deck open", { status: 409 });
         // the landing needs its own data before any deck is open, same as browse/open/new
-        const LANDING = ["/__browse", "/__open", "/__new", "/__theme-previews", "/__recents", "/__pin", "/__skills"];
+        const LANDING = ["/__browse", "/__open", "/__new", "/__theme-previews", "/__recents", "/__pin", "/__skills", "/__reveal", "/__theme-new", "/__state", "/__shell", "/__shell-ask", "/__thumb"];
         if (!deck && !LANDING.includes(url.pathname)) return url.pathname.startsWith("/__") ? CHOOSE : undefined;
         if (url.pathname === "/__doc") return Response.json(doc);
         if (url.pathname === "/__theme-previews") {
-            const shipped = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
-            const names = shipped.includes(currentTheme) ? shipped : [...shipped, currentTheme];
+            const { shipped, yours } = await themeNames();
+            const known = [...shipped, ...yours];
+            const names = known.includes(currentTheme) ? known : [...known, currentTheme];
             const themes = await Promise.all(names.map(async name => {
                 const css = await Bun.file(join(themePath(name, deck ? dirname(deck) : browseRoot), "variables.css")).text().catch(() => "");
-                const kind = shipped.includes(name) ? "shipped" : name.startsWith("..") ? "../brand" : name.startsWith(".") ? "local" : "folder";
+                const kind = shipped.includes(name) ? "shipped" : yours.includes(name) ? "yours"
+                    : name.startsWith("..") ? "../brand" : name.startsWith(".") ? "local" : "folder";
                 return { id: name, name: name.charAt(0).toUpperCase() + name.slice(1), kind, ...themeTokens(css) };
             }));
             return Response.json({ themes, current: currentTheme });
@@ -568,8 +673,12 @@ const server = serve({
                 const css = await Bun.file(join(themePath(r.theme, dirname(r.path)), "variables.css")).text().catch(() => "");
                 return { ...r, found, ...themeTokens(css) };
             }));
-            withPreviews.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastOpened - a.lastOpened);
-            return Response.json(withPreviews.slice(0, 6));
+            // pinned first, then the ones still on disk: a deck that has moved is worth showing,
+            // but never ahead of one you can open
+            withPreviews.sort((a, b) => Number(b.pinned) - Number(a.pinned) || Number(b.found) - Number(a.found) || b.lastOpened - a.lastOpened);
+            // a row of covers is cheap: an entry is a path and what its last build said, and the
+            // grid wraps, so the cap is about how far back a deck is worth looking for
+            return Response.json(withPreviews.slice(0, 24));
         }
         if (url.pathname === "/__pin" && request.method === "POST") {
             const { path, pinned } = await request.json();
@@ -582,8 +691,68 @@ const server = serve({
             return Response.json({ ok: true });
         }
         if (url.pathname === "/__skills") return Response.json({ installed: await skillsInstalled() });
+        // what a desktop shell's menu is drawn against: most of it means nothing with no deck
+        if (url.pathname === "/__thumb") {
+            const theme = url.searchParams.get("theme");
+            if (theme) {
+                if (!drawn.has(theme)) drawn.set(theme, themeThumb(theme));
+                return (await drawn.get(theme)!).clone();
+            }
+            // only a deck already on the recents list: the allowlist is the list the page is
+            // drawing, which is narrower than "any markdown under the root"
+            const path = url.searchParams.get("deck");
+            if (!path || !(await readRecents()).some(r => r.path === path)) return new Response("not a recent", { status: 403 });
+            const source = await Bun.file(path).text().catch(() => undefined);
+            if (source === undefined) return new Response("gone", { status: 404 });
+            return thumbnail(source, dirname(path));
+        }
+        if (url.pathname === "/__state") return Response.json({ deck: deck ? basename(deck) : null });
+        if (url.pathname === "/__shell") {
+            const what = await new Promise<string | undefined>(resolve => {
+                parked?.(""); // one shell at a time; an older wait is stale by definition
+                parked = resolve;
+                request.signal.addEventListener("abort", () => { if (parked === resolve) parked = undefined; resolve(undefined); });
+            });
+            return what ? Response.json({ what }) : new Response("", { status: 204 });
+        }
+        if (url.pathname === "/__shell-ask" && request.method === "POST") {
+            const { what } = await request.json();
+            if (!parked) return new Response("no shell to ask", { status: 409 });
+            parked(String(what));
+            parked = undefined;
+            return Response.json({ ok: true });
+        }
+        /*
+         * Folders the person is meant to edit by hand, handed to the file manager. Named rather
+         * than pathed: an endpoint on localhost taking a path would open anything on the machine
+         * for any page in the browser.
+         */
+        if (url.pathname === "/__reveal" && request.method === "POST") {
+            const { what } = await request.json();
+            const at = what === "themes" ? USER_THEMES : what === "skills" ? PLUGINS : undefined;
+            if (!at) return new Response("themes or skills", { status: 400 });
+            // yours is made on the way there; the plugins folder is Claude Code's to make
+            if (what === "themes") await mkdir(at, { recursive: true });
+            else if (!existsSync(at)) return new Response(`nothing at ${at} yet`, { status: 404 });
+            Bun.spawn([...opener(), at], { stdout: "ignore", stderr: "ignore" }).unref();
+            return Response.json({ path: at });
+        }
+        /* a theme of your own starts as a copy of the default, which is the one theme that
+         * declares every token; an empty folder would render as the default anyway and teach
+         * nothing about what to change */
+        if (url.pathname === "/__theme-new" && request.method === "POST") {
+            const { yours } = await themeNames();
+            let id = "mytheme";
+            for (let n = 2; yours.includes(id); n++) id = `mytheme-${n}`;
+            await mkdir(USER_THEMES, { recursive: true });
+            await cp(join(THEMES, "default"), join(USER_THEMES, id), { recursive: true });
+            console.log(`-> ${join(USER_THEMES, id)}`);
+            Bun.spawn([...opener(), join(USER_THEMES, id)], { stdout: "ignore", stderr: "ignore" }).unref();
+            return Response.json({ id, path: join(USER_THEMES, id) });
+        }
         if (url.pathname === "/__themes") {
-            const themes = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+            const { shipped, yours } = await themeNames();
+            const themes = [...shipped, ...yours];
             // a deck on a theme of its own is still on it; the picker says so rather than
             // showing a list the current theme is not in
             if (!themes.includes(currentTheme)) themes.unshift(currentTheme);
@@ -659,6 +828,10 @@ const server = serve({
             if (!dir) return new Response("outside the folder the studio was started in", { status: 403 });
             retarget(await untitled(dir, typeof theme === "string" ? theme : undefined));
             return Response.json({ file: basename(deck!) });
+        }
+        if (url.pathname === "/__close" && request.method === "POST") {
+            if (deck) release();
+            return Response.json({ ok: true });
         }
         if (url.pathname === "/__open" && request.method === "POST") {
             const { path } = await request.json();

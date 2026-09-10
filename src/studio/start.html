@@ -16,12 +16,25 @@
     html, body { margin: 0; min-height: 100vh; background: var(--ac-ground); color: var(--ac-ink); font: var(--ac-text-body); }
     button { font-family: inherit; }
 
-    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; }
+    /* The one wash in the chrome, and it belongs to the window rather than to the story: begun
+       under the titlebar it would stop at a hard edge there, which is the seam the strip used to
+       draw. A length rather than a percentage vertically, because the shell is as tall as the
+       page and the falloff has to stay where it was. */
+    .ac-shell { display: flex; flex-direction: column; min-height: 100vh;
+                background: radial-gradient(120% 520px at 10% 0, rgb(76 141 246 / 14%), transparent 58%); }
 
     /* ---- titlebar --------------------------------------------------- */
+    /* Transparent where the page is at rest, so the strip and the wash under it read as one
+       surface. It earns its glass only once something is scrolling beneath it, which is the one
+       moment it has to stay legible; a strip that is always filled is a seam the rest of the
+       time. */
     .ac-titlebar { flex: none; height: var(--ac-titlebar); display: flex; align-items: center; gap: 14px; padding: 0 14px;
-                   background: var(--ac-glass); backdrop-filter: var(--ac-glass-filter); -webkit-backdrop-filter: var(--ac-glass-filter);
-                   border-bottom: 1px solid rgb(255 255 255 / 7%); }
+                   background: transparent; border-bottom: 1px solid transparent;
+                   transition: background var(--ac-panel-ms) var(--ac-ease), border-color var(--ac-panel-ms) var(--ac-ease); }
+    body[data-scrolled] .ac-titlebar {
+        background: var(--ac-glass); backdrop-filter: var(--ac-glass-filter); -webkit-backdrop-filter: var(--ac-glass-filter);
+        border-bottom-color: rgb(255 255 255 / 7%);
+    }
     .ac-titlebar__icons { display: flex; align-items: center; gap: 2px; }
     .ac-icon-btn { width: var(--ac-h-icon); height: 26px; padding: 0; display: grid; place-items: center; border: 0; border-radius: var(--ac-r-icon);
                    background: none; color: #a8a8b0; cursor: pointer; }
@@ -52,15 +65,26 @@
     }
     body[data-ainsi-host="electrobun"] .ac-icon-btn__label { display: inline; font: var(--ac-text-control); }
     body[data-ainsi-host="electrobun"] .ac-titlebar__spacer { width: 0; }
+    /* no app name up there: the window is the app, and a name pushed off centre by the lights
+       is worse than none. The browser tab keeps it, where the page has nothing else saying
+       what it is. */
+    body[data-ainsi-host="electrobun"] .ac-titlebar__centre { display: none; }
 
     /* ---- story -------------------------------------------------------- */
-    .ac-story { padding: 60px 56px 44px; display: flex; align-items: flex-end; justify-content: space-between; gap: 56px;
-                background: radial-gradient(120% 140% at 10% 0%, rgb(76 141 246 / 14%), transparent 58%); }
+    /* The gradient spans the window; the line of content inside it does not. Two items pushed to
+       opposite edges of a wide display put the buttons a screen away from the words they answer,
+       so the right padding grows instead and the left edge stays with the sections below. */
+    .ac-story { padding: 60px max(56px, calc(100% - 1336px)) 44px 56px;
+                display: flex; align-items: flex-end; justify-content: space-between; gap: 56px; }
     .ac-story__text { max-width: 660px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-    .ac-story__brand { display: flex; align-items: center; gap: 13px; }
-    .ac-story__logo { height: 30px; width: auto; display: block; }
-    .ac-story__rule { width: 1px; height: 20px; background: var(--ac-hairline-strong); }
-    .ac-story__face { font: 500 15px/1 var(--ac-font); color: var(--ac-ink-2); letter-spacing: -.01em; }
+    /* one line, not two centred boxes: centring left "Studio" riding high against the wordmark */
+    .ac-story__brand { display: flex; align-items: baseline; gap: 13px; }
+    /* the flex baseline of an image is its bottom margin edge, and the file leaves 1.92 of its
+       81 units empty under the wordmark's baseline; taking that off puts the line on the letters
+       rather than on the edge of the file */
+    .ac-story__logo { height: 30px; width: auto; display: block; margin-bottom: calc(30px * -1.92 / 81); }
+    .ac-story__rule { align-self: center; width: 1px; height: 20px; background: var(--ac-hairline-strong); }
+    .ac-story__face { font: 500 18px/1 var(--ac-font); color: var(--ac-ink-2); letter-spacing: -.01em; }
     .ac-story h1 { margin: 0; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: pretty; }
     .ac-story p { margin: 0; font: var(--ac-text-body); color: var(--ac-ink-2); max-width: 520px; text-wrap: pretty; }
 
@@ -72,13 +96,19 @@
     .ac-action--primary:hover { background: #fff; }
     .ac-action--secondary { border: 1px solid rgb(255 255 255 / 14%); background: none; color: #E6E6EA; font: 500 14px/1 var(--ac-font); }
     .ac-action--secondary:hover { border-color: rgb(255 255 255 / 24%); background: rgb(255 255 255 / 7%); }
-    .ac-action__hint { font: 500 11px/1 var(--ac-mono); opacity: .5; }
-    .ac-action--secondary .ac-action__hint { opacity: .45; }
+    /* the shortcut reads at the label's size: it is the second half of what the button says,
+       and 11px mono beside 14px sans is a glyph you have to lean in for */
+    .ac-action__hint { font: 500 14px/1 var(--ac-mono); opacity: .6; }
+    .ac-action--secondary .ac-action__hint { opacity: .55; }
     .ac-status { display: flex; align-items: center; gap: 7px; padding-top: 4px; font: var(--ac-text-meta); color: var(--ac-ink-3); }
     .ac-status__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ac-ok); flex: none; }
     .ac-status--warn .ac-status__dot { background: #c8ab74; }
     .ac-status a { color: var(--ac-blue-ink); text-decoration: none; }
     .ac-status a:hover { text-decoration: underline; }
+    /* a link that acts rather than navigates: every one of these asks the server to open a folder */
+    .ac-link { padding: 0; border: 0; background: none; font: inherit; color: var(--ac-blue-ink); cursor: pointer; }
+    .ac-link:hover { text-decoration: underline; }
+    .ac-link:focus-visible { outline: none; box-shadow: var(--ac-focus); border-radius: 4px; }
 
     /* ---- theme shelf -------------------------------------------------- */
     .ac-section { padding: 0 56px; margin-top: 34px; display: flex; flex-direction: column; gap: 15px; }
@@ -102,12 +132,33 @@
     .ac-tile__caption { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
     .ac-tile__name { font: 500 12.5px/1 var(--ac-font); color: var(--ac-ink-2); }
     .ac-tile__kind { font: var(--ac-text-key); color: var(--ac-ink-3); }
-    .ac-tile--new { cursor: default; }
-    .ac-tile--new .ac-tile__preview { background: #1a1a1e; }
-    .ac-tile--new .ac-tile__name, .ac-tile--new .ac-tile__kind { color: var(--ac-ink-disabled); }
+    .ac-tile--new .ac-tile__preview { background: #1a1a1e; border-style: dashed; }
+    .ac-tile--new .ac-tile__name { color: var(--ac-ink-2); }
+    .ac-tile--new .ac-tile__kind { color: var(--ac-ink-3); }
+
+    /* A tile is the page itself, built by the server and scaled into the box. It sits over the
+       drawing below it, so a build that fails or a deck that has moved leaves the drawing where
+       it was. The scale is set from the box's measured width, because the recents grid decides
+       that width at runtime.
+
+       The fit is cover, anchored to the top: a page and a tile are rarely the same shape, and
+       containing one in the other draws a second box inside the first with the deck floating in
+       the middle of it. Cropping the bottom off a page one costs nothing, because page one is a
+       title and its title is at the top. */
+    .ac-shot { position: absolute; inset: 0; overflow: hidden; background: inherit; }
+    .ac-shot iframe {
+        position: absolute; left: 50%; top: 0;
+        width: 1280px; height: calc(1280px / var(--ac-shot-ratio, 1.7778));
+        border: 0; display: block; pointer-events: none;
+        transform-origin: top center;
+        transform: translateX(-50%) scale(var(--ac-shot-scale, .148));
+    }
 
     /* ---- recent grid ---------------------------------------------------- */
-    .ac-recents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    /* as many as fit at a width a cover reads at, and empty tracks rather than stretched cards:
+       auto-fill keeps the column count the window allows, so a card is never wider than one row
+       of six on a laptop */
+    .ac-recents { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
     .ac-card { position: relative; padding: 0; border: 1px solid var(--ac-hairline); border-radius: var(--ac-r-card);
                background: rgb(255 255 255 / 3%); overflow: hidden; text-align: left; cursor: pointer; color: inherit; }
     .ac-card:focus-visible { outline: none; box-shadow: var(--ac-focus); }
@@ -119,8 +170,6 @@
     .ac-card__pin { position: absolute; right: 9px; top: 9px; width: 20px; height: 20px; padding: 0; border: 0; background: none;
                     font-size: 12px; line-height: 1; cursor: pointer; color: rgb(255 255 255 / 35%); }
     .ac-card__pin--on { color: var(--ac-blue-ink); }
-    .ac-card__play { position: absolute; right: 9px; bottom: 9px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%;
-                     background: rgb(10 10 12 / 55%); backdrop-filter: blur(10px); display: grid; place-items: center; color: #fff; cursor: pointer; }
     .ac-card__body { padding: 11px 14px 13px; display: flex; flex-direction: column; gap: 6px; }
     .ac-card__path { font: var(--ac-text-mono); color: var(--ac-ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                       direction: rtl; text-align: left; }
@@ -151,12 +200,16 @@
     .ac-browse__empty { padding: 16px; color: var(--ac-ink-3); font: var(--ac-text-meta); }
     .ac-browse__error { padding: 10px 16px; color: var(--ac-danger-ink); font: var(--ac-text-meta); }
 
+    /* ---- the skills sheet: what Claude Code has to run, and where it keeps it ---- */
+    .ac-skills { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .ac-skills p { margin: 0; font: var(--ac-text-meta); color: var(--ac-ink-2); }
+    .ac-skills code { display: block; padding: 8px 10px; border-radius: var(--ac-r-chip);
+                      background: rgb(255 255 255 / 5%); font: var(--ac-text-mono); color: var(--ac-ink); user-select: all; }
+    .ac-skills p code { display: inline; padding: 2px 5px; }
+    .ac-skills__foot { display: flex; justify-content: space-between; gap: 12px; padding-top: 2px; font: var(--ac-text-meta); }
+
     /* ---- responsive ------------------------------------------------------ */
-    @media (max-width: 1100px) {
-        .ac-recents { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
     @media (max-width: 760px) {
-        .ac-recents { grid-template-columns: 1fr; }
         .ac-story { flex-direction: column; align-items: stretch; padding: 34px 24px; gap: 24px; }
         .ac-story__text { max-width: none; }
         .ac-actions { width: 100%; order: -1; }
@@ -165,12 +218,20 @@
         .ac-footer__hints { display: none; }
     }
 
+    /* the hand-off to the deck: everything on the page dims under one veil rather than the
+       window blanking between two documents */
+    .ac-veil { position: fixed; inset: 0; z-index: 200; background: var(--ac-ground);
+               opacity: 0; pointer-events: none; transition: opacity 220ms var(--ac-ease); }
+    body[data-leaving] .ac-veil { opacity: 1; pointer-events: auto; }
+
     @media (prefers-reduced-motion: reduce) {
         .ac-tile, .ac-action { transition: none; }
+        .ac-veil { transition: none; }
     }
 </style>
 </head>
 <body>
+<div class="ac-veil"></div>
 <div class="ac-shell">
     <div class="ac-titlebar">
         <div class="ac-titlebar__icons">
@@ -197,8 +258,8 @@
                 <div class="ac-story__rule"></div>
                 <span class="ac-story__face">Studio</span>
             </div>
-            <h1>A deck is a markdown file on your computer.<br>Your agent already has it open.</h1>
-            <p>No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands. Export happens once, at the end.</p>
+            <h1>A deck is a markdown file.<br>Your agent already has it open.</h1>
+            <p>Edit local files. No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands.<br>Export happens once, at the end.</p>
         </div>
         <div class="ac-actions">
             <button class="ac-action ac-action--primary" id="open" data-zone="open">Open a deck…<span class="ac-action__hint">⌘O</span></button>
@@ -208,18 +269,34 @@
     </div>
 
     <div class="ac-section">
-        <div class="ac-section-head"><h2>Start from a theme</h2><span>a theme is a folder — swap it later and every deck follows</span></div>
+        <div class="ac-section-head"><h2>Start from a theme</h2><span>shipped themes and your own · <button type="button" class="ac-link" id="themes-folder">open your themes folder</button></span></div>
         <div class="ac-themes" id="themes"></div>
     </div>
 
     <div class="ac-section ac-section--recents">
-        <div class="ac-section-head"><h2>Recent</h2></div>
+        <div class="ac-section-head"><h2>Open recent</h2></div>
         <div class="ac-recents" id="recents"></div>
     </div>
 
     <div class="ac-footer">
         <div class="ac-footer__status" id="status">Click this window and press ↓ — focus starts on Open a deck, then New, the theme shelf, and the recents.</div>
         <div class="ac-footer__hints"><span>↑↓ zone</span><span>←→ pick</span><span>⏎ go</span><span>⌘O browse</span><span>⌘N new</span></div>
+    </div>
+</div>
+
+<div class="ac-browse" id="skills-sheet" hidden>
+    <div class="ac-browse__panel">
+        <div class="ac-browse__bar">Claude Code skills</div>
+        <div class="ac-skills">
+            <p>The plugin carries the skill that teaches the agent this deck grammar and the build loop. Claude Code installs it, not ainsi:</p>
+            <code>claude plugin marketplace add mikkokam/ainsi</code>
+            <code>claude plugin install ainsi@ainsi</code>
+            <p>To update it later: <code>claude plugin marketplace update ainsi</code></p>
+            <div class="ac-skills__foot">
+                <button type="button" class="ac-link" id="skills-folder">show the plugins folder</button>
+                <button type="button" class="ac-link" id="skills-close">close</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -274,12 +351,31 @@
 
     function updateStatus() { setStatus(describeZone(), false); }
 
+    /* the titlebar is transparent over the wash until something is passing under it */
+    const scrolled = () => document.body.toggleAttribute("data-scrolled", scrollY > 2);
+    addEventListener("scroll", scrolled, { passive: true });
+    scrolled();
+
     // ---- server actions -------------------------------------------------
+
+    /*
+     * The deck arrives by reloading this window onto it, so the landing is on screen until the
+     * new document paints. Covering it first turns that hand-off into one fade instead of a
+     * flash of half-drawn page: the veil is the deck's own ground, so what fades up behind it
+     * is the colour it is already sitting on.
+     */
+    const VEIL = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+    const veil = () => new Promise(done => {
+        if (!VEIL) return done();
+        document.body.setAttribute("data-leaving", "");
+        setTimeout(done, VEIL);
+    });
 
     async function repoint(path, body) {
         const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
         if (!response.ok) return fail(response);
         setStatus(describeZone(), true);
+        await veil();
         location.reload();
     }
     const openDeck = path => repoint("/__open", { path });
@@ -295,6 +391,11 @@
 
     let browseReturnFocus = null;
     const under = (dir, name) => (dir ? dir + "/" + name : name);
+    // the app has a file dialog of its own and it is the one the person knows; this page's
+    // chooser is for a browser tab, where there is no other
+    const desktop = document.body.dataset.ainsiHost === "electrobun";
+    const askShell = what => fetch("/__shell-ask", { method: "POST", body: JSON.stringify({ what }) });
+    const openADeck = () => (desktop ? void askShell("open") : openBrowse());
 
     async function browseTo(next) {
         const response = await fetch("/__browse?at=" + encodeURIComponent(next ?? ""));
@@ -329,8 +430,8 @@
         (browseReturnFocus ?? openBtn).focus();
     }
     browse.addEventListener("click", e => { if (e.target === browse) closeBrowse(); });
-    openBtn.addEventListener("click", openBrowse);
-    document.getElementById("titlebar-open").addEventListener("click", openBrowse);
+    openBtn.addEventListener("click", openADeck);
+    document.getElementById("titlebar-open").addEventListener("click", openADeck);
 
     // ---- new deck ---------------------------------------------------------
 
@@ -340,7 +441,7 @@
     // a desktop shell's File menu reaches this page the same way it reaches the studio's
     document.addEventListener("ainsi:command", event => {
         if (event.detail === "new") newDeck(undefined);
-        if (event.detail === "open") openBrowse();
+        if (event.detail === "open") openADeck();
     });
 
     // ---- theme shelf --------------------------------------------------------
@@ -366,17 +467,77 @@
                     </div>
                 </div>
                 <div class="ac-tile__caption"><span class="ac-tile__name">${t.name}</span><span class="ac-tile__kind">${t.kind}</span></div>`;
+            const shot = document.createElement("div");
+            shot.className = "ac-shot";
+            shot.dataset.shot = `/__thumb?theme=${encodeURIComponent(t.id)}`;
+            tile.querySelector(".ac-tile__preview").append(shot);
+            shots.observe(shot);
             tile.addEventListener("click", () => newDeck(t.id));
             themesEl.append(tile);
         });
-        // last tile: a theme is a folder, so starting one is copying one — not built here yet
-        const more = document.createElement("div");
+        // last tile: a theme is a folder, so starting one is copying one into ~/.ainsi/themes
+        const more = document.createElement("button");
+        more.type = "button";
         more.className = "ac-tile ac-tile--new";
         more.innerHTML = `
             <div class="ac-tile__preview"></div>
-            <div class="ac-tile__caption"><span class="ac-tile__name">New theme…</span><span class="ac-tile__kind">copy a folder, edit</span></div>`;
+            <div class="ac-tile__caption"><span class="ac-tile__name">New theme…</span><span class="ac-tile__kind">copy the default, edit</span></div>`;
+        more.addEventListener("click", newTheme);
         themesEl.append(more);
     }
+
+    /*
+     * Thumbnails, one build each, fetched when the tile comes into view: the shelf and the grid
+     * together are thirty builds and nobody scrolls to all of them.
+     */
+    const shotSizes = new ResizeObserver(entries => entries.forEach(e => sizeShot(e.target)));
+    const shots = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            shots.unobserve(entry.target);
+            void paintShot(entry.target);
+        }
+    }, { rootMargin: "300px" });
+
+    function sizeShot(box) {
+        const ratio = Number(box.style.getPropertyValue("--ac-shot-ratio")) || 16 / 9;
+        const scale = Math.max(box.clientWidth / 1280, box.clientHeight / (1280 / ratio));
+        box.style.setProperty("--ac-shot-scale", scale);
+    }
+
+    async function paintShot(box) {
+        const response = await fetch(box.dataset.shot).catch(() => undefined);
+        if (!response?.ok) return;   // the drawing under it stays, which is the whole point of it
+        const { html, ratio } = await response.json();
+        const [w, h] = ratio.split(":").map(Number);
+        box.style.setProperty("--ac-shot-ratio", w / h);
+        const frame = document.createElement("iframe");
+        frame.setAttribute("scrolling", "no");
+        frame.setAttribute("tabindex", "-1");
+        frame.setAttribute("aria-hidden", "true");
+        frame.srcdoc = html;
+        box.replaceChildren(frame);
+        sizeShot(box);
+        shotSizes.observe(box);
+    }
+
+    /* the folders behind the shelf: yours to edit, and the answer to both is the file manager */
+    async function reveal(what) {
+        const response = await fetch("/__reveal", { method: "POST", body: JSON.stringify({ what }) });
+        if (!response.ok) return fail(response);
+        const { path } = await response.json();
+        statusEl.textContent = `opened ${path}`;
+    }
+
+    async function newTheme() {
+        const response = await fetch("/__theme-new", { method: "POST" });
+        if (!response.ok) return fail(response);
+        const { id, path } = await response.json();
+        statusEl.textContent = `${id} — edit variables.css in ${path}, then pick it here`;
+        await loadThemes();
+    }
+
+    document.getElementById("themes-folder").addEventListener("click", () => void reveal("themes"));
 
     async function loadThemes() {
         const response = await fetch("/__theme-previews");
@@ -416,7 +577,6 @@
                 <div class="ac-card__cover" style="background:${r.ground}">
                     <div class="ac-card__title" style="font-family:${r.display};color:${r.ink}">${r.title}</div>
                     <div class="ac-card__bar" style="background:${r.accent}"></div>
-                    <button type="button" class="ac-card__play" title="Present" aria-label="Present ${r.title}" tabindex="-1"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></button>
                     <button type="button" class="ac-card__pin${r.pinned ? " ac-card__pin--on" : ""}" title="${r.pinned ? "Unpin" : "Pin"}" aria-label="${r.pinned ? "Unpin" : "Pin"} ${r.title}" tabindex="-1">${r.pinned ? "★" : "☆"}</button>
                 </div>
                 <div class="ac-card__body">
@@ -427,9 +587,17 @@
                         <span class="ac-theme-id">${r.theme}</span>
                     </div>
                 </div>`;
+            if (r.found) {
+                const shot = document.createElement("div");
+                shot.className = "ac-shot";
+                shot.dataset.shot = `/__thumb?deck=${encodeURIComponent(r.path)}`;
+                // over the drawn cover, under the pin: later siblings paint on top
+                const cover = card.querySelector(".ac-card__cover");
+                cover.insertBefore(shot, cover.querySelector(".ac-card__pin"));
+                shots.observe(shot);
+            }
             card.addEventListener("click", () => { if (r.found) openDeck(r.path); });
             card.querySelector(".ac-card__pin").addEventListener("click", e => { e.stopPropagation(); pin(r, !r.pinned); });
-            card.querySelector(".ac-card__play").addEventListener("click", e => { e.stopPropagation(); if (r.found) openDeck(r.path); });
             recentsEl.append(card);
         });
     }
@@ -449,14 +617,30 @@
             const response = await fetch("/__skills");
             const { installed } = await response.json();
             skillsStatus.classList.toggle("ac-status--warn", !installed);
-            skillsText.innerHTML = installed
-                ? 'Claude Code skills active · <a href="https://github.com/mikkokam/ainsi" target="_blank" rel="noopener">manage</a>'
-                : 'Add the Ainsi skills · <a href="https://github.com/mikkokam/ainsi" target="_blank" rel="noopener">marketplace</a>';
+            skillsText.replaceChildren(
+                document.createTextNode(installed ? "Claude Code skills active · " : "Add the Ainsi skills · "),
+                Object.assign(document.createElement("button"),
+                    { type: "button", className: "ac-link", textContent: installed ? "manage" : "how", onclick: openSkills }));
         } catch {
             skillsStatus.classList.add("ac-status--warn");
             skillsText.textContent = "Could not check Claude Code skills";
         }
     }
+
+    const skillsSheet = document.getElementById("skills-sheet");
+    let skillsReturnFocus;
+    function openSkills() {
+        skillsReturnFocus = document.activeElement;
+        skillsSheet.hidden = false;
+        skillsSheet.querySelector("#skills-folder").focus();
+    }
+    function closeSkills() {
+        skillsSheet.hidden = true;
+        (skillsReturnFocus ?? openBtn).focus();
+    }
+    skillsSheet.addEventListener("click", e => { if (e.target === skillsSheet) closeSkills(); });
+    document.getElementById("skills-close").addEventListener("click", closeSkills);
+    document.getElementById("skills-folder").addEventListener("click", () => void reveal("skills"));
 
     // ---- keyboard model ---------------------------------------------------
 
@@ -486,8 +670,12 @@
 
     document.addEventListener("keydown", e => {
         const meta = e.metaKey || e.ctrlKey;
-        if (meta && e.key.toLowerCase() === "o") { e.preventDefault(); openBrowse(); return; }
+        if (meta && e.key.toLowerCase() === "o") { e.preventDefault(); openADeck(); return; }
         if (meta && e.key.toLowerCase() === "n") { e.preventDefault(); newDeck(undefined); return; }
+        if (!skillsSheet.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); closeSkills(); }
+            return;
+        }
         if (!browse.hidden) {
             if (e.key === "Escape") { e.preventDefault(); closeBrowse(); }
             return;

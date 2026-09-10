@@ -105,12 +105,12 @@ Movement is the column that decides a design. Ash is harder than oak and cheaper
 # Workshop and factory, honestly
 
 <!-- ainsi: comparison text=small -->
-|              | A workshop piece                    | A factory piece                  |
-| ------------ | ----------------------------------- | -------------------------------- |
-| Joints       | Cut to the board in front of us      | Cut to a tolerance, then glued   |
-| Repair       | Any part, by us, in twenty years     | The part is not made any more    |
-| Lead time    | Eight to sixteen weeks               | From stock, or six weeks         |
-| Price        | Two to four times                    | The reason most rooms have one   |
+|           | A workshop piece                 | A factory piece                |
+| ---       | ---                              | ---                            |
+| Joints    | Cut to the board in front of us  | Cut to a tolerance, then glued |
+| Repair    | Any part, by us, in twenty years | The part is not made any more  |
+| Lead time | Eight to sixteen weeks           | From stock, or six weeks       |
+| Price     | Two to four times                | The reason most rooms have one |
 
 ---
 

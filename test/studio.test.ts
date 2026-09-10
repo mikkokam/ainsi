@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target , toGrid, toItems, toList, toMarkdown } from "../src/studio/edits";
+import { SETTINGS, matterValue, writeMatter, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, strands, withAlert, type Target , toGrid, toItems, toList, toMarkdown } from "../src/studio/edits";
 
 const registry = await load();
 const layouts = await loadLayouts();
@@ -331,4 +331,65 @@ test("a list an editor could not put back is refused rather than flattened", () 
     expect(toItems("- One\n\n- Two")).toBeUndefined();          // loose renders differently from tight
     expect(toItems("- One\n\n  A paragraph\n- Two")).toBeUndefined();
     expect(toItems("# heading")).toBeUndefined();
+});
+
+/*
+ * A layout directive sets the page it sits on, so a block may neither carry one away nor be
+ * dropped above one: either lands a page boundary in the middle of the page it opened. The
+ * shape is gatekeeper's own, where the run holds a component directive as well as the layout.
+ */
+const laid = "---\n\n<!-- ainsi: prose size=small caps -->\n<!-- ainsi: layout split -->\n##### Eyebrow\n\n<!-- ainsi: prose size=small -->\n# Title\n\nBody.\n";
+const laidBlock = (needle: string, run?: string): Target => {
+    const start = laid.indexOf(needle);
+    const target: Target = { start, end: start + needle.length, md: needle, kind: "heading" };
+    if (run) target.directive = { start: laid.indexOf(run), end: laid.indexOf(run) + run.length };
+    return target;
+};
+
+test("a block dropped above the directive opening a page is refused, not performed", () => {
+    const title = laidBlock("# Title", "<!-- ainsi: prose size=small -->");
+    const eyebrow = laidBlock("##### Eyebrow", "<!-- ainsi: prose size=small caps -->");
+    expect(strands(laid, title, eyebrow, "before")).toBe(true);
+    expect(strands(laid, title, eyebrow, "after")).toBe(false);
+});
+
+test("a block whose own run opens the page cannot be carried out of it", () => {
+    const eyebrow = laidBlock("##### Eyebrow", "<!-- ainsi: prose size=small caps -->");
+    const title = laidBlock("# Title", "<!-- ainsi: prose size=small -->");
+    expect(strands(laid, eyebrow, title, "after")).toBe(true);
+});
+
+test("a run carrying no layout is moved as it always was", () => {
+    const title = laidBlock("# Title", "<!-- ainsi: prose size=small -->");
+    const body = laidBlock("Body.");
+    expect(strands(laid, title, body, "before")).toBe(false);
+    expect(strands(laid, title, body, "after")).toBe(false);
+});
+
+/*
+ * The settings panel writes over someone else's frontmatter, so what it must not do is worth
+ * more than what it does: a comment stays, a key it has never heard of stays, and the order
+ * they were written in stays.
+ */
+const matterOf = (lines: string[], changes: Record<string, string>) => {
+    const values = new Map(SETTINGS.map(s => [s.key as string, matterValue(lines, s.key, s.fallback)]));
+    for (const [key, value] of Object.entries(changes)) values.set(key, value);
+    return writeMatter(lines, values);
+};
+
+test("a settings edit keeps a comment, an unknown key and the order of the lines", () => {
+    const lines = ["# photos are from Unsplash", "theme: portfolio", "unknownKey: 12", "logo: assets/mark.svg"];
+    expect(matterOf(lines, { theme: "swiss" }).split("\n")).toEqual([
+        "# photos are from Unsplash", "theme: swiss", "unknownKey: 12", "logo: assets/mark.svg",
+    ]);
+});
+
+test("a key set back to what the parser assumes loses its line, and a new key goes at the end", () => {
+    const lines = ["theme: portfolio", "ratio: 4:3"];
+    expect(matterOf(lines, { ratio: "16:9", numbers: "off" }).split("\n")).toEqual(["theme: portfolio", "numbers: off"]);
+});
+
+test("a deck with no frontmatter gets only the keys that were changed", () => {
+    expect(matterOf([], { logo: "assets/mark.svg" })).toBe("logo: assets/mark.svg");
+    expect(matterOf([], {})).toBe("");
 });

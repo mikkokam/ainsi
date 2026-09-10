@@ -42,7 +42,7 @@ The deck's house layout, used by every page that does not name one. See [Layouts
 
 ## numbers
 
-Page numbers on every page but the cover. `off` hides them from print, export and presenting, but never from the reading view. YAML 1.2 keeps `on` and `off` as strings, so both are read here as you meant them: `off`, `no`, `false` and `0` all turn numbers off.
+Page numbers on every page but the cover. `off` hides them everywhere, the reading view included. YAML 1.2 keeps `on` and `off` as strings, so both are read here as you meant them: `off`, `no`, `false` and `0` all turn numbers off.
 
 ## logo and coverLogo
 

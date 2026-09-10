@@ -121,6 +121,9 @@ const SETTLE = 90_000;
  */
 export async function place(page: import("playwright-core").Page, html: string): Promise<boolean> {
     await page.setContent(html, { waitUntil: "domcontentloaded" });
+    // measured at the design size whatever the window is: a built deck carries the viewer's
+    // chrome, and that chrome zooms a page to fit the window it is being read in
+    await page.addStyleTag({ content: ".ainsi-page { width: min(1280px, 100%) !important; zoom: 1 !important; }" });
     try {
         await page.waitForFunction(() => [...document.images].every(image => image.complete), undefined, { timeout: SETTLE });
         await page.evaluate(() => document.fonts.ready);

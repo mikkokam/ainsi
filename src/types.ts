@@ -28,7 +28,7 @@ export interface Settings {
     theme: string;
     ratio: string;
     h1StartsPage: boolean;
-    /** page numbers on every page but a cover; off hides them from print, export and presenting, never from the reading view */
+    /** page numbers on every page but a cover; off hides them everywhere, the reading view included */
     numbers: boolean;
     /** the deck's house layout; a page directive is an exception lasting one page */
     layout: string;

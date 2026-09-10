@@ -32,6 +32,8 @@
     transition: background .12s ease;
 }
 .ainsi-toolbar__button:hover { background: rgb(0 0 0 / 7%); }
+/* a toggle that is on: the grid, while the grid is what you are looking at */
+.ainsi-toolbar__button[data-active] { background: rgb(0 0 0 / 10%); }
 .ainsi-toolbar__button:focus-visible { outline: 2px solid #1f6feb; outline-offset: 1px; }
 .ainsi-toolbar__button svg { width: 20px; height: 20px; }
 
@@ -156,6 +158,20 @@ body[data-present] .ainsi-overview__label { color: #98a4b3; }
     background: rgb(255 255 255 / 12%);
     border: 1px solid rgb(255 255 255 / 14%);
     white-space: nowrap;
+}
+
+/*
+ * Reading: the page keeps its design width and the window sets the zoom, so the deck is the
+ * same design at every size. `zoom` and not a transform, because the box has to shrink with
+ * the picture: a transform leaves every page reserving its unscaled height and the column
+ * full of holes. Presenting and the grid do their own scaling and must not be zoomed twice,
+ * and print takes the page at its design size the way it always has.
+ */
+body[data-ainsi-read] .ainsi-page { width: 1280px; zoom: var(--ainsi-read-zoom, 1); }
+body[data-ainsi-read][data-present] .ainsi-page,
+body[data-ainsi-read] .ainsi-overview .ainsi-page { zoom: 1; }
+@media print {
+    body[data-ainsi-read] .ainsi-page { width: min(1280px, 100%); zoom: 1; }
 }
 
 /* presentation mode: one page, filling the viewport, scaled rather than reflowed */

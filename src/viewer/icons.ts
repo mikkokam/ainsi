@@ -11,6 +11,8 @@ export const icons = {
     play: wrap(`<polygon points="6 3 20 12 6 21 6 3"/>`),
     x: wrap(`<path d="M18 6 6 18"/><path d="m6 6 12 12"/>`),
     menu: wrap(`<path d="M3 7h18"/><path d="M3 12h14"/><path d="M3 17h14"/>`),
+    /* the way back from the grid: one page, filling the view */
+    reading: wrap(`<rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 10h10"/><path d="M7 14h6"/>`),
     grid: wrap(`<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>`),
 };
 
