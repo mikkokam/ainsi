@@ -11,7 +11,7 @@ import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pack } from "./pack";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
-import { CHROME, THEMES, USER_THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
+import { CHROME, THEMES, USER_THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, newest, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, EntityKind, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
@@ -487,24 +487,36 @@ const THEME_SAMPLE = "# Aa\n\nBody text at this theme's measure, and a second li
  * page too rather than the skeleton.
  */
 const SAMPLES = resolve(import.meta.dir, "..", "samples");
-let byTheme: Map<string, string> | undefined;
+/*
+ * The promise, not the map it will hold: the shelf asks for every tile at once, and a cache that
+ * publishes the map before it has filled it hands the rest of that burst an empty one. They then
+ * find no sample for their theme and fall back to the skeleton, which is a race you only see on
+ * a cold landing and never when the tiles are asked for one at a time.
+ */
+let byTheme: Promise<Map<string, string>> | undefined;
 
-async function samples(): Promise<Map<string, string>> {
-    if (byTheme) return byTheme;
-    byTheme = new Map();
-    for (const entry of await readdir(SAMPLES, { withFileTypes: true }).catch(() => [])) {
-        if (!entry.isDirectory()) continue;
-        const file = join(SAMPLES, entry.name, `${entry.name}.md`);
-        const source = await Bun.file(file).text().catch(() => undefined);
-        if (source === undefined) continue;
-        const named = parse(source).doc.settings.theme;
-        if (!byTheme.has(named)) byTheme.set(named, file);
-    }
+function samples(): Promise<Map<string, string>> {
+    byTheme ??= (async () => {
+        const found = new Map<string, string>();
+        for (const entry of await readdir(SAMPLES, { withFileTypes: true }).catch(() => [])) {
+            if (!entry.isDirectory()) continue;
+            const file = join(SAMPLES, entry.name, `${entry.name}.md`);
+            const source = await Bun.file(file).text().catch(() => undefined);
+            if (source === undefined) continue;
+            const named = parse(source).doc.settings.theme;
+            if (!found.has(named)) found.set(named, file);
+        }
+        return found;
+    })();
     return byTheme;
 }
 
-/** rendered once per theme per process: a tile is redrawn on every visit to the landing */
-const drawn = new Map<string, Promise<Response>>();
+/*
+ * Held per theme, and stamped with the newest mtime in its folder: the landing is visited often
+ * and a build per tile per visit is waste, but a theme you are editing has to redraw or the
+ * shelf lies about the folder you have open in front of you.
+ */
+const drawn = new Map<string, { stamp: number; tile: Promise<Response> }>();
 
 async function themeThumb(theme: string): Promise<Response> {
     const found = await samples();
@@ -695,8 +707,10 @@ const server = serve({
         if (url.pathname === "/__thumb") {
             const theme = url.searchParams.get("theme");
             if (theme) {
-                if (!drawn.has(theme)) drawn.set(theme, themeThumb(theme));
-                return (await drawn.get(theme)!).clone();
+                const stamp = await newest(themePath(theme, deck ? dirname(deck) : browseRoot)).catch(() => 0);
+                const held = drawn.get(theme);
+                if (held?.stamp !== stamp) drawn.set(theme, { stamp, tile: themeThumb(theme) });
+                return (await drawn.get(theme)!.tile).clone();
             }
             // only a deck already on the recents list: the allowlist is the list the page is
             // drawing, which is narrower than "any markdown under the root"

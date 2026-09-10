@@ -1,4 +1,4 @@
-import { ApplicationMenu, BrowserWindow, Utils } from "electrobun/main";
+import { ApplicationMenu, BrowserWindow, Updater, Utils } from "electrobun/main";
 import { homedir } from "node:os";
 import { dirname } from "node:path";
 import { studio, type Studio } from "./studio";
@@ -88,11 +88,24 @@ type Item = Parameters<typeof ApplicationMenu.setApplicationMenu>[0][number];
 const needsDeck = (item: Item): Item => ({ ...item, ...("type" in item && item.type === "separator" ? {} : { enabled: hasDeck }) });
 
 let hasDeck = Boolean(process.env.AINSI_DECK);
+/** the version waiting to be installed, once a check has found one; the menu reads it */
+let offered: string | undefined;
 
 function paintMenu(): void {
     ApplicationMenu.setApplicationMenu([
         /* a role carries no key equivalent of its own here, so the ones everyone reaches for say theirs */
-        { label: "Ainsi", submenu: [{ role: "about" }, { type: "separator" }, { role: "hide", accelerator: "cmd+h" }, { role: "quit", accelerator: "cmd+q" }] },
+        {
+            label: "Ainsi",
+            submenu: [
+                { role: "about" },
+                offered
+                    ? { label: `Install Ainsi ${offered}…`, action: "update-install" }
+                    : { label: "Check for Updates…", action: "update-check" },
+                { type: "separator" },
+                { role: "hide", accelerator: "cmd+h" },
+                { role: "quit", accelerator: "cmd+q" },
+            ],
+        },
         {
             label: "File",
             submenu: [
@@ -213,8 +226,69 @@ async function attend(studio: Studio): Promise<void> {
         if (!asked) return;
         // a dialog that was cancelled leaves this studio where it was, so the wait goes back on
         if (asked.what === "open" && await open()) return;
+        if (asked.what === "update") void install();
+        if (asked.what === "update-check") void checkUpdate(true);
     }
 }
+
+/*
+ * Updates. The channel is baked into the bundle: a dev build reports "updates disabled" and the
+ * check costs one no-op, so this is quiet under `bun run app` and live only in something that
+ * was installed. What it finds is the page's to show, because the page is the only surface with
+ * room to say it, and the shell's own menu item is the second door to the same install.
+ *
+ * The offer is re-announced on every dom-ready: the studio reloads the page on every commit,
+ * and a badge that vanished on the first edit would be a badge nobody trusts.
+ */
+const announce = (error?: string) => void window.webview.executeJavascript(
+    `document.dispatchEvent(new CustomEvent("ainsi:update",{detail:${JSON.stringify({ version: offered ?? null, error })}}))`);
+
+/*
+ * Loud when someone asked, from the version on the landing or from the menu: a check that says
+ * nothing when there is nothing looks like a check that did not run. The launch check is quiet,
+ * because news of no news at launch is noise.
+ */
+async function checkUpdate(loud = false): Promise<void> {
+    const found = await Updater.checkForUpdate().catch(() => undefined);
+    offered = found?.updateAvailable ? found.version : undefined;
+    paintMenu();
+    // offline is not up to date, and saying so is the difference between a check and a shrug
+    const error = found ? found.error || undefined : "the release could not be reached";
+    if (offered || loud) announce(error);
+}
+
+/*
+ * What the badge and the menu item both run: ask, fetch it, then restart into it.
+ *
+ * The dialog is where the plugin gets named. A version that changes the deck grammar changes
+ * what the agent should be writing, and the agent learns that from the Claude Code plugin, not
+ * from this bundle; updating one and not the other is how a deck ends up written against a
+ * grammar the binary does not have. The moment someone is deciding to update is the only moment
+ * that sentence gets read.
+ */
+async function install(): Promise<void> {
+    if (!offered) return;
+    const { response } = await Utils.showMessageBox({
+        type: "question",
+        title: "Install Ainsi",
+        message: `Install Ainsi ${offered} and restart?`,
+        detail: "Update the Claude Code plugin too, so the agent writes the grammar this version"
+            + " renders:\n\n    claude plugin marketplace update ainsi",
+        buttons: ["Install and Restart", "Not Now"],
+        defaultId: 0,
+        cancelId: 1,
+    }).catch(() => ({ response: 0 }));   // no dialog is no reason to refuse an update someone asked for
+    if (response !== 0) return;
+    try {
+        await Updater.downloadUpdate();
+        await Updater.applyUpdate();   // restarts into the new version; nothing runs after it
+    } catch (error) {
+        console.error(`update failed: ${String(error)}`);
+    }
+}
+
+window.webview.on("dom-ready" as "did-navigate", () => { if (offered) announce(); });
+void checkUpdate();
 
 void follow(current);
 void attend(current);
@@ -224,6 +298,8 @@ ApplicationMenu.on("application-menu-clicked", event => {
     const action = (event as { data?: { action?: string } }).data?.action;
     if (!action) return;
     if (action === "open") void open();
+    else if (action === "update-check") void checkUpdate(true);
+    else if (action === "update-install") void install();
     else command(action);
 });
 

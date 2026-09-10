@@ -241,18 +241,21 @@ export const loadViewer = (diagnostics: Diagnostic[] = []) => chrome("viewer", d
  */
 export async function loadStart(): Promise<string> {
     const assets = resolve(import.meta.dir, "chrome", "assets");
-    const [html, tokens, logo, mark] = await Promise.all([
+    const [html, tokens, logo, mark, pkg] = await Promise.all([
         Bun.file(join(import.meta.dir, "studio", "start.html")).text(),
         Bun.file(join(import.meta.dir, "chrome", "tokens.css")).text(),
         Bun.file(join(assets, "ainsi-logo.svg")).arrayBuffer(),
         Bun.file(join(assets, "ainsi-mark.svg")).arrayBuffer(),
+        // the version the landing shows, from the one place a release bumps first
+        Bun.file(resolve(import.meta.dir, "..", "package.json")).json() as Promise<{ version: string }>,
     ]);
     const uri = (bytes: ArrayBuffer) => `data:image/svg+xml;base64,${Buffer.from(bytes).toString("base64")}`;
     return html
         .replace("__MARK__", MARK)
         .replace("__TOKENS__", tokens)
         .replace("__LOGO__", uri(logo))
-        .replace("__LOGOMARK__", uri(mark));
+        .replace("__LOGOMARK__", uri(mark))
+        .replace("__VERSION__", pkg.version);
 }
 
 /** Studio chrome: the editing layer the dev server injects. Never in a deck. */
@@ -292,7 +295,7 @@ async function chrome(name: string, diagnostics: Diagnostic[]): Promise<{ css: s
 }
 
 /** the newest mtime in a folder, its own included so a deletion counts; chrome is one level deep */
-async function newest(dir: string): Promise<number> {
+export async function newest(dir: string): Promise<number> {
     const stamps = await Promise.all([dir, ...(await readdir(dir)).map(entry => join(dir, entry))]
         .map(path => stat(path).then(s => s.mtimeMs).catch(() => 0)));
     return Math.max(...stamps);

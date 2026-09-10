@@ -138,6 +138,8 @@ The same component under a theme that asked for the opposite: `crop` trims every
     bun run app                       # the desktop app, built and launched
     bun run app:build                 # the same app as a .app and a .dmg
 
+An installed app checks for its own update at launch and offers it in the studio, on the landing and in the deck's toolbar alike, with the same install behind the app menu's own item. It reads `stable-macos-arm64-update.json` from the latest GitHub release, so a release is `bun run app:build` and then the two files it wrote into `desktop/electrobun/artifacts/` — that manifest and the `.app.tar.zst` beside it — uploaded as assets, with the `.dmg` for a first install. A dev build reports updates as disabled and says nothing.
+
 `dev` runs the studio under `bun --watch`. A deck edit and an edit to the studio's own css or script push a reload to the open page; an edit to the engine restarts the process, and the page reloads when it reconnects and finds the build has moved.
 
 The studio prints each rebuild's milliseconds by phase, and the browser console reports any commit round trip over 600 ms: write, rebuild, reload. `localStorage.setItem("ainsi:trace", "1")` reports every one, and `AINSI_TRACE=1` adds the server's side of the write.

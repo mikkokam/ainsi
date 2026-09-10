@@ -80,14 +80,41 @@ let chrome: Chrome | undefined;
  * The handle is the element, not an id, because a rebuild replaces the document and a
  * selection does not survive one. What survives a rebuild is the file, which is the point.
  */
-interface Selection { kind: "block" | "page"; handle: HTMLElement }
+interface Selection { kind: "block" | "page" | "deck"; handle?: HTMLElement }
 let selected: Selection | undefined;
 
 function select(handle: HTMLElement | undefined, kind: Selection["kind"] = "block"): void {
-    if (selected?.handle === handle) return;
-    selected?.handle.removeAttribute("data-ainsi-selected");
+    if (selected?.handle === handle && selected?.kind === kind) return;
+    for (const el of document.querySelectorAll("[data-ainsi-selected]")) {
+        el.removeAttribute("data-ainsi-selected");
+    }
     selected = handle ? { kind, handle } : undefined;
     handle?.setAttribute("data-ainsi-selected", "");
+}
+
+/** select every page in the deck, or the text inside an open field */
+function selectAll(): void {
+    const focused = document.activeElement as HTMLElement | null;
+    if (focused instanceof HTMLInputElement || focused instanceof HTMLTextAreaElement) {
+        focused.select();
+        return;
+    }
+    if (focused?.closest?.("[contenteditable]")) {
+        document.execCommand("selectAll");
+        return;
+    }
+    if (chrome?.kind === "block" || chrome?.kind === "raw") return;
+    if (chrome?.kind === "menu") shut();
+    window.getSelection()?.removeAllRanges();
+    for (const el of document.querySelectorAll("[data-ainsi-selected]")) {
+        el.removeAttribute("data-ainsi-selected");
+    }
+    const pages = document.querySelectorAll<HTMLElement>(".ainsi-page");
+    if (!pages.length) return;
+    for (const page of pages) {
+        page.setAttribute("data-ainsi-selected", "");
+    }
+    selected = { kind: "deck" };
 }
 let pendingReload = false;
 
@@ -290,6 +317,23 @@ function veil(): Promise<void> {
     return new Promise(done => setTimeout(done, LEAVING));
 }
 
+/*
+ * The app's own update, offered in the strip: the shell checks at launch and announces what it
+ * found, again after every reload, because the studio reloads this page on every commit. Only
+ * the shell sends it, so a browser tab never grows a badge for a tool it does not install.
+ */
+document.addEventListener("ainsi:update", event => {
+    const { version, error } = (event as CustomEvent).detail as { version: string | null; error?: string };
+    document.querySelector(".ainsi-studio__update")?.remove();
+    if (error) return hint(`Could not check for updates: ${error}`, true, 4000);
+    if (!version) return hint("Ainsi is up to date", false, 2500);
+    const button = h("button", {
+        class: "ainsi-studio__pill ainsi-studio__update", type: "button",
+        title: `Install Ainsi ${version} and restart`, click: () => void askShell("update"),
+    }, `Update to ${version}`);
+    (document.querySelector(".ainsi-studio__cluster") ?? document.body).prepend(button);
+});
+
 /** back to the chooser: the server forgets the deck, and the reload lands on the landing page */
 async function closeDeck(): Promise<void> {
     const response = await fetch("/__close", { method: "POST" });
@@ -381,6 +425,14 @@ async function init(): Promise<void> {
     document.addEventListener("keydown", event => {
         if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
         const key = event.key.toLowerCase();
+        if (key === "a") {
+            if (chrome?.kind === "block" || chrome?.kind === "raw") return;
+            if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+            if (document.body.hasAttribute("data-present")) return;
+            event.preventDefault();
+            selectAll();
+            return;
+        }
         if (key !== "c" && key !== "x" && key !== "v") return;
         if (chrome?.kind === "block" || chrome?.kind === "raw") return;
         if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
@@ -405,13 +457,18 @@ async function init(): Promise<void> {
          * and the page lets go. It is the only way to reach a page a full-bleed picture covers.
          */
         if (event.key === "Escape") {
-            const section = selected.kind === "block" ? selected.handle.closest<HTMLElement>(".ainsi-page") : undefined;
+            if (selected.kind === "deck") {
+                select(undefined);
+                return;
+            }
+            const section = selected.kind === "block" && selected.handle ? selected.handle.closest<HTMLElement>(".ainsi-page") : undefined;
             if (chrome?.kind === "menu") shut();
             if (section) selectPage(section);
             else select(undefined);
             return;
         }
-        if (selected.kind === "page") return;
+        if (selected.kind === "page" || selected.kind === "deck") return;
+        if (!selected.handle) return;
         const range = rangeOf(selected.handle);
         if (range) edit(selected.handle, range, "end");
     });
@@ -575,6 +632,7 @@ async function init(): Promise<void> {
         else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);
         else if (name === "zip") void exportTo("/__zip", `${base}.zip`);
         else if (name === "copy" || name === "cut" || name === "paste") void clipboard(name);
+        else if (name === "select-all") selectAll();
         else if (name === "insert") insertHere();
         else if (name.startsWith("insert:")) insertHere(name.slice("insert:".length));
         else if (name === "duplicate") duplicateSelection();
@@ -586,7 +644,7 @@ async function init(): Promise<void> {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
         else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["select", "marks bar"], ["empty", "deletes the block"]);
-        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"], [`${alt} ${mod} E`, "edit this page's source"], [`${mod} O`, "open another deck"], [`${mod} Z`, "undo the last commit"], [`${mod} ⇧ Z`, "redo"]);
+        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"], [`${alt} ${mod} E`, "edit this page's source"], [`${mod} A`, "select all"], [`${mod} O`, "open another deck"], [`${mod} Z`, "undo the last commit"], [`${mod} ⇧ Z`, "redo"]);
         // ⌘W is the app's alone; in a browser that chord belongs to the tab
         if (mode === "Studio" && desktop) rows.push([`${mod} W`, "close the deck"]);
     });
@@ -895,11 +953,40 @@ async function clipboard(verb: "copy" | "cut" | "paste"): Promise<void> {
         return;
     }
     if (!selected) return hint("Nothing selected", true, 2000);
-    if (selected.kind === "page") return pageClipboard(verb, selected.handle);
+    if (selected.kind === "deck") return deckClipboard(verb);
+    if (selected.kind === "page" && selected.handle) return pageClipboard(verb, selected.handle);
+    if (!selected.handle) return;
     const range = rangeOf(selected.handle);
     if (!range) return;
     if (verb === "paste") return paste(range);
     return copy(range, verb === "cut" ? selected.handle : undefined);
+}
+
+/*
+ * The clipboard on the whole presentation. Copy puts the entire markdown source onto the
+ * clipboard; paste replaces the entire deck; cut empties the file.
+ */
+async function deckClipboard(verb: "copy" | "cut" | "paste"): Promise<void> {
+    if (verb === "paste") {
+        let text: string;
+        try {
+            text = (await navigator.clipboard.readText()).trim();
+        } catch {
+            return hint("The browser would not give the clipboard", true, 4000);
+        }
+        if (!text) return hint("Nothing on the clipboard", true, 2500);
+        return splice({ start: 0, end: doc.source.length, text });
+    }
+
+    try {
+        await navigator.clipboard.writeText(doc.source);
+    } catch {
+        return hint("The browser would not give the clipboard", true, 4000);
+    }
+    if (verb === "copy") return hint("Deck copied", false, 1200);
+    select(undefined);
+    splice({ start: 0, end: doc.source.length, text: "" });
+    hint("Deck cut", false, 1200);
 }
 
 /*
@@ -971,19 +1058,19 @@ async function paste(range: Range): Promise<void> {
  */
 function insertHere(label?: string): void {
     if (label === "Page") {
-        const section = selected?.handle.closest<HTMLElement>(".ainsi-page")
+        const section = selected?.handle?.closest<HTMLElement>(".ainsi-page")
             ?? document.querySelector<HTMLElement>(`[data-ainsi-entity="${pageInView()}"]`)?.closest<HTMLElement>(".ainsi-page");
         if (section) insertPage(section);
         return;
     }
     const stub = INSERTS.find(i => i.label === label);
-    if (selected?.kind === "page" && pageOf(selected.handle)) {
+    if (selected?.kind === "page" && selected.handle && pageOf(selected.handle)) {
         if (!stub) { insertPage(selected.handle); return; }
         const page = pageOf(selected.handle)!;
         splice({ start: page.last, end: page.last, text: `\n\n${stub.md}` });
         return;
     }
-    if (selected) {
+    if (selected?.handle) {
         const range = rangeOf(selected.handle);
         if (!range) return;
         if (stub?.md) splice({ start: range.end, end: range.end, text: `\n\n${stub.md}` });
@@ -1005,13 +1092,15 @@ function insertHere(label?: string): void {
  */
 function duplicateSelection(): void {
     if (!selected) return hint("Nothing selected", true, 2000);
-    if (selected.kind === "page") {
+    if (selected.kind === "deck") return;
+    if (selected.kind === "page" && selected.handle) {
         const page = pageOf(selected.handle);
         if (!page) return;
         const span = pageSpan(doc.source, page);
         splice(addPage(page, doc.source.slice(span.start, span.end).trim()));
         return;
     }
+    if (!selected.handle) return;
     const range = rangeOf(selected.handle);
     if (range) splice({ start: range.end, end: range.end, text: `\n\n${range.md}` });
 }
@@ -1032,13 +1121,19 @@ function pageInView(): string | undefined {
 
 function deleteSelection(): void {
     if (!selected) return hint("Nothing selected", true, 2000);
-    if (selected.kind === "page") {
+    if (selected.kind === "deck") {
+        select(undefined);
+        splice({ start: 0, end: doc.source.length, text: "" });
+        return;
+    }
+    if (selected.kind === "page" && selected.handle) {
         const page = pageOf(selected.handle);
         if (!page) return;
         select(undefined);
         splice(removePage(doc.source, page));
         return;
     }
+    if (!selected.handle) return;
     const target = targetOf(selected.handle);
     if (!target) return;
     select(undefined);

@@ -11,7 +11,7 @@
 <link rel="icon" href="__MARK__">
 <style>__TOKENS__</style>
 <style>
-    :root { color-scheme: dark; }
+    :root { color-scheme: dark; --ac-footer-h: 46px; }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100vh; background: var(--ac-ground); color: var(--ac-ink); font: var(--ac-text-body); }
     button { font-family: inherit; }
@@ -20,7 +20,7 @@
        under the titlebar it would stop at a hard edge there, which is the seam the strip used to
        draw. A length rather than a percentage vertically, because the shell is as tall as the
        page and the falloff has to stay where it was. */
-    .ac-shell { display: flex; flex-direction: column; min-height: 100vh;
+    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--ac-footer-h) + 28px);
                 background: radial-gradient(120% 520px at 10% 0, rgb(76 141 246 / 14%), transparent 58%); }
 
     /* ---- titlebar --------------------------------------------------- */
@@ -85,6 +85,9 @@
     .ac-story__logo { height: 30px; width: auto; display: block; margin-bottom: calc(30px * -1.92 / 81); }
     .ac-story__rule { align-self: center; width: 1px; height: 20px; background: var(--ac-hairline-strong); }
     .ac-story__face { font: 500 18px/1 var(--ac-font); color: var(--ac-ink-2); letter-spacing: -.01em; }
+    /* the version rides with the name; in the app it is also the door to a check for updates */
+    .ac-story__version { font: var(--ac-text-mono); color: var(--ac-ink-3); }
+    .ac-story__version.ac-link { color: var(--ac-blue-ink); }
     .ac-story h1 { margin: 0; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: pretty; }
     .ac-story p { margin: 0; font: var(--ac-text-body); color: var(--ac-ink-2); max-width: 520px; text-wrap: pretty; }
 
@@ -103,6 +106,8 @@
     .ac-status { display: flex; align-items: center; gap: 7px; padding-top: 4px; font: var(--ac-text-meta); color: var(--ac-ink-3); }
     .ac-status__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ac-ok); flex: none; }
     .ac-status--warn .ac-status__dot { background: #c8ab74; }
+    /* an update is news, not a warning: the blue that means "this is where you are" everywhere else */
+    .ac-status--update .ac-status__dot { background: var(--ac-blue); }
     .ac-status a { color: var(--ac-blue-ink); text-decoration: none; }
     .ac-status a:hover { text-decoration: underline; }
     /* a link that acts rather than navigates: every one of these asks the server to open a folder */
@@ -179,7 +184,12 @@
     .ac-empty { padding: 24px 0; font: var(--ac-text-meta); color: var(--ac-ink-3); }
 
     /* ---- footer --------------------------------------------------------- */
-    .ac-footer { margin: 34px 56px 0; padding: 20px 0 40px; border-top: 1px solid var(--ac-hairline);
+    /* It says what ⏎ would do, which is only useful while the keys are being pressed, so it stays
+       on the glass at the window's foot rather than at the end of the scroll. The shell keeps its
+       height in reserve below the recents so the last row is never read through it. */
+    .ac-footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+                 min-height: var(--ac-footer-h); padding: 11px 56px; border-top: 1px solid rgb(255 255 255 / 7%);
+                 background: var(--ac-glass); backdrop-filter: var(--ac-glass-filter); -webkit-backdrop-filter: var(--ac-glass-filter);
                  display: flex; align-items: center; justify-content: space-between; gap: 24px; }
     .ac-footer__status { font: var(--ac-text-meta); color: var(--ac-ink-3); max-width: 600px; }
     .ac-footer__status--acted { color: var(--ac-blue-ink); }
@@ -214,7 +224,6 @@
         .ac-story__text { max-width: none; }
         .ac-actions { width: 100%; order: -1; }
         .ac-section, .ac-footer { padding-left: 24px; padding-right: 24px; }
-        .ac-footer { margin-left: 24px; margin-right: 24px; }
         .ac-footer__hints { display: none; }
     }
 
@@ -257,6 +266,7 @@
                 <img class="ac-story__logo" src="__LOGO__" alt="ainsi">
                 <div class="ac-story__rule"></div>
                 <span class="ac-story__face">Studio</span>
+                <span class="ac-story__version" id="version">__VERSION__</span>
             </div>
             <h1>A deck is a markdown file.<br>Your agent already has it open.</h1>
             <p>Edit local files. No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands.<br>Export happens once, at the end.</p>
@@ -626,6 +636,45 @@
             skillsText.textContent = "Could not check Claude Code skills";
         }
     }
+
+    /*
+     * The version beside the name, and in the app it is the door to a check for updates: this is
+     * a beta that will break things, and the fastest way to leave someone behind is to give them
+     * no way to ask. In a browser it is a label, because a checkout updates by pulling.
+     */
+    const versionEl = document.getElementById("version");
+    const version = versionEl.textContent;
+    if (desktop) {
+        versionEl.classList.add("ac-link");
+        versionEl.title = "Check for updates";
+        versionEl.tabIndex = 0;
+        versionEl.addEventListener("click", () => {
+            versionEl.textContent = "checking…";
+            void askShell("update-check");
+        });
+    }
+
+    /*
+     * What the check found, announced by the shell: a line under the skills status, the one place
+     * on this page that already reports on the tool rather than on a deck. Only the shell sends
+     * this, so a browser tab never grows an update badge for a tool it does not install.
+     */
+    document.addEventListener("ainsi:update", event => {
+        versionEl.textContent = version;
+        document.querySelector(".ac-status--update")?.remove();
+        const { version: next, error } = event.detail ?? {};
+        if (error) return setStatus(`Could not check for updates: ${error}`, false);
+        if (!next) return setStatus("Ainsi is up to date", true);
+        const line = document.createElement("div");
+        line.className = "ac-status ac-status--update";
+        line.append(Object.assign(document.createElement("span"), { className: "ac-status__dot" }),
+            document.createTextNode(`Ainsi ${next} is out · `),
+            Object.assign(document.createElement("button"), {
+                type: "button", className: "ac-link", textContent: "install and restart",
+                onclick: () => void askShell("update"),
+            }));
+        skillsStatus.after(line);
+    });
 
     const skillsSheet = document.getElementById("skills-sheet");
     let skillsReturnFocus;

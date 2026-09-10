@@ -114,7 +114,7 @@ Print was in the menu and did nothing, and is gone. The command ran `window.prin
 
 View and Slideshow landed, from the viewer rather than the studio: a built deck presents with no server anywhere near it, so the viewer grew its own `ainsi:command` listener beside the `ainsi:menu` and `ainsi:keys` it already dispatched. `[decision]` Play means from the page in view, and Play from Start is the second item, because a deck is open at a page for a reason.
 
-Edit's clipboard items and an Insert menu landed with selection. What is left in Edit is Select All, which is still the webview's role and selects text rather than blocks.
+Edit's clipboard items, Select All and an Insert menu landed with selection. Select All selects every page in the deck, and copying puts the full markdown source on the clipboard.
 
 Insert names the kinds the parser has, which cannot drift, and the in-page palette adds which components each kind can be shown as by asking the registry through `/__doc` rather than keeping a second list. Duplicate is a copy put straight after the original rather than through the clipboard, so it neither asks a permission nor takes what was on it.
 

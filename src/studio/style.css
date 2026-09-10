@@ -653,6 +653,9 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-menu__item[data-active] {
     cursor: pointer;
 }
 .ainsi-studio__pill:hover { color: var(--ac-ink); }
+/* the one pill that is an offer rather than a door: blue, because it is news */
+.ainsi-studio__update { color: var(--ac-blue-glyph); box-shadow: inset 0 0 0 1px var(--ac-blue-edge); }
+.ainsi-studio__update:hover { background: var(--ac-blue-wash); color: var(--ac-blue-ink); }
 .ainsi-studio__pill svg { width: 13px; height: 13px; }
 .ainsi-studio__pillkey { font: var(--ac-text-key); color: var(--ac-ink-on-content-3); }
 body[data-present] .ainsi-studio__cluster { display: none; }

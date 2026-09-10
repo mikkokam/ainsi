@@ -20,6 +20,15 @@ export default {
         identifier: "dev.ainsi.studio",
         version: "2.0.0-beta.1",
     },
+    /*
+     * Where an installed app looks for its next version. `app:build --env=stable` writes
+     * `stable-macos-arm64-update.json` and the `.app.tar.zst` beside it into artifacts/; a
+     * release carrying those two under this url is what the updater reads and patches from.
+     * `/releases/latest/download/` always resolves to the newest release's assets.
+     */
+    release: {
+        baseUrl: "https://github.com/mikkokam/ainsi/releases/latest/download",
+    },
     build: {
         // the shell spawns bun, reads its stdout and holds the child; real Bun, not a
         // lookalike, because that is what the studio it starts is written against
