@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { cp, mkdir, readdir, rename } from "node:fs/promises";
+import { cp, mkdir, readdir, rename, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
@@ -544,6 +544,13 @@ async function thumbnail(source: string, dir: string, themeName?: string): Promi
 const opener = (): string[] =>
     process.platform === "darwin" ? ["open"] : process.platform === "win32" ? ["cmd", "/c", "start", ""] : ["xdg-open"];
 
+/** select a file in the platform's file manager, rather than just opening the folder it sits in;
+ * xdg has no standard "select" verb, so Linux falls back to the folder itself */
+const revealer = (path: string): string[] =>
+    process.platform === "darwin" ? ["open", "-R", path]
+    : process.platform === "win32" ? ["explorer", `/select,${path}`]
+    : [...opener(), dirname(path)];
+
 /** point the studio at another deck: the outputs, the watch and the editor follow it */
 function retarget(next: string): void {
     const first = deck === undefined;
@@ -663,7 +670,7 @@ const server = serve({
         // and making a deck mean anything
         const CHOOSE = new Response("no deck open", { status: 409 });
         // the landing needs its own data before any deck is open, same as browse/open/new
-        const LANDING = ["/__browse", "/__open", "/__new", "/__theme-previews", "/__recents", "/__pin", "/__skills", "/__reveal", "/__theme-new", "/__state", "/__shell", "/__shell-ask", "/__thumb"];
+        const LANDING = ["/__browse", "/__open", "/__new", "/__theme-previews", "/__recents", "/__pin", "/__skills", "/__reveal", "/__delete", "/__theme-new", "/__state", "/__shell", "/__shell-ask", "/__thumb"];
         if (!deck && !LANDING.includes(url.pathname)) return url.pathname.startsWith("/__") ? CHOOSE : undefined;
         if (url.pathname === "/__doc") return Response.json(doc);
         if (url.pathname === "/__theme-previews") {
@@ -690,7 +697,7 @@ const server = serve({
             withPreviews.sort((a, b) => Number(b.pinned) - Number(a.pinned) || Number(b.found) - Number(a.found) || b.lastOpened - a.lastOpened);
             // a row of covers is cheap: an entry is a path and what its last build said, and the
             // grid wraps, so the cap is about how far back a deck is worth looking for
-            return Response.json(withPreviews.slice(0, 24));
+            return Response.json(withPreviews.slice(0, 16));
         }
         if (url.pathname === "/__pin" && request.method === "POST") {
             const { path, pinned } = await request.json();
@@ -742,14 +749,32 @@ const server = serve({
          * for any page in the browser.
          */
         if (url.pathname === "/__reveal" && request.method === "POST") {
-            const { what } = await request.json();
+            const { what, path } = await request.json();
+            // a recent's own file, selected rather than just opening its folder: the allowlist is
+            // the list the page is showing, same as /__thumb, not any path a page can ask for
+            if (typeof path === "string") {
+                if (!(await readRecents()).some(r => r.path === path)) return new Response("not a recent", { status: 403 });
+                Bun.spawn(revealer(path), { stdout: "ignore", stderr: "ignore" }).unref();
+                return Response.json({ path });
+            }
             const at = what === "themes" ? USER_THEMES : what === "skills" ? PLUGINS : undefined;
-            if (!at) return new Response("themes or skills", { status: 400 });
+            if (!at) return new Response("themes, skills or path", { status: 400 });
             // yours is made on the way there; the plugins folder is Claude Code's to make
             if (what === "themes") await mkdir(at, { recursive: true });
             else if (!existsSync(at)) return new Response(`nothing at ${at} yet`, { status: 404 });
             Bun.spawn([...opener(), at], { stdout: "ignore", stderr: "ignore" }).unref();
             return Response.json({ path: at });
+        }
+        /* only a recent's markdown file, never what it links to: a deck that draws on images or
+         * fonts beside it keeps them, so the person is told that before they confirm */
+        if (url.pathname === "/__delete" && request.method === "POST") {
+            const { path } = await request.json();
+            if (typeof path !== "string") return new Response("path", { status: 400 });
+            const list = await readRecents();
+            if (!list.some(r => r.path === path)) return new Response("not a recent", { status: 403 });
+            await rm(path, { force: true });
+            await writeRecents(list.filter(r => r.path !== path));
+            return Response.json({ ok: true });
         }
         /* a theme of your own starts as a copy of the default, which is the one theme that
          * declares every token; an empty folder would render as the default anyway and teach

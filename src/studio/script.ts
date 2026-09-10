@@ -21,8 +21,10 @@
 
 import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
-import { markdown } from "@codemirror/lang-markdown";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import { ALERT_KINDS, MATTER, RATIOS, SETTINGS, addPage, alertOf, directiveLine, isOther, markerOf, matterValue, move, movePage, moveTo, pageSpan, strands, toGrid, toItems, toList, toMarkdown, relayout, remove, removePage, render as structural, retag, withAlert, writeMatter, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
@@ -300,6 +302,30 @@ function drillTo(label: string): void {
 const askShell = (what: string) => fetch("/__shell-ask", { method: "POST", body: JSON.stringify({ what }) });
 
 /*
+ * The source editor's own colours. CodeMirror's default style is written for paper — headings in
+ * #00f, strings in #a11 — and this sheet is the chrome's dark one, so it needs its own. Built
+ * from the chrome tokens rather than from hex, which keeps the editor and the panels around it
+ * one palette; the markers themselves stay quiet, because the point of the view is the text and
+ * a wall of lit-up hashes and asterisks is the syntax shouting over the words.
+ */
+const SOURCE = HighlightStyle.define([
+    { tag: [tags.heading1, tags.heading2, tags.heading3, tags.heading4, tags.heading5, tags.heading6],
+        color: "var(--ac-ink)", fontWeight: "600" },
+    { tag: tags.processingInstruction, color: "var(--ac-ink-3)" },   // #, -, >, ```, ** and friends
+    { tag: tags.strong, color: "var(--ac-ink)", fontWeight: "600" },
+    { tag: tags.emphasis, color: "var(--ac-ink)", fontStyle: "italic" },
+    { tag: tags.strikethrough, color: "var(--ac-ink-3)", textDecoration: "line-through" },
+    { tag: [tags.link, tags.labelName], color: "var(--ac-blue-ink)" },
+    { tag: tags.url, color: "var(--ac-blue-ink)", textDecoration: "underline" },
+    { tag: [tags.monospace, tags.string], color: "var(--ac-ok)" },
+    { tag: tags.quote, color: "var(--ac-ink-2)", fontStyle: "italic" },
+    { tag: tags.list, color: "var(--ac-ink)" },
+    { tag: tags.contentSeparator, color: "var(--ac-blue-ink)" },     // the --- that ends a page
+    // <!-- ainsi: ... --> is the deck's own instruction to the renderer, not a note to a reader
+    { tag: [tags.comment, tags.meta], color: "var(--ac-danger)" },
+]);
+
+/*
  * Leaving for another document: the chooser, or another deck. The landing covers itself the
  * same way on the way in, so the two meet on one colour instead of the window blanking between
  * them. Only a hand-off gets this; the reload after a commit is the same document and must not
@@ -551,6 +577,16 @@ async function init(): Promise<void> {
     addEventListener("scroll", () => (pageRail.hidden = true), { passive: true });
 
     document.addEventListener("contextmenu", event => {
+        /*
+         * In the app the webview's own menu offers Reload and Inspect Element, which are doors
+         * out of the product rather than into it, so the right button is the studio's alone.
+         * A caret in a field keeps the native menu: cut, paste and spelling there are real, and
+         * the block menu below has nothing to say about a word being typed. A browser keeps its
+         * menu everywhere, because there the studio is a page in a dev tool.
+         */
+        if (desktop && !(event.target as HTMLElement).closest?.("input, textarea, [contenteditable], .cm-editor")) {
+            event.preventDefault();
+        }
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
         const target = handleAt(event.target as HTMLElement);
         if (!target) return;
@@ -2176,7 +2212,11 @@ async function openRaw(index?: number): Promise<void> {
         doc: initial,
         extensions: [
             minimalSetup,
-            markdown(),
+            // GFM, not CommonMark: the engine parses with remark-gfm, so a table in a deck is a
+            // table, and an editor whose parser is narrower than the renderer's shows plain text
+            // where the deck has structure
+            markdown({ base: markdownLanguage }),
+            syntaxHighlighting(SOURCE),
             EditorView.lineWrapping,
             highlightSelectionMatches(),
             keymap.of([

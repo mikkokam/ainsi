@@ -32,12 +32,16 @@
        unknown is behind it. Anything floating over a DECK — nav pill, block toolbar,
        menu, block rail, status pills — must use --ac-glass-over-content, which is
        opaque enough and darkened enough to survive white paper, a saturated cover
-       and a photograph alike. Backdrop blur averages what is behind it, so 72% over
-       white lifts to pale grey and grey text on it fails. */
-    --ac-glass:           rgb(24 24 28 / 72%);  /* over our own ground ONLY */
+       and a photograph alike. Backdrop blur averages what is behind it, so a thin layer
+       over white lifts to pale grey and grey text on it fails.
+
+       What the over-content number may be is set by the floor, --ac-ink-on-content-3 at
+       11px, over the worst case of a white page: with brightness(.55) under it, 66% keeps
+       that at about 4.6:1 and 60% drops it under 4.5. That is the whole budget. */
+    --ac-glass:           rgb(24 24 28 / 52%);  /* over our own ground ONLY */
     --ac-glass-filter:    blur(24px) saturate(180%);
 
-    --ac-glass-over-content:        rgb(16 16 20 / 72%);
+    --ac-glass-over-content:        rgb(16 16 20 / 66%);
     --ac-glass-over-content-filter: blur(20px) saturate(140%) brightness(.55);
     --ac-glass-over-content-edge:   rgb(255 255 255 / 14%);
     --ac-glass-over-content-shadow: 0 6px 24px rgb(0 0 0 / 35%);

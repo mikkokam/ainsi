@@ -20,7 +20,7 @@
        under the titlebar it would stop at a hard edge there, which is the seam the strip used to
        draw. A length rather than a percentage vertically, because the shell is as tall as the
        page and the falloff has to stay where it was. */
-    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--ac-footer-h) + 28px);
+    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--ac-footer-h) + 96px);
                 background: radial-gradient(120% 520px at 10% 0, rgb(76 141 246 / 14%), transparent 58%); }
 
     /* ---- titlebar --------------------------------------------------- */
@@ -74,7 +74,7 @@
     /* The gradient spans the window; the line of content inside it does not. Two items pushed to
        opposite edges of a wide display put the buttons a screen away from the words they answer,
        so the right padding grows instead and the left edge stays with the sections below. */
-    .ac-story { padding: 60px max(56px, calc(100% - 1336px)) 44px 56px;
+    .ac-story { padding: 60px max(56px, calc(100% - 1336px)) 0 56px;
                 display: flex; align-items: flex-end; justify-content: space-between; gap: 56px; }
     .ac-story__text { max-width: 660px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
     /* one line, not two centred boxes: centring left "Studio" riding high against the wordmark */
@@ -88,7 +88,7 @@
     /* the version rides with the name; in the app it is also the door to a check for updates */
     .ac-story__version { font: var(--ac-text-mono); color: var(--ac-ink-3); }
     .ac-story__version.ac-link { color: var(--ac-blue-ink); }
-    .ac-story h1 { margin: 0; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: pretty; }
+    .ac-story h1 { margin: 0; max-width: 600px; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: balance; }
     .ac-story p { margin: 0; font: var(--ac-text-body); color: var(--ac-ink-2); max-width: 520px; text-wrap: pretty; }
 
     .ac-actions { flex: none; width: 300px; display: flex; flex-direction: column; gap: 10px; }
@@ -116,18 +116,30 @@
     .ac-link:focus-visible { outline: none; box-shadow: var(--ac-focus); border-radius: 4px; }
 
     /* ---- theme shelf -------------------------------------------------- */
-    .ac-section { padding: 0 56px; margin-top: 34px; display: flex; flex-direction: column; gap: 15px; }
-    .ac-section--recents { flex: 1; }
+    /* same right edge as the hero: one content width, not three */
+    .ac-section { padding: 0 max(56px, calc(100% - 1336px)) 0 56px; margin-top: 96px; display: flex; flex-direction: column; gap: 15px; }
     .ac-section-head { display: flex; align-items: baseline; gap: 12px; }
     .ac-section-head h2 { margin: 0; font: var(--ac-text-section); color: var(--ac-ink); }
     .ac-section-head span { font: 400 12.5px/1.4 var(--ac-font); color: var(--ac-ink-3); }
 
-    .ac-themes { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 3px 3px 5px;
+    .ac-themes-wrap { position: relative; }
+    .ac-themes { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 3px 5px 0;
                  -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent); }
     .ac-themes::-webkit-scrollbar { display: none; }
-    .ac-tile { flex: none; width: 190px; display: flex; flex-direction: column; gap: 9px; padding: 3px; border: 0; background: none;
+    /* a row that overflows with no visible scrollbar and no wheel axis of its own is a shelf
+       nothing past the fold can be reached from; the arrows are that reach, shown only when
+       there is somewhere left to go */
+    .ac-themes__arrow { position: absolute; top: 0; height: 107px; width: 30px; display: flex; align-items: center; justify-content: center;
+                         border: 1px solid var(--ac-hairline-strong); border-radius: var(--ac-r-control); background: var(--ac-raised);
+                         box-shadow: var(--ac-shadow-float); color: var(--ac-ink-2); font-size: 17px; line-height: 1; cursor: pointer; z-index: 2; }
+    .ac-themes__arrow:hover { color: var(--ac-ink); background: var(--ac-hover); }
+    .ac-themes__arrow:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-themes__arrow[hidden] { display: none; }
+    .ac-themes__arrow--left { left: -6px; }
+    .ac-themes__arrow--right { right: 8px; }
+    .ac-tile { flex: none; width: 190px; display: flex; flex-direction: column; gap: 9px; padding: 0; border: 0; background: none;
                border-radius: var(--ac-r-card); cursor: pointer; text-align: left; transition: box-shadow var(--ac-hover-ms) var(--ac-ease); }
-    .ac-tile:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-tile:focus-visible { outline: none; box-shadow: inset var(--ac-focus); }
     .ac-tile__preview { height: 107px; border-radius: var(--ac-r-control); border: 1px solid var(--ac-hairline-strong); overflow: hidden;
                          position: relative; padding: 14px 15px; display: flex; flex-direction: column; gap: 7px; }
     .ac-tile__aa { line-height: 1; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
@@ -165,9 +177,20 @@
        of six on a laptop */
     .ac-recents { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
     .ac-card { position: relative; padding: 0; border: 1px solid var(--ac-hairline); border-radius: var(--ac-r-card);
-               background: rgb(255 255 255 / 3%); overflow: hidden; text-align: left; cursor: pointer; color: inherit; }
+               background: rgb(255 255 255 / 3%); overflow: hidden; text-align: left; cursor: pointer; color: inherit;
+               opacity: .86; transition: opacity var(--ac-hover-ms) var(--ac-ease); }
     .ac-card:focus-visible { outline: none; box-shadow: var(--ac-focus); }
-    .ac-card--missing { opacity: .45; cursor: default; }
+    /* a card the pointer or the keyboard is actually on reads at full strength; the rest sit back
+       a little, which is the whole point and why it stays this subtle */
+    .ac-card:not(.ac-card--missing):hover, .ac-card:not(.ac-card--missing):focus-visible, .ac-card:not(.ac-card--missing):focus-within { opacity: 1; }
+    /* opacity dims a light card on a light page; here it flattens a bright swatch toward mid-grey,
+       which reads brighter than the near-black chrome around it. Fade the swatch itself instead. */
+    .ac-card--missing { cursor: default; }
+    .ac-card--missing .ac-card__cover { background: var(--ac-ground) !important; opacity: .5; }
+    .ac-card--missing .ac-card__title { color: var(--ac-ink-disabled) !important; }
+    .ac-card--missing .ac-card__bar { background: var(--ac-ink-disabled) !important; }
+    .ac-card--missing .ac-card__path,
+    .ac-card--missing .ac-card__meta { color: var(--ac-ink-disabled); }
     .ac-card__cover { height: 104px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
                        border-bottom: 1px solid rgb(255 255 255 / 8%); position: relative; }
     .ac-card__title { font-weight: 700; font-size: 15px; line-height: 1.1; letter-spacing: -.02em; }
@@ -176,12 +199,28 @@
                     font-size: 12px; line-height: 1; cursor: pointer; color: rgb(255 255 255 / 35%); }
     .ac-card__pin--on { color: var(--ac-blue-ink); }
     .ac-card__body { padding: 11px 14px 13px; display: flex; flex-direction: column; gap: 6px; }
+    .ac-card__more { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--ac-r-chip);
+                      background: none; font-size: 14px; line-height: 1; cursor: pointer; color: rgb(255 255 255 / 35%); }
+    .ac-card__more:hover, .ac-card__more:focus-visible { background: var(--ac-hover); color: #f2f2f5; }
+    .ac-card__more:focus-visible { outline: none; box-shadow: var(--ac-focus); }
     .ac-card__path { font: var(--ac-text-mono); color: var(--ac-ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                       direction: rtl; text-align: left; }
     .ac-card__meta { display: flex; align-items: center; gap: 9px; font: 400 11.5px/1 var(--ac-font); color: var(--ac-ink-3); }
     .ac-card__meta .ac-dot { color: #4A4A52; }
     .ac-card__meta .ac-theme-id { font: 400 10.5px/1 var(--ac-mono); }
     .ac-empty { padding: 24px 0; font: var(--ac-text-meta); color: var(--ac-ink-3); }
+
+    /* ---- card menu: the "⋮" button and the right click on its thumbnail open the same thing ---- */
+    .ac-cardmenu { position: fixed; z-index: 60; min-width: 168px; padding: 5px; background: var(--ac-raised);
+                   border: 1px solid var(--ac-hairline-strong); border-radius: var(--ac-r-control); box-shadow: var(--ac-shadow-float); }
+    .ac-cardmenu[hidden] { display: none; }
+    .ac-cardmenu__row { display: block; width: 100%; padding: 7px 9px; border: 0; border-radius: var(--ac-r-chip); background: none;
+                         text-align: left; cursor: pointer; font: var(--ac-text-body); color: var(--ac-ink-2); }
+    .ac-cardmenu__row:hover, .ac-cardmenu__row:focus-visible { outline: none; background: var(--ac-hover); }
+    .ac-cardmenu__row:disabled { color: var(--ac-ink-disabled); cursor: default; }
+    .ac-cardmenu__row:disabled:hover { background: none; }
+    .ac-cardmenu__row--danger { color: var(--ac-danger-ink); }
+    .ac-cardmenu__sep { height: 1px; margin: 5px 3px; background: var(--ac-hairline); }
 
     /* ---- footer --------------------------------------------------------- */
     /* It says what ⏎ would do, which is only useful while the keys are being pressed, so it stays
@@ -223,7 +262,8 @@
         .ac-story { flex-direction: column; align-items: stretch; padding: 34px 24px; gap: 24px; }
         .ac-story__text { max-width: none; }
         .ac-actions { width: 100%; order: -1; }
-        .ac-section, .ac-footer { padding-left: 24px; padding-right: 24px; }
+        .ac-section { padding-left: 24px; padding-right: 24px; }
+        .ac-footer { padding-left: 24px; padding-right: 24px; }
         .ac-footer__hints { display: none; }
     }
 
@@ -268,7 +308,7 @@
                 <span class="ac-story__face">Studio</span>
                 <span class="ac-story__version" id="version">__VERSION__</span>
             </div>
-            <h1>A deck is a markdown file.<br>Your agent already has it open.</h1>
+            <h1>A deck is a markdown file. Your agent already has it open.</h1>
             <p>Edit local files. No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands.<br>Export happens once, at the end.</p>
         </div>
         <div class="ac-actions">
@@ -280,7 +320,11 @@
 
     <div class="ac-section">
         <div class="ac-section-head"><h2>Start from a theme</h2><span>shipped themes and your own · <button type="button" class="ac-link" id="themes-folder">open your themes folder</button></span></div>
-        <div class="ac-themes" id="themes"></div>
+        <div class="ac-themes-wrap">
+            <button type="button" class="ac-themes__arrow ac-themes__arrow--left" id="themes-left" aria-label="Scroll themes left" hidden>‹</button>
+            <div class="ac-themes" id="themes"></div>
+            <button type="button" class="ac-themes__arrow ac-themes__arrow--right" id="themes-right" aria-label="Scroll themes right" hidden>›</button>
+        </div>
     </div>
 
     <div class="ac-section ac-section--recents">
@@ -291,6 +335,26 @@
     <div class="ac-footer">
         <div class="ac-footer__status" id="status">Click this window and press ↓ — focus starts on Open a deck, then New, the theme shelf, and the recents.</div>
         <div class="ac-footer__hints"><span>↑↓ zone</span><span>←→ pick</span><span>⏎ go</span><span>⌘O browse</span><span>⌘N new</span></div>
+    </div>
+</div>
+
+<div class="ac-cardmenu" id="card-menu" hidden>
+    <button type="button" class="ac-cardmenu__row" id="card-menu-open">Open</button>
+    <button type="button" class="ac-cardmenu__row" id="card-menu-reveal">Reveal file</button>
+    <div class="ac-cardmenu__sep"></div>
+    <button type="button" class="ac-cardmenu__row ac-cardmenu__row--danger" id="card-menu-delete">Delete file…</button>
+</div>
+
+<div class="ac-browse" id="delete-sheet" hidden>
+    <div class="ac-browse__panel">
+        <div class="ac-browse__bar">Delete deck?</div>
+        <div class="ac-skills">
+            <p id="delete-message"></p>
+            <div class="ac-skills__foot">
+                <button type="button" class="ac-link" id="delete-cancel">cancel</button>
+                <button type="button" class="ac-link" id="delete-confirm" style="color:var(--ac-danger-ink)">delete the file</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -494,7 +558,30 @@
             <div class="ac-tile__caption"><span class="ac-tile__name">New theme…</span><span class="ac-tile__kind">copy the default, edit</span></div>`;
         more.addEventListener("click", newTheme);
         themesEl.append(more);
+        updateThemeArrows();
     }
+
+    // ---- theme shelf scrolling: no visible scrollbar and, on a plain mouse, no horizontal
+    // wheel axis either, so the row needs its own way to say there is more --------------------
+
+    const themesLeft = document.getElementById("themes-left");
+    const themesRight = document.getElementById("themes-right");
+    function updateThemeArrows() {
+        const max = themesEl.scrollWidth - themesEl.clientWidth;
+        themesLeft.hidden = themesEl.scrollLeft <= 2;
+        themesRight.hidden = themesEl.scrollLeft >= max - 2;
+    }
+    themesEl.addEventListener("scroll", updateThemeArrows, { passive: true });
+    new ResizeObserver(updateThemeArrows).observe(themesEl);
+    themesLeft.addEventListener("click", () => themesEl.scrollBy({ left: -themesEl.clientWidth * 0.9, behavior: "smooth" }));
+    themesRight.addEventListener("click", () => themesEl.scrollBy({ left: themesEl.clientWidth * 0.9, behavior: "smooth" }));
+    // a vertical wheel has no horizontal component to give it; read it as one here, like any
+    // other horizontal shelf
+    themesEl.addEventListener("wheel", e => {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        e.preventDefault();
+        themesEl.scrollLeft += e.deltaY;
+    }, { passive: false });
 
     /*
      * Thumbnails, one build each, fetched when the tile comes into view: the shelf and the grid
@@ -537,6 +624,12 @@
         if (!response.ok) return fail(response);
         const { path } = await response.json();
         statusEl.textContent = `opened ${path}`;
+    }
+
+    async function revealDeck(path) {
+        const response = await fetch("/__reveal", { method: "POST", body: JSON.stringify({ path }) });
+        if (!response.ok) return fail(response);
+        statusEl.textContent = `revealed ${path}`;
     }
 
     async function newTheme() {
@@ -593,10 +686,11 @@
                     <div class="ac-card__path">${r.path}</div>
                     <div class="ac-card__meta">
                         <span>${r.found ? relTime(r.lastOpened) : "not found"}</span><span class="ac-dot">·</span>
-                        <span>${r.pages} pages</span><span class="ac-dot">·</span>
+                        <span>${r.pages} page${r.pages === 1 ? "" : "s"}</span><span class="ac-dot">·</span>
                         <span class="ac-theme-id">${r.theme}</span>
                     </div>
-                </div>`;
+                </div>
+                <button type="button" class="ac-card__more" title="More" aria-label="More actions for ${r.title}" tabindex="-1">⋮</button>`;
             if (r.found) {
                 const shot = document.createElement("div");
                 shot.className = "ac-shot";
@@ -608,6 +702,16 @@
             }
             card.addEventListener("click", () => { if (r.found) openDeck(r.path); });
             card.querySelector(".ac-card__pin").addEventListener("click", e => { e.stopPropagation(); pin(r, !r.pinned); });
+            card.querySelector(".ac-card__more").addEventListener("click", e => {
+                e.stopPropagation();
+                const at = e.currentTarget.getBoundingClientRect();
+                openCardMenu(r, at.right, at.bottom + 4);
+            });
+            // the thumbnail is the whole cover: right-clicking it opens the same menu the ⋮ does
+            card.querySelector(".ac-card__cover").addEventListener("contextmenu", e => {
+                e.preventDefault(); e.stopPropagation();
+                openCardMenu(r, e.clientX, e.clientY);
+            });
             recentsEl.append(card);
         });
     }
@@ -619,6 +723,70 @@
         recentIndex = clamp(recentIndex, 0, Math.max(recents.length - 1, 0));
         renderRecents();
     }
+
+    // ---- card menu: the ⋮ button and a right click on the thumbnail open the same thing --------
+
+    const cardMenu = document.getElementById("card-menu");
+    const cardMenuOpen = document.getElementById("card-menu-open");
+    const cardMenuReveal = document.getElementById("card-menu-reveal");
+    const cardMenuDelete = document.getElementById("card-menu-delete");
+    let cardMenuRecent = null;
+    let cardMenuReturnFocus = null;
+
+    function openCardMenu(recent, x, y) {
+        cardMenuRecent = recent;
+        cardMenuReturnFocus = document.activeElement;
+        cardMenuOpen.disabled = !recent.found;
+        cardMenuReveal.disabled = !recent.found;
+        cardMenu.hidden = false;
+        // clamp to the window: a card in the last column or row would otherwise open off-screen
+        const w = cardMenu.offsetWidth, h = cardMenu.offsetHeight;
+        cardMenu.style.left = `${Math.min(x, innerWidth - w - 8)}px`;
+        cardMenu.style.top = `${Math.min(y, innerHeight - h - 8)}px`;
+        (recent.found ? cardMenuOpen : cardMenuDelete).focus();
+    }
+    function closeCardMenu() {
+        cardMenu.hidden = true;
+        cardMenuRecent = null;
+        cardMenuReturnFocus?.focus();
+    }
+    document.addEventListener("click", e => { if (!cardMenu.hidden && !cardMenu.contains(e.target)) closeCardMenu(); });
+    cardMenuOpen.addEventListener("click", () => { const r = cardMenuRecent; closeCardMenu(); if (r?.found) openDeck(r.path); });
+    cardMenuReveal.addEventListener("click", () => { const r = cardMenuRecent; closeCardMenu(); if (r?.found) void revealDeck(r.path); });
+    cardMenuDelete.addEventListener("click", () => { const r = cardMenuRecent; closeCardMenu(); if (r) openDeleteConfirm(r); });
+
+    // ---- delete a recent: the markdown file only, never what it links to ------------------------
+
+    const deleteSheet = document.getElementById("delete-sheet");
+    const deleteMessage = document.getElementById("delete-message");
+    let deleteRecent = null;
+    let deleteReturnFocus = null;
+
+    function openDeleteConfirm(recent) {
+        deleteRecent = recent;
+        deleteReturnFocus = document.activeElement;
+        deleteMessage.textContent = `Delete ${recent.path}? This deletes only the markdown file, not any images, fonts or other assets it links to.`;
+        deleteSheet.hidden = false;
+        // cancel by default: a destructive action should never be the key a stray Enter lands on
+        document.getElementById("delete-cancel").focus();
+    }
+    function closeDeleteConfirm() {
+        deleteSheet.hidden = true;
+        deleteRecent = null;
+        deleteReturnFocus?.focus();
+    }
+    async function performDelete() {
+        const recent = deleteRecent;
+        if (!recent) return;
+        const response = await fetch("/__delete", { method: "POST", body: JSON.stringify({ path: recent.path }) });
+        if (!response.ok) return fail(response);
+        closeDeleteConfirm();
+        statusEl.textContent = `deleted ${recent.path}`;
+        await loadRecents();
+    }
+    deleteSheet.addEventListener("click", e => { if (e.target === deleteSheet) closeDeleteConfirm(); });
+    document.getElementById("delete-cancel").addEventListener("click", closeDeleteConfirm);
+    document.getElementById("delete-confirm").addEventListener("click", () => void performDelete());
 
     // ---- skills status --------------------------------------------------
 
@@ -636,6 +804,10 @@
             skillsText.textContent = "Could not check Claude Code skills";
         }
     }
+
+    // the app's right button belongs to the app: the webview's own menu is Reload and Inspect
+    // Element, which lead out of the product. A browser tab keeps its menu.
+    if (desktop) document.addEventListener("contextmenu", event => event.preventDefault());
 
     /*
      * The version beside the name, and in the app it is the door to a check for updates: this is
@@ -727,6 +899,14 @@
         }
         if (!browse.hidden) {
             if (e.key === "Escape") { e.preventDefault(); closeBrowse(); }
+            return;
+        }
+        if (!deleteSheet.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); closeDeleteConfirm(); }
+            return;
+        }
+        if (!cardMenu.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); closeCardMenu(); }
             return;
         }
         if (meta && e.key === "Enter") {
