@@ -1,16 +1,13 @@
 import { resolve } from "node:path";
-import { which } from "bun";
 import type { ElectrobunConfig } from "electrobun";
 
 /*
- * The checkout this shell runs is baked in at build time. A dev-only shell has exactly one
- * ainsi to start, and finding it from inside an .app bundle would mean walking out of
- * Contents/Resources to a path that only holds while the build stays where it was made.
+ * Only the fallback for `bun run app`, where the shell has no Contents/Resources/app/ainsi next
+ * to it the way an installed app does (the `copy` below puts it there). An installed app's own
+ * copy is found at runtime by src/bun/index.ts instead: a path baked in here is a path on the
+ * build machine, which the machine that installs the app does not have.
  */
 const repo = resolve(import.meta.dir, "..", "..");
-/* An app launched from Finder gets the login environment, which on a mac has no homebrew in
- * it, so a bare `bun` in the shell's spawn resolves to nothing. */
-const bun = which("bun") ?? "bun";
 
 export default {
     app: {
@@ -18,7 +15,7 @@ export default {
         // menu bar and the bundle are called by
         name: "Ainsi",
         identifier: "dev.ainsi.studio",
-        version: "2.0.0-beta.1",
+        version: "2.0.0-beta.2",
     },
     /*
      * Where an installed app looks for its next version. `app:build --env=stable` writes
@@ -44,8 +41,21 @@ export default {
             entrypoint: "src/bun/index.ts",
             define: {
                 "process.env.AINSI_REPO": JSON.stringify(repo),
-                "process.env.AINSI_BUN": JSON.stringify(bun),
             },
+        },
+        /*
+         * The checkout the shell spawns, so an installed app carries its own rather than
+         * reaching for the build machine's. `copy` is what makes this part of the packaged
+         * application itself rather than a folder dropped on top of one afterwards: only that
+         * makes it survive the self-extraction a stable build does on first launch.
+         */
+        copy: {
+            "../../src": "ainsi/src",
+            "../../themes": "ainsi/themes",
+            "../../samples": "ainsi/samples",
+            "../../package.json": "ainsi/package.json",
+            "../../bun.lock": "ainsi/bun.lock",
+            "../../node_modules": "ainsi/node_modules",
         },
         mac: { bundleCEF: false },
         linux: { bundleCEF: false },

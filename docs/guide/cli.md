@@ -12,7 +12,7 @@ Two commands: the bare one opens the [studio](studio.md), `build` writes a file 
 
 The chooser browses the folder you started in. `ainsi` on its own writes no file; **New presentation** is what creates `untitled.md`, or `untitled-2.md` when that name is taken.
 
-The studio's file browser reaches the folder you started in, and the deck's own folder when the deck lies outside it. It is an HTTP server on localhost, and an endpoint that took any path would let any page in your browser read any file on the machine. To work on a deck elsewhere, start the studio there.
+The studio can now edit multiple decks at once, so it serves each under its own path `/d/<id>/`. The file browser reaches the folder you started in, and the deck's own folder when the deck lies outside it. It is an HTTP server on localhost. To work on a deck elsewhere, start the studio there or open it through the studio.
 
 `--port` moves the server off 4321.
 

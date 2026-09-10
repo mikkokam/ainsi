@@ -2,7 +2,7 @@
 
 The [README](../README.md) is the tour. These pages are the reference.
 
-- [Install](guide/install.md) — Bun, the browser the fit solver needs, and how to update.
+- [Install](guide/install.md) — The macOS desktop app, CLI setup, the browser the fit solver needs, and how to update.
 - [Writing a deck](guide/writing.md) — where pages break, what a directive is, and what the engine does when there is no directive.
 - [Components](guide/components.md) — the fourteen, what each accepts, and every prop.
 - [Layouts](guide/layouts.md) — the four page shapes and their props.

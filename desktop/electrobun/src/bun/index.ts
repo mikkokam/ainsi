@@ -1,6 +1,7 @@
 import { ApplicationMenu, BrowserWindow, Updater, Utils, app } from "electrobun/main";
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { studio, type Studio } from "./studio";
 
 /*
@@ -10,9 +11,21 @@ import { studio, type Studio } from "./studio";
  * against that one server, answered with the id and url of the deck it opened.
  */
 
-/** the checkout and the bun that runs it, both baked in by electrobun.config.ts */
-const repo = process.env.AINSI_REPO!;
-const bun = process.env.AINSI_BUN!;
+/*
+ * The checkout the shell spawns. An installed app carries its own copy at
+ * Contents/Resources/app/ainsi, electrobun.config.ts's `build.copy` puts it there as part of the
+ * packaged application itself, which is what lets it survive the self-extraction a stable build
+ * does on first launch. `bun run app` has no such folder next to the system bun it runs under,
+ * so it falls back to the checkout baked in by electrobun.config.ts.
+ */
+const bundled = resolve(dirname(process.execPath), "..", "Resources", "app", "ainsi");
+const repo = existsSync(bundled) ? bundled : process.env.AINSI_REPO!;
+/*
+ * The bun the shell is itself running under, which inside an installed app is the one in its
+ * own bundle at Contents/MacOS/bun. Baking a path at build time named a bun on the build
+ * machine, so an app that travelled anywhere had nothing to spawn.
+ */
+const bun = process.execPath || process.env.AINSI_BUN!;
 
 /*
  * What the studio's file browser may reach. Home rather than the working directory, which is

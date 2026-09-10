@@ -1,8 +1,8 @@
 # The studio
 
-`ainsi deck.md` opens a browser page over your markdown file. It is not a second copy of the document: every change is written to the `.md` before it comes back through the engine, and anything you can see, the file already says.
+`ainsi deck.md` opens a studio view over your markdown file. If you are using the desktop app, it opens in a native window; if you are using the CLI, it opens in your browser. It is not a second copy of the document: every change is written to the `.md` before it comes back through the engine, and anything you can see, the file already says.
 
-The studio is served by the dev server and is never in a built deck. What ships inside a deck is the player: the toolbar, the grid and presenting, and nothing that edits.
+The studio is served by the dev server (or the desktop app's internal server) and is never in a built deck. What ships inside a deck is the player: the toolbar, the grid and presenting, and nothing that edits.
 
 ## Editing a block
 

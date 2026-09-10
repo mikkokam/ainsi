@@ -1,6 +1,18 @@
 # Install
 
-Requires [Bun](https://bun.sh). There is nothing else to install and no service to sign into.
+There are two ways to use Ainsi: as a native desktop app or as a CLI tool. Both are entirely local with no services to sign into.
+
+## 1. Desktop App (MacOS)
+
+**The easiest way to start is the desktop app.** It's a single binary you can install, and it auto-updates itself.
+
+Download the latest `.dmg` from the [GitHub releases page](https://github.com/mikkokam/ainsi/releases/latest).
+
+The auto-update is included: the app checks for its own update at launch and offers it in the studio along with an option in the app menu.
+
+## 2. CLI Tool
+
+If you prefer using the terminal and a local web server (with the GUI in your browser), you can install the CLI. Requires [Bun](https://bun.sh).
 
     git clone git@github.com:mikkokam/ainsi.git
     cd ainsi

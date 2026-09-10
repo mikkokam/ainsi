@@ -76,7 +76,7 @@ function start(): void {
 
         const brand = document.createElement("div");
         brand.className = "ainsi-menu__brand";
-        brand.textContent = document.body.hasAttribute("data-ainsi-studio") ? "Ainsi Studio" : "Ainsi Player";
+        brand.textContent = document.body.hasAttribute("data-ainsi-studio") ? "Ainsi Studio" : "Ainsi Stage";
         panel.append(brand);
 
         // the studio, when present, fills this with its own actions
