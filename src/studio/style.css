@@ -39,6 +39,27 @@ body[data-ainsi-dragging] { cursor: grabbing; }
 [data-ainsi-carried] { opacity: 0.3; transition: opacity .12s ease; }
 .ainsi-studio__grip[title^="Block menu"] { cursor: grab; }
 
+/* the table editor: a grid of the source's own cells, whatever the component draws on the page */
+.ainsi-studio__table {
+    position: absolute;
+    z-index: 70;
+    max-width: min(90vw, 640px);
+    padding: .6rem;
+    background: rgb(255 255 255 / 98%);
+    border: 1px solid rgb(0 0 0 / 10%);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgb(0 0 0 / 18%);
+    font: 12px/1.4 system-ui, sans-serif;
+    color: #14181d;
+}
+.ainsi-studio__grid { border-collapse: collapse; width: 100%; }
+.ainsi-studio__grid td, .ainsi-studio__grid th { padding: 1px; vertical-align: middle; }
+.ainsi-studio__grid input { width: 100%; min-width: 6ch; }
+.ainsi-studio__gridtitle input { font-weight: 600; }
+.ainsi-studio__gridcorner, .ainsi-studio__gridadd { color: #98a2ae; text-align: right; padding-right: .3rem !important; white-space: nowrap; }
+.ainsi-studio__gridhead { white-space: nowrap; }
+.ainsi-studio__table .ainsi-studio__imageok { margin-top: .5rem; }
+
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }
 

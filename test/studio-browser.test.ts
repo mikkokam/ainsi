@@ -589,3 +589,74 @@ test.skipIf(!chromium)("a drag dropped on nothing leaves the deck as it was", as
     expect(await count(studio.page, ".ainsi-studio__drop-line")).toBe(0);
     await studio.stop();
 }, 60_000);
+
+const TABLE_DECK = "# Hinnasto\n\n| Name | Qty | Price |\n| --- | ---: | :---: |\n| Apples | 12 | 1,20 |\n| Pears | 3 | 0,90 |\n";
+
+/** the table on the page, opened the way anything else is: click to select, Enter to edit */
+async function openTable(studio: Awaited<ReturnType<typeof open>>) {
+    await studio.page.locator("table").first().click();
+    await studio.page.keyboard.press("Enter");
+    await studio.page.waitForSelector(".ainsi-studio__table");
+}
+
+test.skipIf(!chromium)("a table opens as a grid of its cells, not as pipes", async () => {
+    const studio = await open(TABLE_DECK);
+    await openTable(studio);
+
+    expect(await count(studio.page, ".ainsi-studio__table textarea")).toBe(0);
+    const values = await studio.page.locator(".ainsi-studio__grid input").evaluateAll(
+        inputs => inputs.map(i => (i as HTMLInputElement).value));
+    expect(values).toEqual(["Name", "Qty", "Price", "Apples", "12", "1,20", "Pears", "3", "0,90"]);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a cell typed into reaches the file as a table", async () => {
+    const studio = await open(TABLE_DECK);
+    await openTable(studio);
+    await studio.page.locator(".ainsi-studio__grid input").nth(3).fill("Omenat");
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.includes("Omenat"));
+    expect(after).toContain("| Omenat |");
+    expect(after).toContain("| ---    | ---: | :---: |");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a column added reaches every row", async () => {
+    const studio = await open(TABLE_DECK);
+    await openTable(studio);
+    await studio.page.locator('.ainsi-studio__gridadd [title="Add column"]').first().click();
+    expect(await count(studio.page, ".ainsi-studio__grid input")).toBe(12);
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.split("|").length > 17);
+    for (const line of after.split("\n").filter(l => l.startsWith("|"))) {
+        expect(line.split("|").length).toBe(6);        // four columns, and the edge on each side
+    }
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a column's alignment is a button, and lands in the rule row", async () => {
+    const studio = await open(TABLE_DECK);
+    await openTable(studio);
+    // the first column, which starts left
+    await studio.page.locator('.ainsi-studio__gridhead [title="right"]').first().click();
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => /\|\s*-+:\s*\|\s*-+:/.test(t));
+    expect(after).toMatch(/\|\s*-+:\s*\|/);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a row removed leaves the rest of the table alone", async () => {
+    const studio = await open(TABLE_DECK);
+    await openTable(studio);
+    await studio.page.locator('.ainsi-studio__gridadd [title="Remove row"]').first().click();
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => !t.includes("Apples"));
+    expect(after).not.toContain("Apples");
+    expect(after).toContain("Pears");
+    expect(after).toContain("| Name");
+    await studio.stop();
+}, 60_000);

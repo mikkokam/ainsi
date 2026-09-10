@@ -252,3 +252,49 @@ export function movePage(source: string, page: PageTarget, neighbour: PageTarget
     const [a, b] = page.first <= neighbour.first ? [page, neighbour] : [neighbour, page];
     return swap(source, pageSpan(source, a), pageSpan(source, b), was => (a.held || /(^|\n)---[ \t]*(\n|$)/.test(was) ? was : "\n\n---\n\n"));
 }
+
+/*
+ * A markdown table as a grid, and back.
+ *
+ * The rendering varies: bar-table draws bars, comparison draws columns, matrix draws a field.
+ * The source never does. So an editor works on this shape and serves every component that
+ * takes a table, and nothing here knows which one is drawing it.
+ */
+export type Align = "left" | "center" | "right";
+export interface Grid { head: string[]; rows: string[][]; align: Align[] }
+
+/** a cell's own text, with the pipes it escaped put back as pipes */
+const cells = (line: string): string[] =>
+    line.replace(/^\s*\|/, "").replace(/\|\s*$/, "")
+        .split(/(?<!\\)\|/)
+        .map(cell => cell.trim().replace(/\\\|/g, "|"));
+
+const ALIGN = /^:?-{1,}:?$/;
+
+export function toGrid(md: string): Grid | undefined {
+    const lines = md.trim().split("\n").filter(line => line.trim());
+    if (lines.length < 2) return undefined;
+    const head = cells(lines[1]!);
+    if (!head.length || !head.every(cell => ALIGN.test(cell))) return undefined;
+    const align = head.map<Align>(cell =>
+        cell.startsWith(":") && cell.endsWith(":") ? "center" : cell.endsWith(":") ? "right" : "left");
+    const width = align.length;
+    const fit = (row: string[]) => Array.from({ length: width }, (_, i) => row[i] ?? "");
+    return { head: fit(cells(lines[0]!)), rows: lines.slice(2).map(line => fit(cells(line))), align };
+}
+
+export function toMarkdown(grid: Grid): string {
+    const escape = (cell: string) => cell.replace(/\|/g, "\\|").trim();
+    const body = [grid.head, ...grid.rows].map(row => row.map(escape));
+    const rule = grid.align.map(a => (a === "center" ? ":---:" : a === "right" ? "---:" : "---"));
+    // padded to the widest cell in each column, so the source reads as a table in a plain editor
+    const width = grid.align.map((_, i) => Math.max(rule[i]!.length, ...body.map(row => row[i]?.length ?? 0)));
+    const pad = (cell: string, i: number, a: Align) => {
+        const room = width[i]! - cell.length;
+        if (a === "right") return " ".repeat(room) + cell;
+        if (a === "center") return " ".repeat(Math.floor(room / 2)) + cell + " ".repeat(Math.ceil(room / 2));
+        return cell + " ".repeat(room);
+    };
+    const line = (row: string[]) => `| ${row.map((cell, i) => pad(cell, i, grid.align[i]!)).join(" | ")} |`;
+    return [line(body[0]!), line(rule.map((cell, i) => pad(cell, i, grid.align[i]!))), ...body.slice(1).map(line)].join("\n");
+}

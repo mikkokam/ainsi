@@ -16,6 +16,12 @@ Move up and Move down sit beside the delete, and swap the block with its neighbo
 
 The page has its own rail one scope up, at the page's top-left corner: the grip carries the page's layout and its props, ⌥ click on it adds a page below, and so does the plus beside it. The page menu moves pages the same way, taking the layout directive along and writing the break a directive alone was holding open.
 
+## Tables
+
+A table opens as a grid of its own cells rather than as pipes: click to select it, Enter to open. Each column carries its alignment as three buttons above it, and a column or a row is added and removed from the same place. What is drawn on the page does not matter here, because it never varies at the source: `bar-table`, `comparison` and the rest all take a plain markdown table, so this is one editor for every one of them.
+
+Cells hold markdown, not rich text. A `|` inside a cell is written as `\|` on the way out and read back as a pipe, and the table is padded to its widest cell so the source still reads as a table in a plain editor.
+
 `E` opens the whole file's source in a code editor, for when a splice is faster than a form. **Edit source** on the page menu opens the same editor over one page's slice, which is what you want when the page you are splicing is the one on screen. Escape closes whatever is open.
 
 ## Images

@@ -9,10 +9,10 @@ theme: boring
 
 # Operating Review Q3 2026
 
+Boring Inc. Group Performance and Outlook
+
 <!-- ainsi: prose size=small -->
 Prepared by Corporate Planning · 8 September 2026
-
-Boring Inc. Group Performance and Outlook
 
 ---
 

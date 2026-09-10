@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, pageSpan, toGrid, toMarkdown, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -1161,6 +1161,7 @@ function openAt(index: number, caret: Caret): void {
 
 function edit(target: HTMLElement, range: Range, caret: Caret): void {
     if (range.kind === "image" && openImage(target, range)) return;
+    if (range.kind === "table" && openTable(target, range)) return;
     const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
     openEditor(target, {
         initial: range.md,
@@ -1176,6 +1177,123 @@ function edit(target: HTMLElement, range: Range, caret: Caret): void {
  * attributes) falls back to it.
  */
 const IMAGE = /^!\[((?:[^[\]\\]|\\.)*)\]\(\s*(<[^>]*>|[^\s)]*)(?:\s+("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))?\s*\)\s*$/;
+
+/*
+ * A table as a grid rather than as pipes.
+ *
+ * What is drawn on the page varies: bar-table draws bars, comparison draws columns. The source
+ * is a plain markdown table every time, so this edits that and serves all of them, and nothing
+ * here knows which component is rendering it.
+ */
+function openTable(target: HTMLElement, range: Range): boolean {
+    const grid = toGrid(range.md);
+    if (!grid) return false;
+
+    const panel = h("form", { class: "ainsi-studio__table" });
+    const table = h("table", { class: "ainsi-studio__grid" });
+    let focus: HTMLInputElement | undefined;
+    let drawn = false;
+
+    const draw = (): void => {
+        table.replaceChildren();
+        const columns = grid.align.length;
+
+        // the alignment row: what each column does, above the column it does it to
+        const heading = h("tr");
+        heading.append(h("th", { class: "ainsi-studio__gridcorner" }));
+        grid.align.forEach((current, i) => {
+            const cell = h("th", { class: "ainsi-studio__gridhead" });
+            for (const [name, icon] of [["left", "alignLeft"], ["center", "alignCenter"], ["right", "alignRight"]] as const) {
+                cell.append(iconButton(icon, name, current === name, () => { grid.align[i] = name; draw(); }));
+            }
+            cell.append(iconButton("trash", "Remove column", false, () => {
+                if (columns < 2) return;
+                grid.align.splice(i, 1);
+                grid.head.splice(i, 1);
+                for (const row of grid.rows) row.splice(i, 1);
+                draw();
+            }));
+            heading.append(cell);
+        });
+        heading.append(h("th", { class: "ainsi-studio__gridadd" }, iconButton("plus", "Add column", false, () => {
+            grid.align.push("left");
+            grid.head.push("");
+            for (const row of grid.rows) row.push("");
+            draw();
+        })));
+        table.append(heading);
+
+        const line = (row: string[], head: boolean, index: number): void => {
+            const tr = h("tr", head ? { class: "ainsi-studio__gridtitle" } : {});
+            tr.append(h("td", { class: "ainsi-studio__gridcorner" }, head ? "" : String(index + 1)));
+            row.forEach((value, i) => {
+                const input = h("input", { class: "ainsi-studio__input", value, spellcheck: "false", autocomplete: "off" }) as HTMLInputElement;
+                input.addEventListener("input", () => { row[i] = input.value; });
+                tr.append(h("td", {}, input));
+                if (!focus) focus = input;
+            });
+            tr.append(h("td", { class: "ainsi-studio__gridadd" }, head ? "" : iconButton("trash", "Remove row", false, () => {
+                grid.rows.splice(index, 1);
+                draw();
+            })));
+            table.append(tr);
+        };
+        line(grid.head, true, -1);
+        grid.rows.forEach((row, i) => line(row, false, i));
+
+        /*
+         * Adding or removing a column replaces every cell, so whatever had the caret is gone and
+         * focus falls to the body, where the commit chord cannot reach this panel. It comes back
+         * to the grid. Typing never redraws, so this never interrupts anyone mid-word.
+         */
+        if (drawn && !panel.contains(document.activeElement)) {
+            queueMicrotask(() => (table.querySelector("input") as HTMLInputElement | null)?.focus());
+        }
+        drawn = true;
+
+        const foot = h("tr");
+        foot.append(h("td", { class: "ainsi-studio__gridcorner" }), h("td", { colspan: String(columns + 1) },
+            iconButton("plus", "Add row", false, () => { grid.rows.push(grid.align.map(() => "")); draw(); })));
+        table.append(foot);
+    };
+
+    draw();
+    panel.append(table, h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
+
+    const rect = target.getBoundingClientRect();
+    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, innerWidth - 640))}px`;
+    panel.style.top = `${rect.top + scrollY}px`;
+    document.body.append(panel);
+    target.classList.add("ainsi-studio--dim");
+
+    let done = false;
+    const editor: Chrome = {
+        kind: "block",
+        holds: true,
+        close() { done = true; panel.remove(); target.classList.remove("ainsi-studio--dim"); },
+    };
+    show(editor);
+    focus?.focus();
+    focus?.select();
+
+    const commit = async (): Promise<void> => {
+        if (done) return;
+        done = true;
+        const text = toMarkdown(grid);
+        if (text === range.md) { if (chrome === editor) shut(); return; }
+        hint("saving…");
+        editor.holds = false;
+        await splice({ start: range.start, end: range.end, text });
+    };
+
+    panel.addEventListener("submit", event => { event.preventDefault(); void commit(); });
+    panel.addEventListener("keydown", event => {
+        event.stopPropagation();                        // the viewer's own keys stay out of the cells
+        if (event.key === "Escape") { event.preventDefault(); if (chrome === editor) shut(); }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void commit(); }
+    });
+    return true;
+}
 
 function openImage(target: HTMLElement, range: Range): boolean {
     const match = IMAGE.exec(range.md);

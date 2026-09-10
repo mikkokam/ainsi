@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
+import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target , toGrid, toMarkdown } from "../src/studio/edits";
 
 const registry = await load();
 const layouts = await loadLayouts();
@@ -270,4 +270,40 @@ test("a block dropped before the one it already precedes is not a move", () => {
 test("dropped before a block, it lands ahead of it", () => {
     expect(apply(four, moveTo(four, block(four, "D"), block(four, "B"), "before")!)).toBe("A\n\nD\n\nB\n\nC");
     expect(apply(four, moveTo(four, block(four, "A"), block(four, "D"), "before")!)).toBe("B\n\nC\n\nA\n\nD");
+});
+
+/* the table as a grid: what varies is which component draws it, never the source it is drawn from */
+const TABLE = "| Name | Qty | Price |\n| --- | ---: | :---: |\n| Apples | 12 | 1,20 |\n| Pears | 3 | 0,90 |";
+
+test("a markdown table reads as a grid, with each column's alignment", () => {
+    const grid = toGrid(TABLE)!;
+    expect(grid.head).toEqual(["Name", "Qty", "Price"]);
+    expect(grid.rows).toEqual([["Apples", "12", "1,20"], ["Pears", "3", "0,90"]]);
+    expect(grid.align).toEqual(["left", "right", "center"]);
+});
+
+test("a grid written back is a table a person could have typed, padded to its columns", () => {
+    expect(toMarkdown(toGrid(TABLE)!)).toBe(
+        "| Name   |  Qty | Price |\n| ---    | ---: | :---: |\n| Apples |   12 | 1,20  |\n| Pears  |    3 | 0,90  |",
+    );
+});
+
+test("a table survives the round trip unchanged the second time", () => {
+    const once = toMarkdown(toGrid(TABLE)!);
+    expect(toMarkdown(toGrid(once)!)).toBe(once);
+});
+
+test("a pipe inside a cell is a pipe, not a column", () => {
+    const grid = toGrid("| a | b |\n| --- | --- |\n| x \\| y | z |")!;
+    expect(grid.rows).toEqual([["x | y", "z"]]);
+    expect(toMarkdown(grid)).toContain("x \\| y");
+});
+
+test("a row short of cells is filled rather than losing its columns", () => {
+    expect(toGrid("| a | b | c |\n| --- | --- | --- |\n| 1 |")!.rows).toEqual([["1", "", ""]]);
+});
+
+test("what is not a table is not read as one", () => {
+    expect(toGrid("# heading")).toBeUndefined();
+    expect(toGrid("| a | b |")).toBeUndefined();
 });
