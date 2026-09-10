@@ -42,7 +42,10 @@
     --ac-glass-filter:    blur(24px) saturate(180%);
 
     --ac-glass-over-content:        rgb(16 16 20 / 66%);
-    --ac-glass-over-content-filter: blur(20px) saturate(140%) brightness(.55);
+    /* Radius dominates what a backdrop costs, and this filter runs on every floating
+       surface at once, re-sampled whenever the window is composited. 12 rather than 20
+       because the fill at 72% is already doing most of the separating. */
+    --ac-glass-over-content-filter: blur(12px) saturate(140%) brightness(.55);
     --ac-glass-over-content-edge:   rgb(255 255 255 / 14%);
     --ac-glass-over-content-shadow: 0 6px 24px rgb(0 0 0 / 35%);
     /* menus and other larger over-content panels go one step more opaque */

@@ -38,7 +38,8 @@ async function studio() {
         const { value, done } = await reader.read();
         if (done) break;
         seen += decoder.decode(value, { stream: true });
-        url = /studio on (\S+)/.exec(seen)?.[1] ?? "";
+        // the deck has a url of its own: one server holds many, the root is the chooser
+        url = /deck on (\S+)/.exec(seen)?.[1] ?? "";
     }
     return { url, stop: async () => { child.kill(); await rm(dir, { recursive: true, force: true }); } };
 }

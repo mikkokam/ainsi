@@ -20,7 +20,8 @@
        under the titlebar it would stop at a hard edge there, which is the seam the strip used to
        draw. A length rather than a percentage vertically, because the shell is as tall as the
        page and the falloff has to stay where it was. */
-    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; padding-bottom: calc(var(--ac-footer-h) + 96px);
+    .ac-shell { display: flex; flex-direction: column; max-width: 1392px;
+    margin: 0 auto; min-height: 100vh; padding-bottom: calc(var(--ac-footer-h) + 96px);
                 background: radial-gradient(120% 520px at 10% 0, rgb(76 141 246 / 14%), transparent 58%); }
 
     /* ---- titlebar --------------------------------------------------- */
@@ -293,10 +294,6 @@
                 <span class="ac-icon-btn__label">New</span>
             </button>
         </div>
-        <div class="ac-titlebar__centre">
-            <img class="ac-titlebar__mark" src="__LOGOMARK__" alt="">
-            <span class="ac-titlebar__name">Ainsi Studio</span>
-        </div>
         <div class="ac-titlebar__spacer"></div>
     </div>
 
@@ -445,12 +442,19 @@
         setTimeout(done, VEIL);
     });
 
+    /*
+     * The deck answers with where it is served, never with a reload: one server holds many
+     * decks, and a deck already open is the window it is already in. On the desktop the shell
+     * makes the window; in a browser this tab goes there itself.
+     */
     async function repoint(path, body) {
         const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
         if (!response.ok) return fail(response);
+        const { url } = await response.json();
         setStatus(describeZone(), true);
+        if (desktop && (await askShell("window " + location.origin + url)).ok) return;
         await veil();
-        location.reload();
+        location.assign(url);
     }
     const openDeck = path => repoint("/__open", { path });
     const newDeck = theme => repoint("/__new", { at, theme });

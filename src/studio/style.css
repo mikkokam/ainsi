@@ -123,6 +123,20 @@ body::after {
 @media print { body::after { display: none; } }
 @media (prefers-reduced-motion: reduce) { body::after { animation-duration: 1ms; } }
 
+/*
+ * A page's ground picture is one large texture behind everything else on that page, and the
+ * page carries a fractional zoom, so a composite re-rasterises the whole thing rather than
+ * moving a finished layer. Dragging the window composites continuously, which is where it
+ * shows. Promoted, the picture is a texture the compositor moves instead of redrawing.
+ *
+ * Studio only, so a built deck, a print and a PDF are untouched by it. The cost is a layer per
+ * ground picture, which is memory against smoothness; if that trade goes the wrong way the
+ * answer is to skip off-screen pages instead, and that needs an intrinsic size to be safe.
+ */
+body[data-ainsi-edit]:not([data-present]) :is([data-layout="header"], [data-layout="split"]) .ainsi-full img {
+    will-change: transform;
+}
+
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }
 

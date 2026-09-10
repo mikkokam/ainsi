@@ -15,11 +15,17 @@ import { spawn } from "bun";
 
 export interface Studio {
     readonly url: string;
+    /** what marks a request as the shell's own, so a native dialog's path is trusted */
+    readonly key: string;
     stop(): void;
 }
 
 /** the studio prints one line naming where it is; nothing else on stdout looks like this */
 const URL_LINE = /studio on (\S+)/;
+/* And one naming the key that says a path came from a native dialog rather than from a page.
+   It goes over stdout because stdout is the one channel only the process that launched the
+   studio can read, which is the whole of what the key claims. */
+const KEY_LINE = /shell key (\S+)/;
 const GIVE_UP = 20_000;
 
 export interface StudioOptions {
@@ -27,15 +33,18 @@ export interface StudioOptions {
     repo: string;
     /** the bun to run it with, absolute: a window app inherits no useful PATH */
     bun: string;
-    /** the deck to open, or undefined to land on the studio's chooser */
-    deck?: string;
     /** what the studio's file browser may reach: its working directory */
     root: string;
 }
 
-export async function studio({ repo, bun, deck, root }: StudioOptions): Promise<Studio> {
+/*
+ * Always starts on the chooser: the shell holds one of these for its whole life and opens every
+ * deck against it afterwards through `/__open` and `/__new`, the same door a launch-time deck
+ * goes through, so there is only ever one way a deck gets a window.
+ */
+export async function studio({ repo, bun, root }: StudioOptions): Promise<Studio> {
     const child = spawn({
-        cmd: [bun, `${repo}/src/cli.ts`, ...(deck ? [deck] : []), "--port", "0"],
+        cmd: [bun, `${repo}/src/cli.ts`, "--port", "0"],
         cwd: root,
         // the studio refuses to start without a terminal, so an agent piping it gets a file
         // rather than a server it cannot see. This says who is asking.
@@ -49,18 +58,20 @@ export async function studio({ repo, bun, deck, root }: StudioOptions): Promise<
 
     const stop = () => child.kill();
     const reader = child.stdout.getReader();
-    const url = await Promise.race([firstUrl(reader), Bun.sleep(GIVE_UP).then(() => undefined)]);
+    const started = await Promise.race([firstUrl(reader), Bun.sleep(GIVE_UP).then(() => undefined)]);
     reader.releaseLock();
+    const url = started?.url;
+    const key = started?.key ?? "";
     if (!url) {
         stop();
         throw new Error(`no studio after ${GIVE_UP / 1000}s; run \`${bun} ${repo}/src/cli.ts\` to see why`);
     }
     // the rest of the studio's output is its own log, and it goes where every other log goes
     void child.stdout.pipeTo(new WritableStream({ write: chunk => void process.stdout.write(chunk) }));
-    return { url, stop };
+    return { url, key, stop };
 }
 
-async function firstUrl(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string | undefined> {
+async function firstUrl(reader: ReadableStreamDefaultReader<Uint8Array>): Promise<{ url: string; key: string } | undefined> {
     const decoder = new TextDecoder();
     let seen = "";
     for (;;) {
@@ -68,7 +79,8 @@ async function firstUrl(reader: ReadableStreamDefaultReader<Uint8Array>): Promis
         if (done) return undefined;
         seen += decoder.decode(value, { stream: true });
         process.stdout.write(value);
+        // the key is printed before the url, so by the time the url lands the key is in hand
         const found = URL_LINE.exec(seen);
-        if (found) return found[1];
+        if (found) return { url: found[1]!, key: KEY_LINE.exec(seen)?.[1] ?? "" };
     }
 }

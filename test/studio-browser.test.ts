@@ -39,7 +39,8 @@ async function open(deck = DECK) {
         const { value, done } = await reader.read();
         if (done) break;
         seen += decoder.decode(value, { stream: true });
-        url = /studio on (\S+)/.exec(seen)?.[1] ?? "";
+        // the deck has a url of its own: one server holds many, the root is the chooser
+        url = /deck on (\S+)/.exec(seen)?.[1] ?? "";
     }
 
     const browser = await browserType.launch(process.env.AINSI_CHROMIUM ? { executablePath: process.env.AINSI_CHROMIUM } : {});

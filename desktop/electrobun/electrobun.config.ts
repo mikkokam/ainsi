@@ -29,6 +29,13 @@ export default {
     release: {
         baseUrl: "https://github.com/mikkokam/ainsi/releases/latest/download",
     },
+    /*
+     * A Mac app lives on with no windows open; closing the last deck and the Decks window
+     * behind it is not quitting, and the Dock icon is what brings Decks back.
+     */
+    runtime: {
+        exitOnLastWindowClosed: false,
+    },
     build: {
         // the shell spawns bun, reads its stdout and holds the child; real Bun, not a
         // lookalike, because that is what the studio it starts is written against

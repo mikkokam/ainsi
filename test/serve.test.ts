@@ -27,7 +27,7 @@ test("a change reaches a listening page", async () => {
     const server = start();
     const page = await listen(server.url);
 
-    server.changed("deck.md");
+    server.changed("", "deck.md");
     expect(await page.next()).toContain("data: reload");
 
     await page.stop();
@@ -40,7 +40,7 @@ test("a page that went away does not hold up the one still there", async () => {
     await gone.stop();
 
     const page = await listen(server.url);
-    server.changed("deck.md");
+    server.changed("", "deck.md");
     expect(await page.next()).toContain("data: reload");
 
     await page.stop();

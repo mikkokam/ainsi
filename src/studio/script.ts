@@ -54,6 +54,8 @@ interface DocPage {
 interface DocLayout { name: string; fields: Field[] }
 interface Doc {
     hash: string; source: string; file: string;
+    /** the deck's own theme: the picker marks it, the menu says it, nothing asks the server */
+    theme: string;
     layout: string;
     entities: DocEntity[]; blocks: DocBlock[]; pages: DocPage[];
     components: DocComponent[]; layouts: DocLayout[];
@@ -63,7 +65,16 @@ interface Doc {
 type Caret = "start" | "end" | "select";
 type Mode = "inplace" | "overlay" | "insert";
 
-let doc: Doc = { hash: "", source: "", file: "", layout: "default", entities: [], blocks: [], pages: [], components: [], layouts: [] };
+let doc: Doc = { hash: "", source: "", file: "", theme: "default", layout: "default", entities: [], blocks: [], pages: [], components: [], layouts: [] };
+
+/*
+ * One server, many decks: this window's deck is the /d/<id>/ its page was served from, and
+ * every endpoint that acts on a deck hangs off that prefix. Written once here rather than into
+ * two dozen string literals, and the app-scoped endpoints (the chooser's, the shell's) are
+ * asked for at the root, which is what they mean.
+ */
+const DECK = /^\/d\/([^/]+)\//.exec(location.pathname)?.[1] ?? "";
+const mine = (path: string): string => (DECK ? `/d/${DECK}${path}` : path);
 
 /*
  * One piece of chrome at a time: a block editor, raw mode, or the block menu. Opening one
@@ -210,7 +221,7 @@ function mountFileField(): void {
         const name = field.value.trim();
         if (renaming || !name || name === doc.file) { field.value = doc.file; return; }
         renaming = true;
-        const response = await fetch("/__rename", { method: "POST", body: JSON.stringify({ name }) });
+        const response = await fetch(mine("/__rename"), { method: "POST", body: JSON.stringify({ name }) });
         renaming = false;
         if (!response.ok) {
             hint(await response.text(), true, 3000);
@@ -360,12 +371,12 @@ document.addEventListener("ainsi:update", event => {
     (document.querySelector(".ainsi-studio__cluster") ?? document.body).prepend(button);
 });
 
-/** back to the chooser: the server forgets the deck, and the reload lands on the landing page */
+/** back to the chooser: the server forgets the deck, and this window lands on the landing page */
 async function closeDeck(): Promise<void> {
-    const response = await fetch("/__close", { method: "POST" });
+    const response = await fetch(mine("/__close"), { method: "POST" });
     if (!response.ok) return hint((await response.text()) || "could not close the deck", true, 3000);
     await veil();
-    location.reload();
+    location.assign("/");
 }
 
 /**
@@ -392,8 +403,10 @@ function mountStatusPills(): void {
     if (lastCommitMs !== undefined) saved.textContent = `saved · ${lastCommitMs} ms`;
 }
 
-const SCROLL = "ainsi-scroll";
-const REOPEN = "ainsi-reopen";
+/* keyed by deck, all four of them: sessionStorage belongs to the tab, and a tab that leaves one
+   deck for another would otherwise land on its scroll position and its undo stack */
+const SCROLL = `ainsi-scroll:${DECK}`;
+const REOPEN = `ainsi-reopen:${DECK}`;
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
 /* who is showing this page, stamped on the body by the server; the app is the one that has a
@@ -403,7 +416,7 @@ const desktop = document.body.dataset.ainsiHost === "electrobun";
 init();
 
 async function init(): Promise<void> {
-    doc = await (await fetch("/__doc")).json();
+    doc = await (await fetch(mine("/__doc"))).json();
     document.body.setAttribute("data-ainsi-edit", "");
     if (desktop) labelToolbar();
     mountFileField();
@@ -614,7 +627,7 @@ async function init(): Promise<void> {
         panel.querySelector(".ainsi-menu__brand")?.remove();
 
         slot.classList.add("ainsi-menu__group");
-        const meta = h("span", { class: "ainsi-menu__groupmeta" }, `${doc.pages.length} pages`);
+        const meta = h("span", { class: "ainsi-menu__groupmeta" }, `${doc.theme} · ${doc.pages.length} pages`);
         const themeRow = menuItem("Theme…", () => themeDrill(panel));
         slot.append(
             h("div", { class: "ainsi-menu__grouphead" }, h("span", {}, "Deck"), meta),
@@ -628,12 +641,7 @@ async function init(): Promise<void> {
             menuItem("Export…", () => exportDrill(panel, close)),
         );
         slot.after(h("div", { class: "ainsi-menu__rule" }));
-        void (async () => {
-            const { current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
-            meta.textContent = `${current} · ${doc.pages.length} pages`;
-            themeRow.querySelector(".ainsi-menu__itemhint")?.remove();
-            themeRow.append(h("span", { class: "ainsi-menu__itemhint" }, current));
-        })();
+        themeRow.append(h("span", { class: "ainsi-menu__itemhint" }, doc.theme));
 
         const pagesHead = panel.querySelector<HTMLElement>(".ainsi-menu__head");
         if (!pagesHead) return;
@@ -744,8 +752,8 @@ async function init(): Promise<void> {
  */
 interface Splice { start: number; end: number; text: string }
 interface Entry extends Splice { was: string }   // what the range holds now; a mismatch means the file moved
-const UNDO = "ainsi-undo";
-const REDO = "ainsi-redo";
+const UNDO = `ainsi-undo:${DECK}`;
+const REDO = `ainsi-redo:${DECK}`;
 const DEPTH = 50;
 
 function stack(key: string): Entry[] {
@@ -1339,43 +1347,49 @@ function explicit(fields: Field[], props: Record<string, unknown>): Record<strin
  */
 async function openDrill(panel: HTMLElement, at?: string): Promise<void> {
     const query = at === undefined ? "" : `?at=${encodeURIComponent(at)}`;
-    const response = await fetch(`/__browse${query}`);
+    const response = await fetch(mine(`/__browse${query}`));
     if (!response.ok) return hint(await response.text(), true, 4000);
-    const { here, up, entries, current } = await response.json() as {
-        here: string; up?: string; entries: { name: string; dir: boolean }[]; current?: string;
+    const folder = await response.json() as {
+        at: string; here: string; up?: string; entries: { name: string; dir: boolean }[]; open: string[];
     };
-    const rows = entries.map(entry => {
+    const rows = folder.entries.map(entry => {
+        const path = join(folder.at, entry.name);
         const row = menuItem(entry.dir ? `${entry.name}/` : entry.name, () => {
-            if (entry.dir) return void openDrill(panel, join(at ?? "", entry.name));
-            void repoint("/__open", { path: join(at ?? "", entry.name) });
+            if (entry.dir) return void openDrill(panel, path);
+            void repoint("/__open", { path });
         });
-        if (!entry.dir && entry.name === current) row.setAttribute("data-active", "");
+        // a deck with a window already; opening it goes to that window rather than making a second
+        if (!entry.dir && folder.open.includes(entry.name)) row.setAttribute("data-active", "");
         return row;
     });
-    if (up !== undefined) rows.unshift(menuItem("../", () => void openDrill(panel, up)));
+    if (folder.up !== undefined) rows.unshift(menuItem("../", () => void openDrill(panel, folder.up)));
     // whatever a deck can be opened from can make one: the new deck lands in the folder on screen
-    rows.unshift(menuItem("New presentation", () => void repoint("/__new", { at: at ?? "" })));
-    drill(panel, here, ...rows);
+    rows.unshift(menuItem("New presentation", () => void repoint("/__new", { at: folder.at })));
+    drill(panel, folder.here, ...rows);
 }
 
 const join = (a: string, b: string): string => (a ? `${a}/${b}` : b);
 
 /*
- * Point the server at another deck and reload onto it. The reload is this client's own, not
- * the one the server pushes: that push is held while an editor is open, and the studio has no
- * chrome registered for the viewer's menu, so a stale hold from an earlier edit swallowed it
- * and the click did nothing until the page was reloaded by hand.
+ * Another deck, in a window of its own. The server answers with where that deck is served
+ * rather than repointing this one, so a deck already open is the window it is already in. On
+ * the desktop the shell makes the window; in a browser this tab goes there itself, and it does
+ * so on its own rather than on a pushed reload, which is held while an editor is open.
  */
 async function repoint(path: string, body: Record<string, string>): Promise<void> {
-    const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
+    const response = await fetch(mine(path), { method: "POST", body: JSON.stringify(body) });
     if (!response.ok) return hint((await response.text()) || "could not open", true, 4000);
+    const { url } = await response.json() as { url: string };
+    if (desktop && (await askShell(`window ${location.origin}${url}`)).ok) return;
     await veil();
-    location.reload();
+    location.assign(url);
 }
 
 async function themeDrill(panel: HTMLElement): Promise<void> {
-    const { themes, current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
-    drill(panel, "Theme", ...themes.map(theme => {
+    const { themes } = await (await fetch("/__themes")).json() as { themes: string[] };
+    // a deck on a theme of its own is still on it, and the shelf has never heard of that theme
+    const current = doc.theme;
+    drill(panel, "Theme", ...(themes.includes(current) ? themes : [current, ...themes]).map(theme => {
         const row = menuItem(theme, () => { const change = themeChange(theme); if (change) splice(change); });
         if (theme === current) row.setAttribute("data-active", "");
         return row;
@@ -1408,7 +1422,7 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
 async function exportTo(path: string, target: string): Promise<void> {
     hint(`Writing ${target}…`);
     try {
-        const response = await fetch(path, { method: "POST" });
+        const response = await fetch(mine(path), { method: "POST" });
         if (response.ok) hint(`Wrote ${target}`, false, 2500);
         else hint((await response.text()) || `export failed: ${response.status}`, true, 6000);
     } catch {
@@ -1469,7 +1483,7 @@ function openDeck(): void {
 
     // the themes, once the panel is up: the dropdown is not worth waiting on to show the rest
     void (async () => {
-        const known = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
+        const known = await (await fetch("/__themes")).json() as { themes: string[] };
         themes = known.themes.includes(values.get("theme")!) ? known.themes : [...known.themes, values.get("theme")!];
         draw();
     })().catch(() => undefined);
@@ -2199,7 +2213,7 @@ let discardArmed: ReturnType<typeof setTimeout> | undefined;
 async function openRaw(index?: number): Promise<void> {
     if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
     // refetched rather than trusted: a held reload means the module's copy can be stale
-    doc = await (await fetch("/__doc")).json();
+    doc = await (await fetch(mine("/__doc"))).json();
 
     // by number, because the refetch may have brought new ids: a page keeps its place in the
     // deck across an edit somewhere else, and a deck that lost the page has nothing to open
@@ -2307,7 +2321,7 @@ async function splice(change: Splice, onto: string = UNDO): Promise<void> {
     let failure: string | undefined;
     traceMark("sent");
     try {
-        const response = await fetch("/__edit", {
+        const response = await fetch(mine("/__edit"), {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ hash: doc.hash, ...change }),
