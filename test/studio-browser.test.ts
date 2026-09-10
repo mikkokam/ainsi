@@ -682,3 +682,81 @@ test.skipIf(!chromium)("a row removed leaves the rest of the table alone", async
     expect(after).toContain("| Name");
     await studio.stop();
 }, 60_000);
+
+const LIST_DECK = "# Ohjelma\n\n<!-- ainsi: timeline -->\n\n- Aamu: avaus\n- Keskipäivä: työpaja\n- Ilta: yhteenveto\n";
+
+async function openList(studio: Awaited<ReturnType<typeof open>>) {
+    const box = (await studio.page.locator(".ainsi-page").first().boundingBox())!;
+    await studio.page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.7);
+    await studio.page.keyboard.press("Enter");
+    await studio.page.waitForSelector(".ainsi-studio__list");
+}
+
+test.skipIf(!chromium)("a list opens as its items, whatever component is drawing it", async () => {
+    const studio = await open(LIST_DECK);
+    await openList(studio);
+    expect(await count(studio.page, ".ainsi-studio__list textarea")).toBe(0);
+    const values = await studio.page.locator(".ainsi-studio__item input").evaluateAll(
+        inputs => inputs.map(i => (i as HTMLInputElement).value));
+    expect(values).toEqual(["Aamu: avaus", "Keskipäivä: työpaja", "Ilta: yhteenveto"]);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("an item typed into reaches the file, and the directive stays", async () => {
+    const studio = await open(LIST_DECK);
+    await openList(studio);
+    await studio.page.locator(".ainsi-studio__item input").nth(0).fill("Aamu: kahvi");
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.includes("kahvi"));
+    expect(after).toContain("- Aamu: kahvi");
+    expect(after).toContain("<!-- ainsi: timeline -->");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("an item moves without cutting and pasting a line", async () => {
+    const studio = await open(LIST_DECK);
+    await openList(studio);
+    await studio.page.locator('.ainsi-studio__item [title="Move down"]').first().click();
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.indexOf("Keskipäivä") < t.indexOf("Aamu"));
+    expect(after.indexOf("Keskipäivä")).toBeLessThan(after.indexOf("Aamu"));
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("bullets become numbers, and the markers are rewritten", async () => {
+    const studio = await open(LIST_DECK);
+    await openList(studio);
+    await studio.page.locator('.ainsi-studio__itemhead [title="Numbered"]').click();
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.includes("1. Aamu"));
+    expect(after).toContain("1. Aamu: avaus");
+    expect(after).toContain("3. Ilta: yhteenveto");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("an item indents no deeper than one past the item above it", async () => {
+    const studio = await open(LIST_DECK);
+    await openList(studio);
+    const indent = studio.page.locator('.ainsi-studio__item [title="Indent"]').nth(1);
+    await indent.click();
+    await indent.click();                                 // a second press cannot skip a level
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => /\n  - Keskipäivä/.test(t));
+    expect(after).toContain("\n  - Keskipäivä");
+    expect(after).not.toContain("\n    - Keskipäivä");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a list an editor cannot put back opens the raw editor instead", async () => {
+    const studio = await open("# T\n\n- One\n\n- Two\n");
+    const box = (await studio.page.locator(".ainsi-page").first().boundingBox())!;
+    await studio.page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.7);
+    await studio.page.keyboard.press("Enter");
+    expect(await until(() => count(studio.page, "textarea"), n => n === 1)).toBe(1);
+    expect(await count(studio.page, ".ainsi-studio__list")).toBe(0);
+    await studio.stop();
+}, 60_000);

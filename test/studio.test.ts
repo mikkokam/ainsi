@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target , toGrid, toMarkdown } from "../src/studio/edits";
+import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target , toGrid, toItems, toList, toMarkdown } from "../src/studio/edits";
 
 const registry = await load();
 const layouts = await loadLayouts();
@@ -306,4 +306,29 @@ test("a row short of cells is filled rather than losing its columns", () => {
 test("what is not a table is not read as one", () => {
     expect(toGrid("# heading")).toBeUndefined();
     expect(toGrid("| a | b |")).toBeUndefined();
+});
+
+/* the list as its items: what draws it varies, the source is a list of items either way */
+test("a list reads as its items, with the depth each one sits at", () => {
+    const list = toItems("- One\n  - Nested\n- Two")!;
+    expect(list.ordered).toBe(false);
+    expect(list.items).toEqual([{ depth: 0, text: "One" }, { depth: 1, text: "Nested" }, { depth: 0, text: "Two" }]);
+});
+
+test("a numbered list is numbered again from one, per level", () => {
+    expect(toList({ ordered: true, items: [
+        { depth: 0, text: "One" }, { depth: 1, text: "a" }, { depth: 1, text: "b" }, { depth: 0, text: "Two" },
+    ] })).toBe("1. One\n  1. a\n  2. b\n2. Two");
+});
+
+test("a list written back is the list it came from", () => {
+    for (const md of ["- One\n- Two", "1. One\n2. Two", "- One\n  - Nested\n- Two", "- Label: text"]) {
+        expect(toList(toItems(md)!)).toBe(md);
+    }
+});
+
+test("a list an editor could not put back is refused rather than flattened", () => {
+    expect(toItems("- One\n\n- Two")).toBeUndefined();          // loose renders differently from tight
+    expect(toItems("- One\n\n  A paragraph\n- Two")).toBeUndefined();
+    expect(toItems("# heading")).toBeUndefined();
 });

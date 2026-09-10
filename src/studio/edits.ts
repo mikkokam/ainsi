@@ -298,3 +298,42 @@ export function toMarkdown(grid: Grid): string {
     const line = (row: string[]) => `| ${row.map((cell, i) => pad(cell, i, grid.align[i]!)).join(" | ")} |`;
     return [line(body[0]!), line(rule.map((cell, i) => pad(cell, i, grid.align[i]!))), ...body.slice(1).map(line)].join("\n");
 }
+
+/*
+ * A markdown list as its items, and back.
+ *
+ * Same bargain as the table: what draws it varies, timeline draws a spine and boxes draws
+ * panels, and the source is a list of items either way. What this cannot round-trip faithfully
+ * it refuses, so a list holding a paragraph or a nested block falls back to the raw editor
+ * rather than being flattened by an editor that did not understand it.
+ */
+export interface Items { ordered: boolean; items: { depth: number; text: string }[] }
+
+const ITEM = /^([ \t]*)(?:[-*+]|\d+[.)])[ \t]+(.*)$/;
+
+export function toItems(md: string): Items | undefined {
+    const lines = md.trim().split("\n");
+    if (!lines.length) return undefined;
+    // every line, blanks included: a list written loose renders differently from a tight one,
+    // and an editor that dropped the blanks would tighten it without saying so
+    const parsed = lines.map(line => ITEM.exec(line));
+    if (parsed.some(match => !match)) return undefined;
+
+    // the shallowest indent is depth zero, and every deeper one counts in units of it
+    const indents = parsed.map(match => match![1]!.replace(/\t/g, "  ").length);
+    const step = Math.min(...indents.filter(n => n > 0).concat(2));
+    return {
+        ordered: /^\s*\d/.test(lines[0]!),
+        items: parsed.map((match, i) => ({ depth: Math.round(indents[i]! / step), text: match![2]!.trim() })),
+    };
+}
+
+export function toList(list: Items): string {
+    const counts: number[] = [];
+    return list.items.map(({ depth, text }) => {
+        counts.length = depth + 1;
+        counts[depth] = (counts[depth] ?? 0) + 1;
+        const marker = list.ordered ? `${counts[depth]}.` : "-";
+        return `${"  ".repeat(depth)}${marker} ${text}`;
+    }).join("\n");
+}

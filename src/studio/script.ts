@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, pageSpan, toGrid, toMarkdown, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, pageSpan, toGrid, toItems, toList, toMarkdown, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -121,6 +121,9 @@ function traceMark(leg: "sent" | "answered" | "told"): void {
     } catch { /* private mode, or a full quota: a trace is never worth breaking an edit for */ }
 }
 
+/** the round trip just finished, so the status pill has something to show on the page it lands on */
+let lastCommitMs: number | undefined;
+
 function traceReport(): void {
     try {
         const kept = sessionStorage.getItem(TRACE);
@@ -128,6 +131,7 @@ function traceReport(): void {
         sessionStorage.removeItem(TRACE);
         const { sent, answered, told } = JSON.parse(kept) as { sent: number; answered?: number; told?: number };
         const total = Date.now() - sent;
+        lastCommitMs = total;
         if (total < SLOW && !localStorage.getItem(TRACE)) return;
         console.log(`ainsi commit ${total} ms: write ${(answered ?? sent) - sent}, `
             + `rebuild ${(told ?? answered ?? sent) - (answered ?? sent)}, reload ${Date.now() - (told ?? sent)}`);
@@ -189,7 +193,70 @@ function mountFileField(): void {
         if (event.key === "Escape") { event.preventDefault(); field.value = doc.file; field.blur(); }
         event.stopPropagation();
     });
-    (document.querySelector(".ainsi-toolbar") ?? document.body).append(field);
+    (document.querySelector(".ainsi-toolbar") ?? document.body).append(divider(), field);
+}
+
+/**
+ * The page nearest the top of the viewport: what ⌥⌘E or "Edit source" means with nothing more
+ * specific selected. The same measure the viewer's own nearest() takes for presenting, kept
+ * separate because that one is a private closure the studio has no way to call into.
+ */
+function nearestPage(): number {
+    const pages = [...document.querySelectorAll<HTMLElement>(".ainsi-page")];
+    let best = 0;
+    let distance = Infinity;
+    pages.forEach((page, i) => {
+        const offset = Math.abs(page.getBoundingClientRect().top);
+        if (offset < distance) { distance = offset; best = i; }
+    });
+    return best;
+}
+
+/**
+ * The right cluster: Edit source and Export, both reachable from the nav pill's own dropdown
+ * too, so this is a shortcut to the same code rather than a second way to do either. Export
+ * has no dialog of its own here: the pill opens the viewer's menu and drills straight to the
+ * Export section it already builds.
+ */
+function mountRightCluster(): void {
+    const source = h("button", { class: "ainsi-studio__pill", type: "button", title: "Edit source  ⌥⌘E", "aria-label": "Edit source" });
+    source.innerHTML = icons.code;
+    source.append("Edit source", h("span", { class: "ainsi-studio__pillkey" }, "⌥⌘E"));
+    source.addEventListener("click", () => void openRaw(nearestPage()));
+
+    const exportButton = h("button", { class: "ainsi-studio__pill", type: "button", title: "Export…", "aria-label": "Export…", click: () => openExportMenu() }, "Export…");
+
+    document.body.append(h("div", { class: "ainsi-studio__cluster" }, source, exportButton));
+}
+
+/** opens the nav pill's own menu and drills straight to Export, rather than a second surface */
+function openExportMenu(): void {
+    document.querySelector<HTMLButtonElement>('.ainsi-toolbar__button[title="Menu"]')?.click();
+    [...document.querySelectorAll<HTMLButtonElement>(".ainsi-menu__item")].find(el => el.textContent === "Export…")?.click();
+}
+
+/**
+ * The status pills, bottom corners: where you are in the deck, and how the last write went.
+ * The page number tracks scroll the same way the viewer's own reading position does; the
+ * commit time is whatever traceReport() read back from the load that just happened, so it is
+ * one page behind the write it describes rather than nothing at all.
+ */
+function mountStatusPills(): void {
+    const page = h("span", { class: "ainsi-studio__statuspage" });
+    const left = h("div", { class: "ainsi-studio__status ainsi-studio__status--left" },
+        page, h("span", {}, "⌘⏎ present"), h("span", {}, "⌘G grid"), h("span", {}, "⌥⌘E source"));
+    const saved = h("span", {}, "ready");
+    const right = h("div", { class: "ainsi-studio__status ainsi-studio__status--right" },
+        h("span", { class: "ainsi-studio__statusdot" }), saved);
+    document.body.append(left, right);
+
+    const update = () => {
+        const total = document.querySelectorAll(".ainsi-page").length;
+        page.textContent = total ? `page ${nearestPage() + 1} / ${total}` : "";
+    };
+    update();
+    addEventListener("scroll", update, { passive: true });
+    if (lastCommitMs !== undefined) saved.textContent = `saved · ${lastCommitMs} ms`;
 }
 
 const SCROLL = "ainsi-scroll";
@@ -202,6 +269,8 @@ async function init(): Promise<void> {
     doc = await (await fetch("/__doc")).json();
     document.body.setAttribute("data-ainsi-edit", "");
     mountFileField();
+    mountRightCluster();
+    mountStatusPills();
 
     const scrolled = sessionStorage.getItem(SCROLL);
     if (scrolled) scrollTo(0, Number(scrolled));
@@ -395,6 +464,8 @@ async function init(): Promise<void> {
         const base = doc.file.replace(/\.[^.]+$/, "");
         if (name === "new") void repoint("/__new", {});
         else if (name === "source") openRaw();
+        else if (name === "source-page") void openRaw(nearestPage());
+        else if (name === "export") openExportMenu();
         else if (name === "settings") openDeck();
         else if (name === "pptx") void exportTo("/__pptx", `${base}.pptx`);
         else if (name === "zip") void exportTo("/__zip", `${base}.zip`);
@@ -430,6 +501,17 @@ async function init(): Promise<void> {
         if (chrome || document.body.hasAttribute("data-present")) return;
         event.preventDefault();
         openRaw();
+    });
+
+    // ⌥⌘E: the page you are looking at, as a sheet. ⇧⌘E: the whole file, full window.
+    document.addEventListener("keydown", event => {
+        if (event.key.toLowerCase() !== "e" || !(event.metaKey || event.ctrlKey)) return;
+        if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
+        if (chrome || document.body.hasAttribute("data-present")) return;
+        if (event.altKey === event.shiftKey) return;   // neither or both is neither shortcut
+        event.preventDefault();
+        if (event.altKey) void openRaw(nearestPage());
+        else openRaw();
     });
 
     // commit-level undo, only with nothing open: an open textarea or CodeMirror keeps its own
@@ -925,6 +1007,23 @@ function selectPage(section: HTMLElement): void {
     openPageMenu(section, section.getBoundingClientRect());
 }
 
+/*
+ * What is drawing this block, and what it says it wants of its content. A component's `about`
+ * already carries the convention its render depends on, so an editor showing it is one home
+ * for the fact rather than a second copy of it: `boxes` says a leading bold run is the card
+ * title, and a person who does not know that gets a card with no title and no reason why.
+ */
+function expects(target: HTMLElement): HTMLElement | undefined {
+    const id = target.dataset.ainsiEntity ?? target.dataset.ainsiSpan?.split(" ")[0];
+    const entity = doc.entities.find(e => e.id === id);
+    const block = doc.blocks.find(b => entity && b.ids.includes(entity.id));
+    const component = block && doc.components.find(c => c.name === block.component);
+    if (!component) return undefined;
+    return h("div", { class: "ainsi-studio__expects" },
+        h("b", {}, component.name),
+        h("span", {}, component.about));
+}
+
 /** the target a splice needs, for the entity or span a handle stands for */
 function targetOf(handle: HTMLElement): Target | undefined {
     const id = handle.dataset.ainsiEntity ?? handle.dataset.ainsiSpan?.split(" ")[0];
@@ -1164,6 +1263,7 @@ function edit(target: HTMLElement, range: Range, caret: Caret): void {
     // the markdown decides, not the kind: a component that builds its own markup is addressed
     // as a block rather than as a table, and comparison, bar-table and roadmap all do
     if (openTable(target, range)) return;
+    if (openList(target, range)) return;
     const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
     openEditor(target, {
         initial: range.md,
@@ -1260,10 +1360,12 @@ function openTable(target: HTMLElement, range: Range): boolean {
     };
 
     draw();
+    const says = expects(target);
+    if (says) panel.append(says);
     panel.append(table, h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
 
     const rect = target.getBoundingClientRect();
-    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, innerWidth - 640))}px`;
+    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, scrollX + innerWidth - 940))}px`;
     panel.style.top = `${rect.top + scrollY}px`;
     document.body.append(panel);
     target.classList.add("ainsi-studio--dim");
@@ -1295,6 +1397,113 @@ function openTable(target: HTMLElement, range: Range): boolean {
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void commit(); }
     });
     return true;
+}
+
+/*
+ * A list as its items. Same bargain as the table above: timeline draws a spine and boxes draws
+ * panels, and both are a list of items in the source, so this edits that and serves all of
+ * them. What it cannot round-trip it refuses, and the raw editor takes over.
+ */
+function openList(target: HTMLElement, range: Range): boolean {
+    const list = toItems(range.md);
+    if (!list) return false;
+
+    const panel = h("form", { class: "ainsi-studio__table ainsi-studio__list" });
+    const rows = h("div", { class: "ainsi-studio__items" });
+    let focus: HTMLInputElement | undefined;
+    let drawn = false;
+
+    const draw = (): void => {
+        rows.replaceChildren();
+        list.items.forEach((item, i) => {
+            const row = h("div", { class: "ainsi-studio__item" });
+            row.style.paddingLeft = `${item.depth * 1.4}rem`;
+
+            const input = h("input", { class: "ainsi-studio__input", value: item.text, spellcheck: "false", autocomplete: "off" }) as HTMLInputElement;
+            input.addEventListener("input", () => { item.text = input.value; });
+            // the deepest an item may go is one past the item above it, so a list cannot skip a level
+            const ceiling = i === 0 ? 0 : (list.items[i - 1]!.depth ?? 0) + 1;
+            const shift = (by: number) => () => {
+                item.depth = Math.max(0, Math.min(ceiling, item.depth + by));
+                draw();
+            };
+            row.append(
+                iconButton("panelLeft", "Outdent", false, shift(-1)),
+                iconButton("panelRight", "Indent", false, shift(1)),
+                input,
+                iconButton("up", "Move up", false, () => { if (i > 0) { swapItems(list, i, i - 1); draw(); } }),
+                iconButton("down", "Move down", false, () => { if (i < list.items.length - 1) { swapItems(list, i, i + 1); draw(); } }),
+                iconButton("trash", "Remove item", false, () => { list.items.splice(i, 1); draw(); }),
+            );
+            rows.append(row);
+            if (!focus) focus = input;
+        });
+
+        if (drawn && !panel.contains(document.activeElement)) {
+            queueMicrotask(() => (rows.querySelector("input") as HTMLInputElement | null)?.focus());
+        }
+        drawn = true;
+    };
+
+    const marker = h("div", { class: "ainsi-studio__itemhead" });
+    const toggle = (): void => {
+        marker.replaceChildren(
+            iconButton("list", "Bullets", !list.ordered, () => { list.ordered = false; toggle(); }),
+            iconButton("ordered", "Numbered", list.ordered, () => { list.ordered = true; toggle(); }),
+        );
+    };
+    toggle();
+
+    draw();
+    const says = expects(target);
+    if (says) panel.append(says);
+    panel.append(marker, rows,
+        h("div", { class: "ainsi-studio__itemfoot" },
+            iconButton("plus", "Add item", false, () => {
+                list.items.push({ depth: list.items.at(-1)?.depth ?? 0, text: "" });
+                draw();
+            }),
+            h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK")));
+
+    const rect = target.getBoundingClientRect();
+    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, scrollX + innerWidth - 820))}px`;
+    panel.style.top = `${rect.top + scrollY}px`;
+    document.body.append(panel);
+    target.classList.add("ainsi-studio--dim");
+
+    let done = false;
+    const editor: Chrome = {
+        kind: "block",
+        holds: true,
+        close() { done = true; panel.remove(); target.classList.remove("ainsi-studio--dim"); },
+    };
+    show(editor);
+    focus?.focus();
+    focus?.select();
+
+    const commit = async (): Promise<void> => {
+        if (done) return;
+        done = true;
+        const text = toList(list);
+        if (text === range.md) { if (chrome === editor) shut(); return; }
+        hint("saving…");
+        editor.holds = false;
+        await splice({ start: range.start, end: range.end, text });
+    };
+
+    panel.addEventListener("submit", event => { event.preventDefault(); void commit(); });
+    panel.addEventListener("keydown", event => {
+        event.stopPropagation();
+        if (event.key === "Escape") { event.preventDefault(); if (chrome === editor) shut(); }
+        if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void commit(); }
+    });
+    return true;
+}
+
+/** two items and the run beneath the one that moves, so a parent takes its children with it */
+function swapItems(list: { items: { depth: number; text: string }[] }, a: number, b: number): void {
+    const [item] = list.items.splice(a, 1);
+    list.items.splice(b, 0, item!);
 }
 
 function openImage(target: HTMLElement, range: Range): boolean {
@@ -1641,15 +1850,23 @@ async function openRaw(index?: number): Promise<void> {
         ],
     });
 
-    const save = barButton("Save", `${MOD}⏎`, () => commitRaw());
+    // a page's own source is a sheet over the deck; the whole file still takes the window
+    const sheet = page !== undefined;
+    const save = barButton("Save", sheet ? `${MOD}S` : `${MOD}⏎`, () => commitRaw());
     save.setAttribute("data-primary", "");
-    const container = h("div", { class: "ainsi-studio__raw" },
-        h("div", { class: "ainsi-studio__rawbar" },
-            h("span", { class: "ainsi-studio__rawname" }, page ? `${doc.file} · page ${index! + 1}` : doc.file),
-            h("span", { class: "ainsi-studio__rawgap" }),
-            barButton("Cancel", "esc", () => cancelRaw()),
-            save),
-        view.dom);
+    const bar = h("div", { class: "ainsi-studio__rawbar" },
+        h("span", { class: "ainsi-studio__rawname" }, page ? `${doc.file} · page ${index! + 1}` : doc.file),
+        h("span", { class: "ainsi-studio__rawgap" }),
+        barButton("Cancel", "esc", () => cancelRaw()),
+        save);
+    const panel = h("div", { class: sheet ? "ainsi-studio__sheet" : "ainsi-studio__sheetfull" }, bar, view.dom);
+    if (sheet) {
+        panel.append(h("div", { class: "ainsi-studio__rawfoot" },
+            h("span", {}, "editing one page · the file keeps the rest"),
+            h("div", { class: "ainsi-studio__rawfootkeys" },
+                h("span", {}, `${MOD}S save`), h("span", {}, "esc cancel"), h("span", {}, "⇧⌘E whole file"))));
+    }
+    const container = h("div", { class: `ainsi-studio__raw${sheet ? " ainsi-studio__raw--sheet" : ""}` }, panel);
 
     document.body.append(container);
     document.body.setAttribute("data-ainsi-raw", "");
