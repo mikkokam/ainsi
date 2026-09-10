@@ -760,3 +760,17 @@ test.skipIf(!chromium)("a list an editor cannot put back opens the raw editor in
     expect(await count(studio.page, ".ainsi-studio__list")).toBe(0);
     await studio.stop();
 }, 60_000);
+
+/*
+ * Option is a compose modifier on macOS: ⌥E is the dead acute, so a chord matched on
+ * `event.key` never sees "e" and ⌥⌘E fires for nobody. Playwright's own press() sends the
+ * plain letter and would pass either way, so the event is built the way the platform sends it.
+ */
+test.skipIf(!chromium)("the page-source chord reads the physical key, not the composed one", async () => {
+    const studio = await open();
+    await studio.page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown",
+        { key: "´", code: "KeyE", metaKey: true, altKey: true, bubbles: true, cancelable: true })));
+    expect(await until(() => count(studio.page, ".ainsi-studio__raw--sheet"), n => n === 1)).toBe(1);
+    expect(await studio.page.locator(".ainsi-studio__rawname").textContent()).toBe("deck.md · page 1");
+    await studio.stop();
+});

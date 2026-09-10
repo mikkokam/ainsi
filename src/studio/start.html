@@ -1,91 +1,528 @@
 <!doctype html>
 <!--
-  The studio before it has a deck. `ainsi` on its own writes nothing until asked: this page
-  browses what the server allows and either opens a deck or asks it for a new one. It never
-  coexists with the deck view, so it carries its own small chrome rather than the studio's.
+  The studio before it has a deck: open one, start one from a theme, or reopen a recent one.
+  It never coexists with the deck view, so it carries its own chrome rather than the studio's,
+  built from the same --ac-* chrome tokens the editor uses once a deck is open.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Ainsi</title>
+<title>Ainsi Studio</title>
 <link rel="icon" href="__MARK__">
+<style>__TOKENS__</style>
 <style>
-    :root { color-scheme: light dark; --ink: #1c1c1e; --soft: #6b6b70; --ground: #fbfbfd; --line: #e3e3e8; --tint: #f2f2f6; }
-    @media (prefers-color-scheme: dark) { :root { --ink: #f2f2f5; --soft: #9a9aa2; --ground: #17171a; --line: #2c2c31; --tint: #1f1f23; } }
+    :root { color-scheme: dark; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--ground); color: var(--ink);
-           font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif; }
-    main { width: min(30rem, 92vw); }
-    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 .25rem; letter-spacing: -.01em; }
-    p { margin: 0 0 1.5rem; color: var(--soft); }
-    .list { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--tint); }
-    button { display: flex; gap: .6rem; align-items: baseline; width: 100%; padding: .6rem .8rem; text-align: left;
-             font: inherit; color: inherit; background: none; border: 0; border-top: 1px solid var(--line); cursor: pointer; }
-    button:first-child { border-top: 0; }
-    button:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
-    .new { font-weight: 600; }
-    .where { margin: 1.5rem 0 .4rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
-    .empty { padding: .6rem .8rem; color: var(--soft); }
-    .error { color: #c0392b; min-height: 1.5rem; margin-top: .8rem; }
+    html, body { margin: 0; min-height: 100vh; background: var(--ac-ground); color: var(--ac-ink); font: var(--ac-text-body); }
+    button { font-family: inherit; }
+
+    .ac-shell { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ---- titlebar --------------------------------------------------- */
+    .ac-titlebar { flex: none; height: var(--ac-titlebar); display: flex; align-items: center; gap: 14px; padding: 0 14px;
+                   background: var(--ac-glass); backdrop-filter: var(--ac-glass-filter); -webkit-backdrop-filter: var(--ac-glass-filter);
+                   border-bottom: 1px solid rgb(255 255 255 / 7%); }
+    .ac-titlebar__icons { display: flex; align-items: center; gap: 2px; }
+    .ac-icon-btn { width: var(--ac-h-icon); height: 26px; padding: 0; display: grid; place-items: center; border: 0; border-radius: var(--ac-r-icon);
+                   background: none; color: #a8a8b0; cursor: pointer; }
+    .ac-icon-btn:hover { background: var(--ac-hover); color: #f2f2f5; }
+    .ac-icon-btn:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-icon-btn svg { display: block; }
+    .ac-titlebar__centre { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+    .ac-titlebar__mark { width: 15px; height: 15px; opacity: .75; display: block; }
+    .ac-titlebar__name { font: 500 12px/1 var(--ac-font); color: var(--ac-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ac-titlebar__spacer { width: 58px; flex: none; }
+    .ac-icon-btn__label { display: none; }
+
+    /* ---- inside the app ------------------------------------------------
+       The window has no titlebar of its own there: this strip is it. The left
+       end is the traffic lights' room, the bar drags the window, and anything
+       that takes a click has to say so or the drag swallows it. A button in a
+       window titlebar carries no chrome: an icon, its word, and a hover. */
+    body[data-ainsi-host="electrobun"] .ac-titlebar {
+        /* the lights are the system's and do not scroll, so neither may the strip under them */
+        position: sticky; top: 0; z-index: 10;
+        padding-left: var(--ac-lights);
+        --electrobun-app-region: drag; -webkit-app-region: drag;
+    }
+    body[data-ainsi-host="electrobun"] .ac-titlebar .ac-icon-btn {
+        --electrobun-app-region: no-drag; -webkit-app-region: no-drag;
+        width: auto; gap: 7px; padding: 0 10px 0 8px;
+        display: inline-flex; align-items: center;
+    }
+    body[data-ainsi-host="electrobun"] .ac-icon-btn__label { display: inline; font: var(--ac-text-control); }
+    body[data-ainsi-host="electrobun"] .ac-titlebar__spacer { width: 0; }
+
+    /* ---- story -------------------------------------------------------- */
+    .ac-story { padding: 60px 56px 44px; display: flex; align-items: flex-end; justify-content: space-between; gap: 56px;
+                background: radial-gradient(120% 140% at 10% 0%, rgb(76 141 246 / 14%), transparent 58%); }
+    .ac-story__text { max-width: 660px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+    .ac-story__brand { display: flex; align-items: center; gap: 13px; }
+    .ac-story__logo { height: 30px; width: auto; display: block; }
+    .ac-story__rule { width: 1px; height: 20px; background: var(--ac-hairline-strong); }
+    .ac-story__face { font: 500 15px/1 var(--ac-font); color: var(--ac-ink-2); letter-spacing: -.01em; }
+    .ac-story h1 { margin: 0; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: pretty; }
+    .ac-story p { margin: 0; font: var(--ac-text-body); color: var(--ac-ink-2); max-width: 520px; text-wrap: pretty; }
+
+    .ac-actions { flex: none; width: 300px; display: flex; flex-direction: column; gap: 10px; }
+    .ac-action { height: var(--ac-h-page-action); border: 0; border-radius: var(--ac-r-button); display: flex; align-items: center; justify-content: center;
+                 gap: 10px; cursor: pointer; text-align: left; padding: 0 16px; }
+    .ac-action:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-action--primary { background: #F2F2F5; color: #111114; font: var(--ac-text-cta); }
+    .ac-action--primary:hover { background: #fff; }
+    .ac-action--secondary { border: 1px solid rgb(255 255 255 / 14%); background: none; color: #E6E6EA; font: 500 14px/1 var(--ac-font); }
+    .ac-action--secondary:hover { border-color: rgb(255 255 255 / 24%); background: rgb(255 255 255 / 7%); }
+    .ac-action__hint { font: 500 11px/1 var(--ac-mono); opacity: .5; }
+    .ac-action--secondary .ac-action__hint { opacity: .45; }
+    .ac-status { display: flex; align-items: center; gap: 7px; padding-top: 4px; font: var(--ac-text-meta); color: var(--ac-ink-3); }
+    .ac-status__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ac-ok); flex: none; }
+    .ac-status--warn .ac-status__dot { background: #c8ab74; }
+    .ac-status a { color: var(--ac-blue-ink); text-decoration: none; }
+    .ac-status a:hover { text-decoration: underline; }
+
+    /* ---- theme shelf -------------------------------------------------- */
+    .ac-section { padding: 0 56px; margin-top: 34px; display: flex; flex-direction: column; gap: 15px; }
+    .ac-section--recents { flex: 1; }
+    .ac-section-head { display: flex; align-items: baseline; gap: 12px; }
+    .ac-section-head h2 { margin: 0; font: var(--ac-text-section); color: var(--ac-ink); }
+    .ac-section-head span { font: 400 12.5px/1.4 var(--ac-font); color: var(--ac-ink-3); }
+
+    .ac-themes { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 3px 3px 5px;
+                 -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent); }
+    .ac-themes::-webkit-scrollbar { display: none; }
+    .ac-tile { flex: none; width: 190px; display: flex; flex-direction: column; gap: 9px; padding: 3px; border: 0; background: none;
+               border-radius: var(--ac-r-card); cursor: pointer; text-align: left; transition: box-shadow var(--ac-hover-ms) var(--ac-ease); }
+    .ac-tile:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-tile__preview { height: 107px; border-radius: var(--ac-r-control); border: 1px solid var(--ac-hairline-strong); overflow: hidden;
+                         position: relative; padding: 14px 15px; display: flex; flex-direction: column; gap: 7px; }
+    .ac-tile__aa { line-height: 1; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
+    .ac-tile__bar { height: 2px; width: 38px; }
+    .ac-tile__rules { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+    .ac-tile__rule { height: 3px; border-radius: 2px; }
+    .ac-tile__caption { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .ac-tile__name { font: 500 12.5px/1 var(--ac-font); color: var(--ac-ink-2); }
+    .ac-tile__kind { font: var(--ac-text-key); color: var(--ac-ink-3); }
+    .ac-tile--new { cursor: default; }
+    .ac-tile--new .ac-tile__preview { background: #1a1a1e; }
+    .ac-tile--new .ac-tile__name, .ac-tile--new .ac-tile__kind { color: var(--ac-ink-disabled); }
+
+    /* ---- recent grid ---------------------------------------------------- */
+    .ac-recents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .ac-card { position: relative; padding: 0; border: 1px solid var(--ac-hairline); border-radius: var(--ac-r-card);
+               background: rgb(255 255 255 / 3%); overflow: hidden; text-align: left; cursor: pointer; color: inherit; }
+    .ac-card:focus-visible { outline: none; box-shadow: var(--ac-focus); }
+    .ac-card--missing { opacity: .45; cursor: default; }
+    .ac-card__cover { height: 104px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+                       border-bottom: 1px solid rgb(255 255 255 / 8%); position: relative; }
+    .ac-card__title { font-weight: 700; font-size: 15px; line-height: 1.1; letter-spacing: -.02em; }
+    .ac-card__bar { height: 2px; width: 30px; }
+    .ac-card__pin { position: absolute; right: 9px; top: 9px; width: 20px; height: 20px; padding: 0; border: 0; background: none;
+                    font-size: 12px; line-height: 1; cursor: pointer; color: rgb(255 255 255 / 35%); }
+    .ac-card__pin--on { color: var(--ac-blue-ink); }
+    .ac-card__play { position: absolute; right: 9px; bottom: 9px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%;
+                     background: rgb(10 10 12 / 55%); backdrop-filter: blur(10px); display: grid; place-items: center; color: #fff; cursor: pointer; }
+    .ac-card__body { padding: 11px 14px 13px; display: flex; flex-direction: column; gap: 6px; }
+    .ac-card__path { font: var(--ac-text-mono); color: var(--ac-ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                      direction: rtl; text-align: left; }
+    .ac-card__meta { display: flex; align-items: center; gap: 9px; font: 400 11.5px/1 var(--ac-font); color: var(--ac-ink-3); }
+    .ac-card__meta .ac-dot { color: #4A4A52; }
+    .ac-card__meta .ac-theme-id { font: 400 10.5px/1 var(--ac-mono); }
+    .ac-empty { padding: 24px 0; font: var(--ac-text-meta); color: var(--ac-ink-3); }
+
+    /* ---- footer --------------------------------------------------------- */
+    .ac-footer { margin: 34px 56px 0; padding: 20px 0 40px; border-top: 1px solid var(--ac-hairline);
+                 display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .ac-footer__status { font: var(--ac-text-meta); color: var(--ac-ink-3); max-width: 600px; }
+    .ac-footer__status--acted { color: var(--ac-blue-ink); }
+    .ac-footer__hints { display: flex; align-items: center; gap: 15px; font: var(--ac-text-key); color: var(--ac-ink-3); white-space: nowrap; }
+
+    /* ---- browse sheet (functionality the handoff assumes carries over, not pixel-specced) ---- */
+    .ac-browse { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding-top: 15vh;
+                 background: rgb(6 6 8 / 55%); backdrop-filter: blur(6px); }
+    .ac-browse[hidden] { display: none; }
+    .ac-browse__panel { width: 460px; max-height: 60vh; display: flex; flex-direction: column; background: var(--ac-raised);
+                         border: 1px solid var(--ac-hairline-strong); border-radius: var(--ac-r-panel); box-shadow: var(--ac-shadow-float); overflow: hidden; }
+    .ac-browse__bar { padding: 12px 16px; font: var(--ac-text-mono); color: var(--ac-ink-3); border-bottom: 1px solid var(--ac-hairline); }
+    .ac-browse__list { overflow-y: auto; }
+    .ac-browse__row { display: block; width: 100%; padding: 10px 16px; border: 0; background: none; text-align: left; cursor: pointer;
+                       font: var(--ac-text-body); color: var(--ac-ink-2); }
+    .ac-browse__row:hover { background: var(--ac-hover); }
+    .ac-browse__row:focus-visible { outline: none; box-shadow: inset var(--ac-focus); }
+    .ac-browse__empty { padding: 16px; color: var(--ac-ink-3); font: var(--ac-text-meta); }
+    .ac-browse__error { padding: 10px 16px; color: var(--ac-danger-ink); font: var(--ac-text-meta); }
+
+    /* ---- responsive ------------------------------------------------------ */
+    @media (max-width: 1100px) {
+        .ac-recents { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+        .ac-recents { grid-template-columns: 1fr; }
+        .ac-story { flex-direction: column; align-items: stretch; padding: 34px 24px; gap: 24px; }
+        .ac-story__text { max-width: none; }
+        .ac-actions { width: 100%; order: -1; }
+        .ac-section, .ac-footer { padding-left: 24px; padding-right: 24px; }
+        .ac-footer { margin-left: 24px; margin-right: 24px; }
+        .ac-footer__hints { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ac-tile, .ac-action { transition: none; }
+    }
 </style>
 </head>
 <body>
-<main>
-    <h1>Ainsi STUDIO</h1>
-    <p>Write a deck in markdown.</p>
-    <div class="list">
-        <button class="new" id="new">New presentation</button>
+<div class="ac-shell">
+    <div class="ac-titlebar">
+        <div class="ac-titlebar__icons">
+            <button class="ac-icon-btn" id="titlebar-open" title="Open a deck  ⌘O" aria-label="Open a deck">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V6a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v2"></path><path d="M3.4 19l2-7.2A1 1 0 0 1 6.4 11H21l-2.2 7.3a1 1 0 0 1-1 .7z"></path></svg>
+                <span class="ac-icon-btn__label">Open</span>
+            </button>
+            <button class="ac-icon-btn" id="titlebar-new" title="New deck  ⌘N" aria-label="New deck">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9z"></path><path d="M14 3v6h5"></path><path d="M12 12v5M9.5 14.5h5"></path></svg>
+                <span class="ac-icon-btn__label">New</span>
+            </button>
+        </div>
+        <div class="ac-titlebar__centre">
+            <img class="ac-titlebar__mark" src="__LOGOMARK__" alt="">
+            <span class="ac-titlebar__name">Ainsi Studio</span>
+        </div>
+        <div class="ac-titlebar__spacer"></div>
     </div>
-    <div class="where" id="where"></div>
-    <div class="list" id="list"></div>
-    <div class="error" id="error"></div>
-</main>
+
+    <div class="ac-story">
+        <div class="ac-story__text">
+            <div class="ac-story__brand">
+                <img class="ac-story__logo" src="__LOGO__" alt="ainsi">
+                <div class="ac-story__rule"></div>
+                <span class="ac-story__face">Studio</span>
+            </div>
+            <h1>A deck is a markdown file on your computer.<br>Your agent already has it open.</h1>
+            <p>No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands. Export happens once, at the end.</p>
+        </div>
+        <div class="ac-actions">
+            <button class="ac-action ac-action--primary" id="open" data-zone="open">Open a deck…<span class="ac-action__hint">⌘O</span></button>
+            <button class="ac-action ac-action--secondary" id="new" data-zone="new">New deck<span class="ac-action__hint">⌘N</span></button>
+            <div class="ac-status" id="skills-status"><span class="ac-status__dot"></span><span id="skills-text">checking Claude Code skills…</span></div>
+        </div>
+    </div>
+
+    <div class="ac-section">
+        <div class="ac-section-head"><h2>Start from a theme</h2><span>a theme is a folder — swap it later and every deck follows</span></div>
+        <div class="ac-themes" id="themes"></div>
+    </div>
+
+    <div class="ac-section ac-section--recents">
+        <div class="ac-section-head"><h2>Recent</h2></div>
+        <div class="ac-recents" id="recents"></div>
+    </div>
+
+    <div class="ac-footer">
+        <div class="ac-footer__status" id="status">Click this window and press ↓ — focus starts on Open a deck, then New, the theme shelf, and the recents.</div>
+        <div class="ac-footer__hints"><span>↑↓ zone</span><span>←→ pick</span><span>⏎ go</span><span>⌘O browse</span><span>⌘N new</span></div>
+    </div>
+</div>
+
+<div class="ac-browse" id="browse" hidden>
+    <div class="ac-browse__panel">
+        <div class="ac-browse__bar" id="browse-where"></div>
+        <div class="ac-browse__list" id="browse-list"></div>
+    </div>
+</div>
+
 <script>
-    const list = document.getElementById("list");
-    const where = document.getElementById("where");
-    const error = document.getElementById("error");
-    let at = "";
+(() => {
+    const zones = ["open", "new", "themes", "recents"];
+    let zone = "open";
+    let themeIndex = 0;
+    let recentIndex = 0;
+    let themes = [];
+    let recents = [];
+    let at = ""; // the folder a browse or a plain "New deck" resolves against
 
-    const row = (text, onClick, className) => {
-        const button = document.createElement("button");
-        button.textContent = text;
-        if (className) button.className = className;
-        button.addEventListener("click", onClick);
-        return button;
-    };
+    const openBtn = document.getElementById("open");
+    const newBtn = document.getElementById("new");
+    const themesEl = document.getElementById("themes");
+    const recentsEl = document.getElementById("recents");
+    const statusEl = document.getElementById("status");
+    const skillsText = document.getElementById("skills-text");
+    const skillsStatus = document.getElementById("skills-status");
+    const browse = document.getElementById("browse");
+    const browseWhere = document.getElementById("browse-where");
+    const browseList = document.getElementById("browse-list");
+
+    const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+    const fail = async response => setStatus((await response.text()) || "something went wrong", false);
+
+    function setStatus(text, acted) {
+        statusEl.textContent = text;
+        statusEl.classList.toggle("ac-footer__status--acted", !!acted);
+    }
+
+    /** what ⏎ would do right now, so the footer teaches the model as it is used */
+    function describeZone() {
+        if (zone === "open") return "Browse for a deck — ⌘O does the same, and so does the folder icon in the titlebar.";
+        if (zone === "new") return "New deck in the default theme, written to the folder you last browsed.";
+        if (zone === "themes") {
+            const t = themes[themeIndex];
+            return t ? `New deck in ${t.name} — ${t.kind}.` : "No themes to start from.";
+        }
+        const r = recents[recentIndex];
+        if (!r) return "No recent decks yet.";
+        return r.found ? `Opening ${r.path} — the agent sees the same file.` : `${r.file} is gone — the path no longer resolves.`;
+    }
+
+    function updateStatus() { setStatus(describeZone(), false); }
+
+    // ---- server actions -------------------------------------------------
+
+    async function repoint(path, body) {
+        const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
+        if (!response.ok) return fail(response);
+        setStatus(describeZone(), true);
+        location.reload();
+    }
+    const openDeck = path => repoint("/__open", { path });
+    const newDeck = theme => repoint("/__new", { at, theme });
+
+    async function pin(recent, pinned) {
+        const response = await fetch("/__pin", { method: "POST", body: JSON.stringify({ path: recent.path, pinned }) });
+        if (!response.ok) return fail(response);
+        await loadRecents();
+    }
+
+    // ---- browse sheet -----------------------------------------------------
+
+    let browseReturnFocus = null;
     const under = (dir, name) => (dir ? dir + "/" + name : name);
-    const fail = async response => { error.textContent = (await response.text()) || "something went wrong"; };
 
-    async function browse(next) {
+    async function browseTo(next) {
         const response = await fetch("/__browse?at=" + encodeURIComponent(next ?? ""));
         if (!response.ok) return fail(response);
         const page = await response.json();
         at = page.at;
-        where.textContent = page.here;
-        list.replaceChildren();
-        if (page.up !== undefined) list.append(row("../", () => browse(page.up)));
+        browseWhere.textContent = page.here;
+        browseList.replaceChildren();
+        if (page.up !== undefined) browseList.append(browseRow("../", () => browseTo(page.up)));
         for (const entry of page.entries) {
-            list.append(entry.dir
-                ? row(entry.name + "/", () => browse(under(at, entry.name)))
-                : row(entry.name, () => open(under(at, entry.name))));
+            browseList.append(entry.dir
+                ? browseRow(entry.name + "/", () => browseTo(under(at, entry.name)))
+                : browseRow(entry.name, () => openDeck(under(at, entry.name))));
         }
-        if (!list.children.length) list.append(Object.assign(document.createElement("div"), { className: "empty", textContent: "no decks here" }));
+        if (!browseList.children.length) browseList.append(Object.assign(document.createElement("div"), { className: "ac-browse__empty", textContent: "no decks here" }));
     }
+    function browseRow(text, onClick) {
+        const button = document.createElement("button");
+        button.className = "ac-browse__row";
+        button.textContent = text;
+        button.addEventListener("click", onClick);
+        return button;
+    }
+    function openBrowse() {
+        browseReturnFocus = document.activeElement;
+        browse.hidden = false;
+        browseTo(at);
+        browseList.parentElement.querySelector(".ac-browse__row")?.focus();
+    }
+    function closeBrowse() {
+        browse.hidden = true;
+        (browseReturnFocus ?? openBtn).focus();
+    }
+    browse.addEventListener("click", e => { if (e.target === browse) closeBrowse(); });
+    openBtn.addEventListener("click", openBrowse);
+    document.getElementById("titlebar-open").addEventListener("click", openBrowse);
 
-    // both of these repoint the server; this page then reloads onto the deck itself rather
-    // than waiting for the push, which is one thing fewer to be wrong about
-    async function repoint(path, body) {
-        const response = await fetch(path, { method: "POST", body: JSON.stringify(body) });
-        if (!response.ok) return fail(response);
-        location.reload();
-    }
-    const open = path => repoint("/__open", { path });
-    const make = () => repoint("/__new", { at });
-    document.getElementById("new").addEventListener("click", make);
+    // ---- new deck ---------------------------------------------------------
+
+    newBtn.addEventListener("click", () => newDeck(undefined));
+    document.getElementById("titlebar-new").addEventListener("click", () => newDeck(undefined));
+
     // a desktop shell's File menu reaches this page the same way it reaches the studio's
-    document.addEventListener("ainsi:command", event => { if (event.detail === "new") make(); });
+    document.addEventListener("ainsi:command", event => {
+        if (event.detail === "new") newDeck(undefined);
+        if (event.detail === "open") openBrowse();
+    });
 
-    browse();
+    // ---- theme shelf --------------------------------------------------------
+
+    function renderThemes() {
+        themesEl.replaceChildren();
+        themes.forEach((t, i) => {
+            const tile = document.createElement("button");
+            tile.className = "ac-tile";
+            tile.type = "button";
+            tile.dataset.zone = "themes";
+            tile.dataset.index = String(i);
+            tile.tabIndex = i === themeIndex ? 0 : -1;
+            tile.setAttribute("aria-label", `New deck in ${t.name}`);
+            tile.innerHTML = `
+                <div class="ac-tile__preview" style="background:${t.ground}">
+                    <div class="ac-tile__aa" style="font-family:${t.display};color:${t.ink}">Aa</div>
+                    <div class="ac-tile__bar" style="background:${t.accent}"></div>
+                    <div class="ac-tile__rules">
+                        <div class="ac-tile__rule" style="width:100%;background:${t.rule}"></div>
+                        <div class="ac-tile__rule" style="width:78%;background:${t.rule}"></div>
+                        <div class="ac-tile__rule" style="width:56%;background:${t.rule}"></div>
+                    </div>
+                </div>
+                <div class="ac-tile__caption"><span class="ac-tile__name">${t.name}</span><span class="ac-tile__kind">${t.kind}</span></div>`;
+            tile.addEventListener("click", () => newDeck(t.id));
+            themesEl.append(tile);
+        });
+        // last tile: a theme is a folder, so starting one is copying one — not built here yet
+        const more = document.createElement("div");
+        more.className = "ac-tile ac-tile--new";
+        more.innerHTML = `
+            <div class="ac-tile__preview"></div>
+            <div class="ac-tile__caption"><span class="ac-tile__name">New theme…</span><span class="ac-tile__kind">copy a folder, edit</span></div>`;
+        themesEl.append(more);
+    }
+
+    async function loadThemes() {
+        const response = await fetch("/__theme-previews");
+        if (!response.ok) return fail(response);
+        const data = await response.json();
+        themes = data.themes;
+        themeIndex = clamp(themeIndex, 0, themes.length - 1);
+        renderThemes();
+    }
+
+    // ---- recents ------------------------------------------------------------
+
+    const relTime = ms => {
+        const s = (Date.now() - ms) / 1000;
+        if (s < 90) return "just now";
+        const m = s / 60; if (m < 90) return `${Math.round(m)} min ago`;
+        const h = m / 60; if (h < 36) return `${Math.round(h)} hours ago`;
+        const d = h / 24; if (d < 14) return `${Math.round(d)} days ago`;
+        return new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    };
+
+    function renderRecents() {
+        recentsEl.replaceChildren();
+        if (!recents.length) {
+            recentsEl.append(Object.assign(document.createElement("div"), { className: "ac-empty", textContent: "Nothing opened yet. Start from a theme above." }));
+            return;
+        }
+        recents.forEach((r, i) => {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "ac-card" + (r.found ? "" : " ac-card--missing");
+            card.dataset.zone = "recents";
+            card.dataset.index = String(i);
+            card.tabIndex = i === recentIndex ? 0 : -1;
+            card.setAttribute("aria-label", r.found ? r.title : `${r.title}, not found`);
+            card.innerHTML = `
+                <div class="ac-card__cover" style="background:${r.ground}">
+                    <div class="ac-card__title" style="font-family:${r.display};color:${r.ink}">${r.title}</div>
+                    <div class="ac-card__bar" style="background:${r.accent}"></div>
+                    <button type="button" class="ac-card__play" title="Present" aria-label="Present ${r.title}" tabindex="-1"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></button>
+                    <button type="button" class="ac-card__pin${r.pinned ? " ac-card__pin--on" : ""}" title="${r.pinned ? "Unpin" : "Pin"}" aria-label="${r.pinned ? "Unpin" : "Pin"} ${r.title}" tabindex="-1">${r.pinned ? "★" : "☆"}</button>
+                </div>
+                <div class="ac-card__body">
+                    <div class="ac-card__path">${r.path}</div>
+                    <div class="ac-card__meta">
+                        <span>${r.found ? relTime(r.lastOpened) : "not found"}</span><span class="ac-dot">·</span>
+                        <span>${r.pages} pages</span><span class="ac-dot">·</span>
+                        <span class="ac-theme-id">${r.theme}</span>
+                    </div>
+                </div>`;
+            card.addEventListener("click", () => { if (r.found) openDeck(r.path); });
+            card.querySelector(".ac-card__pin").addEventListener("click", e => { e.stopPropagation(); pin(r, !r.pinned); });
+            card.querySelector(".ac-card__play").addEventListener("click", e => { e.stopPropagation(); if (r.found) openDeck(r.path); });
+            recentsEl.append(card);
+        });
+    }
+
+    async function loadRecents() {
+        const response = await fetch("/__recents");
+        if (!response.ok) return fail(response);
+        recents = await response.json();
+        recentIndex = clamp(recentIndex, 0, Math.max(recents.length - 1, 0));
+        renderRecents();
+    }
+
+    // ---- skills status --------------------------------------------------
+
+    async function loadSkills() {
+        try {
+            const response = await fetch("/__skills");
+            const { installed } = await response.json();
+            skillsStatus.classList.toggle("ac-status--warn", !installed);
+            skillsText.innerHTML = installed
+                ? 'Claude Code skills active · <a href="https://github.com/mikkokam/ainsi" target="_blank" rel="noopener">manage</a>'
+                : 'Add the Ainsi skills · <a href="https://github.com/mikkokam/ainsi" target="_blank" rel="noopener">marketplace</a>';
+        } catch {
+            skillsStatus.classList.add("ac-status--warn");
+            skillsText.textContent = "Could not check Claude Code skills";
+        }
+    }
+
+    // ---- keyboard model ---------------------------------------------------
+
+    function currentZoneItem(z) {
+        if (z === "open") return openBtn;
+        if (z === "new") return newBtn;
+        if (z === "themes") return themesEl.querySelector(`[data-index="${clamp(themeIndex, 0, themes.length - 1)}"]`);
+        return recentsEl.querySelector(`[data-index="${clamp(recentIndex, 0, recents.length - 1)}"]`);
+    }
+
+    // roving tabindex: one stop per zone, so Tab does not walk through every tile or card
+    function roveTabIndex() {
+        themesEl.querySelectorAll(".ac-tile[data-zone]").forEach(el => { el.tabIndex = Number(el.dataset.index) === themeIndex ? 0 : -1; });
+        recentsEl.querySelectorAll(".ac-card[data-zone]").forEach(el => { el.tabIndex = Number(el.dataset.index) === recentIndex ? 0 : -1; });
+    }
+
+    // real focus drives the model: a click, Tab, or an arrow key all land here the same way
+    document.addEventListener("focusin", e => {
+        const el = e.target.closest("[data-zone]");
+        if (!el) return;
+        zone = el.dataset.zone;
+        if (zone === "themes") themeIndex = Number(el.dataset.index);
+        if (zone === "recents") recentIndex = Number(el.dataset.index);
+        roveTabIndex();
+        updateStatus();
+    });
+
+    document.addEventListener("keydown", e => {
+        const meta = e.metaKey || e.ctrlKey;
+        if (meta && e.key.toLowerCase() === "o") { e.preventDefault(); openBrowse(); return; }
+        if (meta && e.key.toLowerCase() === "n") { e.preventDefault(); newDeck(undefined); return; }
+        if (!browse.hidden) {
+            if (e.key === "Escape") { e.preventDefault(); closeBrowse(); }
+            return;
+        }
+        if (meta && e.key === "Enter") {
+            e.preventDefault();
+            // present without opening the editor: not wired end-to-end yet (see report), falls
+            // back to the same open a highlighted recent already does
+            const r = recents[recentIndex];
+            if (zone === "recents" && r?.found) openDeck(r.path);
+            return;
+        }
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const zi = clamp(zones.indexOf(zone) + (e.key === "ArrowDown" ? 1 : -1), 0, zones.length - 1);
+            currentZoneItem(zones[zi])?.focus();
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            if (zone !== "themes" && zone !== "recents") return;
+            e.preventDefault();
+            const d = e.key === "ArrowRight" ? 1 : -1;
+            const list = zone === "themes" ? themes : recents;
+            const idx = zone === "themes" ? themeIndex : recentIndex;
+            const next = clamp(idx + d, 0, list.length - 1);
+            if (zone === "themes") themeIndex = next; else recentIndex = next;
+            roveTabIndex();
+            currentZoneItem(zone)?.focus();
+        }
+    });
+
+    (async () => {
+        await Promise.all([loadThemes(), loadRecents(), loadSkills()]);
+        openBtn.focus();
+        updateStatus();
+    })();
+})();
 </script>
 </body>
 </html>

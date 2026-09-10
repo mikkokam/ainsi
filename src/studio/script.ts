@@ -116,7 +116,11 @@ function traceMark(leg: "sent" | "answered" | "told"): void {
     try {
         const at = Date.now();
         const kept = sessionStorage.getItem(TRACE);
-        const record = leg === "sent" ? { sent: at } : { ...(kept ? JSON.parse(kept) : {}), [leg]: at };
+        // only a commit starts a record. The server pushes a reload for any change it sees,
+        // including one an external editor made, and a later leg starting its own record left
+        // a round trip with no beginning to measure from.
+        if (leg !== "sent" && !kept) return;
+        const record = leg === "sent" ? { sent: at } : { ...JSON.parse(kept!), [leg]: at };
         sessionStorage.setItem(TRACE, JSON.stringify(record));
     } catch { /* private mode, or a full quota: a trace is never worth breaking an edit for */ }
 }
@@ -129,7 +133,8 @@ function traceReport(): void {
         const kept = sessionStorage.getItem(TRACE);
         if (!kept) return;
         sessionStorage.removeItem(TRACE);
-        const { sent, answered, told } = JSON.parse(kept) as { sent: number; answered?: number; told?: number };
+        const { sent, answered, told } = JSON.parse(kept) as { sent?: number; answered?: number; told?: number };
+        if (typeof sent !== "number") return;       // a record written before the guard above
         const total = Date.now() - sent;
         lastCommitMs = total;
         if (total < SLOW && !localStorage.getItem(TRACE)) return;
@@ -196,8 +201,20 @@ function mountFileField(): void {
     (document.querySelector(".ainsi-toolbar") ?? document.body).append(divider(), field);
 }
 
+/*
+ * The nav pill's icons take their word in the app, where the strip runs the width of the window
+ * and a row of bare glyphs in a titlebar is a guessing game. The word is the button's own name
+ * without the shortcut it already carries in its tooltip.
+ */
+function labelToolbar(): void {
+    for (const button of document.querySelectorAll<HTMLButtonElement>(".ainsi-toolbar__button")) {
+        const name = button.getAttribute("aria-label")?.split(" (")[0];
+        if (name) button.append(h("span", { class: "ainsi-toolbar__label" }, name));
+    }
+}
+
 /**
- * The page nearest the top of the viewport: what ⌥⌘E or "Edit source" means with nothing more
+ * The page nearest the top of the viewport: what ⌥⌘E or "Edit page source" means with nothing more
  * specific selected. The same measure the viewer's own nearest() takes for presenting, kept
  * separate because that one is a private closure the studio has no way to call into.
  */
@@ -213,20 +230,25 @@ function nearestPage(): number {
 }
 
 /**
- * The right cluster: Edit source and Export, both reachable from the nav pill's own dropdown
+ * The right cluster: Edit page source and Export, both reachable from the nav pill's own dropdown
  * too, so this is a shortcut to the same code rather than a second way to do either. Export
  * has no dialog of its own here: the pill opens the viewer's menu and drills straight to the
  * Export section it already builds.
  */
 function mountRightCluster(): void {
-    const source = h("button", { class: "ainsi-studio__pill", type: "button", title: "Edit source  ⌥⌘E", "aria-label": "Edit source" });
+    const source = h("button", { class: "ainsi-studio__pill", type: "button", title: "Edit page source  ⌥⌘E", "aria-label": "Edit page source" });
     source.innerHTML = icons.code;
-    source.append("Edit source", h("span", { class: "ainsi-studio__pillkey" }, "⌥⌘E"));
+    source.append("Edit page source", h("span", { class: "ainsi-studio__pillkey" }, "⌥⌘E"));
     source.addEventListener("click", () => void openRaw(nearestPage()));
 
-    const exportButton = h("button", { class: "ainsi-studio__pill", type: "button", title: "Export…", "aria-label": "Export…", click: () => openExportMenu() }, "Export…");
+    const exportButton = h("button", { class: "ainsi-studio__pill", type: "button", title: "Export…", "aria-label": "Export…", click: () => openExportMenu() });
+    exportButton.innerHTML = icons.export;
+    exportButton.append("Export…");
 
-    document.body.append(h("div", { class: "ainsi-studio__cluster" }, source, exportButton));
+    const cluster = h("div", { class: "ainsi-studio__cluster" }, source, exportButton);
+    // in the app the strip is the window's titlebar and these are its right end; in a browser
+    // there is no strip to join, so they stay a corner of their own
+    ((desktop && document.querySelector(".ainsi-toolbar")) || document.body).append(cluster);
 }
 
 /** opens the nav pill's own menu and drills straight to Export, rather than a second surface */
@@ -244,7 +266,7 @@ function openExportMenu(): void {
 function mountStatusPills(): void {
     const page = h("span", { class: "ainsi-studio__statuspage" });
     const left = h("div", { class: "ainsi-studio__status ainsi-studio__status--left" },
-        page, h("span", {}, "⌘⏎ present"), h("span", {}, "⌘G grid"), h("span", {}, "⌥⌘E source"));
+        page, h("span", {}, "⌘⏎ present"), h("span", {}, "⌘G grid"), h("span", {}, "⌥⌘E page source"));
     const saved = h("span", {}, "ready");
     const right = h("div", { class: "ainsi-studio__status ainsi-studio__status--right" },
         h("span", { class: "ainsi-studio__statusdot" }), saved);
@@ -263,11 +285,16 @@ const SCROLL = "ainsi-scroll";
 const REOPEN = "ainsi-reopen";
 const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
 
+/* who is showing this page, stamped on the body by the server; the app is the one that has a
+ * titlebar of its own for the chrome to become */
+const desktop = document.body.dataset.ainsiHost === "electrobun";
+
 init();
 
 async function init(): Promise<void> {
     doc = await (await fetch("/__doc")).json();
     document.body.setAttribute("data-ainsi-edit", "");
+    if (desktop) labelToolbar();
     mountFileField();
     mountRightCluster();
     mountStatusPills();
@@ -440,18 +467,50 @@ async function init(): Promise<void> {
         openAt(Number(index), (caret as Caret) ?? "end");
     }
 
-    // the viewer's menu announces itself on open and offers a slot; theme and export are
-    // studio business, because both need the server and the player ships without one
+    /*
+     * The viewer's menu announces itself on open and offers a slot; theme and export are
+     * studio business, because both need the server and the player ships without one. The
+     * app name already lives in the titlebar and does not belong twice, so the viewer's own
+     * brand row is dropped here in favour of a "Deck" header carrying the theme and page
+     * count; the "Slides" header and its rows, already built by the time this fires, are
+     * relabelled "Pages" and folded into their own scrolling group.
+     */
     document.addEventListener("ainsi:menu", event => {
         const { panel, slot, close } = (event as CustomEvent).detail as { panel: HTMLElement; slot: HTMLElement; close(): void };
+        panel.querySelector(".ainsi-menu__brand")?.remove();
+
+        slot.classList.add("ainsi-menu__group");
+        const meta = h("span", { class: "ainsi-menu__groupmeta" }, `${doc.pages.length} pages`);
+        const themeRow = menuItem("Theme…", () => themeDrill(panel));
         slot.append(
-            menuItem("Edit source (E)", () => openRaw()),
-            menuItem("Open deck…", () => openDrill(panel)),
+            h("div", { class: "ainsi-menu__grouphead" }, h("span", {}, "Deck"), meta),
+            menuItem("Edit source", () => void openRaw(nearestPage()), "⌥⌘E"),
+            menuItem("Open deck…", () => openDrill(panel), "⌘O"),
             menuItem("Deck settings…", () => { close(); openDeck(); }),
-            menuItem("Theme…", () => themeDrill(panel)),
+            themeRow,
             menuItem("Export…", () => exportDrill(panel, close)),
-            h("div", { class: "ainsi-menu__rule" }),
         );
+        slot.after(h("div", { class: "ainsi-menu__rule" }));
+        void (async () => {
+            const { current } = await (await fetch("/__themes")).json() as { themes: string[]; current: string };
+            meta.textContent = `${current} · ${doc.pages.length} pages`;
+            themeRow.querySelector(".ainsi-menu__itemhint")?.remove();
+            themeRow.append(h("span", { class: "ainsi-menu__itemhint" }, current));
+        })();
+
+        const pagesHead = panel.querySelector<HTMLElement>(".ainsi-menu__head");
+        if (!pagesHead) return;
+        pagesHead.textContent = "Pages";
+        const rows = [...panel.querySelectorAll<HTMLElement>(".ainsi-menu__item")].filter(row => !slot.contains(row));
+        for (const row of rows) {
+            const numbered = /^(\d+)\s+(.*)$/.exec(row.textContent ?? "");
+            if (!numbered) continue;
+            row.replaceChildren(
+                h("span", { class: "ainsi-menu__pagenum" }, numbered[1]!),
+                h("span", { class: "ainsi-menu__pagetitle" }, numbered[2]!),
+            );
+        }
+        panel.append(h("div", { class: "ainsi-menu__pages" }, pagesHead, ...rows));
     });
 
     /*
@@ -481,7 +540,7 @@ async function init(): Promise<void> {
         const { mode, rows, mod, alt } = (event as CustomEvent).detail as { mode: string; rows: [string, string][]; mod: string; alt: string };
         if (mode === "Editing" && chrome?.kind === "raw") rows.push([`${mod} ⏎`, "save"], [`${mod} F`, "find"], ["esc", "cancel"]);
         else if (mode === "Editing") rows.push([`${mod} ⏎`, "commit"], ["esc", "cancel"], ["↑ ↓ at the edge", "previous / next block"], [`${mod} B`, "bold"], [`${mod} I`, "italic"], ["select", "marks bar"], ["empty", "deletes the block"]);
-        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"], [`${mod} Z`, "undo the last commit"], [`${mod} ⇧ Z`, "redo"]);
+        if (mode === "Studio") rows.unshift(["click", "edit"], [`${alt} click`, "add a block below"], ["E", "edit the whole file"], [`${alt} ${mod} E`, "edit this page's source"], [`${mod} Z`, "undo the last commit"], [`${mod} ⇧ Z`, "redo"]);
     });
 
     // the escape hatch for a block editor that lost focus: its own Escape handler lives on
@@ -504,8 +563,10 @@ async function init(): Promise<void> {
     });
 
     // ⌥⌘E: the page you are looking at, as a sheet. ⇧⌘E: the whole file, full window.
+    // Read `code`, not `key`: Option is a compose modifier on macOS, so ⌥E arrives as the dead
+    // acute rather than as "e" and a chord matched on `key` never fires.
     document.addEventListener("keydown", event => {
-        if (event.key.toLowerCase() !== "e" || !(event.metaKey || event.ctrlKey)) return;
+        if (event.code !== "KeyE" || !(event.metaKey || event.ctrlKey)) return;
         if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
         if (chrome || document.body.hasAttribute("data-present")) return;
         if (event.altKey === event.shiftKey) return;   // neither or both is neither shortcut
@@ -661,12 +722,13 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     }
 
     // where it sits: a swap with the neighbour above or below, never across a page break.
-    // Only the moves that exist are drawn, so the first block has no dead Move up.
+    // Both are always drawn — a pair with one hidden shifts the row's width as you reach an
+    // end — and the impossible direction is disabled rather than dropped.
     const [above, below] = beside(target, block);
     if (above || below) {
         menu.append(divider());
-        if (above) menu.append(iconButton("up", "Move up", false, () => splice(move(doc.source, target, above))));
-        if (below) menu.append(iconButton("down", "Move down", false, () => splice(move(doc.source, target, below))));
+        menu.append(iconButton("up", "Move up", false, () => splice(move(doc.source, target, above!)), !above));
+        menu.append(iconButton("down", "Move down", false, () => splice(move(doc.source, target, below!)), !below));
     }
 
     menu.append(divider(), iconButton("trash", "Delete", false, () => splice(remove(doc.source, target))));
@@ -721,9 +783,11 @@ function openPageMenu(section: HTMLElement, at: DOMRect): void {
     const index = doc.pages.indexOf(page);
     const before = doc.pages[index - 1];
     const after = doc.pages[index + 1];
-    menu.append(divider(), iconButton("code", "Edit source", false, () => void openRaw(index)));
-    if (before) menu.append(iconButton("up", "Move page up", false, () => splice(movePage(doc.source, page, before))));
-    if (after) menu.append(iconButton("down", "Move page down", false, () => splice(movePage(doc.source, page, after))));
+    menu.append(divider(), iconButton("code", "Edit page source", false, () => void openRaw(index)));
+    if (before || after) {
+        menu.append(iconButton("up", "Move page up", false, () => splice(movePage(doc.source, page, before!)), !before));
+        menu.append(iconButton("down", "Move page down", false, () => splice(movePage(doc.source, page, after!)), !after));
+    }
 
     menu.append(divider(), iconButton("trash", "Delete page", false, () => splice(removePage(doc.source, page))));
 
@@ -1365,16 +1429,17 @@ function openTable(target: HTMLElement, range: Range): boolean {
     panel.append(table, h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
 
     const rect = target.getBoundingClientRect();
-    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, scrollX + innerWidth - 940))}px`;
-    panel.style.top = `${rect.top + scrollY}px`;
+    panel.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - 940))}px`;
+    panel.style.top = `${Math.max(8, Math.min(rect.top, innerHeight - 120))}px`;
     document.body.append(panel);
     target.classList.add("ainsi-studio--dim");
 
     let done = false;
+    let stop: (() => void) | undefined;
     const editor: Chrome = {
         kind: "block",
         holds: true,
-        close() { done = true; panel.remove(); target.classList.remove("ainsi-studio--dim"); },
+        close() { done = true; stop?.(); panel.remove(); target.classList.remove("ainsi-studio--dim"); },
     };
     show(editor);
     focus?.focus();
@@ -1390,6 +1455,7 @@ function openTable(target: HTMLElement, range: Range): boolean {
         await splice({ start: range.start, end: range.end, text });
     };
 
+    stop = dismissOnOutside(panel, () => void commit());
     panel.addEventListener("submit", event => { event.preventDefault(); void commit(); });
     panel.addEventListener("keydown", event => {
         event.stopPropagation();                        // the viewer's own keys stay out of the cells
@@ -1466,16 +1532,17 @@ function openList(target: HTMLElement, range: Range): boolean {
             h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK")));
 
     const rect = target.getBoundingClientRect();
-    panel.style.left = `${Math.max(8, Math.min(rect.left + scrollX, scrollX + innerWidth - 820))}px`;
-    panel.style.top = `${rect.top + scrollY}px`;
+    panel.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - 820))}px`;
+    panel.style.top = `${Math.max(8, Math.min(rect.top, innerHeight - 120))}px`;
     document.body.append(panel);
     target.classList.add("ainsi-studio--dim");
 
     let done = false;
+    let stop: (() => void) | undefined;
     const editor: Chrome = {
         kind: "block",
         holds: true,
-        close() { done = true; panel.remove(); target.classList.remove("ainsi-studio--dim"); },
+        close() { done = true; stop?.(); panel.remove(); target.classList.remove("ainsi-studio--dim"); },
     };
     show(editor);
     focus?.focus();
@@ -1491,6 +1558,7 @@ function openList(target: HTMLElement, range: Range): boolean {
         await splice({ start: range.start, end: range.end, text });
     };
 
+    stop = dismissOnOutside(panel, () => void commit());
     panel.addEventListener("submit", event => { event.preventDefault(); void commit(); });
     panel.addEventListener("keydown", event => {
         event.stopPropagation();
@@ -1504,6 +1572,21 @@ function openList(target: HTMLElement, range: Range): boolean {
 function swapItems(list: { items: { depth: number; text: string }[] }, a: number, b: number): void {
     const [item] = list.items.splice(a, 1);
     list.items.splice(b, 0, item!);
+}
+
+/*
+ * A pointer landing outside a structured editor commits it, which is what blur already does for
+ * the textarea editor. Without it the panel registers as chrome of kind "block", the document's
+ * own click handler returns on that kind before it can dismiss anything, and the panel stays
+ * open and holding every later click. Capture phase, so it runs before the panel's own controls.
+ */
+function dismissOnOutside(panel: HTMLElement, commit: () => void): () => void {
+    const outside = (event: PointerEvent): void => {
+        if (panel.contains(event.target as Node)) return;
+        commit();
+    };
+    document.addEventListener("pointerdown", outside, true);
+    return () => document.removeEventListener("pointerdown", outside, true);
 }
 
 function openImage(target: HTMLElement, range: Range): boolean {
@@ -1539,18 +1622,20 @@ function openImage(target: HTMLElement, range: Range): boolean {
     }
 
     const rect = target.getBoundingClientRect();
-    panel.style.left = `${rect.left + scrollX}px`;
-    panel.style.top = `${rect.top + scrollY}px`;
+    panel.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - 320))}px`;
+    panel.style.top = `${Math.max(8, Math.min(rect.top, innerHeight - 120))}px`;
     panel.style.width = `${Math.min(Math.max(rect.width, 320), 560)}px`;
     document.body.append(panel);
     target.classList.add("ainsi-studio--dim");
 
     let done = false;
+    let stop: (() => void) | undefined;
     const editor: Chrome = {
         kind: "block",
         holds: true,
         close() {
             done = true;
+            stop?.();
             panel.remove();
             target.classList.remove("ainsi-studio--dim");
         },
@@ -1571,6 +1656,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
         await splice({ start: range.start, end: range.end, text });
     };
 
+    stop = dismissOnOutside(panel, () => commit());
     panel.addEventListener("submit", event => { event.preventDefault(); commit(); });
     panel.addEventListener("keydown", event => {
         event.stopPropagation();                        // the viewer's own keys stay out of the inputs
@@ -1614,7 +1700,9 @@ const shownAs = (kind: string | undefined): string[] =>
 
 function openInsertMenu(target: HTMLElement, at: number, from: DOMRect): void {
     menu = document.createElement("div");
-    menu.className = "ainsi-studio__bar";
+    // its own modifier because every button here wears a word: the block toolbar's square box
+    // is for glyphs, and a label clamped to it overlaps its neighbour
+    menu.className = "ainsi-studio__bar ainsi-studio__bar--insert";
     menu.addEventListener("click", event => event.stopPropagation());
 
     /** the splice an insert is: a blank line, the markdown, and the directive when one is named */
@@ -1846,13 +1934,14 @@ async function openRaw(index?: number): Promise<void> {
                 { key: "Mod-Enter", run: () => (commitRaw(), true) },
                 { key: "Mod-s", run: () => (commitRaw(), true) },
                 { key: "Escape", run: () => (cancelRaw(), true) },
+                { key: "Shift-Mod-e", run: () => (widenRaw(), true) },
             ]),
         ],
     });
 
     // a page's own source is a sheet over the deck; the whole file still takes the window
     const sheet = page !== undefined;
-    const save = barButton("Save", sheet ? `${MOD}S` : `${MOD}⏎`, () => commitRaw());
+    const save = barButton("Save", sheet ? `${MOD}S` : `${MOD}⏎`, () => commitRaw(), true);
     save.setAttribute("data-primary", "");
     const bar = h("div", { class: "ainsi-studio__rawbar" },
         h("span", { class: "ainsi-studio__rawname" }, page ? `${doc.file} · page ${index! + 1}` : doc.file),
@@ -1864,7 +1953,7 @@ async function openRaw(index?: number): Promise<void> {
         panel.append(h("div", { class: "ainsi-studio__rawfoot" },
             h("span", {}, "editing one page · the file keeps the rest"),
             h("div", { class: "ainsi-studio__rawfootkeys" },
-                h("span", {}, `${MOD}S save`), h("span", {}, "esc cancel"), h("span", {}, "⇧⌘E whole file"))));
+                h("span", {}, `${MOD}S save`), h("span", {}, "esc cancel"), h("span", {}, `⇧${MOD}E whole file`))));
     }
     const container = h("div", { class: `ainsi-studio__raw${sheet ? " ainsi-studio__raw--sheet" : ""}` }, panel);
 
@@ -1892,6 +1981,16 @@ async function openRaw(index?: number): Promise<void> {
         hint("saving…");
         if (chrome?.kind === "raw") chrome.holds = false;
         await splice({ ...range, text });
+    }
+
+    /* the sheet's foot offers the whole file, and the global chord cannot serve it: that one
+       bails while any chrome is open. Refused rather than discarded while there is typing to
+       lose, since the wider editor would open on the same text read back from disk. */
+    function widenRaw(): void {
+        if (container.hasAttribute("data-committing")) return;
+        if (view.state.doc.toString() !== initial) return hint("unsaved changes; save or cancel first");
+        shut();
+        void openRaw();
     }
 
     function cancelRaw(): void {

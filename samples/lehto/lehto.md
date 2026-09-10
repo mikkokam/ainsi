@@ -91,7 +91,7 @@ Underfloor heating and a sixteen-metre window are harder on a table than any cus
 
 <!-- ainsi: bar-table -->
 | Species     | Hardness | Seasonal movement | Lead time | Price index |
-| ----------- | -------- | ----------------- | --------- | ----------- |
+| ---         | ---      | ---               | ---       | ---         |
 | Finnish oak | 1 290    | 2.9%              | 14 weeks  | 100         |
 | Ash         | 1 320    | 3.4%              | 10 weeks  | 78          |
 | Birch       | 1 210    | 4.1%              | 8 weeks   | 61          |

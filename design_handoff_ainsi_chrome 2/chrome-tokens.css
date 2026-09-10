@@ -1,0 +1,142 @@
+/*
+ * Ainsi chrome tokens — the application shell only.
+ *
+ * These are deliberately NOT --ainsi-*. That prefix belongs to the deck's theme contract
+ * (themes/<name>/variables.css) and a deck must never be able to reach the chrome, nor the chrome
+ * the deck. Prefix here is --ac-* ("ainsi chrome"). Suggested home: src/chrome/tokens.css,
+ * imported by src/studio/style.css and src/viewer/style.css.
+ *
+ * Dark only. There is no light chrome theme; the one light surface is the source editor,
+ * which is a document, not chrome, and carries its own --ac-paper-* tokens below.
+ */
+:root {
+    /* ---- brand / focus -------------------------------------------------
+       Blue means one thing: this is where you are. Focus rings, current
+       selection, active toggle. Never decoration, never a panel background,
+       never on a slide — the deck's theme owns colour there. */
+    --ac-blue:            #4C8DF6;   /* focus ring, selection, active toggle (on dark) */
+    --ac-blue-ink:        #8AB4F8;   /* links and labels on dark */
+    --ac-blue-solid:      #1F6FEB;   /* filled action on a LIGHT surface (source sheet) */
+    --ac-blue-wash:       rgb(76 141 246 / 16%);
+    --ac-blue-edge:       rgb(76 141 246 / 45%);
+
+    /* the focus ring, one shape everywhere: button, card, theme tile, block */
+    --ac-focus: 0 0 0 2px var(--ac-blue), 0 0 0 5px rgb(76 141 246 / 22%);
+
+    /* ---- surfaces ------------------------------------------------------ */
+    --ac-ground:          #0D0D10;   /* the window */
+    --ac-sunken:          #09090B;
+    --ac-raised:          #15151A;   /* cards, lists; opaque, nothing behind them */
+    /* Glass comes in two recipes, and picking the wrong one is a contrast bug.
+       --ac-glass is only safe over OUR OWN ground (the landing titlebar): nothing
+       unknown is behind it. Anything floating over a DECK — nav pill, block toolbar,
+       menu, block rail, status pills — must use --ac-glass-over-content, which is
+       opaque enough and darkened enough to survive white paper, a saturated cover
+       and a photograph alike. Backdrop blur averages what is behind it, so 72% over
+       white lifts to pale grey and grey text on it fails. */
+    --ac-glass:           rgb(24 24 28 / 72%);  /* over our own ground ONLY */
+    --ac-glass-filter:    blur(24px) saturate(180%);
+
+    --ac-glass-over-content:        rgb(16 16 20 / 90%);
+    --ac-glass-over-content-filter: blur(20px) saturate(140%) brightness(.55);
+    --ac-glass-over-content-edge:   rgb(255 255 255 / 14%);
+    --ac-glass-over-content-shadow: 0 6px 24px rgb(0 0 0 / 35%);
+    /* menus and other larger over-content panels go one step more opaque */
+    --ac-menu-over-content:         rgb(16 16 20 / 94%);
+    --ac-menu-shadow:               0 18px 60px rgb(0 0 0 / 60%);
+
+    /* ink ON over-content glass — one step brighter than on our own ground.
+       --ac-ink-3 is NOT permitted over deck content. */
+    --ac-ink-on-content:       #E8E8EC;   /* icons and labels at rest */
+    --ac-ink-on-content-2:     #D6D6DC;   /* filename, secondary label */
+    --ac-ink-on-content-3:     #A8A8B0;   /* group labels (size, align, colour) — floor */
+    --ac-blue-glyph:           #BCD6FC;   /* active toggle glyph on over-content glass */
+    --ac-hairline:        rgb(255 255 255 / 9%);
+    --ac-hairline-strong: rgb(255 255 255 / 16%);
+    --ac-hover:           rgb(255 255 255 / 9%);  /* icon + ghost button hover fill */
+
+    /* ---- ink ----------------------------------------------------------- */
+    --ac-ink:             #F4F4F6;   /* headings, primary control text */
+    --ac-ink-2:           #C8C8CE;   /* body copy */
+    --ac-ink-3:           #8A8A92;   /* meta, paths, shortcut hints — the FLOOR for text */
+    --ac-ink-disabled:    #4A4A52;   /* disabled control text; never live text */
+
+    /* ---- signal -------------------------------------------------------- */
+    --ac-ok:              #4EA86B;   /* saved, skills active */
+    --ac-danger:          #E08B84;
+    --ac-danger-ink:      #F0A9A3;
+
+    /* ---- one light surface: the source editor -------------------------- */
+    --ac-paper:           #FBFBFD;
+    --ac-paper-raised:    #FFFFFF;
+    --ac-paper-ink:       #1C1C1E;
+    --ac-paper-ink-2:     #6B6B70;
+    --ac-paper-ink-3:     #8A8A90;
+    --ac-paper-line:      #E3E3E8;
+    --ac-paper-comment:   #9A5B28;   /* <!-- ainsi: ... --> in the markdown view */
+
+    /* ---- type ----------------------------------------------------------
+       Two faces, and the split carries meaning: sans is language, mono is
+       anything a machine would accept as input (paths, filenames, shortcuts,
+       theme ids, markdown). Never a third face in chrome. */
+    --ac-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    --ac-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+    --ac-text-display: 600 42px/1.08 var(--ac-font);   /* landing story; -.03em tracking */
+    --ac-text-title:   600 32px/1.1  var(--ac-font);   /* panel heading; -.025em */
+    --ac-text-section: 600 15px/1.2  var(--ac-font);
+    --ac-text-body:    400 15px/1.6  var(--ac-font);
+    --ac-text-cta:     600 14px/1    var(--ac-font);
+    --ac-text-control: 500 13px/1    var(--ac-font);
+    --ac-text-meta:    400 11.5px/1.4 var(--ac-font);
+    --ac-text-mono:    400 11.5px/1  var(--ac-mono);
+    --ac-text-key:     400 11px/1    var(--ac-mono);
+
+    /* ---- space: 4pt base ------------------------------------------------
+       14 inside controls · 24 between rows · 34 between sections · 56 page margin */
+    --ac-1: 4px;  --ac-2: 8px;  --ac-3: 12px; --ac-4: 16px;
+    --ac-5: 24px; --ac-6: 34px; --ac-7: 44px; --ac-8: 56px;
+
+    /* ---- radius --------------------------------------------------------- */
+    --ac-r-chip:    6px;
+    --ac-r-icon:    8px;
+    --ac-r-control: 9px;
+    --ac-r-button: 11px;
+    --ac-r-card:   12px;
+    --ac-r-panel:  14px;
+    --ac-r-pill:  999px;
+
+    /* ---- control heights ------------------------------------------------ */
+    --ac-h-page-action: 44px;  /* Open a deck… / New deck */
+    --ac-h-bar:         34px;  /* Export…, Edit source */
+    --ac-h-toolbar:     30px;  /* block toolbar buttons */
+    --ac-h-icon:        28px;  /* titlebar icon button */
+    --ac-h-menu-row:    32px;  /* menu item */
+
+    /* Every control inside one bar is the SAME box. A toolbar whose buttons are
+       28, 30 and 26 high reads as broken even when nobody can name why. */
+    --ac-toolbar-btn:   30px;  /* width AND height of every block-toolbar control */
+
+    /* Active toggle inside a bar is an INSET ring, so the box does not grow and the
+       row does not shift:  background: var(--ac-blue-wash);
+                            box-shadow: inset 0 0 0 1px var(--ac-blue-edge);
+       An outer --ac-focus ring belongs on page-level controls, never on a bar button.
+       A colour swatch is the exception: it keeps its own fill and takes a CONCENTRIC
+       ring on the circle itself (box-shadow follows border-radius, so the ring is
+       only round if it is on the round element, not a square wrapper):
+                            box-shadow: 0 0 0 1px rgb(255 255 255 / 25%),
+                                        0 0 0 3px var(--ac-blue); */
+
+    /* ---- elevation ------------------------------------------------------ */
+    --ac-shadow-float: 0 10px 40px rgb(0 0 0 / 50%);
+    --ac-shadow-sheet: 0 40px 120px rgb(0 0 0 / 70%), 0 0 0 1px rgb(255 255 255 / 10%);
+
+    /* ---- motion --------------------------------------------------------- */
+    --ac-hover-ms: 120ms;
+    --ac-panel-ms: 180ms;
+    --ac-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root { --ac-hover-ms: 0ms; --ac-panel-ms: 0ms; }
+}

@@ -115,12 +115,12 @@ Four things, every time
 # Rates
 
 <!-- ainsi: striped-table -->
-| | Day | Half day |
-| --- | --- | --- |
-| Editorial | 1 400€ | 850€ |
-| Corporate and annual report | 1 900€ | 1 150€ |
-| Portrait, studio | 1 200€ | 750€ |
-| Retouching, per frame | 60€ | 60€ |
+|                             |    Day | Half day |
+| ---                         |   ---: |     ---: |
+| Editorial                   | 1 400€ |     850€ |
+| Corporate and annual report | 1 900€ |   1 150€ |
+| Portrait, studio            | 1 200€ |     750€ |
+| Retouching, per frame       |    60€ |      60€ |
 
 ---
 

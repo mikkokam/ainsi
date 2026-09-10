@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { readdir, rename } from "node:fs/promises";
+import { mkdir, readdir, rename } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { assemble, render as renderPages, type BuildOptions } from "./build";
 import { END, group } from "./group";
@@ -45,13 +46,71 @@ const flag = (name: string): string | undefined => {
     return i === -1 ? undefined : args[i + 1];
 };
 
-/** a fresh deck: untitled.md in the given folder, or the first untitled-N.md it does not hold */
-async function untitled(dir: string): Promise<string> {
+/** a fresh deck: untitled.md in the given folder, or the first untitled-N.md it does not hold, on the theme asked for */
+async function untitled(dir: string, theme?: string): Promise<string> {
     for (let n = 1; ; n++) {
         const candidate = resolve(dir, n === 1 ? "untitled.md" : `untitled-${n}.md`);
         if (await Bun.file(candidate).exists()) continue;
-        await Bun.write(candidate, "# Untitled\n");
+        const front = theme && theme !== "default" ? `---\ntheme: ${theme}\n---\n\n` : "";
+        await Bun.write(candidate, `${front}# Untitled\n`);
         return candidate;
+    }
+}
+
+/**
+ * The landing's recent-deck list. A JSON file under the user's config dir rather than
+ * bun:sqlite: it is one array, read whole and written whole, never queried, and a studio
+ * process is the only writer at a time — sqlite's concurrency story buys nothing here.
+ */
+interface Recent { title: string; file: string; path: string; lastOpened: number; pages: number; theme: string; pinned: boolean }
+const RECENTS = join(homedir(), ".config", "ainsi", "recents.json");
+
+async function readRecents(): Promise<Recent[]> {
+    try {
+        return JSON.parse(await Bun.file(RECENTS).text());
+    } catch {
+        return [];
+    }
+}
+async function writeRecents(list: Recent[]): Promise<void> {
+    await mkdir(dirname(RECENTS), { recursive: true });
+    await Bun.write(RECENTS, JSON.stringify(list, null, 2));
+}
+/** upserts by path; pinned survives, everything else is only ever as fresh as the last build */
+async function recordRecent(path: string, title: string, pages: number, theme: string): Promise<void> {
+    const list = await readRecents();
+    const at = list.findIndex(r => r.path === path);
+    const pinned = at === -1 ? false : list[at]!.pinned;
+    const entry: Recent = { title, file: basename(path), path, lastOpened: Date.now(), pages, theme, pinned };
+    if (at === -1) list.push(entry); else list[at] = entry;
+    await writeRecents(list);
+}
+
+/** the four tokens a theme's tile or a deck's cover strip draws from, plus its type face */
+function themeTokens(css: string): { ground: string; ink: string; accent: string; rule: string; display: string } {
+    const get = (name: string) => css.match(new RegExp(`--ainsi-${name}:\\s*([^;]+);`))?.[1]?.trim();
+    const font = get("font") ?? "system-ui, sans-serif";
+    const display = get("font-display");
+    return {
+        ground: get("ground") ?? "#ffffff",
+        ink: get("ink") ?? "#000000",
+        accent: get("accent") ?? "#000000",
+        rule: get("rule") ?? "#cccccc",
+        display: display === "var(--ainsi-font)" || !display ? font : display,
+    };
+}
+
+/**
+ * The status line reads "Claude Code skills active" or asks for them. Checked, not assumed:
+ * the same installed_plugins.json Claude Code itself writes under the user's home, so a
+ * missing or unreadable file just answers false rather than throwing.
+ */
+async function skillsInstalled(): Promise<boolean> {
+    try {
+        const raw = JSON.parse(await Bun.file(join(homedir(), ".claude", "plugins", "installed_plugins.json")).text());
+        return Object.keys(raw?.plugins ?? {}).some(id => id === "ainsi@ainsi" || id.startsWith("ainsi@"));
+    } catch {
+        return false;
     }
 }
 
@@ -249,6 +308,10 @@ async function build(): Promise<{ html: string; roots: string[] }> {
         const fitted = [page.scale === 1 ? "" : ` x${page.scale}`, page.overflow ? " OVERFLOWS" : ""].join("");
         console.log(`  page ${page.index + 1} [${page.layout}]${fitted}: ${blocks}`);
     }
+
+    // the landing's recents card is only ever as fresh as a deck's last build, so it is
+    // written here rather than re-derived when the landing is next shown
+    if (editing) await recordRecent(deck!, assembled.title, result.pages.length, settings.theme);
 
     return { html: result.html, roots: [themeDir] };
 }
@@ -457,6 +520,14 @@ if (building && format === "zip") {
     process.exit(0);
 }
 
+/*
+ * Who asked, on the page itself. The shell announces itself in AINSI_HOST and the chrome
+ * branches on it: in the app the studio's own bar is the window's titlebar, in a browser it
+ * floats over the deck. Stamped on what is served rather than on what build() returns, so the
+ * html written beside the deck says nothing about who was looking at it.
+ */
+const stamp = (html: string) => (host ? html.replace("\n<body", `\n<body data-ainsi-host="${host}"`) : html);
+
 const first = deck ? await build() : { html: await loadStart(), roots: [] as string[] };
 
 if (!editing) {
@@ -467,17 +538,50 @@ if (!editing) {
 const server = serve({
     deck,
     port,
-    initial: first.html,
+    initial: stamp(first.html),
     // the chrome and the theme, and nothing else: components and layouts are imported now, so
     // a change to one needs the process restarted and a watch over them could not honour it
     roots: [...CHROME, ...first.roots],
-    rebuild: async () => (await build()).html,
+    rebuild: async () => stamp((await build()).html),
     route: editing ? async (request, url) => {
         // before a deck is chosen the studio is the start page, and only browsing, opening
         // and making a deck mean anything
         const CHOOSE = new Response("no deck open", { status: 409 });
-        if (!deck && !["/__browse", "/__open", "/__new"].includes(url.pathname)) return url.pathname.startsWith("/__") ? CHOOSE : undefined;
+        // the landing needs its own data before any deck is open, same as browse/open/new
+        const LANDING = ["/__browse", "/__open", "/__new", "/__theme-previews", "/__recents", "/__pin", "/__skills"];
+        if (!deck && !LANDING.includes(url.pathname)) return url.pathname.startsWith("/__") ? CHOOSE : undefined;
         if (url.pathname === "/__doc") return Response.json(doc);
+        if (url.pathname === "/__theme-previews") {
+            const shipped = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
+            const names = shipped.includes(currentTheme) ? shipped : [...shipped, currentTheme];
+            const themes = await Promise.all(names.map(async name => {
+                const css = await Bun.file(join(themePath(name, deck ? dirname(deck) : browseRoot), "variables.css")).text().catch(() => "");
+                const kind = shipped.includes(name) ? "shipped" : name.startsWith("..") ? "../brand" : name.startsWith(".") ? "local" : "folder";
+                return { id: name, name: name.charAt(0).toUpperCase() + name.slice(1), kind, ...themeTokens(css) };
+            }));
+            return Response.json({ themes, current: currentTheme });
+        }
+        if (url.pathname === "/__recents") {
+            const list = await readRecents();
+            const withPreviews = await Promise.all(list.map(async r => {
+                const found = await Bun.file(r.path).exists();
+                const css = await Bun.file(join(themePath(r.theme, dirname(r.path)), "variables.css")).text().catch(() => "");
+                return { ...r, found, ...themeTokens(css) };
+            }));
+            withPreviews.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.lastOpened - a.lastOpened);
+            return Response.json(withPreviews.slice(0, 6));
+        }
+        if (url.pathname === "/__pin" && request.method === "POST") {
+            const { path, pinned } = await request.json();
+            if (typeof path !== "string" || typeof pinned !== "boolean") return new Response("path and pinned", { status: 400 });
+            const list = await readRecents();
+            const entry = list.find(r => r.path === path);
+            if (!entry) return new Response("not a recent", { status: 404 });
+            entry.pinned = pinned;
+            await writeRecents(list);
+            return Response.json({ ok: true });
+        }
+        if (url.pathname === "/__skills") return Response.json({ installed: await skillsInstalled() });
         if (url.pathname === "/__themes") {
             const themes = (await readdir(THEMES, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort();
             // a deck on a theme of its own is still on it; the picker says so rather than
@@ -548,12 +652,12 @@ const server = serve({
             });
         }
         if (url.pathname === "/__new" && request.method === "POST") {
-            const { at } = await request.json();
+            const { at, theme } = await request.json();
             // no folder named means beside the deck that is open: what a File menu asks for,
             // having no idea where in the tree the chooser last was
             const dir = at === undefined && deck ? dirname(deck) : under(browseRoot, at);
             if (!dir) return new Response("outside the folder the studio was started in", { status: 403 });
-            retarget(await untitled(dir));
+            retarget(await untitled(dir, typeof theme === "string" ? theme : undefined));
             return Response.json({ file: basename(deck!) });
         }
         if (url.pathname === "/__open" && request.method === "POST") {

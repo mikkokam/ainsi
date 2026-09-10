@@ -25,10 +25,18 @@ const root = process.env.AINSI_DECK ? dirname(process.env.AINSI_DECK) : homedir(
 
 let current: Studio = await studio({ repo, bun, deck: process.env.AINSI_DECK, root });
 
+/*
+ * No titlebar of the system's own: the page draws that strip, so the window is one bar rather
+ * than a native one with the studio's own under it. The traffic lights stay, drawn over the
+ * page's top-left corner, and --ac-lights is the room the chrome leaves them; the offset drops
+ * them to the middle of a 44px strip.
+ */
 const window = new BrowserWindow({
     title: "ainsi",
     url: current.url,
     frame: { width: 1440, height: 900, x: 80, y: 60 },
+    titleBarStyle: "hiddenInset",
+    trafficLightOffset: { x: 0, y: 8 },
 });
 
 /*

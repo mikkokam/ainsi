@@ -1,24 +1,27 @@
 /* Studio chrome: dev server only, never in a deck. Handles are attributes on the deck's own
    elements, so nothing here may change layout, stacking or what selectors match. */
 
-/* the innermost handle wins the hover: a block stays quiet while an entity inside it is lit */
-body[data-ainsi-edit]:not([data-present]) [data-ainsi-entity]:hover:not(:has([data-ainsi-entity]:hover)),
-body[data-ainsi-edit]:not([data-present]) [data-ainsi-span]:not([data-ainsi-entity]):hover:not(:has([data-ainsi-entity]:hover)) {
+/* The innermost handle wins the hover: a block stays quiet while an entity inside it is lit.
+   Selected is excluded because this rule outranks the selected rule below on specificity, and
+   a block that is both draws the dashed edge three pixels outside its ring rather than instead
+   of it, which reads as one edge sitting crooked around the other. */
+body[data-ainsi-edit]:not([data-present]) [data-ainsi-entity]:hover:not([data-ainsi-selected]):not(:has([data-ainsi-entity]:hover)),
+body[data-ainsi-edit]:not([data-present]) [data-ainsi-span]:not([data-ainsi-entity]):hover:not([data-ainsi-selected]):not(:has([data-ainsi-entity]:hover)) {
     outline: 1.5px dashed rgba(80, 140, 255, 0.7);
     outline-offset: 3px;
     cursor: text;
 }
 
-/* what is selected, which is a block picked but not being typed in: a solid edge against the
-   dashed one hover draws, so the two states are not the same shape in two colours */
+/* what is selected, which is a block picked but not being typed in: the one focus ring the
+   whole chrome uses, against the dashed one hover draws, so the two states are not the same
+   shape in two colours */
 body[data-ainsi-edit]:not([data-present]) [data-ainsi-selected] {
-    outline: 2px solid #1f6feb;
-    outline-offset: 3px;
-    border-radius: 2px;
+    outline: none;
+    box-shadow: var(--ac-focus);
+    border-radius: 4px;
 }
-/* a page is already a rectangle with an edge, so its selection sits just outside that edge */
+/* a page is already a rectangle with an edge; square corners keep that edge rather than round it */
 body[data-ainsi-edit]:not([data-present]) .ainsi-page[data-ainsi-selected] {
-    outline-offset: 6px;
     border-radius: 0;
 }
 
@@ -27,7 +30,7 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-page[data-ainsi-selected] {
     position: fixed;
     z-index: 90;
     height: 2px;
-    background: #1f6feb;
+    background: var(--ac-blue);
     border-radius: 2px;
     pointer-events: none;
 }
@@ -40,23 +43,47 @@ body[data-ainsi-dragging] { cursor: grabbing; }
 .ainsi-studio__grip[title^="Block menu"] { cursor: grab; }
 
 /* the table editor: a grid of the source's own cells, whatever the component draws on the page */
+/* The structured editors: a table as a grid, a list as its items, a picture as its fields.
+   Panels floating over a deck, so they take the over-content recipe at the menu's opacity and
+   its ink, never --ac-ink-3. Fixed to the viewport, because a panel placed in document
+   coordinates scrolls away while it is still open and still holding every click. */
 .ainsi-studio__table {
-    position: absolute;
+    position: fixed;
     z-index: 70;
-    max-width: min(90vw, 640px);
+    width: max-content;
+    min-width: min(92vw, 560px);
+    max-width: min(92vw, 920px);
+    max-height: 86vh;
+    overflow: auto;
     padding: .6rem;
-    background: rgb(255 255 255 / 98%);
-    border: 1px solid rgb(0 0 0 / 10%);
-    border-radius: 10px;
-    box-shadow: 0 8px 30px rgb(0 0 0 / 18%);
-    font: 12px/1.4 system-ui, sans-serif;
-    color: #14181d;
+    background: var(--ac-menu-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: var(--ac-r-panel);
+    box-shadow: var(--ac-menu-shadow);
+    font: 12px/1.4 var(--ac-font);
+    color: var(--ac-ink-on-content);
 }
 .ainsi-studio__grid { border-collapse: collapse; width: 100%; }
+.ainsi-studio__list { min-width: min(92vw, 520px); max-width: min(92vw, 800px); }
+.ainsi-studio__itemhead { display: flex; gap: .15rem; padding-bottom: .35rem; border-bottom: 1px solid rgb(255 255 255 / 10%); margin-bottom: .35rem; }
+.ainsi-studio__item { display: flex; align-items: center; gap: .15rem; padding: 1px 0; }
+.ainsi-studio__item input { flex: 1; min-width: 12ch; }
+/* what the component drawing this block says it wants of its content, in its own words */
+.ainsi-studio__expects {
+    display: flex; gap: .5rem; align-items: baseline;
+    padding-bottom: .4rem; margin-bottom: .4rem;
+    border-bottom: 1px solid rgb(255 255 255 / 10%);
+    font: 11px/1.45 var(--ac-font); color: var(--ac-ink-on-content-3);
+}
+.ainsi-studio__expects b { font: 600 11px/1.45 var(--ac-mono); color: var(--ac-ink-on-content); white-space: nowrap; }
+.ainsi-studio__itemfoot { display: flex; align-items: center; gap: .4rem; margin-top: .4rem; }
+.ainsi-studio__itemfoot .ainsi-studio__imageok { margin: 0 0 0 auto; }
 .ainsi-studio__grid td, .ainsi-studio__grid th { padding: 1px; vertical-align: middle; }
-.ainsi-studio__grid input { width: 100%; min-width: 6ch; }
+.ainsi-studio__grid input { width: 100%; min-width: 10ch; }
+.ainsi-studio__grid td { min-width: 8rem; }
 .ainsi-studio__gridtitle input { font-weight: 600; }
-.ainsi-studio__gridcorner, .ainsi-studio__gridadd { color: #98a2ae; text-align: right; padding-right: .3rem !important; white-space: nowrap; }
+.ainsi-studio__gridcorner, .ainsi-studio__gridadd { color: var(--ac-ink-on-content-3); text-align: right; padding-right: .3rem !important; white-space: nowrap; }
 .ainsi-studio__gridhead { white-space: nowrap; }
 .ainsi-studio__table .ainsi-studio__imageok { margin-top: .5rem; }
 
@@ -102,39 +129,40 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
     padding: 0.6em 0.7em;
     border-style: solid;
-    background: rgba(255, 255, 255, 0.98);
-    color: #111;
+    background: var(--ac-paper);
+    color: var(--ac-paper-ink);
     box-shadow: 0 10px 32px rgb(0 0 0 / 28%);
 }
 
 /* an image's form floats where its source would: two fields and a line on local paths */
 .ainsi-studio__image {
-    position: absolute;
+    position: fixed;
     z-index: 70;
     display: grid;
     gap: .45rem;
     margin: 0;
     padding: .7rem .8rem;
-    border: 1.5px solid rgba(80, 140, 255, 0.8);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.98);
-    color: #111;
-    box-shadow: 0 10px 32px rgb(0 0 0 / 28%);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: var(--ac-r-card);
+    background: var(--ac-menu-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    color: var(--ac-ink-on-content);
+    box-shadow: var(--ac-menu-shadow);
 }
 .ainsi-studio__imagerow { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: .4rem; }
 .ainsi-studio__image .ainsi-studio__input { width: 100%; box-sizing: border-box; }
-.ainsi-studio__imagehint { margin: .1rem 0 0; font: 11px/1.4 system-ui, sans-serif; color: #5b6672; }
+.ainsi-studio__imagehint { margin: .1rem 0 0; font: 11px/1.4 var(--ac-font); color: var(--ac-ink-on-content-3); }
 /* delete at the form's top right corner; the name row stops short of it */
 .ainsi-studio__imagetrash { position: absolute; top: .45rem; right: .45rem; }
 .ainsi-studio__imageok {
     justify-self: end;
     padding: .35rem .9rem;
-    border: 0; border-radius: 6px;
-    background: #1f6feb; color: #fff;
-    font: 500 12px/1 system-ui, sans-serif;
+    border: 0; border-radius: var(--ac-r-control);
+    background: var(--ac-blue); color: #0D0D10;
+    font: 600 12.5px/1 var(--ac-font);
     cursor: pointer;
 }
-.ainsi-studio__imageok:hover { background: #1a5fd0; }
+.ainsi-studio__imageok:hover { filter: brightness(1.06); }
 .ainsi-studio__image .ainsi-studio__imagerow:first-child { padding-right: 2.2rem; }
 
 /* the deck's frontmatter: a block before page one, the page's width, pushing the deck down */
@@ -144,8 +172,8 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
     padding: 0.6em 0.7em;
     border-style: solid;
-    background: rgba(255, 255, 255, 0.96);
-    color: #111;
+    background: var(--ac-paper);
+    color: var(--ac-paper-ink);
 }
 
 .ainsi-studio__editor--insert {
@@ -153,14 +181,18 @@ body[data-ainsi-dragging] { cursor: grabbing; }
     font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
     padding: 0.6em 0.7em;
     border-style: solid;
-    background: rgba(255, 255, 255, 0.96);
-    color: #111;
+    background: var(--ac-paper);
+    color: var(--ac-paper-ink);
     position: relative;
     z-index: 5;
 }
 
-/* Raw mode: the whole file over the rendered deck. Fixed light chrome like the overlay
-   editor, whatever the theme, because source is chrome rather than content. */
+/*
+ * Raw mode, two shapes. A whole-file edit (⇧⌘E) takes the window, as it always has: source
+ * is chrome rather than content, so it gets paper tokens rather than the deck's theme. A
+ * page's own source (⌥⌘E, or "Edit page source") is a sheet over a scrim instead — the
+ * deck stays visible behind it, because splicing one page is not leaving the deck.
+ */
 body[data-ainsi-raw] { overflow: hidden; }
 
 .ainsi-studio__raw {
@@ -169,53 +201,93 @@ body[data-ainsi-raw] { overflow: hidden; }
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background: #fff;
-    color: #111;
+    background: var(--ac-paper);
+    color: var(--ac-paper-ink);
 }
-
+.ainsi-studio__raw--sheet {
+    display: flex; align-items: center; justify-content: center;
+    background: rgb(6 6 8 / 55%);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
 .ainsi-studio__raw[data-committing] { opacity: 0.6; pointer-events: none; }
+
+/* the whole-file surface: the bar and the editor fill the window, same as before */
+.ainsi-studio__sheetfull { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* the per-page surface: a fixed-width panel, centred, its own radius and shadow over the scrim */
+.ainsi-studio__sheet {
+    display: flex; flex-direction: column;
+    width: 820px; max-height: 86vh;
+    border-radius: var(--ac-r-panel);
+    overflow: hidden;
+    background: var(--ac-paper);
+    box-shadow: var(--ac-shadow-sheet);
+}
 
 .ainsi-studio__rawbar {
     flex: none;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    font: 12px/1 system-ui, sans-serif;
+    gap: 12px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--ac-paper-line);
+    background: var(--ac-paper-raised);
+    font: 12px/1 var(--ac-font);
 }
 
-.ainsi-studio__rawname { color: #888; font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ainsi-studio__rawname { color: var(--ac-paper-ink-3); font: var(--ac-text-mono); }
 .ainsi-studio__rawgap { flex: 1; }
 
 .ainsi-studio__rawbutton {
-    font: 12px/1 system-ui, sans-serif;
-    color: #333;
-    background: #fff;
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    border-radius: 6px;
-    padding: 6px 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 30px; padding: 0 14px;
+    font: 500 12.5px/1 var(--ac-font);
+    color: var(--ac-paper-ink-2);
+    background: var(--ac-paper-raised);
+    border: 1px solid var(--ac-paper-line);
+    border-radius: var(--ac-r-control);
     cursor: pointer;
 }
+.ainsi-studio__rawbutton:hover { background: var(--ac-paper); }
 
 .ainsi-studio__rawbutton[data-primary] {
     color: #fff;
-    background: rgb(60, 110, 240);
-    border-color: rgb(60, 110, 240);
+    font-weight: 600;
+    background: var(--ac-blue-solid);
+    border-color: var(--ac-blue-solid);
 }
+.ainsi-studio__rawkey { font: 500 10.5px/1 var(--ac-mono); opacity: .7; }
+.ainsi-studio__rawbutton[data-primary]:hover { filter: brightness(1.06); }
 
 .ainsi-studio__raw .cm-editor { flex: 1; overflow: hidden; }
 .ainsi-studio__raw .cm-editor.cm-focused { outline: none; }
 .ainsi-studio__raw .cm-scroller {
-    font: 13px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace;
+    font: 400 13px/1.75 var(--ac-mono);
+    color: var(--ac-paper-ink);
     overflow: auto;
 }
 /* a readable measure on a wide window; padding keeps the caret off the edges on a narrow one */
-.ainsi-studio__raw .cm-content {
+.ainsi-studio__sheetfull .cm-content {
     max-width: 820px;
     margin: 0 auto;
     padding: 24px 20px 45vh;
 }
+/* the sheet is already 820px wide; its own padding is the measure */
+.ainsi-studio__sheet .cm-content { padding: 26px 30px 34px; }
+/* a floor under the body: a short page would otherwise shrink the sheet to a strip, and the
+   sheet's size jumping about between pages is worse than empty room under a few lines */
+.ainsi-studio__sheet .cm-editor { min-height: 330px; }
+
+.ainsi-studio__rawfoot {
+    flex: none;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 10px 14px;
+    background: #F7F7FA;
+    border-top: 1px solid var(--ac-paper-line);
+    font: var(--ac-text-key);
+    color: var(--ac-paper-ink-3);
+}
+.ainsi-studio__rawfootkeys { display: flex; gap: 14px; }
 
 /* a display rule beats the browser's [hidden]; say it again for what toggles by that attribute */
 .ainsi-studio__marks[hidden], .ainsi-studio__rail[hidden] { display: none; }
@@ -253,21 +325,23 @@ body[data-ainsi-raw] { overflow: hidden; }
 }
 .ainsi-studio__mark:hover::after, .ainsi-studio__mark:focus-visible::after { opacity: 1; }
 
-/* a rail: two visible doors at the hovered block's or page's top-left corner, menu and add-below */
+/* a rail: two visible doors at the hovered block's or page's top-left corner, menu and add-below.
+   Dark glass, same as the rest of the floating chrome — it sits over the deck, not on it. */
 .ainsi-studio__rail {
     position: fixed; z-index: 75;
-    display: flex; flex-direction: column; gap: 2px;
+    display: flex; flex-direction: column; gap: 3px;
 }
 .ainsi-studio__grip {
-    width: 24px; height: 24px;
+    width: 26px; height: 26px;
     display: grid; place-items: center;
-    padding: 0; border: 1px solid rgb(0 0 0 / 10%); border-radius: 6px;
-    background: rgb(255 255 255 / 95%); color: #5b6672;
-    box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+    padding: 0; border: 1px solid var(--ac-glass-over-content-edge); border-radius: var(--ac-r-icon);
+    background: var(--ac-glass-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    color: var(--ac-ink-on-content);
     cursor: pointer;
 }
-.ainsi-studio__grip svg { width: 15px; height: 15px; }
-.ainsi-studio__grip:hover { color: #1f6feb; border-color: #1f6feb; }
+.ainsi-studio__grip svg { width: 14px; height: 14px; stroke-width: 2; }
+.ainsi-studio__grip:hover { color: var(--ac-blue); border-color: var(--ac-blue); }
 
 /* a photo layout without its photo: where the image goes, said in the studio only */
 body[data-ainsi-edit]:not([data-present]) [data-layout="header"] main:not(:has(.ainsi-full))::after,
@@ -291,82 +365,119 @@ body[data-ainsi-edit]:not([data-present]) [data-layout="split"] main[data-side="
     left: auto; right: 1.2rem;
 }
 
-/* the block toolbar: one row above the block, dropdowns beneath their buttons */
+/* the block toolbar: dark glass, floating above the selected block. One row, dropdowns
+   beneath their buttons; delete is the only control drawn in the danger colour. */
 .ainsi-studio__bar {
     position: fixed; z-index: 80;
-    display: flex; align-items: center; gap: .15rem;
-    padding: .3rem .35rem;
-    font: 12px/1 system-ui, sans-serif;
-    color: #14181d;
-    background: rgb(255 255 255 / 97%);
-    border: 1px solid rgb(0 0 0 / 10%);
-    border-radius: 10px;
-    box-shadow: 0 6px 24px rgb(0 0 0 / 16%);
+    display: flex; align-items: center; gap: 3px;
+    padding: 5px 6px;
+    font: var(--ac-text-control);
+    color: var(--ac-ink-on-content-2);
+    background: var(--ac-glass-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: var(--ac-r-card);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 40%);
     white-space: nowrap;
 }
 /* a press left for the server: the bar waits for the rebuild rather than taking another */
 .ainsi-studio__bar[data-busy] { opacity: .55; pointer-events: none; }
-.ainsi-studio__barlabel { padding: 0 .5rem; color: #5b6672; font-weight: 500; text-transform: capitalize; }
-.ainsi-studio__bardivider { width: 1px; height: 20px; margin: 0 .25rem; background: rgb(0 0 0 / 12%); }
+.ainsi-studio__barlabel { padding: 0 .5rem; color: var(--ac-ink-on-content-2); font-weight: 500; text-transform: capitalize; }
+.ainsi-studio__bardivider { width: 1px; height: 18px; margin: 0 5px; background: rgb(255 255 255 / 16%); }
+/* every control in the bar is the same box — icon button, size/align/caps toggle and the type
+   dropdown — so a row never shifts height as the mix of controls changes */
 .ainsi-studio__barbutton {
-    display: inline-flex; align-items: center; gap: .3rem;
-    height: 30px; padding: 0 .4rem;
-    border: 0; border-radius: 7px;
-    background: transparent; color: #14181d;
-    font: 500 12px/1 system-ui, sans-serif;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    width: var(--ac-toolbar-btn); height: var(--ac-toolbar-btn); padding: 0;
+    border: 0; border-radius: var(--ac-r-icon);
+    background: transparent; color: var(--ac-ink-on-content);
+    font: var(--ac-text-control);
     cursor: pointer;
 }
-.ainsi-studio__barbutton svg { width: 17px; height: 17px; }
-.ainsi-studio__barbutton:hover { background: rgb(0 0 0 / 7%); }
-.ainsi-studio__barbutton[data-active] { background: rgb(31 111 235 / 12%); color: #1f6feb; }
-.ainsi-studio__barbutton--drop { padding: 0 .35rem 0 .6rem; background: rgb(31 111 235 / 12%); color: #1f6feb; }
-.ainsi-studio__barbutton--drop svg { width: 14px; height: 14px; }
+.ainsi-studio__barbutton svg { width: 15px; height: 15px; stroke-width: 1.7; }
+/* the insert bar names every kind it offers, so its buttons take the width of the word */
+.ainsi-studio__bar--insert .ainsi-studio__barbutton { width: auto; padding: 0 10px; }
+.ainsi-studio__barbutton:hover { background: var(--ac-hover); color: var(--ac-ink); }
+.ainsi-studio__barbutton:disabled { color: var(--ac-ink-disabled); cursor: default; }
+.ainsi-studio__barbutton:disabled:hover { background: transparent; }
+.ainsi-studio__barbutton[data-active] { background: var(--ac-blue-wash); box-shadow: inset 0 0 0 1px var(--ac-blue-edge); color: var(--ac-blue-glyph); }
+/* the type dropdown: the one control that is 30 high rather than 30 square, its own width to fit "Heading 1" */
+.ainsi-studio__barbutton--drop {
+    width: auto; padding: 0 8px 0 10px;
+    background: var(--ac-blue-wash); box-shadow: inset 0 0 0 1px var(--ac-blue-edge); color: var(--ac-blue-glyph);
+}
+.ainsi-studio__barbutton--drop svg { width: 12px; height: 12px; stroke-width: 2; }
+/* the only destructive control in the bar; everything else stays neutral */
+.ainsi-studio__bar .ainsi-studio__barbutton[aria-label="Delete"],
+.ainsi-studio__bar .ainsi-studio__barbutton[aria-label="Delete page"] {
+    color: var(--ac-danger);
+}
+.ainsi-studio__bar .ainsi-studio__barbutton[aria-label="Delete"]:hover,
+.ainsi-studio__bar .ainsi-studio__barbutton[aria-label="Delete page"]:hover {
+    background: rgb(224 139 132 / 16%); color: var(--ac-danger-ink);
+}
 .ainsi-studio__drop { position: relative; }
 .ainsi-studio__droplist {
     position: absolute; top: calc(100% + 6px); left: 0; z-index: 1;
     min-width: 200px; max-width: 340px;
     white-space: normal;
     padding: .3rem;
-    background: rgb(255 255 255 / 98%);
-    border: 1px solid rgb(0 0 0 / 10%);
-    border-radius: 8px;
-    box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+    background: var(--ac-raised);
+    border: 1px solid var(--ac-hairline-strong);
+    border-radius: var(--ac-r-control);
+    box-shadow: var(--ac-shadow-float);
 }
 .ainsi-studio__dropitem {
     display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem;
     width: 100%; padding: .45rem .6rem;
     border: 0; border-radius: 6px;
-    background: transparent; color: #14181d;
-    font: 400 13px/1.2 system-ui, sans-serif;
+    background: transparent; color: var(--ac-ink);
+    font: 400 13px/1.2 var(--ac-font);
     text-align: left; cursor: pointer;
 }
-.ainsi-studio__dropitem:hover { background: rgb(0 0 0 / 6%); }
-.ainsi-studio__dropitem[data-active] { font-weight: 600; }
-.ainsi-studio__drophint { font: 11px/1 ui-monospace, monospace; color: #8a94a0; white-space: nowrap; }
+.ainsi-studio__dropitem:hover { background: var(--ac-hover); }
+.ainsi-studio__dropitem[data-active] { font-weight: 600; color: var(--ac-blue-ink); }
+.ainsi-studio__drophint { font: var(--ac-text-key); color: var(--ac-ink-3); white-space: nowrap; }
 /* a hint that is a sentence goes under its name, not beside it */
 .ainsi-studio__dropitem:has(.ainsi-studio__drophint--about) { flex-direction: column; align-items: flex-start; gap: .2rem; }
-.ainsi-studio__drophint--about { font: 11px/1.35 system-ui, sans-serif; white-space: normal; text-align: left; }
-.ainsi-studio__field { display: inline-flex; align-items: center; gap: .2rem; padding-left: .3rem; }
-.ainsi-studio__fieldname { font: 500 11px/1 ui-monospace, monospace; color: #5b6672; margin-right: .15rem; }
+.ainsi-studio__drophint--about { font: 11px/1.35 var(--ac-font); color: var(--ac-ink-3); white-space: normal; text-align: left; }
+.ainsi-studio__field { display: inline-flex; align-items: center; gap: 2px; }
+/* the "size" / "align" / "caps" / "colour" group labels: the over-content floor colour, never ac-ink-3 */
+.ainsi-studio__fieldname { font: var(--ac-text-key); color: var(--ac-ink-on-content-3); padding: 0 5px; text-transform: lowercase; }
+/* every chip is the same 30×30 box as an icon button, radius 8 — the size ramp, the align and
+   caps toggles are controls in this bar like any other and share its one geometry */
+/* The square box is for a glyph. An option with no icon falls back to its own word, and a
+   word clamped to 30px runs over the option beside it: "two-thirds" needs its width. */
 .ainsi-studio__chip {
-    font: 500 11px/1 system-ui, sans-serif;
-    color: #14181d;
-    padding: .3rem .5rem;
-    border: 1px solid rgb(0 0 0 / 12%); border-radius: 999px;
-    background: #fff; cursor: pointer;
+    min-width: var(--ac-toolbar-btn); height: var(--ac-toolbar-btn); padding: 0 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font: 600 11px/1 var(--ac-font);
+    color: var(--ac-ink-on-content);
+    border: 0; border-radius: var(--ac-r-icon);
+    background: transparent; cursor: pointer;
 }
-.ainsi-studio__chip:hover { background: rgb(0 0 0 / 6%); }
-.ainsi-studio__chip[data-active] { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-.ainsi-studio__chip--icon { display: inline-grid; place-items: center; width: 28px; height: 24px; padding: 0; }
-.ainsi-studio__chip--icon svg { width: 14px; height: 14px; }
-.ainsi-studio__swatch { display: block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgb(0 0 0 / 15%); }
-/* a chosen swatch keeps its own colour and takes a ring instead of the fill */
-.ainsi-studio__chip[data-active]:has(.ainsi-studio__swatch) { background: #fff; border-color: transparent; outline: 2px solid #1f6feb; outline-offset: 1px; }
-.ainsi-studio__chip--text { font: 600 10px/1 system-ui, sans-serif; letter-spacing: .08em; }
+.ainsi-studio__chip:hover { background: var(--ac-hover); color: var(--ac-ink); }
+.ainsi-studio__chip[data-active] { background: var(--ac-blue-wash); box-shadow: inset 0 0 0 1px var(--ac-blue-edge); color: var(--ac-blue-glyph); }
+.ainsi-studio__chip--icon, .ainsi-studio__chip--text { width: var(--ac-toolbar-btn); padding: 0; }
+.ainsi-studio__chip--icon svg { width: 15px; height: 15px; stroke-width: 1.7; }
+/* the align trio reads thin next to a glyph at the bar's usual weight, so it draws heavier */
+.ainsi-studio__chip--icon[data-field="align"] svg { stroke-width: 1.8; }
+.ainsi-studio__chip--text[data-field="caps"] { font-size: 10px; letter-spacing: .08em; }
+/* the one exception to "every control is 30×30": a swatch is the colour itself, an 18px
+   circle with its own gap, not a glyph centred in a box */
+.ainsi-studio__chip--icon:has(.ainsi-studio__swatch) { width: 18px; height: 18px; border-radius: 50%; }
+.ainsi-studio__field:has(.ainsi-studio__swatch) { gap: 9px; padding: 0 5px 0 3px; }
+.ainsi-studio__swatch { display: block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgb(255 255 255 / 20%); }
+/* a chosen swatch keeps its own colour and takes a concentric ring, on the circle itself —
+   box-shadow follows border-radius, so a ring on the square wrapper draws a squircle */
+.ainsi-studio__chip[data-active]:has(.ainsi-studio__swatch) { background: transparent; box-shadow: none; }
+.ainsi-studio__chip[data-active] .ainsi-studio__swatch { border-color: transparent; box-shadow: 0 0 0 1px rgb(255 255 255 / 25%), 0 0 0 3px var(--ac-blue); }
 .ainsi-studio__input {
-    font: 12px/1.3 ui-monospace, monospace;
+    font: 12px/1.3 var(--ac-mono);
+    color: var(--ac-ink);
     padding: .25rem .45rem; width: 7rem;
-    border: 1px solid rgb(0 0 0 / 15%); border-radius: 6px;
+    background: rgb(255 255 255 / 6%);
+    border: 1px solid var(--ac-hairline-strong); border-radius: 6px;
 }
 
 /* only failures surface here; the shortcut card is the viewer's */
@@ -387,10 +498,141 @@ body[data-ainsi-edit]:not([data-present]) [data-layout="split"] main[data-side="
 body > .ainsi-studio__file { position: fixed; top: 1rem; left: 1rem; z-index: 100; background: rgb(255 255 255 / 92%); }
 body[data-present] .ainsi-studio__file { display: none; }
 
+/*
+ * The nav pill, dark glass, top-left: the viewer's own toolbar restyled while a deck is open
+ * for editing. Left alone, it stays the reading-mode strip the player and a presenting studio
+ * both use; this scope is editing only, so a shipped deck's own toolbar is untouched.
+ */
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar {
+    top: 18px; left: 20px;
+    gap: 2px;
+    padding: 5px 6px;
+    background: var(--ac-glass-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: var(--ac-r-panel);
+    box-shadow: var(--ac-glass-over-content-shadow);
+    opacity: 1;
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button {
+    width: 30px; height: 28px;
+    border-radius: var(--ac-r-icon);
+    color: var(--ac-ink-on-content);
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button:hover { background: var(--ac-hover); color: var(--ac-ink); }
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button svg { width: 15px; height: 15px; stroke-width: 1.7; }
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar__count { color: var(--ac-ink-on-content-3); }
+body[data-ainsi-edit]:not([data-present]) .ainsi-toolbar .ainsi-studio__bardivider { height: 16px; margin: 0 6px; }
+body[data-ainsi-edit]:not([data-present]) .ainsi-studio__file {
+    font: var(--ac-text-mono);
+    color: var(--ac-ink-on-content-2);
+    width: auto; max-width: 16ch;
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-studio__file:hover { background: var(--ac-hover); }
+body[data-ainsi-edit]:not([data-present]) .ainsi-studio__file:focus {
+    width: 24ch; color: var(--ac-ink);
+    background: rgb(255 255 255 / 8%);
+    box-shadow: inset 0 0 0 1px var(--ac-blue);
+}
+
+/*
+ * The deck menu, opened from the nav pill's first icon: dark glass over content, not the
+ * viewer's light popover — a light dialog on a dark shell reads as a stray application. Two
+ * groups, "Deck" and "Pages"; the app name is not repeated here, it lives in the titlebar.
+ */
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu {
+    width: 288px;
+    padding: 0;
+    background: var(--ac-menu-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: var(--ac-r-card);
+    box-shadow: var(--ac-menu-shadow);
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__group { padding: 6px; }
+.ainsi-menu__grouphead {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px 9px;
+    font: 500 11px/1 var(--ac-font); letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ac-ink-on-content-3);
+}
+.ainsi-menu__groupmeta {
+    font: var(--ac-text-key); letter-spacing: normal; text-transform: none;
+    color: var(--ac-ink-on-content-3);
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__rule { height: 1px; margin: 0; background: rgb(255 255 255 / 10%); }
+.ainsi-menu__pages { padding: 6px 6px 8px; max-height: 322px; overflow-y: auto; }
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__head {
+    padding: 9px 10px 7px;
+    font: 500 11px/1 var(--ac-font); letter-spacing: .09em; text-transform: uppercase;
+    color: var(--ac-ink-on-content-3);
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__item {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    height: var(--ac-h-menu-row); padding: 0 10px;
+    border-radius: var(--ac-r-icon);
+    font: 400 13px/1 var(--ac-font);
+    color: var(--ac-ink-on-content);
+}
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__item:hover { background: var(--ac-hover); color: #fff; }
+/* the current page: a wash and an inset ring, not bold — bold is invisible at a glance and
+   unreadable on the row you are already reading */
+body[data-ainsi-edit]:not([data-present]) .ainsi-menu__item[data-active] {
+    font-weight: 400;
+    background: var(--ac-blue-wash);
+    box-shadow: inset 0 0 0 1px var(--ac-blue-edge);
+    color: var(--ac-ink-on-content);
+}
+.ainsi-menu__itemhint { font: var(--ac-text-key); color: var(--ac-ink-on-content-3); }
+.ainsi-menu__pagenum { flex: none; width: 16px; text-align: right; font: var(--ac-text-mono); color: var(--ac-ink-on-content-3); }
+.ainsi-menu__pagetitle { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* the right cluster: Edit page source and Export, the two actions that reach past any one block */
+.ainsi-studio__cluster {
+    position: fixed; z-index: 100;
+    top: 18px; right: 20px;
+    display: flex; align-items: center; gap: 8px;
+}
+.ainsi-studio__pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: var(--ac-h-bar); padding: 0 12px;
+    border: 1px solid var(--ac-glass-over-content-edge); border-radius: var(--ac-r-control);
+    background: var(--ac-glass-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    box-shadow: var(--ac-glass-over-content-shadow);
+    color: var(--ac-ink-on-content-2);
+    font: var(--ac-text-control);
+    cursor: pointer;
+}
+.ainsi-studio__pill:hover { color: var(--ac-ink); }
+.ainsi-studio__pill svg { width: 13px; height: 13px; }
+.ainsi-studio__pillkey { font: var(--ac-text-key); color: var(--ac-ink-on-content-3); }
+body[data-present] .ainsi-studio__cluster { display: none; }
+
+/* the status pills, bottom corners: where you are, and how the last write went */
+.ainsi-studio__status {
+    position: fixed; z-index: 60;
+    bottom: 18px;
+    display: flex; align-items: center; gap: 15px;
+    padding: 8px 14px;
+    border-radius: var(--ac-r-pill);
+    background: var(--ac-glass-over-content);
+    backdrop-filter: var(--ac-glass-over-content-filter); -webkit-backdrop-filter: var(--ac-glass-over-content-filter);
+    border: 1px solid var(--ac-glass-over-content-edge);
+    box-shadow: var(--ac-glass-over-content-shadow);
+    font: var(--ac-text-key);
+    color: var(--ac-ink-on-content-3);
+}
+.ainsi-studio__status--left { left: 20px; }
+.ainsi-studio__status--right { right: 20px; gap: 8px; }
+.ainsi-studio__statuspage { color: var(--ac-ink-on-content-2); }
+.ainsi-studio__statusdot { width: 6px; height: 6px; border-radius: 50%; background: var(--ac-ok); flex: none; }
+body[data-present] .ainsi-studio__status { display: none; }
+
 .ainsi-studio__hint {
     position: fixed;
-    left: 12px;
-    bottom: 12px;
+    left: 20px;
+    bottom: 64px;
     z-index: 60;
     font: 12px/1 system-ui, sans-serif;
     color: #fff;
@@ -405,3 +647,53 @@ body[data-present] .ainsi-studio__file { display: none; }
 .ainsi-studio__hint--alarm { background: rgba(178, 34, 34, 0.92); }
 
 body[data-present] .ainsi-studio__hint { display: none; }
+
+/*
+ * Inside the app. The window has no titlebar of its own there, so the nav pill stops floating
+ * and becomes that strip: full width, square, the traffic lights' room at its left end and the
+ * deck's two actions at its right. The whole strip drags the window, which is why every control
+ * in it opts out; and a button in a window titlebar carries no chrome of its own, so what is
+ * left is an icon, its word and a hover.
+ */
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) {
+    padding-top: calc(var(--ainsi-gap) * 2 + var(--ac-titlebar));
+}
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-toolbar {
+    top: 0; left: 0; right: 0;
+    height: var(--ac-titlebar);
+    padding: 0 var(--ac-3) 0 var(--ac-lights);
+    border: 0; border-bottom: 1px solid var(--ac-glass-over-content-edge);
+    border-radius: 0;
+    box-shadow: none;
+    --electrobun-app-region: drag; -webkit-app-region: drag;
+}
+/* the custom property inherits, so a control says no-drag or the strip drags instead of clicking */
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-toolbar :is(button, input) {
+    --electrobun-app-region: no-drag; -webkit-app-region: no-drag;
+}
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-toolbar__button {
+    width: auto; height: var(--ac-h-icon);
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 0 10px 0 8px;
+}
+/* the word is the app's alone: the floating pill and presentation mode have no room for it */
+.ainsi-toolbar__label { display: none; }
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-toolbar__label {
+    display: inline; font: var(--ac-text-control);
+}
+/* the menu hangs under the button that opened it, which now starts past the lights */
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-menu {
+    top: calc(100% + 6px); left: var(--ac-lights);
+}
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-studio__cluster {
+    position: static; margin-left: auto; gap: var(--ac-1);
+}
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-studio__pill {
+    height: var(--ac-h-icon); padding: 0 10px;
+    border: 0; border-radius: var(--ac-r-icon);
+    background: none; box-shadow: none;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+body[data-ainsi-host="electrobun"][data-ainsi-edit]:not([data-present]) .ainsi-studio__pill:hover {
+    background: var(--ac-hover); color: var(--ac-ink);
+}

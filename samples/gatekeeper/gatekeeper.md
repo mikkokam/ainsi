@@ -86,7 +86,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 <!-- ainsi: comparison -->
 |                     | Today                    | With Acme                   |
-| ------------------- | ------------------------ | --------------------------- |
+| ---                 | ---                      | ---                         |
 | Audit trail         | Ad-hoc log queries       | Signed event stream (7 yrs) |
 | Cost allocation     | Aggregate month-end bill | Per-team attribution, live  |
 | Policy enforcement  | Confluence guidelines    | Declarative OPA bundles     |
@@ -111,7 +111,7 @@ Every outbound LLM call passes through Acme before reaching upstream providers.
 
 <!-- ainsi: bar-table -->
 | Hop            | Share | Added latency | Calls a day |
-| -------------- | ----- | ------------- | ----------- |
+| ---            | ---   | ---           | ---         |
 | Policy check   | 46%   | 0.9 ms        | 500 000     |
 | Attribution    | 24%   | 0.4 ms        | 500 000     |
 | Signing        | 19%   | 0.3 ms        | 400 000     |

@@ -30,7 +30,7 @@ export function divider(): HTMLElement {
     return element;
 }
 
-export function iconButton(icon: IconName, title: string, active: boolean, onClick: () => void): HTMLButtonElement {
+export function iconButton(icon: IconName, title: string, active: boolean, onClick: () => void, disabled = false): HTMLButtonElement {
     const element = document.createElement("button");
     element.className = "ainsi-studio__barbutton";
     element.type = "button";
@@ -38,7 +38,9 @@ export function iconButton(icon: IconName, title: string, active: boolean, onCli
     element.setAttribute("aria-label", title);
     element.innerHTML = icons[icon];
     if (active) element.setAttribute("data-active", "");
-    element.addEventListener("click", onClick);
+    // disabled rather than absent: the pair stays the same width whichever end of the deck it is
+    if (disabled) element.disabled = true;
+    else element.addEventListener("click", onClick);
     return element;
 }
 
@@ -83,7 +85,12 @@ const GLYPH: Record<string, Record<string, IconName>> = {
 };
 /* an option shown as a short text glyph: the letters themselves say it */
 const LETTERS: Record<string, string> = { caps: "AB" };
-const SIZES: Record<string, string> = { small: ".7em", normal: ".85em", large: "1.05em", huge: "1.3em" };
+/* the letter names the step and its own size shows it, so the four read as a ramp rather than
+   four copies of the same glyph */
+const SIZES: Record<string, { letter: string; size: string }> = {
+    small: { letter: "S", size: "11px" }, normal: { letter: "M", size: "12px" },
+    large: { letter: "L", size: "13px" }, huge: { letter: "XL", size: "14px" },
+};
 /* a colour chip is a swatch of the theme's own token, read from the page the studio sits in */
 const SWATCH: Record<string, Record<string, string>> = {
     color: { ink: "--ainsi-ink", soft: "--ainsi-ink-soft", accent: "--ainsi-accent" },
@@ -95,11 +102,11 @@ function glyph(field: string, option: string, active: boolean, onClick: () => vo
     const swatch = SWATCH[field]?.[option];
     const letters = LETTERS[option];
     if (!icon && !SIZES[option] && !swatch && !letters) return chip(option, active, onClick);
-    const element = h("button", { class: "ainsi-studio__chip ainsi-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, click: onClick }) as HTMLButtonElement;
+    const element = h("button", { class: "ainsi-studio__chip ainsi-studio__chip--icon", type: "button", title: option, "aria-label": option, "data-active": active, "data-field": field, click: onClick }) as HTMLButtonElement;
     if (icon) element.innerHTML = icons[icon];
     else if (swatch) element.append(h("span", { class: "ainsi-studio__swatch", style: `background:var(${swatch})` }));
     else if (letters) { element.classList.add("ainsi-studio__chip--text"); element.append(letters); }
-    else element.append(h("span", { style: `font-size:${SIZES[option]};font-weight:600` }, "A"));
+    else element.append(h("span", { style: `font-size:${SIZES[option]!.size};font-weight:600` }, SIZES[option]!.letter));
     return element;
 }
 
@@ -153,8 +160,10 @@ export function control(field: Field, value: unknown, onChange: (value: unknown)
     return wrap;
 }
 
-export function menuItem(text: string, onClick: () => void): HTMLElement {
-    return h("button", { class: "ainsi-menu__item", type: "button", click: onClick }, text);
+/** a row in the viewer's dropdown menu; a hint (shortcut or current value) sits right-aligned */
+export function menuItem(text: string, onClick: () => void, hint?: string): HTMLElement {
+    return h("button", { class: "ainsi-menu__item", type: "button", click: onClick },
+        h("span", {}, text), ...(hint ? [h("span", { class: "ainsi-menu__itemhint" }, hint)] : []));
 }
 
 /** a drill replaces the menu's panel with one section, in place */
@@ -162,8 +171,11 @@ export function drill(panel: HTMLElement, title: string, ...rows: HTMLElement[])
     panel.replaceChildren(h("div", { class: "ainsi-menu__head" }, title), ...rows);
 }
 
-export const barButton = (text: string, key: string, onClick: () => void): HTMLElement =>
-    h("button", { class: "ainsi-studio__rawbutton", type: "button", title: key, click: onClick }, text);
+/* `key` shows on the button when it is the one being urged, and stays a tooltip otherwise:
+   two badges side by side make neither read as the default */
+export const barButton = (text: string, key: string, onClick: () => void, shows = false): HTMLElement =>
+    h("button", { class: "ainsi-studio__rawbutton", type: "button", title: key, click: onClick },
+        text, ...(shows ? [h("span", { class: "ainsi-studio__rawkey" }, key)] : []));
 
 /** above the block's top-left corner, or below it when there is no room above */
 export function place(bar: HTMLElement, at: DOMRect): void {

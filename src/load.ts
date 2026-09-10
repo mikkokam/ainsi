@@ -223,8 +223,27 @@ function selectors(css: string): string[] {
 /** Viewer chrome: a toolbar and presentation mode. Not content, so not a component. */
 export const loadViewer = (diagnostics: Diagnostic[] = []) => chrome("viewer", diagnostics);
 
-/** The page the studio shows before a deck is chosen: open one, or make one. */
-export const loadStart = async () => (await Bun.file(join(import.meta.dir, "studio", "start.html")).text()).replace("__MARK__", MARK);
+/**
+ * The page the studio shows before a deck is chosen: open one, start one from a theme, or
+ * reopen a recent one. It is served standalone, before any deck's chrome bundle exists, so the
+ * chrome tokens and the two brand assets it needs are inlined here rather than reached through
+ * `chrome()`'s injection, which only ever runs once a deck is open.
+ */
+export async function loadStart(): Promise<string> {
+    const assets = resolve(import.meta.dir, "chrome", "assets");
+    const [html, tokens, logo, mark] = await Promise.all([
+        Bun.file(join(import.meta.dir, "studio", "start.html")).text(),
+        Bun.file(join(import.meta.dir, "chrome", "tokens.css")).text(),
+        Bun.file(join(assets, "ainsi-logo.svg")).arrayBuffer(),
+        Bun.file(join(assets, "ainsi-mark.svg")).arrayBuffer(),
+    ]);
+    const uri = (bytes: ArrayBuffer) => `data:image/svg+xml;base64,${Buffer.from(bytes).toString("base64")}`;
+    return html
+        .replace("__MARK__", MARK)
+        .replace("__TOKENS__", tokens)
+        .replace("__LOGO__", uri(logo))
+        .replace("__LOGOMARK__", uri(mark));
+}
 
 /** Studio chrome: the editing layer the dev server injects. Never in a deck. */
 export const loadStudio = (diagnostics: Diagnostic[] = []) => chrome("studio", diagnostics);
@@ -238,11 +257,13 @@ const bundled = new Map<string, { stamp: number; chrome: { css: string; script: 
 
 async function chrome(name: string, diagnostics: Diagnostic[]): Promise<{ css: string; script: string }> {
     const dir = resolve(import.meta.dir, name);
-    const stamp = await newest(dir);
+    // the shared tokens live outside this folder, so they have to count towards the stamp too
+    const stamp = Math.max(await newest(dir), await newest(resolve(import.meta.dir, "chrome")));
     const held = bundled.get(name);
     if (held && held.stamp === stamp) return held.chrome;
 
-    const css = (await readIfPresent(join(dir, "style.css"))) ?? "";
+    const css = [await readIfPresent(join(import.meta.dir, "chrome", "tokens.css")), await readIfPresent(join(dir, "style.css"))]
+        .filter(Boolean).join("\n");
     const built = await Bun.build({
         entrypoints: [join(dir, "script.ts")],
         target: "browser",
@@ -270,4 +291,4 @@ async function newest(dir: string): Promise<number> {
 export const BUILTIN = resolve(import.meta.dir, "components");
 export const LAYOUTS = resolve(import.meta.dir, "layouts");
 /** the chrome folders, so a dev server editing them rebuilds the way it does for a component */
-export const CHROME = [resolve(import.meta.dir, "viewer"), resolve(import.meta.dir, "studio")];
+export const CHROME = [resolve(import.meta.dir, "viewer"), resolve(import.meta.dir, "studio"), resolve(import.meta.dir, "chrome")];

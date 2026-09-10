@@ -1,3 +1,5 @@
+`[stale]` `design_handoff_ainsi_chrome 2/README.md` assigns `⇧⌘E` to both `Export…` in the deck menu (line 272) and whole-file source (lines 340-341). The deck menu built against it keeps `⇧⌘E` on whole-file source, since that path is already built, tested and named in the source sheet's own foot bar; `Export…` renders with no shortcut. The handoff needs a fix, not the code.
+
 # Walking skeleton
 
 ## Syntax highlighting in a fenced block (question)
@@ -33,6 +35,14 @@ This supersedes the round-trip editing question, which asked for a writer that c
 `[decision]` Every write hashes the file first and refuses on a mismatch. The deck will be open in an editor at the same time, and a splice against a stale offset corrupts the file rather than merely losing an edit.
 
 Measured, so the design rests on numbers rather than hope. Full rebuild is 11.9 ms at 11 pages, 15.4 ms at 25, 52 ms at 100, 223 ms at 400, and it is almost entirely remark's parse — grouping and rendering are free, so the only lever that would ever matter is the parser. Replacing the whole body in the browser costs 0.8 ms at 11 pages and 6.8 ms at 100; replacing one section costs 0.10 ms at any size. A commit round-trips in about 20 ms on a realistic deck, which is well under noticing. Rebuilding per keystroke is not on, and not because of the milliseconds.
+
+## A dragged block carries the page's layout with it (defect)
+
+`SKILL.md` says a layout directive sets the page it sits on, for that page only. The studio's move does not read it that way: `spanOf` takes a block's whole leading directive run, so a block whose run includes a `layout` line drags the page boundary along when it moves.
+
+Reproduced on `samples/gatekeeper`, page five. Its run is `prose size=small caps`, then `layout split side=right tone=inverse`, then the `#####` eyebrow. Dragging the `#` above that eyebrow moves the layout directive into the middle of the page, `paginate` flushes where it now sits, and the deck goes from seventeen pages to eighteen: one holding the `#` alone, the next holding everything else. The same fault is in the up and down buttons, which share `spanOf`.
+
+Two fixes, and they differ in what they do to bytes the author wrote. The narrow one clamps the drop: a block may not land above a page's layout directive, and a move that would strand one is refused rather than performed, which is the idiom the list editor already uses. The full one gives the directive run an order — layout first, because it owns the page, then the component directives that own the block — and lets a move insert between them, at the cost of rewriting a line the author placed. Done is the gatekeeper drag leaving seventeen pages, and a test on the pure `moveTo` that says so.
 
 ## A cropped field cannot be stepped down (defect)
 
@@ -87,6 +97,16 @@ It is one component, served to a browser tab and to a window alike, and it is qu
 Hiding the chrome is what makes the gap visible: every action it holds has to exist as a native item, and `Theme…` already does not. It has no command name, so on a desktop with the chrome hidden there is no way to change a theme. Whether the answer is a native submenu listing the themes or a command that opens the studio's own drill is part of this row.
 
 The chrome moves into a toolbar along the top rather than sitting over the content. One constraint decides how far that goes: studio chrome is injected at runtime and never ships in a deck, so a studio toolbar is free, while the viewer's toolbar ships inside the built HTML and is in the print path, so anything moved there has to stay invisible to print, to export and to measurement.
+
+`[stale]` The row above's third paragraph says recents is a directory listing ordered by mtime, needing no state. The Ainsi chrome landing built against `design_handoff_ainsi_chrome/` needs more than a listing can hold: a pin that survives past the deck it was set on, and a page count and theme drawn from a deck's last build rather than recomputed at launch. It now persists as one JSON array under `~/.config/ainsi/recents.json`, upserted on every build. Reconcile this row with that, or decide the JSON store is itself the thing to revisit.
+
+## Ainsi chrome landing, three pieces left open (feat)
+
+The chooser is now the landing from `design_handoff_ainsi_chrome/`: titlebar, a theme shelf drawn from each shipped theme's own `--ainsi-*` tokens, a recent grid, and the four-zone keyboard model (`open` → `new` → `themes` → `recents`) with roving tabindex and a footer that narrates what Enter would do.
+
+Three pieces of the handoff are not wired. Quick play on a recent card, and `⌘⏎`, both fall back to opening the deck rather than presenting it directly: bypassing the editor needs a hook in the studio's own `script.ts` to auto-present on load, which was out of this build's file ownership. A recent whose file has moved shows `not found` but offers no Locate…. The theme shelf's last tile, copying a folder into a deck's own theme, is drawn greyed out and does nothing. None of the three has a design for its mechanics yet.
+
+`Open a deck…` still opens the old folder-browse list, restyled to the chrome tokens; the handoff did not specify that screen, and nothing here redesigns it.
 
 ## The menus the app is missing (feat)
 

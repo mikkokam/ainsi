@@ -71,24 +71,24 @@ Where the next hundred million goes
 # Capital allocation to 2029
 
 <!-- ainsi: bar-table -->
-| Programme | Capital | Share | Payback |
-| --- | --- | --- | --- |
-| Calibration data platform | 44 M€ | 44% | 3.1 yrs |
-| Site consolidation | 31 M€ | 31% | 2.4 yrs |
-| Optical range extension | 18 M€ | 18% | 4.8 yrs |
-| Working capital | 7 M€ | 7% | n/a |
+| Programme                 | Capital | Share | Payback |
+| ---                       | ---     | ---   | ---     |
+| Calibration data platform | 44 M€   | 44%   | 3.1 yrs |
+| Site consolidation        | 31 M€   | 31%   | 2.4 yrs |
+| Optical range extension   | 18 M€   | 18%   | 4.8 yrs |
+| Working capital           | 7 M€    | 7%    | n/a     |
 
 ---
 
 # The sequence
 
 <!-- ainsi: roadmap -->
-| Programme | 2026 | 2027 | 2028 | 2029 |
-| --- | --- | --- | --- | --- |
-| Data platform | Build | Build | Live | |
-| Consolidation | Two sites | Two sites | | |
-| Optical range | | Design | Pilot | Ship |
-| Buyback | x | x | x | x |
+| Programme     | 2026      | 2027      | 2028  | 2029 |
+| ---           | ---       | ---       | ---   | ---  |
+| Data platform | Build     | Build     | Live  |      |
+| Consolidation | Two sites | Two sites |       |      |
+| Optical range |           | Design    | Pilot | Ship |
+| Buyback       | x         | x         | x     | x    |
 
 ---
 
