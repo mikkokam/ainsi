@@ -362,3 +362,104 @@ test.skipIf(!chromium)("reading leaves both the grid and the presentation", asyn
     expect(await until(() => studio.page.evaluate(() => document.body.hasAttribute("data-present")), on => !on)).toBe(false);
     await studio.stop();
 }, 60_000);
+
+/** the plus on the hovered block's rail, which is how something new is put after it */
+async function openInsert(page: Page) {
+    const box = (await page.locator("[data-ainsi-entity]").first().boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + 4, box.y + 4);
+    const plus = page.locator('.ainsi-studio__rail:not([hidden]) [title^="Add a block below"]');
+    await plus.waitFor();
+    await plus.click();
+    await page.waitForSelector(".ainsi-studio__bar");
+}
+
+test.skipIf(!chromium)("insert offers the kinds the parser has, not a list of its own", async () => {
+    const studio = await open();
+    await openInsert(studio.page);
+    const labels = await studio.page.locator(".ainsi-studio__bar button").allInnerTexts();
+    for (const wanted of ["Page", "Text", "Bullets", "Numbered", "Quote", "Callout", "Code", "Table", "Image"]) {
+        expect(labels.join(" ")).toContain(wanted);
+    }
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a kind several components can shape offers them, from the registry", async () => {
+    const studio = await open();
+    await openInsert(studio.page);
+    await studio.page.locator(".ainsi-studio__bar button", { hasText: "Bullets" }).first().click();
+    const forms = await studio.page.locator(".ainsi-studio__droplist:not([hidden]) .ainsi-studio__dropitem").allInnerTexts();
+    // whatever the registry says takes a list, which is these today and whatever is added later
+    expect(forms.join(" ")).toContain("timeline");
+    expect(forms.join(" ")).toContain("agenda");
+    expect(forms.join(" ")).toContain("boxes");
+    expect(forms.join(" ")).not.toContain("prose");   // what grouping picks anyway is not a choice
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("inserting a shaped list writes the directive and the list under it", async () => {
+    const studio = await open();
+    await openInsert(studio.page);
+    await studio.page.locator(".ainsi-studio__bar button", { hasText: "Bullets" }).first().click();
+    await studio.page.locator(".ainsi-studio__droplist:not([hidden]) .ainsi-studio__dropitem", { hasText: "timeline" }).first().click();
+
+    const after = await until(studio.source, t => t.includes("ainsi: timeline"));
+    expect(after).toContain("<!-- ainsi: timeline -->");
+    expect(after).toContain("- One");
+    // and it renders as the component it named, rather than as a plain list
+    expect(await until(() => count(studio.page, '[data-ainsi="timeline"]'), n => n === 1)).toBe(1);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("inserting a table writes a table a person could have typed", async () => {
+    const studio = await open();
+    await openInsert(studio.page);
+    await studio.page.locator(".ainsi-studio__bar button", { hasText: "Table" }).first().click();
+    await studio.page.locator(".ainsi-studio__droplist:not([hidden]) .ainsi-studio__dropitem", { hasText: "plain" }).first().click();
+
+    const after = await until(studio.source, t => t.includes("| --- |"));
+    expect(after).toContain("| A | B |");
+    expect(await until(() => count(studio.page, "table"), n => n >= 1)).toBeGreaterThan(0);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("insert can add a page, from the same place a block comes from", async () => {
+    const studio = await open();
+    await openInsert(studio.page);
+    await studio.page.locator(".ainsi-studio__bar button", { hasText: "Page" }).first().click();
+    expect(await until(() => count(studio.page, ".ainsi-page"), n => n === 3)).toBe(3);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("the insert commands a native menu sends name the same kinds", async () => {
+    const studio = await open();
+    await paragraph(studio.page, 0).click();
+    await command(studio.page, "insert:Table");
+    const after = await until(studio.source, t => t.includes("| --- |"));
+    expect(after).toContain("| A | B |");
+    // after the block that was selected, not at the end of the file
+    expect(after.indexOf("| A | B |")).toBeLessThan(after.indexOf("Toinen kappale."));
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("duplicate puts a copy straight after, without touching the clipboard", async () => {
+    const studio = await open();
+    await studio.page.evaluate(() => navigator.clipboard.writeText("koskematon"));
+    await paragraph(studio.page, 0).click();
+    await command(studio.page, "duplicate");
+
+    const after = await until(studio.source, t => t.split("Ensimmäinen kappale.").length === 3);
+    expect(after.split("Ensimmäinen kappale.").length - 1).toBe(2);
+    expect(await clipboard(studio.page, t => t.length > 0)).toBe("koskematon");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("duplicating a page copies the whole page after it", async () => {
+    const studio = await open();
+    await selectPage(studio.page, 0);
+    await command(studio.page, "duplicate");
+    expect(await until(() => count(studio.page, ".ainsi-page"), n => n === 3)).toBe(3);
+    const after = await studio.source();
+    expect(after.split("# Otsikko").length - 1).toBe(2);
+    await studio.stop();
+}, 60_000);

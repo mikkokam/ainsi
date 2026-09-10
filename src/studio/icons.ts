@@ -26,6 +26,9 @@ export const icons = {
     alignBottom: wrap(`<path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/>`),
     up: wrap(`<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>`),
     down: wrap(`<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>`),
+    table: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 10h18M9 10v9.5M15 10v9.5"/></svg>`,
+    page: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>`,
+    duplicate: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 4.5h-11a2 2 0 0 0-2 2v11"/></svg>`,
     trash: wrap(`<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`),
 };
 

@@ -98,7 +98,9 @@ View and Slideshow landed, from the viewer rather than the studio: a built deck 
 
 Edit's clipboard items and an Insert menu landed with selection. What is left in Edit is Select All, which is still the webview's role and selects text rather than blocks.
 
-What is left of this row: the window's own toolbar, and Save As. The menus are there.
+Insert names the kinds the parser has, which cannot drift, and the in-page palette adds which components each kind can be shown as by asking the registry through `/__doc` rather than keeping a second list. Duplicate is a copy put straight after the original rather than through the clipboard, so it neither asks a permission nor takes what was on it.
+
+What is left of this row: the window's own toolbar, Save As, and the `(+)` moving from the top-left of a rail to under whatever is selected, which is where the thing it makes will appear.
 
 File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.
 

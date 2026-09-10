@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, markerOf, move, movePage, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -39,7 +39,7 @@ interface DocBlock {
     directive?: { start: number; end: number };
     terminator?: { start: number; end: number };
 }
-interface DocComponent { name: string; about: string; fields: Field[] }
+interface DocComponent { name: string; about: string; fields: Field[]; takes: string[] }
 interface DocPage {
     ids: string[];
     layout: string;
@@ -380,6 +380,8 @@ async function init(): Promise<void> {
         else if (name === "zip") void exportTo("/__zip", `${base}.zip`);
         else if (name === "copy" || name === "cut" || name === "paste") void clipboard(name);
         else if (name === "insert") insertHere();
+        else if (name.startsWith("insert:")) insertHere(name.slice("insert:".length));
+        else if (name === "duplicate") duplicateSelection();
         else if (name === "delete") deleteSelection();
         else if (name.startsWith("pdf")) void exportTo(`/__pdf?images=${name.slice(4) || "screen"}`, `${base}.pdf`);
     });
@@ -743,21 +745,51 @@ async function paste(range: Range): Promise<void> {
  * Insert goes after the selection, or at the end of the page in view when nothing is selected,
  * which is the only answer that does not need a question asked first.
  */
-function insertHere(): void {
+function insertHere(label?: string): void {
+    if (label === "Page") {
+        const section = selected?.handle.closest<HTMLElement>(".ainsi-page")
+            ?? document.querySelector<HTMLElement>(`[data-ainsi-entity="${pageInView()}"]`)?.closest<HTMLElement>(".ainsi-page");
+        if (section) insertPage(section);
+        return;
+    }
+    const stub = INSERTS.find(i => i.label === label);
     if (selected?.kind === "page" && pageOf(selected.handle)) {
-        insertPage(selected.handle);
+        if (!stub) { insertPage(selected.handle); return; }
+        const page = pageOf(selected.handle)!;
+        splice({ start: page.last, end: page.last, text: `\n\n${stub.md}` });
         return;
     }
     if (selected) {
         const range = rangeOf(selected.handle);
-        if (range) insertAfter(selected.handle, range.end);
+        if (!range) return;
+        if (stub?.md) splice({ start: range.end, end: range.end, text: `\n\n${stub.md}` });
+        else insertAfter(selected.handle, range.end);
         return;
     }
     const page = pageInView();
     const last = page && doc.pages.find(p => p.ids.includes(page));
     if (!last) return hint("Nothing selected", true, 2000);
     const anchor = document.querySelector<HTMLElement>(`[data-ainsi-entity="${last.ids.at(-1)}"]`);
-    if (anchor) insertAfter(anchor, last.last);
+    if (!anchor) return;
+    if (stub?.md) splice({ start: last.last, end: last.last, text: `\n\n${stub.md}` });
+    else insertAfter(anchor, last.last);
+}
+
+/*
+ * Duplicate is a copy put straight after the original rather than through the clipboard, so it
+ * neither asks for a permission nor takes what was on it.
+ */
+function duplicateSelection(): void {
+    if (!selected) return hint("Nothing selected", true, 2000);
+    if (selected.kind === "page") {
+        const page = pageOf(selected.handle);
+        if (!page) return;
+        const span = pageSpan(doc.source, page);
+        splice(addPage(page, doc.source.slice(span.start, span.end).trim()));
+        return;
+    }
+    const range = rangeOf(selected.handle);
+    if (range) splice({ start: range.end, end: range.end, text: `\n\n${range.md}` });
 }
 
 /** the id of the first entity on the page nearest the middle of the window */
@@ -1126,20 +1158,58 @@ function openImage(target: HTMLElement, range: Range): boolean {
  * block, which is clicked into the image form like any image. Alt-click stays the markdown
  * shortcut past the menu.
  */
+/*
+ * What can go after something. The kinds are the engine's own vocabulary, so this list cannot
+ * drift from what the parser understands; which components each kind can become is asked of
+ * the registry through `/__doc`, so that half cannot drift either. Everything here is markdown
+ * a person could have typed, which is the only kind of insert this tool has.
+ */
+const INSERTS: { label: string; icon: IconName; md: string; takes?: string }[] = [
+    { label: "Text", icon: "text", md: "" },
+    { label: "Bullets", icon: "list", md: "- One\n- Two\n- Three", takes: "list" },
+    { label: "Numbered", icon: "ordered", md: "1. One\n2. Two\n3. Three", takes: "list" },
+    { label: "Quote", icon: "quote", md: "> Quote." },
+    { label: "Callout", icon: "alert", md: "> [!NOTE]\n> Worth knowing." },
+    { label: "Code", icon: "code", md: "```\ncode\n```" },
+    { label: "Table", icon: "table", md: "| A | B |\n| --- | --- |\n| 1 | 2 |", takes: "table" },
+    { label: "Image", icon: "image", md: "![]()", takes: "image" },
+];
+
+/** the components that will take this kind on their own, minus the one grouping picks anyway */
+const shownAs = (kind: string | undefined): string[] =>
+    kind === undefined ? [] : doc.components.filter(c => c.takes.includes(kind) && c.name !== "prose").map(c => c.name);
+
 function openInsertMenu(target: HTMLElement, at: number, from: DOMRect): void {
     menu = document.createElement("div");
     menu.className = "ainsi-studio__bar";
     menu.addEventListener("click", event => event.stopPropagation());
+
+    /** the splice an insert is: a blank line, the markdown, and the directive when one is named */
+    const put = (md: string, component?: string) => () => {
+        closeMenu();
+        if (!md) return insertAfter(target, at);
+        const directive = component ? `${directiveLine(component, {})}\n\n` : "";
+        splice({ start: at, end: at, text: `\n\n${directive}${md}` });
+    };
+
     const option = (icon: IconName, text: string, onClick: () => void) => {
         const button = h("button", { class: "ainsi-studio__barbutton", type: "button", click: onClick });
         button.innerHTML = icons[icon];
         button.append(text);
         return button;
     };
-    menu.append(
-        option("text", "Markdown", () => { closeMenu(); insertAfter(target, at); }),
-        option("image", "Image", () => splice({ start: at, end: at, text: "\n\n![]()" })),
-    );
+
+    menu.append(option("page", "Page", () => { closeMenu(); insertPage(target.closest<HTMLElement>(".ainsi-page")!); }), divider());
+    for (const { label, icon, md, takes } of INSERTS) {
+        const forms = shownAs(takes);
+        // a kind one component can shape is a button; a kind several can is that button and a list
+        if (!forms.length) { menu.append(option(icon, label, put(md))); continue; }
+        menu.append(dropdown(label, [
+            item(label, "plain", false, put(md)),
+            ...forms.map(name => item(name, "", false, put(md, name))),
+        ]));
+    }
+
     document.body.append(menu);
     place(menu, from);
     addEventListener("keydown", menuKey);

@@ -105,6 +105,7 @@ ApplicationMenu.setApplicationMenu([
             { label: "Cut", action: "cut", accelerator: "cmd+x" },
             { label: "Copy", action: "copy", accelerator: "cmd+c" },
             { label: "Paste", action: "paste", accelerator: "cmd+v" },
+            { label: "Duplicate", action: "duplicate", accelerator: "cmd+d" },
             { label: "Delete", action: "delete" },
             { role: "selectAll" },
             { type: "separator" },
@@ -113,8 +114,24 @@ ApplicationMenu.setApplicationMenu([
         ],
     },
     {
+        /*
+         * The kinds the parser has, which is a list that cannot drift. Which components each
+         * kind can be shown as lives in the page, where the registry is: a menu built before
+         * a deck is open cannot know what a theme's components accept.
+         */
         label: "Insert",
-        submenu: [{ label: "Block…", action: "insert", accelerator: "cmd+shift+n" }],
+        submenu: [
+            { label: "Page", action: "insert:Page", accelerator: "cmd+shift+n" },
+            { type: "separator" },
+            { label: "Text", action: "insert:Text" },
+            { label: "Bullets", action: "insert:Bullets" },
+            { label: "Numbered", action: "insert:Numbered" },
+            { label: "Quote", action: "insert:Quote" },
+            { label: "Callout", action: "insert:Callout" },
+            { label: "Code", action: "insert:Code" },
+            { label: "Table", action: "insert:Table" },
+            { label: "Image", action: "insert:Image" },
+        ],
     },
     {
         label: "View",

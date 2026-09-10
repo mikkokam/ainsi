@@ -11,7 +11,7 @@ import { pptx } from "./pptx";
 import { serve } from "./serve";
 import { CHROME, THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
-import type { Block, Diagnostic, Directive, Entity, Page, Settings } from "./types";
+import type { Block, Diagnostic, Directive, Entity, EntityKind, Page, Settings } from "./types";
 import type { ZodTypeAny } from "zod";
 
 const argv = process.argv.slice(2);
@@ -120,7 +120,13 @@ interface DocBlock {
     directive?: { start: number; end: number };
     terminator?: { start: number; end: number };
 }
-interface DocComponent { name: string; about: string; fields: Field[] }
+interface DocComponent {
+    name: string;
+    about: string;
+    fields: Field[];
+    /** the entity kinds it will take on its own, so an insert palette is derived and not copied */
+    takes: EntityKind[];
+}
 interface Field { name: string; type: "enum" | "boolean" | "number" | "string"; options?: string[]; default?: unknown }
 /** a page as the studio addresses it: its entities, its layout, and the directive that set it */
 interface DocPage {
@@ -298,7 +304,24 @@ function describePages(pages: Page[], entities: Entity[], directives: Directive[
 
 /** the palette: each component's fields from its own zod schema */
 function describeComponents(registry: Registry): DocComponent[] {
-    return registry.all().map(c => ({ name: c.name, about: c.about, fields: fields(c.props) }));
+    return registry.all().map(c => ({
+        name: c.name,
+        about: c.about,
+        fields: fields(c.props),
+        takes: OFFERED.filter(kind => {
+            // a component's own accepts() is the answer; one that throws on a bare entity is a no
+            try { return c.accepts([sample(kind)]); } catch { return false; }
+        }),
+    }));
+}
+
+/** the kinds an insert can make, and so the only ones a palette needs to ask about */
+const OFFERED: EntityKind[] = ["list", "table", "image", "paragraph", "quote", "code"];
+
+/** the least entity of a kind that `accepts` can be asked about */
+function sample(kind: EntityKind): Entity {
+    const node = kind === "image" ? { type: "image", url: "" } : { type: kind, children: [] };
+    return { id: `sample-${kind}`, kind, text: "", md: "", node, ...(kind === "list" ? { ordered: false } : {}) };
 }
 
 function fields(schema: ZodTypeAny): Field[] {

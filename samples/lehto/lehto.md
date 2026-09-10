@@ -17,6 +17,8 @@ coverLogo: assets/lehto-mark-white.svg
 
 ---
 
+---
+
 <!-- ainsi: prose color=accent -->
 # Wood runs in family
 
