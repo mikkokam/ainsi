@@ -119,9 +119,9 @@ function paintMenu(): void {
         },
         {
             /*
-             * Cut, copy and paste are the studio's rather than the webview's roles: a role acts on
-             * a text selection, and most of the time what is selected here is a block. The studio
-             * hands the verb back to the field when a caret is in one.
+             * Cut, copy, paste and select all are the studio's rather than the webview's roles: a role
+             * acts on a text selection, and most of the time what is selected here is a block or the deck.
+             * The studio hands the verb back to the field when a caret is in one.
              */
             label: "Edit",
             submenu: [
@@ -132,7 +132,7 @@ function paintMenu(): void {
                 needsDeck({ label: "Paste", action: "paste", accelerator: "cmd+v" }),
                 needsDeck({ label: "Duplicate", action: "duplicate", accelerator: "cmd+d" }),
                 needsDeck({ label: "Delete", action: "delete" }),
-                { role: "selectAll" },
+                needsDeck({ label: "Select All", action: "select-all", accelerator: "cmd+a" }),
                 { type: "separator" },
                 needsDeck({ label: "Edit Deck Source", action: "source", accelerator: "shift+cmd+e" }),
                 needsDeck({ label: "Edit Page Source", action: "source-page", accelerator: "alt+cmd+e" }),

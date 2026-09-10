@@ -18,6 +18,17 @@ bun.lock
 
 # built decks; the html beside a sample is the demo, a pdf is not
 *.pdf
+# what "Deck and its files…" writes beside the deck it packed
+*.zip
+
+# a deck made by accident: New writes untitled.md into whatever folder the studio was started
+# in, and the next one is untitled-2.md
+untitled.md
+untitled-*.md
+
+# secrets; bun loads this by itself and it never leaves the machine
+.env
+.env.*
 
 # desktop shells: toolchain projections and build output
 desktop/*/.hutch/
@@ -25,3 +36,4 @@ desktop/*/build/
 desktop/*/hutch.lock
 desktop/.*.hutch-template.lock
 desktop/*/artifacts/
+desktop/*/.cottontail-tmp/
