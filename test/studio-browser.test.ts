@@ -119,7 +119,7 @@ test.skipIf(!chromium)("a second click on what is selected puts the caret in it"
     await studio.stop();
 }, 60_000);
 
-test.skipIf(!chromium)("Enter opens the selection and Escape lets it go", async () => {
+test.skipIf(!chromium)("Enter opens the selection, and Escape steps back out one level at a time", async () => {
     const studio = await open();
     await paragraph(studio.page, 0).click();
     await studio.page.keyboard.press("Enter");
@@ -127,6 +127,11 @@ test.skipIf(!chromium)("Enter opens the selection and Escape lets it go", async 
 
     await studio.page.keyboard.press("Escape");
     expect(await until(() => count(studio.page, "textarea"), n => n === 0)).toBe(0);
+
+    // the block hands over to the page it is on, which is the only way to a page under a picture
+    await studio.page.keyboard.press("Escape");
+    expect(await until(() => count(studio.page, ".ainsi-page[data-ainsi-selected]"), n => n === 1)).toBe(1);
+
     await studio.page.keyboard.press("Escape");
     expect(await until(() => count(studio.page, "[data-ainsi-selected]"), n => n === 0)).toBe(0);
 
@@ -461,5 +466,35 @@ test.skipIf(!chromium)("duplicating a page copies the whole page after it", asyn
     expect(await until(() => count(studio.page, ".ainsi-page"), n => n === 3)).toBe(3);
     const after = await studio.source();
     expect(after.split("# Otsikko").length - 1).toBe(2);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("clicking a page where no block is picks the page", async () => {
+    const studio = await open();
+    const box = (await studio.page.locator(".ainsi-page").first().boundingBox())!;
+    // just inside the page's own edge, which no block reaches
+    await studio.page.mouse.click(box.x + 6, box.y + box.height - 6);
+
+    expect(await until(() => count(studio.page, ".ainsi-page[data-ainsi-selected]"), n => n === 1)).toBe(1);
+    expect(await count(studio.page, ".ainsi-studio__bar")).toBe(1);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("clicking outside every page lets go rather than picking one", async () => {
+    const studio = await open();
+    await paragraph(studio.page, 0).click();
+    await studio.page.mouse.click(4, 880);
+    expect(await until(() => count(studio.page, "[data-ainsi-selected]"), n => n === 0)).toBe(0);
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a picture covering the page is picked before the page it covers", async () => {
+    const studio = await open("---\nlayout: header\n---\n\n# Kansi\n\n![](kuva.png)\n");
+    const box = (await studio.page.locator(".ainsi-page").first().boundingBox())!;
+    await studio.page.mouse.click(box.x + box.width - 20, box.y + 20);
+
+    // the image is a block, and a block is the innermost thing under the pointer
+    expect(await until(() => count(studio.page, ".ainsi-page[data-ainsi-selected]"), n => n === 0)).toBe(0);
+    expect(await count(studio.page, "[data-ainsi-selected]")).toBe(1);
     await studio.stop();
 }, 60_000);

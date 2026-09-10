@@ -211,10 +211,19 @@ async function init(): Promise<void> {
         if (chrome?.kind === "block" || chrome?.kind === "raw" || document.body.hasAttribute("data-present")) return;
         const target = handleAt(event.target as HTMLElement);
         if (!target) {
-            select(undefined);
-            if (chrome?.kind === "menu") shut();
-            else if (onMark(event)) { event.preventDefault(); openDeck(); }
-            else if (onEmptyGround(event)) event.preventDefault();
+            if (chrome?.kind === "menu") { select(undefined); shut(); return; }
+            if (onMark(event)) { event.preventDefault(); select(undefined); openDeck(); return; }
+            // the ground of a page that wants a picture is already an offer to add one, and the
+            // badge on it says so; taking that space for the page would take the offer away
+            if (onEmptyGround(event)) { event.preventDefault(); select(undefined); return; }
+            /*
+             * Anything else inside a page is the page. A click picks the innermost thing under
+             * it, and the page is the outermost, so a full-bleed picture is picked before the
+             * page it covers, which is the same rule and not an exception to it.
+             */
+            const section = (event.target as HTMLElement).closest?.<HTMLElement>(".ainsi-page");
+            if (section) selectPage(section);
+            else select(undefined);
             return;
         }
         const range = rangeOf(target);
@@ -254,7 +263,17 @@ async function init(): Promise<void> {
         if ((event.target as HTMLElement).closest?.("input, textarea, [contenteditable]")) return;
         if (document.body.hasAttribute("data-present")) return;
         event.preventDefault();
-        if (event.key === "Escape") { select(undefined); if (chrome?.kind === "menu") shut(); return; }
+        /*
+         * Escape steps out rather than straight to nothing: a block hands over to its page,
+         * and the page lets go. It is the only way to reach a page a full-bleed picture covers.
+         */
+        if (event.key === "Escape") {
+            const section = selected.kind === "block" ? selected.handle.closest<HTMLElement>(".ainsi-page") : undefined;
+            if (chrome?.kind === "menu") shut();
+            if (section) selectPage(section);
+            else select(undefined);
+            return;
+        }
         if (selected.kind === "page") return;
         const range = rangeOf(selected.handle);
         if (range) edit(selected.handle, range, "end");
@@ -313,8 +332,7 @@ async function init(): Promise<void> {
         event.stopPropagation();
         if (!pageAt) return;
         if (event.altKey) return insertPage(pageAt);
-        select(pageAt, "page");
-        openPageMenu(pageAt, pageGrip.getBoundingClientRect());
+        selectPage(pageAt);
     });
     pagePlus.addEventListener("click", event => { event.stopPropagation(); if (pageAt) insertPage(pageAt); });
     // the rail sits outside the page, so the pointer crosses the shell on its way over;
@@ -819,6 +837,12 @@ function deleteSelection(): void {
     if (!target) return;
     select(undefined);
     splice(remove(doc.source, target));
+}
+
+/** the page picked up, with the bar that says what can be done to it */
+function selectPage(section: HTMLElement): void {
+    select(section, "page");
+    openPageMenu(section, section.getBoundingClientRect());
 }
 
 /** the target a splice needs, for the entity or span a handle stands for */

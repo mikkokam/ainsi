@@ -100,7 +100,7 @@ Edit's clipboard items and an Insert menu landed with selection. What is left in
 
 Insert names the kinds the parser has, which cannot drift, and the in-page palette adds which components each kind can be shown as by asking the registry through `/__doc` rather than keeping a second list. Duplicate is a copy put straight after the original rather than through the clipboard, so it neither asks a permission nor takes what was on it.
 
-What is left of this row: the window's own toolbar, Save As, and the `(+)` moving from the top-left of a rail to under whatever is selected, which is where the thing it makes will appear.
+What is left of this row: the window's own toolbar, Save As, and the `(+)` moving from the top-left of a rail to under whatever is selected, which is where the thing it makes will appear. Duplicate belongs in the bar beside the other verbs on the selection rather than under it, because the `(+)` makes something new and the bar acts on what is there.
 
 File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.
 
