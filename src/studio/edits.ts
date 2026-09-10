@@ -209,6 +209,27 @@ function swap(source: string, one: Span, two: Span, between: (was: string) => st
  * it holds no blank line: a heading and the paragraph glued under it are two blocks, and
  * swapping them without one would make a list swallow the paragraph as a continuation line.
  */
+/*
+ * A block lifted out and put down after another, however far away it is. `move` swaps two
+ * neighbours, which is what the up and down buttons want; a drag lands anywhere, so the whole
+ * region between the two is rewritten in one splice rather than a swap repeated.
+ */
+export function moveTo(source: string, block: Target, target: Target, gap = "\n\n"): Splice | undefined {
+    const from = spanOf(block);
+    const to = spanOf(target);
+    if (from.start === to.start) return undefined;
+    const held = source.slice(from.start, from.end);
+
+    if (from.start < to.start) {
+        // downwards: what followed it closes up, and the block lands past the target
+        const between = source.slice(from.end, to.start).replace(/^\s+/, "");
+        return { start: from.start, end: to.end, text: `${between}${source.slice(to.start, to.end)}${gap}${held}` };
+    }
+    // upwards: the block lands straight after the target, and what was between follows it
+    const between = source.slice(to.end, from.start);
+    return { start: to.start, end: from.end, text: `${source.slice(to.start, to.end)}${gap}${held}${between}`.replace(/\s+$/, "") };
+}
+
 export function move(source: string, block: Target, neighbour: Target): Splice {
     return swap(source, spanOf(block), spanOf(neighbour), was => (/\n[ \t]*\n/.test(was) ? was : "\n\n"));
 }

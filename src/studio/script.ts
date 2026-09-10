@@ -23,7 +23,7 @@ import { EditorView, minimalSetup } from "codemirror";
 import { keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
-import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, pageSpan, relayout, remove, removePage, render as structural, retag, withAlert, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -291,6 +291,8 @@ async function init(): Promise<void> {
     let gripped: HTMLElement | undefined;
     let leaving: ReturnType<typeof setTimeout> | undefined;
     grip.addEventListener("click", event => { event.stopPropagation(); if (gripped) openMenu(gripped, gripped.getBoundingClientRect()); });
+    // the icon is six dots, which promises a drag; this is the promise
+    grip.addEventListener("mousedown", event => { if (gripped) startDrag(event, gripped); });
     plus.addEventListener("click", event => {
         event.stopPropagation();
         const range = gripped && rangeOf(gripped);
@@ -837,6 +839,61 @@ function deleteSelection(): void {
     if (!target) return;
     select(undefined);
     splice(remove(doc.source, target));
+}
+
+/*
+ * Dragging a block to another place in the deck.
+ *
+ * A press that never moves far is a click and opens the menu, so the grip carries both without
+ * either getting in the way. While dragging, a line is drawn under whatever the pointer is
+ * over, which is where the block will land, and the drop is one splice like every other edit.
+ */
+const DRAG = 4;
+
+function startDrag(event: MouseEvent, handle: HTMLElement): void {
+    if (event.button !== 0) return;
+    const from = { x: event.clientX, y: event.clientY };
+    let dragging = false;
+    let over: HTMLElement | undefined;
+
+    const line = h("div", { class: "ainsi-studio__drop-line" });
+
+    const under = (x: number, y: number): HTMLElement | undefined => {
+        const at = document.elementFromPoint(x, y) as HTMLElement | null;
+        const found = at && handleAt(at);
+        return found && found !== handle ? found : undefined;
+    };
+
+    const moved = (move: MouseEvent): void => {
+        if (!dragging && Math.hypot(move.clientX - from.x, move.clientY - from.y) < DRAG) return;
+        if (!dragging) {
+            dragging = true;
+            document.body.append(line);
+            document.body.setAttribute("data-ainsi-dragging", "");
+        }
+        over = under(move.clientX, move.clientY);
+        if (!over) return void (line.hidden = true);
+        const box = over.getBoundingClientRect();
+        line.hidden = false;
+        line.style.left = `${box.left}px`;
+        line.style.width = `${box.width}px`;
+        line.style.top = `${box.bottom + 2}px`;
+    };
+
+    const dropped = (): void => {
+        removeEventListener("mousemove", moved);
+        removeEventListener("mouseup", dropped);
+        line.remove();
+        document.body.removeAttribute("data-ainsi-dragging");
+        if (!dragging || !over) return;
+        const held = targetOf(handle);
+        const onto = targetOf(over);
+        const splicing = held && onto && moveTo(doc.source, held, onto);
+        if (splicing) splice(splicing);
+    };
+
+    addEventListener("mousemove", moved);
+    addEventListener("mouseup", dropped);
 }
 
 /** the page picked up, with the bar that says what can be done to it */

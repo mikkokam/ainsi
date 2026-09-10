@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { addPage, alertOf, directiveLine, markerOf, move, movePage, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
+import { addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, withAlert, type Target } from "../src/studio/edits";
 
 const registry = await load();
 const layouts = await loadLayouts();
@@ -237,4 +237,27 @@ test("a moved page leaves the end marker that closes the page before it", () => 
     const source = "<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n\n---\n\n# Two\n";
     const after = apply(source, movePage(source, pageOf(source, 1), pageOf(source, 0)));
     expect(after).toBe("# Two\n\n---\n\n<!-- ainsi: boxes -->\n- a\n- b\n\n<!-- ainsi: end -->\n");
+});
+
+/** a drag lands anywhere, so the block is lifted out and put down rather than swapped along */
+const four = "A\n\nB\n\nC\n\nD";
+const block = (source: string, letter: string): Target =>
+    ({ start: source.indexOf(letter), end: source.indexOf(letter) + 1, md: letter, kind: "paragraph" });
+const dragged = (from: string, to: string) => apply(four, moveTo(four, block(four, from), block(four, to))!);
+
+test("a block dragged onto its neighbour changes places with it", () => {
+    expect(dragged("A", "B")).toBe("B\n\nA\n\nC\n\nD");
+});
+
+test("a block dragged to the end lands last and the rest closes up", () => {
+    expect(dragged("A", "D")).toBe("B\n\nC\n\nD\n\nA");
+});
+
+test("a block dragged upwards lands straight after what it was dropped on", () => {
+    expect(dragged("D", "A")).toBe("A\n\nD\n\nB\n\nC");
+    expect(dragged("C", "A")).toBe("A\n\nC\n\nB\n\nD");
+});
+
+test("a block dropped on itself is not a move", () => {
+    expect(moveTo(four, block(four, "B"), block(four, "B"))).toBeUndefined();
 });

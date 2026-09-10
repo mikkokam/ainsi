@@ -22,6 +22,21 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-page[data-ainsi-selected] {
     border-radius: 0;
 }
 
+/* where a dragged block will land: under what the pointer is over, the width of it */
+.ainsi-studio__drop-line {
+    position: fixed;
+    z-index: 90;
+    height: 2px;
+    background: #1f6feb;
+    border-radius: 2px;
+    pointer-events: none;
+}
+/* nothing lights up under the pointer while it is carrying something */
+body[data-ainsi-dragging] [data-ainsi-entity]:hover,
+body[data-ainsi-dragging] [data-ainsi-span]:hover { outline: none !important; }
+body[data-ainsi-dragging] { cursor: grabbing; }
+.ainsi-studio__grip[title^="Block menu"] { cursor: grab; }
+
 .ainsi-studio--hidden { display: none !important; }
 .ainsi-studio--dim { opacity: 0.35; }
 

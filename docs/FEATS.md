@@ -100,6 +100,8 @@ Edit's clipboard items and an Insert menu landed with selection. What is left in
 
 Insert names the kinds the parser has, which cannot drift, and the in-page palette adds which components each kind can be shown as by asking the registry through `/__doc` rather than keeping a second list. Duplicate is a copy put straight after the original rather than through the clipboard, so it neither asks a permission nor takes what was on it.
 
+Dragging a page is not built. A block's grip carries the drag its icon promises; a page's grip carries the same icon and does not, which is the same false promise one level up. `movePage` swaps neighbours the way `move` did, so it needs the `moveTo` treatment before a page can be dragged anywhere.
+
 What is left of this row: the window's own toolbar, Save As, and the `(+)` moving from the top-left of a rail to under whatever is selected, which is where the thing it makes will appear. Duplicate belongs in the bar beside the other verbs on the selection rather than under it, because the `(+)` makes something new and the bar acts on what is there.
 
 File ▸ New Window waits on a deck being a URL, below. Two windows today would be two servers over one folder.

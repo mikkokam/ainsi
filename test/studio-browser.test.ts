@@ -498,3 +498,57 @@ test.skipIf(!chromium)("a picture covering the page is picked before the page it
     expect(await count(studio.page, "[data-ainsi-selected]")).toBe(1);
     await studio.stop();
 }, 60_000);
+
+/** the grip on a hovered block, which is what a drag is picked up by */
+async function grip(page: Page, on: ReturnType<typeof paragraph>) {
+    const box = (await on.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + 4, box.y + 4);
+    const handle = page.locator('.ainsi-studio__rail:not([hidden]) [title="Block menu"]');
+    await handle.waitFor();
+    return (await handle.boundingBox())!;
+}
+
+test.skipIf(!chromium)("a block dragged onto another lands after it", async () => {
+    const studio = await open();
+    const from = await grip(studio.page, paragraph(studio.page, 0));
+    const onto = (await paragraph(studio.page, 1).boundingBox())!;
+
+    await studio.page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await studio.page.mouse.down();
+    await studio.page.mouse.move(onto.x + onto.width / 2, onto.y + onto.height / 2, { steps: 12 });
+    expect(await count(studio.page, ".ainsi-studio__drop-line")).toBe(1);
+    await studio.page.mouse.up();
+
+    const after = await until(studio.source, t => t.indexOf("Toinen kappale.") < t.indexOf("Ensimmäinen kappale."));
+    expect(after.indexOf("Toinen kappale.")).toBeLessThan(after.indexOf("Ensimmäinen kappale."));
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a press that does not move is a click, and still opens the menu", async () => {
+    const studio = await open();
+    const from = await grip(studio.page, paragraph(studio.page, 0));
+    await studio.page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await studio.page.mouse.down();
+    await studio.page.mouse.up();
+
+    expect(await until(() => count(studio.page, ".ainsi-studio__bar"), n => n === 1)).toBe(1);
+    expect(await count(studio.page, ".ainsi-studio__drop-line")).toBe(0);
+    expect(await studio.source()).toContain("Ensimmäinen kappale.\n\nToinen kappale.");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a drag dropped on nothing leaves the deck as it was", async () => {
+    const studio = await open();
+    const before = await studio.source();
+    const from = await grip(studio.page, paragraph(studio.page, 0));
+    await studio.page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await studio.page.mouse.down();
+    await studio.page.mouse.move(6, 880, { steps: 12 });
+    await studio.page.mouse.up();
+
+    await Bun.sleep(600);
+    expect(await studio.source()).toBe(before);
+    expect(await count(studio.page, ".ainsi-studio__drop-line")).toBe(0);
+    await studio.stop();
+}, 60_000);
