@@ -161,3 +161,13 @@ test("an image's url is rewritten through the node the walk handed back", () => 
     found!.set("data:image/png;base64,AAA");
     expect(images(doc.entities).map(i => i.url)).toEqual(["data:image/png;base64,AAA"]);
 });
+
+test("a table's alignment row survives into the render, over the default that would beat it", () => {
+    const md = "| L | C | R |\n| :--- | :---: | ---: |\n| a | b | c |\n";
+    const { html } = build(md, { registry: defaults, layouts, themeCss: "" });
+    expect(html).toContain('align="center"');
+    expect(html).toContain('align="right"');
+    // the base stylesheet sets text-align on every cell, so the attribute needs its own rule
+    expect(html).toMatch(/td\[align="right"\][^{]*\{[^}]*text-align:\s*right/);
+    expect(html).toMatch(/td\[align="center"\][^{]*\{[^}]*text-align:\s*center/);
+});

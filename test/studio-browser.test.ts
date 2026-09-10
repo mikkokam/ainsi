@@ -637,14 +637,36 @@ test.skipIf(!chromium)("a column added reaches every row", async () => {
 }, 60_000);
 
 test.skipIf(!chromium)("a column's alignment is a button, and lands in the rule row", async () => {
-    const studio = await open(TABLE_DECK);
+    // every column starts left, so any alignment in the result came from the click
+    const studio = await open("# T\n\n| Name | Qty |\n| --- | --- |\n| A | 12 |\n");
     await openTable(studio);
-    // the first column, which starts left
-    await studio.page.locator('.ainsi-studio__gridhead [title="right"]').first().click();
+    await studio.page.locator('.ainsi-studio__gridhead').first().locator('[title="right"]').click();
     await studio.page.keyboard.press("Meta+Enter");
 
-    const after = await until(studio.source, t => /\|\s*-+:\s*\|\s*-+:/.test(t));
-    expect(after).toMatch(/\|\s*-+:\s*\|/);
+    const after = await until(studio.source, t => t.includes("---:"));
+    expect(after).toContain("| ---: | --- |");
+    await studio.stop();
+}, 60_000);
+
+test.skipIf(!chromium)("a component that renders a table as something else still edits as a grid", async () => {
+    // comparison draws columns and dl rows, so its handle is a block and not a table; the
+    // markdown is what decides, which is the only thing that does not vary between them
+    const table = "| Feature | A | B |\n| --- | --- | --- |\n| Speed | fast | slow |";
+    const studio = await open(`<!-- ainsi: comparison -->\n\n${table}\n`);
+    expect(await count(studio.page, "table")).toBe(0);
+
+    const box = (await studio.page.locator(".ainsi-page").first().boundingBox())!;
+    await studio.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await studio.page.keyboard.press("Enter");
+    await studio.page.waitForSelector(".ainsi-studio__table");
+
+    expect(await count(studio.page, "textarea")).toBe(0);
+    await studio.page.locator(".ainsi-studio__grid input").nth(3).fill("Nopeus");
+    await studio.page.keyboard.press("Meta+Enter");
+
+    const after = await until(studio.source, t => t.includes("Nopeus"));
+    expect(after).toContain("<!-- ainsi: comparison -->");
+    expect(after).toContain("| Nopeus");
     await studio.stop();
 }, 60_000);
 

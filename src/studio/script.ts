@@ -1161,7 +1161,9 @@ function openAt(index: number, caret: Caret): void {
 
 function edit(target: HTMLElement, range: Range, caret: Caret): void {
     if (range.kind === "image" && openImage(target, range)) return;
-    if (range.kind === "table" && openTable(target, range)) return;
+    // the markdown decides, not the kind: a component that builds its own markup is addressed
+    // as a block rather than as a table, and comparison, bar-table and roadmap all do
+    if (openTable(target, range)) return;
     const mode: Mode = range.kind === "heading" || range.kind === "paragraph" ? "inplace" : "overlay";
     openEditor(target, {
         initial: range.md,

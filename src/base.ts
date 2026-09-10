@@ -176,6 +176,10 @@ body[data-numbers="off"][data-present] .ainsi-number { display: none; }
 /* a table as markdown gives it */
 .ainsi-page table { border-collapse: collapse; width: 100%; }
 .ainsi-page th, .ainsi-page td { text-align: left; padding: .5em .8em; border-bottom: var(--ainsi-border) solid var(--ainsi-rule); }
+/* a markdown table's own alignment row, which the default above would otherwise beat: the
+   engine emits it as an attribute, and a stylesheet outranks a presentational attribute */
+.ainsi-page th[align="center"], .ainsi-page td[align="center"] { text-align: center; }
+.ainsi-page th[align="right"], .ainsi-page td[align="right"] { text-align: right; }
 .ainsi-page th { font-weight: var(--ainsi-strong); }
 /* the inline extras: a highlight on the accent, a key cap, a struck word, a task box */
 /*
