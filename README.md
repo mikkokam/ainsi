@@ -69,6 +69,7 @@ Requires [Bun](https://bun.sh).
     ainsi                             # opens Studio on the chooser
     ainsi build deck.md               # writes deck.html, a Stage, and exits
     ainsi build deck.md --to pdf      # deck.pdf, fitted, one sheet per page
+    ainsi build deck.md --to pptx     # deck.pptx, editable text boxes over a raster ground
 
 Studio is where you click a block to change what it is, edit the text, try a theme, and export. Presenting is ⌘⏎, in Studio and in a Stage alike. Every flag is in [the CLI](docs/guide/cli.md), every gesture in [Studio](docs/guide/studio.md).
 

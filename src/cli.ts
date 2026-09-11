@@ -20,16 +20,22 @@ const argv = process.argv.slice(2);
 const building = argv[0] === "build";
 const args = building ? argv.slice(1) : argv;
 const VALUED = new Set(["-o", "--to", "--port"]);
-const FORMATS = ["html", "pdf", "zip"] as const;
+const FORMATS = ["html", "pdf", "zip", "pptx"] as const;
 const inputs = args.filter((a, i) => !a.startsWith("-") && !VALUED.has(args[i - 1] ?? ""));
 const input = inputs[0];
 
 const USAGE = [
     "usage: ainsi [deck.md] [--port 4321]",
     "           opens the studio; without a deck, on the chooser: open one here, or make one",
-    "       ainsi build <deck.md> [-o out.html|out.pdf|out.zip] [--to html|pdf|zip] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]",
+    "       ainsi build <deck.md> [-o out.html|out.pdf|out.zip|out.pptx] [--to html|pdf|zip|pptx] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]",
     "           writes the file beside the deck and exits",
+    "       ainsi --help",
+    "           prints this",
 ].join("\n");
+if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(USAGE);
+    process.exit(0);
+}
 const fail = (message: string): never => {
     console.error(message);
     process.exit(1);
@@ -151,6 +157,7 @@ if (to && !FORMATS.includes(to as typeof FORMATS[number])) fail(`--to takes ${FO
 if (target && to && extname(target).slice(1) !== to) fail(`-o ${target} and --to ${to} disagree`);
 const pdfFlag = args.find(a => a === "--pdf" || a.startsWith("--pdf="));
 const format: typeof FORMATS[number] = building && (to === "zip" || extname(target ?? "").toLowerCase() === ".zip") ? "zip"
+    : building && (to === "pptx" || extname(target ?? "").toLowerCase() === ".pptx") ? "pptx"
     : building && (to === "pdf" || extname(target ?? "").toLowerCase() === ".pdf" || pdfFlag) ? "pdf" : "html";
 const printing = format === "pdf";
 /** where a deck's own build lands: beside it, or wherever -o said for the format asked for */
@@ -695,6 +702,15 @@ if (building && format === "zip") {
     await Bun.write(to, packed.bytes);
     for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
     console.log(`${packed.name}/ -> ${to}`);
+    process.exit(0);
+}
+
+if (building && format === "pptx") {
+    const { written, diagnostics } = await exportPptx(opening!);
+    for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
+    await session?.close();
+    if (!written) fail(diagnostics.map(d => d.message).join("\n") || "pptx failed");
+    console.log(`-> ${outputFor(opening!, ".pptx")}`);
     process.exit(0);
 }
 

@@ -3,7 +3,8 @@
 Two commands: the bare one opens the [studio](studio.md), `build` writes a file and exits.
 
     ainsi [deck.md] [--port 4321]
-    ainsi build <deck.md> [-o out.html|out.pdf|out.zip] [--to html|pdf|zip] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]
+    ainsi build <deck.md> [-o out.html|out.pdf|out.zip|out.pptx] [--to html|pdf|zip|pptx] [--fit] [--pdf[=screen|compact|full]] [--no-viewer]
+    ainsi --help
 
 ## ainsi
 
@@ -26,6 +27,7 @@ With stdout piped, the studio refuses to start and prints the build command inst
     ainsi build deck.md --fit         # measure and fit before writing the html
     ainsi build deck.md --no-viewer   # no toolbar, for a headless render
     ainsi build deck.md --to zip      # deck.zip: the markdown and what it references
+    ainsi build deck.md --to pptx     # deck.pptx: editable text boxes over a raster ground
 
 `--to zip` writes the deck rather than a rendering of it: the markdown, the images it uses, its logos, and its theme when the theme is a folder beside it. Unpack it and there is an ordinary deck folder, which is the one artefact someone else can keep editing. A reference that already sits inside the deck's folder keeps the path it has; only what reaches outside is copied in and relinked. Nothing else in the folder travels, so a built `deck.html` or another deck beside it stays behind.
 

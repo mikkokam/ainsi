@@ -1,0 +1,7 @@
+.git
+node_modules
+samples/**/*.pptx
+samples/**/*.pdf
+samples/**/*.zip
+samples/gatekeeper/gatekeeper.html
+untitled*.html
