@@ -43,7 +43,7 @@ That clears the quarantine flag macOS set on the download, and the app opens nor
 
 The other way around it: build it yourself. A file you build locally never gets the quarantine flag in the first place, since that is only set on something macOS watched arrive from outside (a download, an AirDrop, a browser). Requires [Bun](https://bun.sh) and Xcode's Command Line Tools (`xcode-select --install`; the full Xcode app is not needed):
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     bun install
     bun run app:build
@@ -56,7 +56,7 @@ Not in the mood for any of that: skip the app entirely and run the [CLI](#cli) b
 
 Requires [Bun](https://bun.sh).
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     bun install --production
     bun link                          # puts `ainsi` on the PATH, globally
@@ -67,7 +67,7 @@ Requires [Bun](https://bun.sh).
 
 For running the CLI's studio server on Linux, or reaching it from a browser on another machine:
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     docker build -t ainsi .
     docker run -d -t -p 4321:4321 --memory 6g ainsi

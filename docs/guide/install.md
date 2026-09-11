@@ -18,7 +18,7 @@ The auto-update is included: the app checks for its own update at launch and off
 
 A locally built app never gets the quarantine flag, since that is only set on something macOS watched arrive from outside. Requires [Bun](https://bun.sh) and Xcode's Command Line Tools (`xcode-select --install`; the full Xcode app is not needed):
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     bun install
     bun run app:build
@@ -29,7 +29,7 @@ The app lands in `desktop/electrobun/build/stable-macos-arm64/Ainsi.app` and ope
 
 If you prefer using the terminal and a local web server (with the GUI in your browser), you can install the CLI. Requires [Bun](https://bun.sh).
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     bun install --production          # 25 MB
     bun link                          # puts `ainsi` on the PATH, globally
@@ -40,7 +40,7 @@ If you prefer using the terminal and a local web server (with the GUI in your br
 
 For the studio server on Linux, or reached from a browser on a different machine:
 
-    git clone git@github.com:mikkokam/ainsi.git
+    git clone https://github.com/mikkokam/ainsi.git
     cd ainsi
     docker build -t ainsi .
     docker run -d -t -p 4321:4321 ainsi
