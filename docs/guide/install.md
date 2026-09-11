@@ -1,6 +1,6 @@
 # Install
 
-There are two ways to use Ainsi: as a native desktop app or as a CLI tool. Both are entirely local with no services to sign into.
+There are three ways to use Ainsi: as a native desktop app, as a CLI tool, or in Docker. All are entirely local with no services to sign into.
 
 ## 1. Desktop App (MacOS)
 
@@ -20,6 +20,17 @@ If you prefer using the terminal and a local web server (with the GUI in your br
     bun link                          # puts `ainsi` on the PATH, globally
 
 `bun link` is what makes `ainsi` work in any folder. The clone stays where it is; the themes and components ship from inside it.
+
+## 3. Docker
+
+For the studio server on Linux, or reached from a browser on a different machine:
+
+    git clone git@github.com:mikkokam/ainsi.git
+    cd ainsi
+    docker build -t ainsi .
+    docker run -d -t -p 4321:4321 ainsi
+
+The image bundles Chromium (`playwright-core install --with-deps`), so a build takes a few minutes and the image is a few hundred MB. There is no published image; building locally is the only way to get one today.
 
 ## The browser
 

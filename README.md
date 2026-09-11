@@ -63,6 +63,17 @@ Requires [Bun](https://bun.sh).
 
 `--fit`, PDF export and PPTX export measure pages in a headless browser. `--production` leaves that browser out; [Install](docs/guide/install.md) says how to add one or point Ainsi at a browser already on the machine. Without one a build still writes a file, unfitted, and says so.
 
+### Docker
+
+For running the CLI's studio server on Linux, or reaching it from a browser on another machine:
+
+    git clone git@github.com:mikkokam/ainsi.git
+    cd ainsi
+    docker build -t ainsi .
+    docker run -d -t -p 4321:4321 ainsi
+
+Point a browser at the host's port 4321. There is no published image yet; the `Dockerfile` builds Chromium in, which is why the image is not small.
+
 ## Use
 
     ainsi deck.md                     # opens Studio on the deck
