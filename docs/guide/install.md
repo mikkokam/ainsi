@@ -10,6 +10,21 @@ Download the latest `.dmg` from the [GitHub releases page](https://github.com/mi
 
 The auto-update is included: the app checks for its own update at launch and offers it in the studio along with an option in the app menu.
 
+**Beta: the build is not signed or notarised yet.** Gatekeeper says the downloaded app is damaged and offers only Trash. After dragging it to Applications, clear the quarantine flag macOS set on the download and it opens normally from then on:
+
+    xattr -cr /Applications/Ainsi.app
+
+### Build it yourself
+
+A locally built app never gets the quarantine flag, since that is only set on something macOS watched arrive from outside. Requires [Bun](https://bun.sh) and Xcode's Command Line Tools (`xcode-select --install`; the full Xcode app is not needed):
+
+    git clone git@github.com:mikkokam/ainsi.git
+    cd ainsi
+    bun install
+    bun run app:build
+
+The app lands in `desktop/electrobun/build/stable-macos-arm64/Ainsi.app` and opens straight away; the same build writes `desktop/electrobun/artifacts/macos-arm64-Ainsi.dmg` if you want the disk image. The app is macOS on Apple Silicon only: Electrobun builds for the machine it runs on, and there is no Windows or Linux app. On those, the [CLI](#2-cli-tool) or [Docker](#3-docker) below is the studio.
+
 ## 2. CLI Tool
 
 If you prefer using the terminal and a local web server (with the GUI in your browser), you can install the CLI. Requires [Bun](https://bun.sh).
