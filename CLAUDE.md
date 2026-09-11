@@ -22,5 +22,7 @@ One version, four places. Three of them are `package.json`, `.claude-plugin/plug
 
 Every studio action needs a name, because it has two triggers. The studio's own chrome is written for a browser and the app hides it, so an action reachable only from a button in that chrome does not exist on the desktop. Give it a case in the `ainsi:command` handler and have the button call the same function; the app's menu item then dispatches the name and the behaviour stays in one place. A click handler written inline has no name and the app cannot offer it.
 
+The desktop app's update check reads `release.baseUrl` in `electrobun.config.ts`, which is `.../releases/latest/download/...`. GitHub's `latest` skips anything flagged prerelease, so a release published with `gh release create` (which marks it prerelease by default whenever the tag looks like one, e.g. `-beta.N`) is invisible to that URL and the check fails with nothing to show for it. `gh release edit <tag> --prerelease=false` on the newest release fixes it; the flag only needs to be right on whichever release is meant to be found. The `latest` redirect itself can lag the API by ten or so seconds after the flag changes, so a 404 right after publishing is not necessarily wrong yet.
+
 
 When developing, do not try to do screenshots on your own. instead do the change that you asked and then send a heads up to the user to do the testing - The user probably already has the development server running and the browser open so they can comment.
