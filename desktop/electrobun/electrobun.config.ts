@@ -15,7 +15,7 @@ export default {
         // menu bar and the bundle are called by
         name: "Ainsi",
         identifier: "dev.ainsi.studio",
-        version: "2.0.0-beta.4",
+        version: "2.0.0-beta.5",
     },
     /*
      * Where an installed app looks for its next version. `app:build --env=stable` writes
