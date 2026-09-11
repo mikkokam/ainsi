@@ -3,13 +3,17 @@ import { openFit, place, type FitSession } from "./fit";
 import type { Diagnostic } from "./types";
 
 /**
- * An editable PPTX is the deck in three layers: everything non-text screenshotted as one
- * background picture per page (panels, rules, pseudo-content, shadows — exactly as chromium
- * painted them), each photograph screenshotted again on its own so it arrives as a picture a
- * client can select, move or replace, and every run of text lifted out as a native PowerPoint
- * text box at the same coordinates, same size, colour, weight and alignment. The client gets a
- * file where any line can be clicked and retyped, and the design cannot be broken because it is
- * pixels underneath.
+ * An editable PPTX is the deck in three layers: everything non-text as pictures (panels,
+ * rules, pseudo-content, shadows — exactly as chromium painted them), each photograph
+ * screenshotted on its own so it arrives as a picture a client can select, move or replace,
+ * and every run of text lifted out as a native PowerPoint text box at the same coordinates,
+ * same size, colour, weight and alignment. The client gets a file where any line can be
+ * clicked and retyped, and the design cannot be broken because it is pixels underneath.
+ *
+ * A page on one flat colour gets that colour as the slide's own and a crop per painted
+ * element; a page with a grain, a gradient or a border under everything gets one screenshot
+ * of the whole page as its ground. The first is most pages of most decks and costs a few
+ * small pictures; the second is the only way to carry what paints everywhere.
  *
  * The html handed in is the fitted deck without the viewer, like `pdf` gets: the ground must
  * be the design-width render, or em-based layouts wrap differently than the deck shows.
@@ -48,10 +52,25 @@ interface Box {
     runs: Run[];
 }
 
-/** A photograph lifted out of the ground: px page-relative box and a base64 png. */
+/** A photograph lifted out of the ground: px page-relative box and a base64 jpeg. */
 interface Photo {
     x: number; y: number; w: number; h: number;
-    png: string;
+    jpeg: string;
+}
+
+/**
+ * Every shot is opaque, since a hidden glyph or picture keeps its background painting, so
+ * jpeg loses nothing png kept where there is a raster, at a fifth of the bytes; the whole
+ * deck's shots live in memory until the file is written, so bytes are the budget. A crop of
+ * fills and lines stays png, which is both exact and smaller for flat colour. The mark stays
+ * png: its canvas is transparent.
+ */
+const SHOT = { type: "jpeg", quality: 85 } as const;
+
+/** A painted region of a flat page: px page-relative box, and whether a raster is in it. */
+interface Crop {
+    x: number; y: number; w: number; h: number;
+    raster: boolean;
 }
 
 /** The theme's mark on a page, rasterised: px page-relative box and a base64 png. */
@@ -60,15 +79,12 @@ interface Mark {
     png: string;
 }
 
-interface PageDump {
-    /** rendered page size px, so coordinates normalise however the page actually laid out */
-    pw: number;
-    ph: number;
+/** A slide with its pictures placed, waiting for its text until every page's fonts are known. */
+interface Pending {
+    slide: ReturnType<PptxGenJS["addSlide"]>;
+    /** inches per rendered px, so coordinates normalise however the page actually laid out */
+    scale: number;
     boxes: Box[];
-    photos: Photo[];
-    mark?: Mark;
-    /** base64 png of the page with every lifted glyph, picture and the mark transparent */
-    shot: string;
 }
 
 export async function pptx(html: string, path: string, session?: FitSession): Promise<{ written: boolean; diagnostics: Diagnostic[] }> {
@@ -100,7 +116,10 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
         }
 
         const count = await page.evaluate(() => document.querySelectorAll(".ainsi-page").length);
-        const dumps: PageDump[] = [];
+        const deck = new PptxGenJS();
+        const pending: Pending[] = [];
+        // one page at a time: its shots go onto its slide and are dropped before the next is
+        // taken, so what the deck holds at once is one encoded copy of every picture, not two
         for (let index = 0; index < count; index++) {
             const { pw, ph, boxes } = await page.evaluate(walk, index);
             const mark = await page.evaluate(lift, index).catch(() => undefined);
@@ -111,38 +130,55 @@ export async function pptx(html: string, path: string, session?: FitSession): Pr
             const cutouts = await handle.$$(".ainsi-cut");
             const photos: Photo[] = [];
             for (let i = 0; i < cuts.length && i < cutouts.length; i++) {
-                const png = (await cutouts[i]!.screenshot({ type: "png" }).catch(() => undefined))?.toString("base64");
-                if (png) photos.push({ ...cuts[i]!, png });
+                const jpeg = (await cutouts[i]!.screenshot(SHOT).catch(() => undefined))?.toString("base64");
+                if (jpeg) photos.push({ ...cuts[i]!, jpeg });
             }
-            await page.evaluate(hide, { index, mark: !!mark });
-            const shot = (await handle.screenshot({ type: "png" })).toString("base64");
+            const flat = await page.evaluate(paint, { index, lifted: !!mark }).catch(() => undefined);
+            await page.evaluate(hide, { index, mark: !!mark, plain: !!flat });
+            const shots: { data: string; x: number; y: number; w: number; h: number }[] = [];
+            if (flat) {
+                await handle.scrollIntoViewIfNeeded();
+                const at = (await handle.boundingBox())!;
+                for (const crop of flat.crops) {
+                    const clip = { x: at.x + crop.x, y: at.y + crop.y, width: crop.w, height: crop.h };
+                    const buffer = await page.screenshot(crop.raster ? { clip, ...SHOT } : { clip, type: "png" }).catch((error: Error) => {
+                        diagnostics.push({ level: "warn", message: `page ${index + 1}: a picture at ${Math.round(crop.x)},${Math.round(crop.y)} could not be shot (${error.message.split("\n")[0]})` });
+                        return undefined;
+                    });
+                    if (buffer) shots.push({ data: `image/${crop.raster ? "jpeg" : "png"};base64,` + buffer.toString("base64"), ...crop });
+                }
+            } else {
+                const shot = (await handle.screenshot(SHOT)).toString("base64");
+                shots.push({ data: "image/jpeg;base64," + shot, x: 0, y: 0, w: pw, h: ph });
+            }
             await page.evaluate(restore, index);
-            dumps.push({ pw, ph, boxes, photos, mark, shot });
-        }
 
-        const fonts = await resolveFonts(page, dumps);
-
-        const deck = new PptxGenJS();
-        const ratio = dumps[0] ? dumps[0].ph / dumps[0].pw : 9 / 16;
-        deck.defineLayout({ name: "deck", width: SLIDE_W, height: SLIDE_W * ratio });
-        deck.layout = "deck";
-
-        for (const dump of dumps) {
-            const scale = SLIDE_W / dump.pw;
+            if (index === 0) {
+                deck.defineLayout({ name: "deck", width: SLIDE_W, height: SLIDE_W * (ph / pw) });
+                deck.layout = "deck";
+            }
+            const scale = SLIDE_W / pw;
             const slide = deck.addSlide();
-            slide.addImage({ data: "image/png;base64," + dump.shot, x: 0, y: 0, w: SLIDE_W, h: SLIDE_W * (dump.ph / dump.pw) });
+            if (flat) slide.background = { color: flat.color };
+            for (const shot of shots) slide.addImage({ data: shot.data, x: shot.x * scale, y: shot.y * scale, w: shot.w * scale, h: shot.h * scale });
             // above the ground, below the words: a picture is behind a caption written over it
-            for (const photo of dump.photos) {
+            for (const photo of photos) {
                 slide.addImage({
-                    data: "image/png;base64," + photo.png,
+                    data: "image/jpeg;base64," + photo.jpeg,
                     x: photo.x * scale, y: photo.y * scale, w: photo.w * scale, h: photo.h * scale,
                 });
             }
-            if (dump.mark) {
-                const { x, y, w, h, png } = dump.mark;
+            if (mark) {
+                const { x, y, w, h, png } = mark;
                 slide.addImage({ data: "image/png;base64," + png, x: x * scale, y: y * scale, w: w * scale, h: h * scale });
             }
-            for (const box of dump.boxes) {
+            pending.push({ slide, scale, boxes });
+        }
+
+        const fonts = await resolveFonts(page, pending);
+
+        for (const { slide, scale, boxes } of pending) {
+            for (const box of boxes) {
                 const texts = box.runs.map(run => ({
                     text: run.text,
                     options: {
@@ -291,9 +327,16 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
 
     const boxes: Box[] = [];
     for (const [block, runs] of groups) {
-        const rect = block.getBoundingClientRect();
-        if (!rect.width || !rect.height) continue;
+        const border = block.getBoundingClientRect();
         const style = getComputedStyle(block);
+        // the words sit in the content box: a padded cell aligned right would otherwise end at
+        // its outer edge and run into the cell beside it
+        const inset = (side: string): number => parseFloat(style.getPropertyValue(`border-${side}-width`)) + parseFloat(style.getPropertyValue(`padding-${side}`));
+        const rect = {
+            left: border.left + inset("left"), top: border.top + inset("top"),
+            width: border.width - inset("left") - inset("right"), height: border.height - inset("top") - inset("bottom"),
+        };
+        if (!(rect.width > 0) || !(rect.height > 0)) continue;
         const lineHeight = parseFloat(style.lineHeight);
         const fontSize = parseFloat(style.fontSize);
         // vertical writing flows 90° clockwise, and any transform adds its own angle
@@ -353,6 +396,121 @@ function cut(index: number): { x: number; y: number; w: number; h: number }[] {
 }
 
 /**
+ * Runs in the page, after `cut`. A page on one flat colour needs no ground: the colour becomes
+ * the slide's own and only what paints over it is shot, each outermost painting element as its
+ * own crop, the way a picture is cut. An opaque fill across the whole page (a toned main) is
+ * read as the page colour and looked through. Undefined, and the ground is shot instead, when
+ * the page is not flat (a grain, a gradient, a border, a mark that could not be lifted) or
+ * paints in so many places that one shot is cheaper. A crop is padded for its shadow, which
+ * paints outside the box, and clipped to the page; a subtree that would crop in many places
+ * (a table) becomes one crop. Inline fills are chips and ride their run, so they never crop.
+ * The colour helpers repeat `walk`'s: a function evaluated in the page carries nothing else.
+ */
+function paint({ index, lifted }: { index: number; lifted: boolean }): { color: string; crops: Crop[] } | undefined {
+    const section = document.querySelectorAll<HTMLElement>(".ainsi-page")[index]!;
+    const pageRect = section.getBoundingClientRect();
+    const rgba = (css: string): { r: number; g: number; b: number; a: number } => {
+        const srgb = css.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/);
+        if (srgb) return { r: Number(srgb[1]) * 255, g: Number(srgb[2]) * 255, b: Number(srgb[3]) * 255, a: srgb[4] === undefined ? 1 : Number(srgb[4]) };
+        const p = css.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0];
+        return { r: p[0]!, g: p[1]!, b: p[2]!, a: p.length > 3 ? p[3]! : 1 };
+    };
+    const hex = (c: { r: number; g: number; b: number }): string =>
+        [c.r, c.g, c.b].map(n => Math.round(n).toString(16).padStart(2, "0")).join("");
+    const alpha = (css: string): number => css === "transparent" ? 0 : rgba(css).a;
+    const bordered = (s: CSSStyleDeclaration): boolean =>
+        [
+            [s.borderTopWidth, s.borderTopStyle, s.borderTopColor],
+            [s.borderRightWidth, s.borderRightStyle, s.borderRightColor],
+            [s.borderBottomWidth, s.borderBottomStyle, s.borderBottomColor],
+            [s.borderLeftWidth, s.borderLeftStyle, s.borderLeftColor],
+        ].some(([width, style, color]) => parseFloat(width!) > 0 && style !== "none" && alpha(color!) > 0)
+        || (parseFloat(s.outlineWidth) > 0 && s.outlineStyle !== "none");
+    /* a pseudo paints when it has content and either the content shows or its box does */
+    const pseudo = (el: Element, part: "::before" | "::after"): boolean => {
+        const s = getComputedStyle(el, part);
+        if (s.content === "none" || s.content === "normal" || s.display === "none") return false;
+        return s.content !== '""' || alpha(s.backgroundColor) > 0 || s.backgroundImage !== "none" || bordered(s);
+    };
+
+    if ((!lifted && pseudo(section, "::before")) || pseudo(section, "::after")) return undefined;
+    // a tiled svg on the page is grain, and grain is dropped: the slide is the plain colour
+    const grain = (s: CSSStyleDeclaration): boolean => s.backgroundImage === "none" || /^url\("?data:image\/svg\+xml/.test(s.backgroundImage);
+    const own = getComputedStyle(section);
+    if (!grain(own) || bordered(own)) return undefined;
+    let color = "ffffff";
+    for (let el: Element | null = section; el; el = el.parentElement) {
+        const s = el === section ? own : getComputedStyle(el);
+        if (!grain(s)) return undefined;
+        const c = rgba(s.backgroundColor);
+        if (c.a >= 1) { color = hex(c); break; }
+        if (c.a > 0) return undefined;
+    }
+
+    const MEDIA = new Set(["IMG", "SVG", "CANVAS", "VIDEO", "HR"]);
+    /* how far the widest shadow reaches past the box: offset plus blur plus spread */
+    const shadow = (s: CSSStyleDeclaration): number => {
+        if (s.boxShadow === "none") return 0;
+        let most = 0;
+        for (const one of s.boxShadow.split(/,(?![^(]*\))/)) {
+            const [ox = 0, oy = 0, blur = 0, spread = 0] = one.replace(/\w+\([^)]*\)/g, "").match(/-?[\d.]+(?=px)/g)?.map(Number) ?? [];
+            most = Math.max(most, Math.max(Math.abs(ox), Math.abs(oy)) + blur + spread);
+        }
+        return most;
+    };
+    const raster = (el: Element, s: CSSStyleDeclaration): boolean =>
+        ["IMG", "CANVAS", "VIDEO"].includes(el.tagName.toUpperCase())
+        || /gradient\(|url\("?(?!data:image\/svg)/.test(s.backgroundImage)
+        || !!el.querySelector("img:not(.ainsi-cut), canvas, video");
+    const paints = (el: Element, s: CSSStyleDeclaration): boolean => {
+        if (MEDIA.has(el.tagName.toUpperCase())) return !el.classList.contains("ainsi-cut");
+        if (s.display === "inline") return false;
+        return alpha(s.backgroundColor) > 0 || s.backgroundImage !== "none" || bordered(s) || s.boxShadow !== "none"
+            || pseudo(el, "::before") || pseudo(el, "::after");
+    };
+    const covers = (r: DOMRect): boolean =>
+        r.left <= pageRect.left + 1 && r.top <= pageRect.top + 1 && r.right >= pageRect.right - 1 && r.bottom >= pageRect.bottom - 1;
+    const clip = (left: number, top: number, right: number, bottom: number, hasRaster: boolean): Crop | undefined => {
+        const x = Math.max(left, pageRect.left), y = Math.max(top, pageRect.top);
+        const w = Math.min(right, pageRect.right) - x, h = Math.min(bottom, pageRect.bottom) - y;
+        return w > 0 && h > 0 ? { x: x - pageRect.left, y: y - pageRect.top, w, h, raster: hasRaster } : undefined;
+    };
+    const collect = (el: Element): Crop[] => {
+        const s = getComputedStyle(el);
+        if (s.display === "none" || s.visibility === "hidden") return [];
+        const below = () => [...el.children].flatMap(collect);
+        if (!paints(el, s)) {
+            const found = below();
+            if (found.length <= 8) return found;
+            const x = Math.min(...found.map(c => c.x)), y = Math.min(...found.map(c => c.y));
+            return [{ x, y, w: Math.max(...found.map(c => c.x + c.w)) - x, h: Math.max(...found.map(c => c.y + c.h)) - y, raster: found.some(c => c.raster) }];
+        }
+        const rect = el.getBoundingClientRect();
+        if (!rect.width || !rect.height) return [];
+        if (covers(rect) && !MEDIA.has(el.tagName.toUpperCase()) && alpha(s.backgroundColor) >= 1 && s.backgroundImage === "none"
+            && !bordered(s) && s.boxShadow === "none" && !pseudo(el, "::before") && !pseudo(el, "::after")) {
+            color = hex(rgba(s.backgroundColor));
+            return below();
+        }
+        // the crop is what the subtree paints, not the box: a full-bleed figure positioned out
+        // of a padded article reaches the page edge while the article stops at the padding
+        let { left, top, right, bottom } = rect;
+        for (const inner of el.querySelectorAll("*")) {
+            const is = getComputedStyle(inner);
+            if (is.display === "none" || is.visibility === "hidden") continue;
+            const r = inner.getBoundingClientRect();
+            if (!r.width || !r.height) continue;
+            left = Math.min(left, r.left); top = Math.min(top, r.top); right = Math.max(right, r.right); bottom = Math.max(bottom, r.bottom);
+        }
+        const pad = shadow(s);
+        const one = clip(left - pad, top - pad, right + pad, bottom + pad, raster(el, s));
+        return one ? [one] : [];
+    };
+    const crops = [...section.children].flatMap(collect);
+    return crops.length > 24 ? undefined : { color, crops };
+}
+
+/**
  * Runs in the page. The theme's mark is the page's own ::before when it paints an image: a
  * pseudo has no node to lift, so it is redrawn through a canvas at the size and place the
  * background painted it, with the pseudo's filter and opacity applied (a one-colour mark
@@ -403,14 +561,15 @@ async function lift(index: number): Promise<Mark | undefined> {
     return { x, y, w, h, png: canvas.toDataURL("image/png").split(",")[1]! };
 }
 
-/** Runs in the page: lifted glyphs, inline chip fills, lifted pictures and a lifted mark go transparent for the screenshot. */
-function hide({ index, mark }: { index: number; mark: boolean }): void {
+/** Runs in the page: lifted glyphs, inline chip fills, lifted pictures, a lifted mark and, on a plain page, the grain go for the screenshot. */
+function hide({ index, mark, plain }: { index: number; mark: boolean; plain: boolean }): void {
     const style = document.createElement("style");
     style.id = "ainsi-shot";
     style.textContent = ".ainsi-shot .ainsi-lift { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important }\n"
         + ".ainsi-shot main :is(mark, code, kbd, samp):not(pre *) { background: transparent !important; box-shadow: none !important; border-color: transparent !important }"
         + "\n.ainsi-shot .ainsi-cut { visibility: hidden !important }"
-        + (mark ? "\n.ainsi-shot::before { visibility: hidden !important }" : "");
+        + (mark ? "\n.ainsi-shot::before { visibility: hidden !important }" : "")
+        + (plain ? "\n.ainsi-shot { background-image: none !important }" : "");
     document.head.append(style);
     document.querySelectorAll(".ainsi-page")[index]!.classList.add("ainsi-shot");
 }
@@ -429,8 +588,8 @@ function restore(index: number): void {
  * can resolve. When chromium reports a face ("Libre Franklin Thin"), the family the stack
  * asked for wins, because the family is the name office apps index by.
  */
-async function resolveFonts(page: import("playwright-core").Page, dumps: PageDump[]): Promise<Map<string, string>> {
-    const stacks = [...new Set(dumps.flatMap(d => d.boxes.flatMap(b => b.runs.map(r => r.family))))];
+async function resolveFonts(page: import("playwright-core").Page, pages: { boxes: Box[] }[]): Promise<Map<string, string>> {
+    const stacks = [...new Set(pages.flatMap(d => d.boxes.flatMap(b => b.runs.map(r => r.family))))];
     const resolved = new Map<string, string>();
     let cdp: import("playwright-core").CDPSession | undefined;
     try {

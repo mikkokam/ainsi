@@ -70,9 +70,11 @@ For running the CLI's studio server on Linux, or reaching it from a browser on a
     git clone git@github.com:mikkokam/ainsi.git
     cd ainsi
     docker build -t ainsi .
-    docker run -d -t -p 4321:4321 ainsi
+    docker run -d -t -p 4321:4321 --memory 6g ainsi
 
 Point a browser at the host's port 4321. There is no published image yet; the `Dockerfile` builds Chromium in, which is why the image is not small.
+
+The studio and the stage are lean. PPTX export of a very large deck is not: the headless browser holds the whole deck rendered at 2x while the pages are shot, and 120 pages with a full-bleed photograph on each peaked at 4.5 GB. `--memory` caps the container, and Docker Desktop's own VM (Settings, Resources, Memory) caps every container beneath it, at 2 GB on older installs; raise that first or the export is killed with nothing to show for it.
 
 ## Use
 

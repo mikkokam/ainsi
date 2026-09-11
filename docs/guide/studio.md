@@ -46,7 +46,7 @@ The file name sits in the toolbar. Type over it to rename.
 - PDF, at screen resolution, compact, or with full-resolution images.
 - PPTX, editable.
 
-The PPTX is the deck in two layers: everything that is not text is one background picture per page, exactly as Chromium painted it, and every run of text sits above it as a native PowerPoint text box at the same position, size, colour and weight. Whoever receives it can click any line and retype it, and cannot break the design, because the design is pixels underneath.
+The PPTX is the deck in two layers: everything that is not text is pictures, exactly as Chromium painted them, and every run of text sits above them as a native PowerPoint text box at the same position, size, colour and weight. A page on a flat colour gets that colour as the slide's own and one small picture per panel, rule or photograph; a page with a grain or a gradient under everything gets one picture of the whole page. Whoever receives it can click any line and retype it, and cannot break the design, because the design is pixels underneath.
 
 ## Presenting
 

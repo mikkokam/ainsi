@@ -699,11 +699,12 @@ body[data-present] .ainsi-studio__status { display: none; }
     left: 20px;
     bottom: 64px;
     z-index: 60;
-    font: 12px/1 system-ui, sans-serif;
+    font: 500 14px/1 system-ui, sans-serif;
     color: #fff;
-    background: rgba(20, 24, 32, 0.85);
-    padding: 8px 12px;
+    background: var(--ac-blue-solid);
+    padding: 11px 16px;
     border-radius: 999px;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 30%);
     pointer-events: none;
 }
 
