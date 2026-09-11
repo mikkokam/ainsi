@@ -277,7 +277,8 @@ function walk(index: number): { pw: number; ph: number; boxes: Box[] } {
         parent.classList.add("ainsi-lift");
         const runs = groups.get(block) ?? [];
         runs.push({
-            text: text.replace(/\s+/g, " "),
+            // strip XML 1.0 illegal control chars (pasted from PDFs/Word): Windows PowerPoint's parser rejects them, Keynote/LibreOffice don't
+            text: text.replace(/\s+/g, " ").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ""),
             fontPx: parseFloat(style.fontSize),
             family: style.fontFamily,
             bold: parseInt(style.fontWeight) >= 600,
@@ -459,7 +460,8 @@ async function resolveFonts(page: import("playwright-core").Page, dumps: PageDum
             } catch { /* fallback below */ }
         }
         const family = platform && names.find(n => platform!.toLowerCase().startsWith(n.toLowerCase()));
-        resolved.set(stacks[i]!, family ?? platform ?? concrete);
+        // platform is CDP-reported, not CSS-authored: strip quotes before it reaches an unescaped XML attribute
+        resolved.set(stacks[i]!, family ?? platform?.replace(/["']/g, "") ?? concrete);
     }
     return resolved;
 }

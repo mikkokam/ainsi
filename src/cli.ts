@@ -757,7 +757,14 @@ const server = serve({
                 return Response.json({ path: to });
             }
             if (url.pathname === "/__pptx" && request.method === "POST") {
-                const { written, diagnostics } = await exportPptx(path);
+                let outcome: { written: boolean; diagnostics: Diagnostic[] };
+                try {
+                    outcome = await exportPptx(path);
+                } catch (err) {
+                    console.error(err);
+                    return new Response(err instanceof Error ? err.message : String(err), { status: 500 });
+                }
+                const { written, diagnostics } = outcome;
                 for (const d of diagnostics) console.warn(`${d.level}: ${d.message}`);
                 if (!written) return new Response(diagnostics.map(d => d.message).join("\n") || "pptx failed", { status: 500 });
                 const to = outputFor(path, ".pptx");
