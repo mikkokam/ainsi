@@ -23,7 +23,7 @@ A locally built app never gets the quarantine flag, since that is only set on so
     bun install
     bun run app:build
 
-The app lands in `desktop/electrobun/build/stable-macos-arm64/Ainsi.app` and opens straight away; the same build writes `desktop/electrobun/artifacts/macos-arm64-Ainsi.dmg` if you want the disk image. The app is macOS on Apple Silicon only: Electrobun builds for the machine it runs on, and there is no Windows or Linux app. On those, the [CLI](#2-cli-tool) or [Docker](#3-docker) below is the studio.
+The app lands in `desktop/electrobun/build/stable-macos-arm64/Ainsi.app` and opens straight away; the same build writes `desktop/electrobun/artifacts/macos-arm64-Ainsi.dmg` if you want the disk image. Electrobun builds for the machine it runs on (macOS 14+, Windows 11+, Ubuntu 24.04+), and this app has only been built on macOS with Apple Silicon: the release above is that build, and the updater only knows it. A Windows or Linux build is untried rather than impossible; the [CLI](#2-cli-tool) or [Docker](#3-docker) below is the studio there today.
 
 ## 2. CLI Tool
 
