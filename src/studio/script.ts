@@ -1470,6 +1470,8 @@ function openDeck(): void {
                     placeholder: "https://…  or  assets/mark.svg, beside the deck" }) as HTMLInputElement;
                 input.addEventListener("input", () => values.set(setting.key, input.value.trim()));
                 row.append(input);
+                // a logo is a file like any other, and typing its path was the same chore
+                if (setting.kind === "picture") pickPicture(input, picked => { input.value = picked; values.set(setting.key, picked); });
             }
             return row;
         }));
@@ -1884,6 +1886,44 @@ function dismissOnOutside(panel: HTMLElement, commit: () => void): () => void {
     return () => document.removeEventListener("pointerdown", outside, true);
 }
 
+/*
+ * A browse button on a field that holds a path, and the list it opens. The list is drawn into
+ * the form rather than over it: a floating panel is a click outside the form, which commits it
+ * and closes it under the pointer. It starts in the deck's folder and what it writes is
+ * relative to that folder when the file is under it, absolute when it is not.
+ */
+function pickPicture(input: HTMLInputElement, chosen: (path: string) => void): void {
+    const row = input.parentElement!;
+    const files = h("div", { class: "ainsi-studio__files", hidden: true });
+    const browse = h("button", { class: "ainsi-studio__chip", type: "button", title: "Pick a picture" }, "browse…");
+    row.classList.add("ainsi-studio__row--pick");
+    row.append(browse);
+    row.after(files);
+
+    const relative = (deck: string, file: string): string => (file.startsWith(deck + "/") ? file.slice(deck.length + 1) : file);
+    const list = async (at?: string): Promise<void> => {
+        const response = await fetch(mine(`/__files${at === undefined ? "" : `?at=${encodeURIComponent(at)}`}`));
+        if (!response.ok) return hint((await response.text()) || "could not read that folder", true, 4000);
+        const folder = await response.json() as {
+            at: string; here: string; up?: string; deck: string; entries: { name: string; dir: boolean }[];
+        };
+        const rows = folder.entries.map(one => menuItem(one.dir ? `${one.name}/` : one.name, () => {
+            const path = join(folder.at, one.name);
+            if (one.dir) return void list(path);
+            chosen(relative(folder.deck, path));
+            files.hidden = true;
+            input.focus();
+        }));
+        if (folder.up !== undefined) rows.unshift(menuItem("../", () => void list(folder.up)));
+        files.replaceChildren(h("div", { class: "ainsi-studio__filesat" }, folder.here), ...rows);
+        if (!folder.entries.length) files.append(h("div", { class: "ainsi-studio__filesat" }, "no pictures here"));
+    };
+    browse.addEventListener("click", () => {
+        files.hidden = !files.hidden;
+        if (!files.hidden) void list();
+    });
+}
+
 function openImage(target: HTMLElement, range: Range): boolean {
     const match = IMAGE.exec(range.md);
     if (!match) return false;
@@ -1899,39 +1939,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
     const alt = field("name", altText, "what the picture shows");
     const src = field("url", url, "https://… or a local path");
 
-    /*
-     * The picker, in the panel rather than over it: a floating one would be a click outside the
-     * form, which commits and closes it. It starts where the deck is and walks from there, and
-     * what it writes is relative to the deck's folder when the file is under it.
-     */
-    const files = h("div", { class: "ainsi-studio__files", hidden: true });
-    const browse = h("button", { class: "ainsi-studio__chip", type: "button", title: "Pick a picture" }, "browse…");
-    src.parentElement!.classList.add("ainsi-studio__imagerow--pick");
-    src.parentElement!.append(browse);
-    src.parentElement!.after(files);
-
-    const relative = (deck: string, file: string): string => (file.startsWith(deck + "/") ? file.slice(deck.length + 1) : file);
-    const list = async (at?: string): Promise<void> => {
-        const response = await fetch(mine(`/__files${at === undefined ? "" : `?at=${encodeURIComponent(at)}`}`));
-        if (!response.ok) return hint((await response.text()) || "could not read that folder", true, 4000);
-        const folder = await response.json() as {
-            at: string; here: string; up?: string; deck: string; entries: { name: string; dir: boolean }[];
-        };
-        const rows = folder.entries.map(one => menuItem(one.dir ? `${one.name}/` : one.name, () => {
-            const path = join(folder.at, one.name);
-            if (one.dir) return void list(path);
-            src.value = relative(folder.deck, path);
-            files.hidden = true;
-            src.focus();
-        }));
-        if (folder.up !== undefined) rows.unshift(menuItem("../", () => void list(folder.up)));
-        files.replaceChildren(h("div", { class: "ainsi-studio__filesat" }, folder.here), ...rows);
-        if (!folder.entries.length) files.append(h("div", { class: "ainsi-studio__filesat" }, "no pictures here"));
-    };
-    browse.addEventListener("click", () => {
-        files.hidden = !files.hidden;
-        if (!files.hidden) void list();
-    });
+    pickPicture(src, picked => { src.value = picked; });
 
     panel.append(h("p", { class: "ainsi-studio__imagehint" },
         "A local file is linked, not copied: the studio shows whatever the file holds now, so replacing it replaces the picture here. An export is what makes it travel — html, pdf and pptx embed the picture, the zip carries the file beside the deck — so an exported deck moves to another machine or folder whole."));

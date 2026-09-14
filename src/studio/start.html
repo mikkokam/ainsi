@@ -88,6 +88,10 @@
     .ac-story__face { font: 500 18px/1 var(--ac-font); color: var(--ac-ink-2); letter-spacing: -.01em; }
     /* the version rides with the name; in the app it is also the door to a check for updates */
     .ac-story__version { font: var(--ac-text-mono); color: var(--ac-ink-3); }
+    /* the newer version, on the line the current one is on; blue because it is the one thing
+       here that asks to be clicked */
+    .ac-story__update { font: var(--ac-text-mono); color: var(--ac-blue-ink); }
+    .ac-story__update[hidden] { display: none; }
     .ac-story__version.ac-link { color: var(--ac-blue-ink); }
     .ac-story h1 { margin: 0; max-width: 600px; font: var(--ac-text-display); color: var(--ac-ink); letter-spacing: -.03em; text-wrap: balance; }
     .ac-story p { margin: 0; font: var(--ac-text-body); color: var(--ac-ink-2); max-width: 520px; text-wrap: pretty; }
@@ -108,7 +112,6 @@
     .ac-status__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ac-ok); flex: none; }
     .ac-status--warn .ac-status__dot { background: #c8ab74; }
     /* an update is news, not a warning: the blue that means "this is where you are" everywhere else */
-    .ac-status--update .ac-status__dot { background: var(--ac-blue); }
     .ac-status a { color: var(--ac-blue-ink); text-decoration: none; }
     .ac-status a:hover { text-decoration: underline; }
     /* a link that acts rather than navigates: every one of these asks the server to open a folder */
@@ -308,6 +311,7 @@
                 <div class="ac-story__rule"></div>
                 <span class="ac-story__face">Studio</span>
                 <span class="ac-story__version" id="version">__VERSION__</span>
+                <span class="ac-story__update" id="update" hidden></span>
             </div>
             <h1>A deck is a markdown file. Your agent already has it open.</h1>
             <p>Edit local files. No import, no cloud copy, no second document. The agent writes what is said; you settle how it lands.<br>Export happens once, at the end.</p>
@@ -903,25 +907,27 @@
     }
 
     /*
-     * What the check found, announced by the shell: a line under the skills status, the one place
-     * on this page that already reports on the tool rather than on a deck. Only the shell sends
-     * this, so a browser tab never grows an update badge for a tool it does not install.
+     * What the check found, announced by the shell, beside the version it is about: the version
+     * is what a person looks at to know which build this is, and the news that there is a newer
+     * one belongs on the same line rather than under a status about something else. Only the
+     * shell sends this, so a browser tab never grows an update badge for a tool it does not
+     * install.
      */
+    const updateEl = document.getElementById("update");
     document.addEventListener("ainsi:update", event => {
         versionEl.textContent = version;
-        document.querySelector(".ac-status--update")?.remove();
+        updateEl.replaceChildren();
+        updateEl.hidden = true;
         const { version: next, error } = event.detail ?? {};
         if (error) return setStatus(`Could not check for updates: ${error}`, false);
         if (!next) return setStatus("Ainsi is up to date", true);
-        const line = document.createElement("div");
-        line.className = "ac-status ac-status--update";
-        line.append(Object.assign(document.createElement("span"), { className: "ac-status__dot" }),
-            document.createTextNode(`Ainsi ${next} is out · `),
+        updateEl.append(
+            document.createTextNode(`· ${next} is out · `),
             Object.assign(document.createElement("button"), {
                 type: "button", className: "ac-link", textContent: "install and restart",
                 onclick: () => void askShell("update"),
             }));
-        skillsStatus.after(line);
+        updateEl.hidden = false;
     });
 
     const skillsSheet = document.getElementById("skills-sheet");

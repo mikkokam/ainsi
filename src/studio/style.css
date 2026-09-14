@@ -202,8 +202,8 @@ body[data-ainsi-edit]:not([data-present]) :is([data-layout="header"], [data-layo
 .ainsi-studio__imagerow { display: grid; grid-template-columns: 3rem 1fr; align-items: center; gap: .4rem; }
 .ainsi-studio__image .ainsi-studio__input { width: 100%; box-sizing: border-box; }
 .ainsi-studio__imagehint { margin: .1rem 0 0; font: 11px/1.4 var(--ac-font); color: var(--ac-ink-on-content-3); }
-/* the url row carries its own picker button, so it is three columns rather than two */
-.ainsi-studio__imagerow--pick { grid-template-columns: 3rem 1fr auto; }
+/* a row carrying its own picker button is three columns rather than two */
+.ainsi-studio__imagerow.ainsi-studio__row--pick { grid-template-columns: 3rem 1fr auto; }
 /* the picker sits in the form rather than over it: a floating panel would be a click outside
    the form, which commits it and closes it under the pointer */
 .ainsi-studio__files {
