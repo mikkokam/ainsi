@@ -1414,6 +1414,10 @@ function exportDrill(panel: HTMLElement, close: () => void): void {
         h("div", { class: "ainsi-menu__rule" }),
         // the deck itself: what someone else needs in order to keep writing it
         menuItem(`Deck and its files, as ${base}.zip`, write("/__zip", `${base}.zip`)),
+        // the studio links a picture; an export is the moment that stops being true, and that is
+        // the one thing worth knowing before sending one to somebody else
+        h("div", { class: "ainsi-menu__note" },
+            "Every export travels: the pdf and the pptx embed the pictures, the zip carries the files the deck links to and rewrites the links it had to move."),
     );
 }
 
@@ -1930,7 +1934,7 @@ function openImage(target: HTMLElement, range: Range): boolean {
     });
 
     panel.append(h("p", { class: "ainsi-studio__imagehint" },
-        "A local file works by path, relative to the deck folder or absolute. The deck references it rather than holding it: change the file and the deck shows the new one, and the picture itself is embedded only when you build or export."));
+        "A local file is linked, not copied: the studio shows whatever the file holds now, so replacing it replaces the picture here. An export is what makes it travel — html, pdf and pptx embed the picture, the zip carries the file beside the deck — so an exported deck moves to another machine or folder whole."));
     panel.append(h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
 
     // delete, top right like the block toolbar's; the whole block goes, directive and all

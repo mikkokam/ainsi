@@ -641,6 +641,8 @@ body[data-ainsi-edit]:not([data-present]) .ainsi-menu__group { padding: 6px; }
     color: var(--ac-ink-on-content-3);
 }
 body[data-ainsi-edit]:not([data-present]) .ainsi-menu__rule { height: 1px; margin: 0; background: rgb(255 255 255 / 10%); }
+/* a line under a group of actions, saying what they have in common; never a row you can click */
+.ainsi-menu__note { padding: 8px 10px 10px; font: 11px/1.45 var(--ac-font); color: var(--ac-ink-on-content-3); }
 .ainsi-menu__pages { padding: 6px 6px 8px; max-height: 322px; overflow-y: auto; }
 body[data-ainsi-edit]:not([data-present]) .ainsi-menu__head {
     padding: 9px 10px 7px;
