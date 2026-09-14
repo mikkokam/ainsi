@@ -166,3 +166,13 @@ test("copying a sample writes a folder of its own and leaves the shipped deck al
     expect(await Bun.file(shipped).text()).toBe(before);
     await studio.stop();
 }, 30_000);
+
+test("a theme tile's cover is headed with the theme, not with the title of the sample it borrows", async () => {
+    const studio = await open();
+    // default's sample is lehto, whose own h1 is "Lehto & Mänty" and whose frontmatter opens
+    // with a `#` comment line the heading swap must not take for the title
+    const { html } = await fetch(`${studio.url}/__thumb?theme=default`).then(r => r.json());
+    expect(html).toContain("Default");
+    expect(html).not.toContain("Lehto &");
+    await studio.stop();
+}, 30_000);

@@ -583,13 +583,28 @@ async function copySample(sample: Sample, dir: string): Promise<string> {
  */
 const drawn = new Map<string, { stamp: number; tile: Promise<Response> }>();
 
+/** a theme's name as the shelf and its tile both write it */
+const themeLabel = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
+
+/*
+ * The tile is a real page, and the one thing on it that is not about the theme is the sample's
+ * own title: a tile reading "Lehto & Mänty" says the studio ships a deck by that name, not that
+ * this is the default theme. So the cover's heading is the theme's name, which is also what the
+ * caption under the tile says. The frontmatter is held back first, because a deck's comment
+ * there is a `#` line too.
+ */
+function titled(source: string, name: string): string {
+    const front = /^---\n[\s\S]*?\n---\n/.exec(source)?.[0] ?? "";
+    return front + source.slice(front.length).replace(/^# .*$/m, `# ${themeLabel(name)}`);
+}
+
 async function themeThumb(theme: string): Promise<Response> {
     const found = await samples();
     const file = found.get(theme) ?? found.get("default");
-    if (!file) return thumbnail(THEME_SAMPLE, defaultRoot, theme);
+    if (!file) return thumbnail(titled(THEME_SAMPLE, theme), defaultRoot, theme);
     const source = await Bun.file(file).text().catch(() => undefined);
-    if (source === undefined) return thumbnail(THEME_SAMPLE, defaultRoot, theme);
-    return thumbnail(source, dirname(file), theme);
+    if (source === undefined) return thumbnail(titled(THEME_SAMPLE, theme), defaultRoot, theme);
+    return thumbnail(titled(source, theme), dirname(file), theme);
 }
 
 async function thumbnail(source: string, dir: string, themeName?: string): Promise<Response> {
@@ -862,7 +877,7 @@ const server = serve({
                 const css = await Bun.file(join(themePath(name, defaultRoot), "variables.css")).text().catch(() => "");
                 const kind = shipped.includes(name) ? "shipped" : yours.includes(name) ? "yours"
                     : name.startsWith("..") ? "../brand" : name.startsWith(".") ? "local" : "folder";
-                return { id: name, name: name.charAt(0).toUpperCase() + name.slice(1), kind, ...themeTokens(css) };
+                return { id: name, name: themeLabel(name), kind, ...themeTokens(css) };
             }));
             return Response.json({ themes });
         }
