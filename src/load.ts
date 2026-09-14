@@ -188,11 +188,12 @@ export function themeDir(name: string, deckDir: string): string {
 }
 
 /**
- * A theme is a folder: tokens, an optional escape hatch, and optional layout overrides. The
- * default theme's tokens sit under every other theme's, so a theme declares only what it
- * changes and a token added to the contract never leaves an older theme short.
+ * A theme is a folder: tokens, an optional escape hatch, optional layout overrides, and an
+ * optional, separately-timed escape hatch for a component's own internals. The default theme's
+ * tokens sit under every other theme's, so a theme declares only what it changes and a token
+ * added to the contract never leaves an older theme short.
  */
-export async function loadTheme(dir: string, diagnostics: Diagnostic[] = []): Promise<{ css: string; layouts: string }> {
+export async function loadTheme(dir: string, diagnostics: Diagnostic[] = []): Promise<{ css: string; overrides?: string; layouts: string }> {
     const root = resolve(dir);
     const own = await readIfPresent(join(root, "variables.css"));
     if (!own) diagnostics.push({ level: "warn", message: `theme has no variables.css: ${root}` });
@@ -205,13 +206,20 @@ export async function loadTheme(dir: string, diagnostics: Diagnostic[] = []): Pr
             if (selector.includes("__")) {
                 diagnostics.push({
                     level: "warn",
-                    message: `theme styles.css reaches inside a component: "${selector}"; use a token or a layout`,
+                    message: `theme styles.css reaches inside a component: "${selector}"; use a token, a layout, or overrides.css`,
                 });
             }
         }
     }
 
-    return { css: [variables, styles].filter(Boolean).join("\n\n"), layouts: join(root, "layouts") };
+    // styles.css is spliced in ahead of component css so a component's own token-driven rules
+    // still win; overrides.css is the opposite promise and is spliced in after, so a selector
+    // naming a component's own class wins by plain source order, no specificity trick needed.
+    // Its whole purpose is reaching into a component's internals, so it is exempt from the warning
+    // styles.css gets for the same thing.
+    const overrides = await readIfPresent(join(root, "overrides.css"));
+
+    return { css: [variables, styles].filter(Boolean).join("\n\n"), overrides, layouts: join(root, "layouts") };
 }
 
 function selectors(css: string): string[] {

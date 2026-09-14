@@ -1,0 +1,32 @@
+/*
+ * Nothing on this page is a card: a print is a rectangle on black and everything beside it is a
+ * caption. So a box loses its ground and keeps a hairline over it, and its number is set in the
+ * caption voice on that line rather than in a white tag that would be the brightest thing on a
+ * page of photographs.
+ */
+.ainsi-boxes__box {
+    padding: .8em 0 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    border: none;
+    border-top: 1px solid var(--ainsi-rule);
+}
+
+.ainsi-boxes--ordered .ainsi-boxes__box { padding-top: .8em; }
+.ainsi-boxes--ordered .ainsi-boxes__box::before {
+    position: static;
+    display: block;
+    min-width: 0; height: auto; padding: 0;
+    margin-bottom: .5em;
+    font-size: .58em;
+    letter-spacing: .22em;
+    color: var(--ainsi-ink-soft);
+    background: none;
+}
+
+/* a tile's caption is the plate's label, set like every other label in this theme */
+.ainsi-tiles__caption {
+    font-size: .58em;
+    letter-spacing: .22em; text-transform: uppercase;
+}

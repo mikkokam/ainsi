@@ -123,25 +123,29 @@
     .ac-section-head h2 { margin: 0; font: var(--ac-text-section); color: var(--ac-ink); }
     .ac-section-head span { font: 400 12.5px/1.4 var(--ac-font); color: var(--ac-ink-3); }
 
-    .ac-themes-wrap { position: relative; }
-    .ac-themes { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 3px 5px 0;
-                 -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent); }
-    .ac-themes::-webkit-scrollbar { display: none; }
-    /* a row that overflows with no visible scrollbar and no wheel axis of its own is a shelf
-       nothing past the fold can be reached from; the arrows are that reach, shown only when
-       there is somewhere left to go */
-    .ac-themes__arrow { position: absolute; top: 0; height: 107px; width: 30px; display: flex; align-items: center; justify-content: center;
-                         border: 1px solid var(--ac-hairline-strong); border-radius: var(--ac-r-control); background: var(--ac-raised);
-                         box-shadow: var(--ac-shadow-float); color: var(--ac-ink-2); font-size: 17px; line-height: 1; cursor: pointer; z-index: 2; }
-    .ac-themes__arrow:hover { color: var(--ac-ink); background: var(--ac-hover); }
-    .ac-themes__arrow:focus-visible { outline: none; box-shadow: var(--ac-focus); }
-    .ac-themes__arrow[hidden] { display: none; }
-    .ac-themes__arrow--left { left: -6px; }
-    .ac-themes__arrow--right { right: 8px; }
-    .ac-tile { flex: none; width: 190px; display: flex; flex-direction: column; gap: 9px; padding: 0; border: 0; background: none;
+    /* ---- the tab strip: one list at a time, because they answer the same question ----
+       A tab is type on a rule, not a button: three filled pills would read as three actions
+       when only the panel under them changes. The rule runs the content width so the strip
+       reads as the head of the list rather than a control floating above it. */
+    .ac-tabs { display: flex; align-items: stretch; gap: 4px; border-bottom: 1px solid var(--ac-hairline); }
+    .ac-tab { padding: 8px 12px 11px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+              background: none; cursor: pointer; font: var(--ac-text-section); color: var(--ac-ink-3); }
+    .ac-tab:hover { color: var(--ac-ink-2); }
+    .ac-tab:focus-visible { outline: none; box-shadow: var(--ac-focus); border-radius: var(--ac-r-chip); }
+    .ac-tab[aria-selected="true"] { color: var(--ac-ink); border-bottom-color: var(--ac-blue); }
+    .ac-panel[hidden] { display: none; }
+    .ac-panel { display: flex; flex-direction: column; gap: 15px; }
+    .ac-panel__note { font: 400 12.5px/1.4 var(--ac-font); color: var(--ac-ink-3); }
+    /* the empty deck is the one this panel makes, so the way out of it belongs here */
+    .ac-panel__tip { margin-top: -9px; font: 400 12.5px/1.4 var(--ac-font); color: var(--ac-ink-2); }
+
+    /* the panel is the width of the page now, so the shelf is a grid: every theme on screen at
+       once, at the tile width a page reads at, and the rows wrap where the window ends */
+    .ac-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 12px; }
+    .ac-tile { display: flex; flex-direction: column; gap: 9px; padding: 0; border: 0; background: none;
                border-radius: var(--ac-r-card); cursor: pointer; text-align: left; transition: box-shadow var(--ac-hover-ms) var(--ac-ease); }
     .ac-tile:focus-visible { outline: none; box-shadow: inset var(--ac-focus); }
-    .ac-tile__preview { height: 107px; border-radius: var(--ac-r-control); border: 1px solid var(--ac-hairline-strong); overflow: hidden;
+    .ac-tile__preview { aspect-ratio: 16 / 9; border-radius: var(--ac-r-control); border: 1px solid var(--ac-hairline-strong); overflow: hidden;
                          position: relative; padding: 14px 15px; display: flex; flex-direction: column; gap: 7px; }
     .ac-tile__aa { line-height: 1; font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
     .ac-tile__bar { height: 2px; width: 38px; }
@@ -316,22 +320,31 @@
         </div>
     </div>
 
-    <div class="ac-section">
-        <div class="ac-section-head"><h2>Start from a theme</h2><span>shipped themes and your own · <button type="button" class="ac-link" id="themes-folder">open your themes folder</button></span></div>
-        <div class="ac-themes-wrap">
-            <button type="button" class="ac-themes__arrow ac-themes__arrow--left" id="themes-left" aria-label="Scroll themes left" hidden>‹</button>
+    <div class="ac-section ac-section--list">
+        <div class="ac-tabs" role="tablist" aria-label="Where the next deck comes from">
+            <button type="button" class="ac-tab" role="tab" id="tab-recents" data-zone="tabs" data-tab="recents" aria-selected="true" aria-controls="panel-recents">Open recent</button>
+            <button type="button" class="ac-tab" role="tab" id="tab-themes" data-zone="tabs" data-tab="themes" aria-selected="false" aria-controls="panel-themes" tabindex="-1">Start empty from a theme</button>
+            <button type="button" class="ac-tab" role="tab" id="tab-samples" data-zone="tabs" data-tab="samples" aria-selected="false" aria-controls="panel-samples" tabindex="-1">Copy a sample</button>
+        </div>
+
+        <div class="ac-panel" id="panel-recents" role="tabpanel" aria-labelledby="tab-recents">
+            <div class="ac-recents" id="recents"></div>
+        </div>
+
+        <div class="ac-panel" id="panel-themes" role="tabpanel" aria-labelledby="tab-themes" hidden>
+            <div class="ac-panel__note">shipped themes and your own · <button type="button" class="ac-link" id="themes-folder">open your themes folder</button></div>
+            <div class="ac-panel__tip">Tip: skip empty deck syndrome. Write the markdown with your agent, using <button type="button" class="ac-link" id="tip-skills">the skills</button>, then open that instead.</div>
             <div class="ac-themes" id="themes"></div>
-            <button type="button" class="ac-themes__arrow ac-themes__arrow--right" id="themes-right" aria-label="Scroll themes right" hidden>›</button>
+        </div>
+
+        <div class="ac-panel" id="panel-samples" role="tabpanel" aria-labelledby="tab-samples" hidden>
+            <div class="ac-panel__note">a deck of its own, images and all, in the folder you last browsed · the shipped sample is never written to</div>
+            <div class="ac-recents" id="samples"></div>
         </div>
     </div>
 
-    <div class="ac-section ac-section--recents">
-        <div class="ac-section-head"><h2>Open recent</h2></div>
-        <div class="ac-recents" id="recents"></div>
-    </div>
-
     <div class="ac-footer">
-        <div class="ac-footer__status" id="status">Click this window and press ↓ — focus starts on Open a deck, then New, the theme shelf, and the recents.</div>
+        <div class="ac-footer__status" id="status">Click this window and press ↓ — focus starts on Open a deck, then New, the three tabs, and the list under them.</div>
         <div class="ac-footer__hints"><span>↑↓ zone</span><span>←→ pick</span><span>⏎ go</span><span>⌘O browse</span><span>⌘N new</span></div>
     </div>
 </div>
@@ -381,18 +394,24 @@
 
 <script>
 (() => {
-    const zones = ["open", "new", "themes", "recents"];
+    // the last zone is whichever list the tab strip is showing: three lists, one at a time
+    const zones = () => ["open", "new", "tabs", tab];
     let zone = "open";
+    let tab = "recents";
     let themeIndex = 0;
     let recentIndex = 0;
+    let sampleIndex = 0;
     let themes = [];
     let recents = [];
-    let at = ""; // the folder a browse or a plain "New deck" resolves against
+    let samples = [];
+    let at = ""; // the folder a browse, a plain "New deck" or a sample copy resolves against
 
     const openBtn = document.getElementById("open");
     const newBtn = document.getElementById("new");
     const themesEl = document.getElementById("themes");
     const recentsEl = document.getElementById("recents");
+    const samplesEl = document.getElementById("samples");
+    const tabs = [...document.querySelectorAll(".ac-tab")];
     const statusEl = document.getElementById("status");
     const skillsText = document.getElementById("skills-text");
     const skillsStatus = document.getElementById("skills-status");
@@ -412,9 +431,14 @@
     function describeZone() {
         if (zone === "open") return "Browse for a deck — ⌘O does the same, and so does the folder icon in the titlebar.";
         if (zone === "new") return "New deck in the default theme, written to the folder you last browsed.";
+        if (zone === "tabs") return "← → between the three lists: what you had open, an empty deck on a theme, or a copy of a sample.";
         if (zone === "themes") {
             const t = themes[themeIndex];
             return t ? `New deck in ${t.name} — ${t.kind}.` : "No themes to start from.";
+        }
+        if (zone === "samples") {
+            const d = samples[sampleIndex];
+            return d ? `Copying ${d.id} into the folder you last browsed, then opening the copy.` : "No samples shipped with this build.";
         }
         const r = recents[recentIndex];
         if (!r) return "No recent decks yet.";
@@ -459,6 +483,7 @@
     }
     const openDeck = path => repoint("/__open", { path });
     const newDeck = theme => repoint("/__new", { at, theme });
+    const copySample = id => repoint("/__sample-copy", { at, id });
 
     async function pin(recent, pinned) {
         const response = await fetch("/__pin", { method: "POST", body: JSON.stringify({ path: recent.path, pinned }) });
@@ -523,6 +548,75 @@
         if (event.detail === "open") openADeck();
     });
 
+    // ---- the tab strip ------------------------------------------------------
+
+    /*
+     * Three lists, one question: where the next deck comes from. Only the chosen one is in the
+     * document's tab order, and the samples are fetched the first time they are asked for, since
+     * each one costs a parse and a theme read on the server.
+     */
+    function selectTab(next, { focus } = {}) {
+        tab = next;
+        for (const button of tabs) {
+            const on = button.dataset.tab === tab;
+            button.setAttribute("aria-selected", String(on));
+            button.tabIndex = on ? 0 : -1;
+            document.getElementById(`panel-${button.dataset.tab}`).hidden = !on;
+        }
+        if (tab === "samples" && !samples.length) void loadSamples();
+        if (focus) document.getElementById(`tab-${tab}`).focus();
+        zone = "tabs";
+        updateStatus();
+    }
+    for (const button of tabs) button.addEventListener("click", () => selectTab(button.dataset.tab));
+
+    // ---- samples: shipped decks, copied out rather than opened where they live ---------------
+
+    function renderSamples() {
+        samplesEl.replaceChildren();
+        if (!samples.length) {
+            samplesEl.append(Object.assign(document.createElement("div"), { className: "ac-empty", textContent: "No samples shipped with this build." }));
+            return;
+        }
+        samples.forEach((d, i) => {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "ac-card";
+            card.dataset.zone = "samples";
+            card.dataset.index = String(i);
+            card.tabIndex = i === sampleIndex ? 0 : -1;
+            card.setAttribute("aria-label", `Copy the ${d.id} sample`);
+            card.innerHTML = `
+                <div class="ac-card__cover" style="background:${d.ground}">
+                    <div class="ac-card__title" style="font-family:${d.display};color:${d.ink}">${d.title}</div>
+                    <div class="ac-card__bar" style="background:${d.accent}"></div>
+                </div>
+                <div class="ac-card__body">
+                    <div class="ac-card__path">${d.id}</div>
+                    <div class="ac-card__meta">
+                        <span>copy to open</span><span class="ac-dot">·</span>
+                        <span>${d.pages} page${d.pages === 1 ? "" : "s"}</span><span class="ac-dot">·</span>
+                        <span class="ac-theme-id">${d.theme}</span>
+                    </div>
+                </div>`;
+            const shot = document.createElement("div");
+            shot.className = "ac-shot";
+            shot.dataset.shot = `/__thumb?sample=${encodeURIComponent(d.id)}`;
+            card.querySelector(".ac-card__cover").append(shot);
+            shots.observe(shot);
+            card.addEventListener("click", () => copySample(d.id));
+            samplesEl.append(card);
+        });
+    }
+
+    async function loadSamples() {
+        const response = await fetch("/__samples");
+        if (!response.ok) return fail(response);
+        samples = await response.json();
+        sampleIndex = clamp(sampleIndex, 0, Math.max(samples.length - 1, 0));
+        renderSamples();
+    }
+
     // ---- theme shelf --------------------------------------------------------
 
     function renderThemes() {
@@ -563,30 +657,7 @@
             <div class="ac-tile__caption"><span class="ac-tile__name">New theme…</span><span class="ac-tile__kind">copy the default, edit</span></div>`;
         more.addEventListener("click", newTheme);
         themesEl.append(more);
-        updateThemeArrows();
     }
-
-    // ---- theme shelf scrolling: no visible scrollbar and, on a plain mouse, no horizontal
-    // wheel axis either, so the row needs its own way to say there is more --------------------
-
-    const themesLeft = document.getElementById("themes-left");
-    const themesRight = document.getElementById("themes-right");
-    function updateThemeArrows() {
-        const max = themesEl.scrollWidth - themesEl.clientWidth;
-        themesLeft.hidden = themesEl.scrollLeft <= 2;
-        themesRight.hidden = themesEl.scrollLeft >= max - 2;
-    }
-    themesEl.addEventListener("scroll", updateThemeArrows, { passive: true });
-    new ResizeObserver(updateThemeArrows).observe(themesEl);
-    themesLeft.addEventListener("click", () => themesEl.scrollBy({ left: -themesEl.clientWidth * 0.9, behavior: "smooth" }));
-    themesRight.addEventListener("click", () => themesEl.scrollBy({ left: themesEl.clientWidth * 0.9, behavior: "smooth" }));
-    // a vertical wheel has no horizontal component to give it; read it as one here, like any
-    // other horizontal shelf
-    themesEl.addEventListener("wheel", e => {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        e.preventDefault();
-        themesEl.scrollLeft += e.deltaY;
-    }, { passive: false });
 
     /*
      * Thumbnails, one build each, fetched when the tile comes into view: the shelf and the grid
@@ -670,7 +741,7 @@
     function renderRecents() {
         recentsEl.replaceChildren();
         if (!recents.length) {
-            recentsEl.append(Object.assign(document.createElement("div"), { className: "ac-empty", textContent: "Nothing opened yet. Start from a theme above." }));
+            recentsEl.append(Object.assign(document.createElement("div"), { className: "ac-empty", textContent: "Nothing opened yet. Start empty from a theme, or copy a sample." }));
             return;
         }
         recents.forEach((r, i) => {
@@ -867,13 +938,16 @@
     skillsSheet.addEventListener("click", e => { if (e.target === skillsSheet) closeSkills(); });
     document.getElementById("skills-close").addEventListener("click", closeSkills);
     document.getElementById("skills-folder").addEventListener("click", () => void reveal("skills"));
+    document.getElementById("tip-skills").addEventListener("click", openSkills);
 
     // ---- keyboard model ---------------------------------------------------
 
     function currentZoneItem(z) {
         if (z === "open") return openBtn;
         if (z === "new") return newBtn;
+        if (z === "tabs") return document.getElementById(`tab-${tab}`);
         if (z === "themes") return themesEl.querySelector(`[data-index="${clamp(themeIndex, 0, themes.length - 1)}"]`);
+        if (z === "samples") return samplesEl.querySelector(`[data-index="${clamp(sampleIndex, 0, samples.length - 1)}"]`);
         return recentsEl.querySelector(`[data-index="${clamp(recentIndex, 0, recents.length - 1)}"]`);
     }
 
@@ -881,6 +955,7 @@
     function roveTabIndex() {
         themesEl.querySelectorAll(".ac-tile[data-zone]").forEach(el => { el.tabIndex = Number(el.dataset.index) === themeIndex ? 0 : -1; });
         recentsEl.querySelectorAll(".ac-card[data-zone]").forEach(el => { el.tabIndex = Number(el.dataset.index) === recentIndex ? 0 : -1; });
+        samplesEl.querySelectorAll(".ac-card[data-zone]").forEach(el => { el.tabIndex = Number(el.dataset.index) === sampleIndex ? 0 : -1; });
     }
 
     // real focus drives the model: a click, Tab, or an arrow key all land here the same way
@@ -890,6 +965,7 @@
         zone = el.dataset.zone;
         if (zone === "themes") themeIndex = Number(el.dataset.index);
         if (zone === "recents") recentIndex = Number(el.dataset.index);
+        if (zone === "samples") sampleIndex = Number(el.dataset.index);
         roveTabIndex();
         updateStatus();
     });
@@ -924,16 +1000,25 @@
         }
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
             e.preventDefault();
-            const zi = clamp(zones.indexOf(zone) + (e.key === "ArrowDown" ? 1 : -1), 0, zones.length - 1);
-            currentZoneItem(zones[zi])?.focus();
+            const order = zones();
+            const zi = clamp(order.indexOf(zone) + (e.key === "ArrowDown" ? 1 : -1), 0, order.length - 1);
+            currentZoneItem(order[zi])?.focus();
         } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            if (zone !== "themes" && zone !== "recents") return;
-            e.preventDefault();
             const d = e.key === "ArrowRight" ? 1 : -1;
-            const list = zone === "themes" ? themes : recents;
-            const idx = zone === "themes" ? themeIndex : recentIndex;
+            if (zone === "tabs") {
+                e.preventDefault();
+                const names = tabs.map(t => t.dataset.tab);
+                selectTab(names[clamp(names.indexOf(tab) + d, 0, names.length - 1)], { focus: true });
+                return;
+            }
+            if (zone !== "themes" && zone !== "recents" && zone !== "samples") return;
+            e.preventDefault();
+            const list = zone === "themes" ? themes : zone === "samples" ? samples : recents;
+            const idx = zone === "themes" ? themeIndex : zone === "samples" ? sampleIndex : recentIndex;
             const next = clamp(idx + d, 0, list.length - 1);
-            if (zone === "themes") themeIndex = next; else recentIndex = next;
+            if (zone === "themes") themeIndex = next;
+            else if (zone === "samples") sampleIndex = next;
+            else recentIndex = next;
             roveTabIndex();
             currentZoneItem(zone)?.focus();
         }

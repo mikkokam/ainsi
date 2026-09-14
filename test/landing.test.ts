@@ -135,3 +135,34 @@ test("a recent whose file is gone is still listed, marked not found", async () =
     expect(after[0]).toMatchObject({ found: false });
     await studio.stop();
 }, 30_000);
+
+test("the samples list carries each shipped deck's own title, theme and page count", async () => {
+    const studio = await open();
+    const response = await fetch(`${studio.url}/__samples`);
+    expect(response.status).toBe(200);
+    const samples = await response.json();
+    const meridian = samples.find((s: { id: string }) => s.id === "meridian");
+    expect(meridian).toMatchObject({ theme: "swiss", ground: "#ffffff" });
+    expect(meridian.pages).toBeGreaterThan(1);
+    await studio.stop();
+}, 30_000);
+
+test("copying a sample writes a folder of its own and leaves the shipped deck alone", async () => {
+    const studio = await open();
+    const shipped = resolve(import.meta.dir, "..", "samples", "boring-inc", "boring-inc.md");
+    const before = await Bun.file(shipped).text();
+
+    const response = await fetch(`${studio.url}/__sample-copy`, { method: "POST", body: JSON.stringify({ id: "boring-inc" }) });
+    expect(response.status).toBe(200);
+    const { path } = await response.json();
+    // macOS resolves the temp dir through /private, so the tail is what this can assert on
+    expect(path).toEndWith(join("boring-inc", "boring-inc.md"));
+    expect(await Bun.file(path).text()).toBe(before);
+
+    // a second copy is a second folder rather than an overwrite of the first
+    const again = await fetch(`${studio.url}/__sample-copy`, { method: "POST", body: JSON.stringify({ id: "boring-inc" }) });
+    expect((await again.json()).path).toEndWith(join("boring-inc-2", "boring-inc.md"));
+
+    expect(await Bun.file(shipped).text()).toBe(before);
+    await studio.stop();
+}, 30_000);

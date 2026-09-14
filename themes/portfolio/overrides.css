@@ -1,0 +1,22 @@
+/*
+ * The card stays, because a white plate on off-white paper is how the rest of this theme frames
+ * the work. What goes is the accent stripe across its top and the numeral wedged into its
+ * corner: the number is set large in the mono, above the title, where it reads as a plate
+ * number rather than a badge.
+ */
+.ainsi-boxes__box {
+    border: var(--ainsi-border) solid var(--ainsi-rule);
+    padding: 1.4em;
+}
+
+.ainsi-boxes--ordered .ainsi-boxes__box { padding-top: 1.4em; }
+.ainsi-boxes--ordered .ainsi-boxes__box::before {
+    position: static;
+    display: block;
+    min-width: 0; height: auto; padding: 0;
+    margin-bottom: .5em;
+    font-size: 1.1em;
+    letter-spacing: .06em;
+    color: var(--ainsi-accent);
+    background: none;
+}

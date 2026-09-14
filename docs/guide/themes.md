@@ -5,6 +5,7 @@ A theme is a folder. Swapping the folder rebrands every deck written against it,
     themes/house/
       variables.css           the tokens: what this theme decides
       styles.css              optional: what no token can carry
+      overrides.css           optional: a component's own internals, deliberately
       layouts/
         header/
           style.css           optional: this theme's cover
@@ -65,9 +66,24 @@ The escape hatch, for what no token can carry: the faces and their optical sizin
 
 It may not reach inside a component. A selector containing `__` is a component's internals, and the build warns when it sees one:
 
-    theme styles.css reaches inside a component: ".ainsi-tiles__caption"; use a token or a layout
+    theme styles.css reaches inside a component: ".ainsi-tiles__caption"; use a token, a layout, or overrides.css
 
-The rule holds because a component's markup is its own business and will change. If a component's look cannot be reached through a token, that is a missing token, and adding one is a change to `src/tokens.ts` and every theme, deliberately.
+The rule holds because a component's markup is its own business and will change, and `styles.css` loads before a component's own css, so a selector at equal specificity loses the fight anyway. If a component's look can be reached through a token, use the token: that is what keeps a component's markup free to change under every theme at once. If it cannot, that is a missing token, and adding one is a change to `src/tokens.ts` and every theme, deliberately, unless the deck is a one-off. For that case there is `overrides.css`.
+
+## overrides.css
+
+For the look a token was never going to carry, because it is not a colour or a depth but the component's shape itself: a card with no card, a numeral with no badge. `styles.css` loads ahead of every layout and component so their own rules can still win; `overrides.css` loads after all of it, including the viewer's chrome, so a selector naming a component's own class wins by plain source order, no specificity trick, no `!important`.
+
+    /* overrides.css */
+    .ainsi-boxes__box {
+        background: none;
+        box-shadow: none;
+        border: none;
+        border-top: 1px solid var(--ainsi-ink);
+        border-radius: 0;
+    }
+
+This is the one file exempt from the `__` warning above, because reaching into a component's internals is its entire job. It is still a component's markup, and will still change: a theme leaning on this file is pinned to the component shape as it exists today, more tightly than a token-only theme is, and a component rewrite is the thing that can break it silently. Reach for a token first; reach for this file when there genuinely isn't one, not as a shortcut around writing one.
 
 ## Motion
 
@@ -82,10 +98,12 @@ The hooks, for a theme writing its own: `data-present` and `data-turn="forward" 
 
 ### Replacing it
 
-Override the viewer's rules in `styles.css`. Theme CSS is emitted before the viewer's, so an override has to out-specify it: write `body.ainsi[data-present]` where the viewer writes `body[data-present]`.
+Override the viewer's rules in `overrides.css`, which loads after the viewer's own css, so a plain selector wins:
 
-    body.ainsi[data-present] .ainsi-page[data-current] { animation: none; }
-    body.ainsi[data-present] .ainsi-page[data-current] article > * { animation: none; }
+    body[data-present] .ainsi-page[data-current] { animation: none; }
+    body[data-present] .ainsi-page[data-current] article > * { animation: none; }
+
+(In `styles.css`, which loads before the viewer's, the same override needs the older out-specify trick instead: `body.ainsi[data-present]` where the viewer writes `body[data-present]`.)
 
 Two constraints hold whatever a theme writes in place of it. Only the arriving page can move: the one leaving is `display: none` from the instant it stops being current, and nothing hidden that way can be animated. And a page's keyframes have to restate the viewer's own centring and scale, `translate(-50%, -50%) scale(var(--ainsi-present-scale, 1))`, because an animated transform replaces the rule's, not adds to it.
 

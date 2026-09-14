@@ -17,6 +17,8 @@ export interface BuildOptions {
     registry: Registry;
     layouts: Layouts;
     themeCss?: string;
+    /** a theme's overrides.css, spliced in after every layout and component; see loadTheme */
+    themeOverridesCss?: string;
     /** toolbar and presentation mode; off for a headless render such as a pdf */
     viewer?: { css: string; script: string };
     /** wrap each entity in a boxless handle the studio can splice against */
@@ -204,6 +206,7 @@ ${rendered}
     // a stylesheet honours @import only ahead of every rule, so a theme's font imports move to the top
     const imports = [...(options.themeCss ?? "").matchAll(IMPORT)].map(m => m[0]).join("\n");
     const theme = (options.themeCss ?? "").replace(IMPORT, "");
+    const overrides = options.themeOverridesCss ?? "";
     const html = `<!doctype html>
 <html lang="fi">
 <head>
@@ -221,6 +224,9 @@ ${theme}
 /* layouts and components, styled through the tokens above */
 ${css}
 ${options.viewer?.css ?? ""}
+/* theme overrides.css: spliced in after every component, so a selector naming a component's
+   own class wins by plain source order rather than a specificity trick */
+${overrides}
 </style>
 </head>
 <body class="ainsi"${options.edit ? " data-ainsi-studio" : ""}${settings.numbers ? "" : ' data-numbers="off"'} style="--ainsi-ratio:${settings.ratio.replace(":", " / ")}${logoVars(options)}">

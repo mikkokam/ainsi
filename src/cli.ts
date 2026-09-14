@@ -296,7 +296,7 @@ async function build(path: string, entry?: Open): Promise<{ html: string; roots:
             script: [viewer?.script, studio.script].filter(Boolean).join("\n"),
         };
     }
-    const buildOptions = { registry, layouts, themeCss: theme.css, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics, dir), coverLogo: await logoOf(settings.coverLogo, diagnostics, dir) };
+    const buildOptions = { registry, layouts, themeCss: theme.css, themeOverridesCss: theme.overrides, viewer, edit: editing, logo: await logoOf(settings.logo, diagnostics, dir), coverLogo: await logoOf(settings.coverLogo, diagnostics, dir) };
 
     const assembled = assemble(source, buildOptions);
     clock.mark("assemble");
@@ -529,27 +529,51 @@ const THEME_SAMPLE = "# Aa\n\nBody text at this theme's measure, and a second li
  */
 const SAMPLES = resolve(import.meta.dir, "..", "samples");
 /*
- * The promise, not the map it will hold: the shelf asks for every tile at once, and a cache that
- * publishes the map before it has filled it hands the rest of that burst an empty one. They then
+ * The promise, not the list it will hold: the shelf asks for every tile at once, and a cache that
+ * publishes the list before it has filled it hands the rest of that burst an empty one. They then
  * find no sample for their theme and fall back to the skeleton, which is a race you only see on
  * a cold landing and never when the tiles are asked for one at a time.
  */
-let byTheme: Promise<Map<string, string>> | undefined;
+interface Sample { id: string; file: string; theme: string }
+let listed: Promise<Sample[]> | undefined;
 
-function samples(): Promise<Map<string, string>> {
-    byTheme ??= (async () => {
-        const found = new Map<string, string>();
+function sampleDecks(): Promise<Sample[]> {
+    listed ??= (async () => {
+        const found: Sample[] = [];
         for (const entry of await readdir(SAMPLES, { withFileTypes: true }).catch(() => [])) {
             if (!entry.isDirectory()) continue;
             const file = join(SAMPLES, entry.name, `${entry.name}.md`);
             const source = await Bun.file(file).text().catch(() => undefined);
             if (source === undefined) continue;
-            const named = parse(source).doc.settings.theme;
-            if (!found.has(named)) found.set(named, file);
+            found.push({ id: entry.name, file, theme: parse(source).doc.settings.theme });
         }
         return found;
     })();
-    return byTheme;
+    return listed;
+}
+
+/** the first sample written in each theme, which is the one that theme's tile is drawn from */
+async function samples(): Promise<Map<string, string>> {
+    const found = new Map<string, string>();
+    for (const sample of await sampleDecks()) if (!found.has(sample.theme)) found.set(sample.theme, sample.file);
+    return found;
+}
+
+/*
+ * A sample lands as a folder of its own, never on top of what is already in the target: it is
+ * someone's first deck as often as it is a reference, and a copy that overwrites is a worse
+ * first minute than one with a number after its name. The built html, pdf and pptx beside the
+ * source stay where they are; they are outputs, and the copy makes its own on first build.
+ */
+const OUTPUTS = new Set([".html", ".pdf", ".pptx", ".zip"]);
+
+async function copySample(sample: Sample, dir: string): Promise<string> {
+    for (let n = 1; ; n++) {
+        const target = join(dir, n === 1 ? sample.id : `${sample.id}-${n}`);
+        if (existsSync(target)) continue;
+        await cp(dirname(sample.file), target, { recursive: true, filter: from => !OUTPUTS.has(extname(from)) });
+        return join(target, basename(sample.file));
+    }
 }
 
 /*
@@ -573,7 +597,7 @@ async function thumbnail(source: string, dir: string, themeName?: string): Promi
     const parsed = parse(source);
     const settings = { ...parsed.doc.settings, theme: themeName ?? parsed.doc.settings.theme };
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics, dir);
-    const options = { registry, layouts, themeCss: theme.css, viewer: { css: THUMB_CSS, script: "" } };
+    const options = { registry, layouts, themeCss: theme.css, themeOverridesCss: theme.overrides, viewer: { css: THUMB_CSS, script: "" } };
     const assembled = assemble(source, options);
     const pages = assembled.pages.slice(0, 1);
     await inlineImages(pages, diagnostics, dir);
@@ -664,7 +688,7 @@ async function fitted(path: string, diagnostics: Diagnostic[]) {
     const source = await Bun.file(path).text();
     const settings = parse(source).doc.settings;
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics, dir);
-    const options = { registry, layouts, themeCss: theme.css, logo: await logoOf(settings.logo, diagnostics, dir), coverLogo: await logoOf(settings.coverLogo, diagnostics, dir) };
+    const options = { registry, layouts, themeCss: theme.css, themeOverridesCss: theme.overrides, logo: await logoOf(settings.logo, diagnostics, dir), coverLogo: await logoOf(settings.coverLogo, diagnostics, dir) };
     const assembled = assemble(source, options);
     await inlineImages(assembled.pages, diagnostics, dir);
     const result = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
@@ -862,6 +886,25 @@ const server = serve({
             // grid wraps, so the cap is about how far back a deck is worth looking for
             return Response.json(withPreviews.slice(0, 16));
         }
+        if (url.pathname === "/__samples") {
+            const decks = await Promise.all((await sampleDecks()).map(async sample => {
+                const source = await Bun.file(sample.file).text();
+                const { registry, layouts } = await stack(sample.theme, [], dirname(sample.file));
+                const { title, pages } = assemble(source, { registry, layouts });
+                const css = await Bun.file(join(themePath(sample.theme, dirname(sample.file)), "variables.css")).text().catch(() => "");
+                return { id: sample.id, title, pages: pages.length, theme: sample.theme, ...themeTokens(css) };
+            }));
+            return Response.json(decks);
+        }
+        if (url.pathname === "/__sample-copy" && request.method === "POST") {
+            const { id, at } = await request.json();
+            const dir = under(at, entry ? dirname(entry.path) : defaultRoot);
+            if (!dir) return new Response("outside the folders the studio can reach", { status: 403 });
+            const sample = (await sampleDecks()).find(s => s.id === id);
+            if (!sample) return new Response("no such sample", { status: 404 });
+            const made = await openDeck(await copySample(sample, dir));
+            return Response.json({ id: made.id, url: `/d/${made.id}/`, file: basename(made.path), path: made.path });
+        }
         if (url.pathname === "/__pin" && request.method === "POST") {
             const { path, pinned } = await request.json();
             if (typeof path !== "string" || typeof pinned !== "boolean") return new Response("path and pinned", { status: 400 });
@@ -880,6 +923,12 @@ const server = serve({
                 const held = drawn.get(theme);
                 if (held?.stamp !== stamp) drawn.set(theme, { stamp, tile: themeThumb(theme) });
                 return (await drawn.get(theme)!.tile).clone();
+            }
+            const sampleId = url.searchParams.get("sample");
+            if (sampleId) {
+                const sample = (await sampleDecks()).find(s => s.id === sampleId);
+                if (!sample) return new Response("no such sample", { status: 404 });
+                return thumbnail(await Bun.file(sample.file).text(), dirname(sample.file));
             }
             // only a deck already on the recents list: the allowlist is the list the page is
             // drawing, which is narrower than "any markdown under the root"

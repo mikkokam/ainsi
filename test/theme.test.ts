@@ -88,3 +88,13 @@ test("a bare theme name is one of ours, a path is the deck's own", () => {
     expect(themeDir("../themes/house", "/decks/pitch")).toBe("/decks/themes/house");
     expect(themeDir("/opt/themes/house", "/decks/pitch")).toBe("/opt/themes/house");
 });
+
+test("a theme's overrides.css comes after every component's own css, so a plain selector wins", () => {
+    const { html } = build("# T\n\n<!-- ainsi: boxes -->\n- a\n", {
+        registry: defaults,
+        layouts,
+        themeCss: ".ainsi-page h1 { letter-spacing: .03em; }",
+        themeOverridesCss: ".ainsi-boxes__box { border: none; }",
+    });
+    expect(html.indexOf(".ainsi-boxes__box { border: none; }")).toBeGreaterThan(html.indexOf("border-top: 3px solid var(--ainsi-accent)"));
+});

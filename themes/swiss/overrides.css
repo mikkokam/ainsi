@@ -1,0 +1,26 @@
+/*
+ * The card is not a Swiss idea. A box here is a column hung under a rule, the way a poster
+ * divides its grid: no ground, no shadow, no frame, one heavy line across the top. None of that
+ * is reachable through a token, because the tokens carry the surface and the shadow a card is
+ * drawn with, not whether there is a card at all.
+ */
+.ainsi-boxes__box {
+    padding: .7em 0 0;
+    background: none;
+    box-shadow: none;
+    border: none;
+    border-top: 3px solid var(--ainsi-ink);
+}
+
+/* the number hangs on that rule in red, rather than sitting in a tag cut out of a corner the
+   box no longer has */
+.ainsi-boxes--ordered .ainsi-boxes__box { padding-top: .7em; }
+.ainsi-boxes--ordered .ainsi-boxes__box::before {
+    position: static;
+    display: block;
+    min-width: 0; height: auto; padding: 0;
+    margin-bottom: .4em;
+    font-size: .78em;
+    color: var(--ainsi-accent);
+    background: none;
+}
