@@ -882,9 +882,11 @@ const server = serve({
             // pinned first, then the ones still on disk: a deck that has moved is worth showing,
             // but never ahead of one you can open
             withPreviews.sort((a, b) => Number(b.pinned) - Number(a.pinned) || Number(b.found) - Number(a.found) || b.lastOpened - a.lastOpened);
-            // a row of covers is cheap: an entry is a path and what its last build said, and the
-            // grid wraps, so the cap is about how far back a deck is worth looking for
-            return Response.json(withPreviews.slice(0, 16));
+            // the grid wraps and a cover is only drawn once its card is scrolled to, so the cap is
+            // about how far back a deck is worth looking for rather than about what it costs to
+            // list. A deck whose file has gone is sorted to the end above, so the cap spends
+            // itself on decks that can actually be opened.
+            return Response.json(withPreviews.slice(0, 40));
         }
         if (url.pathname === "/__samples") {
             const decks = await Promise.all((await sampleDecks()).map(async sample => {
