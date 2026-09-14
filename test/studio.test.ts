@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 import { assemble } from "../src/build";
 import { parse } from "../src/parse";
-import { SETTINGS, matterValue, writeMatter, addPage, alertOf, directiveLine, markerOf, move, movePage, moveTo, relayout, remove, removePage, render, retag, strands, withAlert, type Target , toGrid, toItems, toList, toMarkdown } from "../src/studio/edits";
+import { SETTINGS, matterValue, writeMatter, addPage, alertOf, directiveLine, markerOf, mergeToList, move, movePage, moveTo, relayout, remove, removeMany, removePage, render, retag, strands, withAlert, type Target , toGrid, toItems, toList, toMarkdown } from "../src/studio/edits";
 
 const registry = await load();
 const layouts = await loadLayouts();
@@ -392,4 +392,51 @@ test("a key set back to what the parser assumes loses its line, and a new key go
 test("a deck with no frontmatter gets only the keys that were changed", () => {
     expect(matterOf([], { logo: "assets/mark.svg" })).toBe("logo: assets/mark.svg");
     expect(matterOf([], {})).toBe("");
+});
+
+/*
+ * Merging a selection into one list: each block is an item, a list's own items stay items, and
+ * anything inside the region that was not selected keeps its text and its place after the list.
+ */
+const at = (source: string, md: string, kind: string): Target =>
+    ({ start: source.indexOf(md), end: source.indexOf(md) + md.length, md, kind });
+
+test("blocks merge into one list, each block an item and a list's items staying items", () => {
+    const source = "One.\n\n- a\n- b\n\nTwo.\n";
+    const merged = apply(source, mergeToList(source, [
+        at(source, "One.", "paragraph"),
+        at(source, "- a\n- b", "list"),
+        at(source, "Two.", "paragraph"),
+    ])!);
+    expect(merged).toBe("- One.\n- a\n- b\n- Two.\n");
+});
+
+test("merging takes the first block's kind of list, so a numbered one stays numbered", () => {
+    const source = "1. a\n2. b\n\nTail.\n";
+    const merged = apply(source, mergeToList(source, [at(source, "1. a\n2. b", "list"), at(source, "Tail.", "paragraph")])!);
+    expect(merged).toBe("1. a\n2. b\n3. Tail.\n");
+});
+
+test("a heading merged into a list stops being a heading", () => {
+    const source = "# Vaiheet\n\nYksi.\n";
+    const merged = apply(source, mergeToList(source, [at(source, "# Vaiheet", "heading"), at(source, "Yksi.", "paragraph")])!);
+    expect(merged).toBe("- Vaiheet\n- Yksi.\n");
+});
+
+test("a block between two selected ones is not merged and keeps its place after the list", () => {
+    const source = "A\n\nSkipped.\n\nB\n";
+    const merged = apply(source, mergeToList(source, [at(source, "A", "paragraph"), at(source, "B", "paragraph")])!);
+    expect(merged).toBe("- A\n- B\n\nSkipped.\n");
+});
+
+test("merging across a page break brings the blocks onto the first page and leaves the break", () => {
+    const source = "A\n\n---\n\nB\n\nC\n";
+    const merged = apply(source, mergeToList(source, [at(source, "A", "paragraph"), at(source, "B", "paragraph")])!);
+    expect(merged).toBe("- A\n- B\n\n---\n\nC\n");
+});
+
+test("several blocks delete at once, and one nobody picked stays", () => {
+    const source = "A\n\nKept.\n\nB\n\nC\n";
+    const after = apply(source, removeMany(source, [at(source, "A", "paragraph"), at(source, "B", "paragraph")])!);
+    expect(after).toBe("Kept.\n\nC\n");
 });

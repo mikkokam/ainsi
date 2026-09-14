@@ -25,7 +25,7 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
-import { ALERT_KINDS, MATTER, RATIOS, SETTINGS, addPage, alertOf, directiveLine, isOther, markerOf, matterValue, move, movePage, moveTo, pageSpan, strands, toGrid, toItems, toList, toMarkdown, relayout, remove, removePage, render as structural, retag, withAlert, writeMatter, type Target, type TextKind } from "./edits";
+import { ALERT_KINDS, MATTER, RATIOS, SETTINGS, addPage, alertOf, directiveLine, isOther, markerOf, matterValue, mergeToList, move, movePage, moveTo, pageSpan, strands, textShaped, toGrid, toItems, toList, toMarkdown, relayout, remove, removeMany, removePage, render as structural, retag, withAlert, writeMatter, type Target, type TextKind } from "./edits";
 import { icons, type IconName } from "./icons";
 import { ALERT_ICONS } from "../components/alert/icons";
 import { barButton, clash, control, divider, drill, dropdown, GAP, h, hint, iconButton, item, label, mark, menuItem, place, size, type Field } from "./widgets";
@@ -93,16 +93,42 @@ let chrome: Chrome | undefined;
  * The handle is the element, not an id, because a rebuild replaces the document and a
  * selection does not survive one. What survives a rebuild is the file, which is the point.
  */
-interface Selection { kind: "block" | "page" | "deck"; handle?: HTMLElement }
+interface Selection { kind: "block" | "page" | "deck"; handle?: HTMLElement; also?: HTMLElement[] }
 let selected: Selection | undefined;
 
 function select(handle: HTMLElement | undefined, kind: Selection["kind"] = "block"): void {
-    if (selected?.handle === handle && selected?.kind === kind) return;
+    if (selected?.handle === handle && selected?.kind === kind && !selected?.also) return;
     for (const el of document.querySelectorAll("[data-ainsi-selected]")) {
         el.removeAttribute("data-ainsi-selected");
     }
     selected = handle ? { kind, handle } : undefined;
     handle?.setAttribute("data-ainsi-selected", "");
+}
+
+/** every block the selection holds, in the order they are written, one of them included */
+const group = (): HTMLElement[] => selected?.also ?? (selected?.kind === "block" && selected.handle ? [selected.handle] : []);
+
+/*
+ * A second block, and a third. Shift takes everything between the last one and this one, the
+ * platform key takes this one alone, and either way the blocks are kept in document order,
+ * because every edit over them is written in the order the file has them.
+ */
+function selectAlso(handle: HTMLElement, range: boolean): void {
+    const all = wrappers();
+    const held = group();
+    let next: HTMLElement[];
+    if (range && held.length) {
+        const from = all.indexOf(held[0]!);
+        const to = all.indexOf(handle);
+        next = from < 0 || to < 0 ? [handle] : all.slice(Math.min(from, to), Math.max(from, to) + 1);
+    } else {
+        next = held.includes(handle) ? held.filter(one => one !== handle) : [...held, handle];
+        next.sort((a, b) => all.indexOf(a) - all.indexOf(b));
+    }
+    for (const el of document.querySelectorAll("[data-ainsi-selected]")) el.removeAttribute("data-ainsi-selected");
+    if (!next.length) { selected = undefined; return; }
+    for (const one of next) one.setAttribute("data-ainsi-selected", "");
+    selected = { kind: "block", handle: next.at(-1)!, ...(next.length > 1 ? { also: next } : {}) };
 }
 
 /** select every page in the deck, or the text inside an open field */
@@ -450,8 +476,18 @@ async function init(): Promise<void> {
         if (!range) return;
         event.preventDefault();
         if (event.altKey) return insertAfter(target, range.end);
+        // a second block rather than another first one: what the menu then offers is what can
+        // be done to several at once
+        if (event.shiftKey || event.metaKey || event.ctrlKey) {
+            selectAlso(target, event.shiftKey);
+            const many = selected?.also;
+            if (chrome?.kind === "menu") shut();
+            if (many) openGroupMenu(many, target.getBoundingClientRect());
+            else if (selected?.handle) openMenu(selected.handle, selected.handle.getBoundingClientRect());
+            return;
+        }
         // the first click picks the block and shows what can be done to it; the second says do
-        if (selected?.handle === target) edit(target, range, "end");
+        if (selected?.handle === target && !selected.also) edit(target, range, "end");
         else { select(target); openMenu(target, target.getBoundingClientRect()); }
     });
 
@@ -508,6 +544,12 @@ async function init(): Promise<void> {
         }
         if (selected.kind === "page" || selected.kind === "deck") return;
         if (!selected.handle) return;
+        // with several held, Enter opens what can be done to them rather than the text of one
+        if (selected.also) {
+            if (chrome?.kind === "menu") shut();
+            openGroupMenu(selected.also, selected.handle.getBoundingClientRect());
+            return;
+        }
         const range = rangeOf(selected.handle);
         if (range) edit(selected.handle, range, "end");
     });
@@ -523,7 +565,14 @@ async function init(): Promise<void> {
     rail.hidden = true;
     let gripped: HTMLElement | undefined;
     let leaving: ReturnType<typeof setTimeout> | undefined;
-    grip.addEventListener("click", event => { event.stopPropagation(); if (gripped) openMenu(gripped, gripped.getBoundingClientRect()); });
+    grip.addEventListener("click", event => {
+        event.stopPropagation();
+        if (!gripped) return;
+        const many = selected?.also;
+        if (many?.includes(gripped)) return openGroupMenu(many, gripped.getBoundingClientRect());
+        select(gripped);
+        openMenu(gripped, gripped.getBoundingClientRect());
+    });
     // the icon is six dots, which promises a drag; this is the promise
     grip.addEventListener("mousedown", event => { if (gripped) startDrag(event, gripped); });
     plus.addEventListener("click", event => {
@@ -604,6 +653,11 @@ async function init(): Promise<void> {
         const target = handleAt(event.target as HTMLElement);
         if (!target) return;
         event.preventDefault();
+        // right-clicking one of several held blocks is a menu about all of them, which is the
+        // only reading that does not silently throw the rest of the selection away
+        const many = selected?.also;
+        if (many?.includes(target)) return openGroupMenu(many, target.getBoundingClientRect());
+        select(target);
         openMenu(target, target.getBoundingClientRect());
     });
 
@@ -899,6 +953,63 @@ function openMenu(handle: HTMLElement, at: DOMRect): void {
     show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
 }
 
+/*
+ * The menu over several blocks at once. Only what makes sense for many: merge them into one
+ * list, move them, delete them. Everything the single-block menu offers is about what one
+ * block is and how it shows, and there is no honest answer to that for a mixed handful.
+ */
+function openGroupMenu(handles: HTMLElement[], at: DOMRect): void {
+    const targets = handles.map(targetOf).filter((one): one is Target => !!one);
+    if (targets.length < 2) return;
+
+    menu = document.createElement("div");
+    menu.className = "ainsi-studio__bar";
+    menu.addEventListener("click", event => event.stopPropagation());
+    menu.append(label(`${targets.length} blocks`), divider());
+
+    // text, a list, a quote or code: anything whose words survive losing their syntax. A table
+    // or a picture has no line to become an item, so one of those in the selection stops it.
+    const mergeable = targets.every(one => textShaped(one.kind));
+    const merge = h("button", { class: "ainsi-studio__rawbutton", type: "button", click: () => {
+        const change = mergeToList(doc.source, targets, [markerOf(targets[0]!.md)]);
+        if (change) splice(change); else closeMenu();
+    } }, "Merge to list");
+    if (!mergeable) {
+        (merge as HTMLButtonElement).disabled = true;
+        merge.title = "only text, lists, quotes and code can become items";
+    }
+    menu.append(merge);
+
+    /*
+     * Moving many is moving the run they make, so it is offered only when they are one run on
+     * one page: a scattered selection has no single thing above it to change places with.
+     */
+    const span = { start: Math.min(...targets.map(t => t.directive?.start ?? t.start)), end: Math.max(...targets.map(t => t.terminator?.end ?? t.end)) };
+    const solid = handles.every(one => one.closest(".ainsi-page") === handles[0]!.closest(".ainsi-page"))
+        && targets.slice(1).every((one, i) => !doc.source.slice(targets[i]!.terminator?.end ?? targets[i]!.end, one.directive?.start ?? one.start).trim());
+    if (solid) {
+        const run: Target = { start: span.start, end: span.end, md: doc.source.slice(span.start, span.end), kind: targets[0]!.kind };
+        const first = doc.blocks.find(b => b.ids.includes(handles[0]!.dataset.ainsiEntity ?? handles[0]!.dataset.ainsiSpan?.split(" ")[0] ?? ""));
+        const last = doc.blocks.find(b => b.ids.includes(handles.at(-1)!.dataset.ainsiEntity ?? handles.at(-1)!.dataset.ainsiSpan?.split(" ")[0] ?? ""));
+        const above = first ? beside(targets[0]!, first)[0] : undefined;
+        const below = last ? beside(targets.at(-1)!, last)[1] : undefined;
+        menu.append(divider());
+        menu.append(iconButton("up", "Move up", false, () => stepBlock(run, above!), !above));
+        menu.append(iconButton("down", "Move down", false, () => stepBlock(run, below!), !below));
+    }
+
+    menu.append(divider(), iconButton("trash", "Delete", false, () => {
+        const change = removeMany(doc.source, targets);
+        if (change) splice(change); else closeMenu();
+    }));
+
+    document.body.append(menu);
+    place(menu, at);
+    addEventListener("keydown", menuKey);
+    const bar = menu;
+    show({ kind: "menu", holds: false, close() { bar.remove(); if (menu === bar) menu = undefined; removeEventListener("keydown", menuKey); } });
+}
+
 function menuKey(event: KeyboardEvent): void {
     if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
 }
@@ -1000,10 +1111,31 @@ async function clipboard(verb: "copy" | "cut" | "paste"): Promise<void> {
     if (selected.kind === "deck") return deckClipboard(verb);
     if (selected.kind === "page" && selected.handle) return pageClipboard(verb, selected.handle);
     if (!selected.handle) return;
+    // several blocks copy as their markdown in the order the file has them, and cut takes them
+    // all: cutting three and losing two is the kind of mistake undo is a commit away from
+    if (selected.also) {
+        const targets = group().map(targetOf).filter((one): one is Target => !!one);
+        if (verb === "paste" || !targets.length) return;
+        return copyMany(targets, verb === "cut");
+    }
     const range = rangeOf(selected.handle);
     if (!range) return;
     if (verb === "paste") return paste(range);
     return copy(range, verb === "cut" ? selected.handle : undefined);
+}
+
+async function copyMany(targets: Target[], cutting: boolean): Promise<void> {
+    try {
+        await navigator.clipboard.writeText(targets.map(one => one.md).join("\n\n"));
+    } catch {
+        return hint("The browser would not give the clipboard", true, 4000);
+    }
+    if (!cutting) return hint(`Copied ${targets.length} blocks`, false, 1200);
+    const change = removeMany(doc.source, targets);
+    if (!change) return;
+    select(undefined);
+    splice(change);
+    hint("Cut", false, 1200);
 }
 
 /*
@@ -1177,11 +1309,12 @@ function deleteSelection(): void {
         splice(removePage(doc.source, page));
         return;
     }
-    if (!selected.handle) return;
-    const target = targetOf(selected.handle);
-    if (!target) return;
+    const targets = group().map(targetOf).filter((one): one is Target => !!one);
+    if (!targets.length) return;
+    const change = removeMany(doc.source, targets);
+    if (!change) return;
     select(undefined);
-    splice(remove(doc.source, target));
+    splice(change);
 }
 
 /*

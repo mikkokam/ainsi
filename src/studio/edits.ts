@@ -256,6 +256,54 @@ function settled(source: string, splice: Splice): Splice | undefined {
     return source.slice(splice.start, splice.end) === splice.text ? undefined : splice;
 }
 
+/*
+ * Several blocks lifted out of one region. What comes back is where that region starts and
+ * ends and whatever inside it was not selected, in the order it was written: a selection can
+ * skip a block, and a block nobody picked keeps its own text, its own page break and its own
+ * place in the order. It follows whatever replaces the selection, because the selection lands
+ * where the first of it was.
+ */
+function lift(source: string, targets: Target[]): { start: number; end: number; kept: string[] } {
+    const spans = targets.map(spanOf).sort((a, b) => a.start - b.start);
+    const kept: string[] = [];
+    for (let i = 1; i < spans.length; i++) {
+        const gap = source.slice(spans[i - 1]!.end, spans[i]!.start).trim();
+        if (gap) kept.push(gap);
+    }
+    return { start: spans[0]!.start, end: spans.at(-1)!.end, kept };
+}
+
+/**
+ * Several blocks as one list, where the first of them was. Each block becomes one item and a
+ * list's own items stay items, so a paragraph merged into a list of three gives four items
+ * rather than a list holding a list. A page break between two of them is not selected, so it
+ * survives as itself: the blocks come onto the first page and whatever followed the break and
+ * was not picked stays on its own.
+ */
+export function mergeToList(source: string, targets: Target[], neighbours: (string | undefined)[] = []): Splice | undefined {
+    if (targets.length < 2) return undefined;
+    const sorted = [...targets].sort((a, b) => a.start - b.start);
+    const items = sorted.flatMap(target => lines(target.md, target.kind).map(line => line.trim()).filter(Boolean));
+    if (!items.length) return undefined;
+    // the first block decides the kind of list, which is the only one of them that can
+    const ordered = sorted[0]!.kind === "list" && /^\s*\d/.test(sorted[0]!.md);
+    const free = (choices: string[]) => choices.find(c => !neighbours.includes(c)) ?? choices[0]!;
+    const marker = free(ordered ? ["1.", "1)"] : ["-", "*", "+"]);
+    const list = items.map((text, i) => `${ordered ? marker.replace("1", String(i + 1)) : marker} ${text}`).join("\n");
+    const { start, end, kept } = lift(source, sorted);
+    return settled(source, { start, end, text: [list, ...kept].join("\n\n") });
+}
+
+/** Several blocks gone at once, the ones between them that nobody picked staying where they were */
+export function removeMany(source: string, targets: Target[]): Splice | undefined {
+    if (!targets.length) return undefined;
+    if (targets.length === 1) return remove(source, targets[0]!);
+    const { start, end, kept } = lift(source, targets);
+    let after = end;
+    if (!kept.length) while (after < source.length && /\s/.test(source[after]!)) after++;
+    return settled(source, { start, end: after, text: kept.join("\n\n") });
+}
+
 export function move(source: string, block: Target, neighbour: Target): Splice {
     return swap(source, spanOf(block), spanOf(neighbour), was => (/\n[ \t]*\n/.test(was) ? was : "\n\n"));
 }
