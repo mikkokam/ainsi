@@ -176,3 +176,18 @@ test("a theme tile's cover is headed with the theme, not with the title of the s
     expect(html).not.toContain("Lehto &");
     await studio.stop();
 }, 30_000);
+
+test("the picture picker lists folders and pictures, and refuses a folder it may not read", async () => {
+    const studio = await open("# T\n\n![](x.png)\n");
+    await Bun.write(join(studio.dir, "shot.png"), "not really a png");
+    await Bun.write(join(studio.dir, "notes.txt"), "text");
+
+    const listing = await fetch(`${studio.url}/__files`).then(r => r.json());
+    expect(listing.entries.map((e: { name: string }) => e.name)).toContain("shot.png");
+    expect(listing.entries.map((e: { name: string }) => e.name)).not.toContain("notes.txt");
+    expect(listing.deck).toEndWith(studio.dir.replace(/^\/private/, ""));
+
+    const refused = await fetch(`${studio.url}/__files?at=${encodeURIComponent("/etc")}`);
+    expect(refused.status).toBe(403);
+    await studio.stop();
+}, 30_000);

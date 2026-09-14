@@ -1894,8 +1894,43 @@ function openImage(target: HTMLElement, range: Range): boolean {
     };
     const alt = field("name", altText, "what the picture shows");
     const src = field("url", url, "https://… or a local path");
+
+    /*
+     * The picker, in the panel rather than over it: a floating one would be a click outside the
+     * form, which commits and closes it. It starts where the deck is and walks from there, and
+     * what it writes is relative to the deck's folder when the file is under it.
+     */
+    const files = h("div", { class: "ainsi-studio__files", hidden: true });
+    const browse = h("button", { class: "ainsi-studio__chip", type: "button", title: "Pick a picture" }, "browse…");
+    src.parentElement!.classList.add("ainsi-studio__imagerow--pick");
+    src.parentElement!.append(browse);
+    src.parentElement!.after(files);
+
+    const relative = (deck: string, file: string): string => (file.startsWith(deck + "/") ? file.slice(deck.length + 1) : file);
+    const list = async (at?: string): Promise<void> => {
+        const response = await fetch(mine(`/__files${at === undefined ? "" : `?at=${encodeURIComponent(at)}`}`));
+        if (!response.ok) return hint((await response.text()) || "could not read that folder", true, 4000);
+        const folder = await response.json() as {
+            at: string; here: string; up?: string; deck: string; entries: { name: string; dir: boolean }[];
+        };
+        const rows = folder.entries.map(one => menuItem(one.dir ? `${one.name}/` : one.name, () => {
+            const path = join(folder.at, one.name);
+            if (one.dir) return void list(path);
+            src.value = relative(folder.deck, path);
+            files.hidden = true;
+            src.focus();
+        }));
+        if (folder.up !== undefined) rows.unshift(menuItem("../", () => void list(folder.up)));
+        files.replaceChildren(h("div", { class: "ainsi-studio__filesat" }, folder.here), ...rows);
+        if (!folder.entries.length) files.append(h("div", { class: "ainsi-studio__filesat" }, "no pictures here"));
+    };
+    browse.addEventListener("click", () => {
+        files.hidden = !files.hidden;
+        if (!files.hidden) void list();
+    });
+
     panel.append(h("p", { class: "ainsi-studio__imagehint" },
-        "A local file works by path, relative to the deck folder or absolute. It stays linked, not copied: change the file and the deck shows the new one."));
+        "A local file works by path, relative to the deck folder or absolute. The deck references it rather than holding it: change the file and the deck shows the new one, and the picture itself is embedded only when you build or export."));
     panel.append(h("button", { class: "ainsi-studio__imageok", type: "submit" }, "OK"));
 
     // delete, top right like the block toolbar's; the whole block goes, directive and all

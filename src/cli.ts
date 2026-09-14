@@ -682,6 +682,16 @@ function under(at: unknown, fallback = defaultRoot): string | undefined {
     return undefined;
 }
 
+const PICTURES = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"]);
+const HOME = homedir();
+
+/** what the picker may list: the folders the studio serves, and anything under the home folder */
+function listable(at: string): boolean {
+    if (at === HOME || at.startsWith(HOME + "/")) return true;
+    for (const root of browseRoots) if (at === root || at.startsWith(root + "/")) return true;
+    return false;
+}
+
 /** the theme and the component and layout registries a build renders through */
 async function stack(themeName: string, diagnostics: Diagnostic[], dir: string) {
     const themeDir = themePath(themeName, dir);
@@ -1026,6 +1036,27 @@ const server = serve({
             console.log(`-> ${join(USER_THEMES, id)}`);
             Bun.spawn([...opener(), join(USER_THEMES, id)], { stdout: "ignore", stderr: "ignore" }).unref();
             return Response.json({ id, path: join(USER_THEMES, id) });
+        }
+        /*
+         * The picker behind a url field. It lists folders and pictures and nothing else, and it
+         * reaches under the home folder as well as the folders the studio serves: the picture a
+         * deck wants is in Downloads as often as it is beside the deck, and this only ever reads
+         * a folder's names. Nothing here opens, copies or writes anything.
+         */
+        if (url.pathname === "/__files") {
+            const deck = entry ? dirname(entry.path) : defaultRoot;
+            const at = resolve(url.searchParams.get("at") || deck);
+            if (!listable(at)) return new Response("outside the folders the studio can reach", { status: 403 });
+            const found = await readdir(at, { withFileTypes: true }).catch(() => undefined);
+            if (!found) return new Response(`${at} is gone`, { status: 404 });
+            const entries = found
+                .filter(e => !e.name.startsWith(".") && (e.isDirectory() || PICTURES.has(extname(e.name).toLowerCase())))
+                .map(e => ({ name: e.name, dir: e.isDirectory() }))
+                .sort((a, b) => Number(b.dir) - Number(a.dir) || a.name.localeCompare(b.name));
+            const up = dirname(at);
+            // the deck's own folder travels with the listing: what the field is given is relative
+            // to it where it can be, and the page can work that out without a second round trip
+            return Response.json({ at, here: basename(at) || at, up: up !== at && listable(up) ? up : undefined, deck, entries });
         }
         if (url.pathname === "/__browse") {
             const at = under(url.searchParams.get("at"), entry ? dirname(entry.path) : defaultRoot);
