@@ -99,3 +99,26 @@ export class Layouts {
         return [...this.map.values()];
     }
 }
+
+/** a directive's props as written, with `true`, `false` and numbers read as themselves */
+export function coerce(props: Record<string, string>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(props)) {
+        if (v === "true" || v === "false") out[k] = v === "true";
+        else if (/^-?\d+(\.\d+)?$/.test(v)) out[k] = Number(v);
+        else out[k] = v;
+    }
+    return out;
+}
+
+/*
+ * Every props schema passes unknown keys through, because a block carries keys a directive never
+ * wrote. That is also how `columns color=accent` parses clean and then does nothing: the schema
+ * accepts it, the renderer never reads it, and the deck keeps a prop that has never once had an
+ * effect. The schema cannot report that; this can, for the keys a person actually typed.
+ */
+export function strayProps(schema: ZodTypeAny, props: Record<string, string>): string[] {
+    const shape = (schema as { shape?: Record<string, unknown> }).shape;
+    if (!shape) return [];
+    return Object.keys(props).filter(key => !(key in shape));
+}

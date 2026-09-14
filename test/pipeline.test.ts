@@ -171,3 +171,11 @@ test("a table's alignment row survives into the render, over the default that wo
     expect(html).toMatch(/td\[align="right"\][^{]*\{[^}]*text-align:\s*right/);
     expect(html).toMatch(/td\[align="center"\][^{]*\{[^}]*text-align:\s*center/);
 });
+
+test("a prop no component declares is warned about, since passthrough would otherwise carry it in silence", () => {
+    const { diagnostics } = blocksOf("<!-- ainsi: columns color=accent -->\n\n- **A** one\n- **B** two\n");
+    expect(diagnostics.some(d => d.message.includes(`"columns" has no prop "color"`))).toBe(true);
+    // the props a component does declare stay quiet
+    const clean = blocksOf("<!-- ainsi: boxes stretch=true -->\n\n- **A** one\n- **B** two\n");
+    expect(clean.diagnostics.filter(d => d.message.includes("has no prop"))).toEqual([]);
+});

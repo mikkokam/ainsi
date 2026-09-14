@@ -78,7 +78,7 @@ Pictures keep their proportions and are never cropped unless `crop` says so: eac
 
 `full` is an image filling its slot, `size=s|m|l|full` and `align=left|center|right`. Under the header layout it becomes the page's ground.
 
-`prose` is markdown as written and accepts anything, with `size=small|normal|large|huge`, `align`, `caps`, and `color=ink|soft|accent`.
+`prose` is markdown as written and accepts anything, with `size=small|normal|large|huge`, `align`, `caps`, and `color=ink|soft|accent`. `color` is prose's own: every other component names the theme's inks itself, so a page that wants a different ground and ink takes the layout's `tone`, never a `color` on each block. A prop a component does not declare is warned about at build and does nothing.
 
 `alert` is the callout blockquote and takes no props.
 

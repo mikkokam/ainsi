@@ -1,5 +1,5 @@
 import type { Block, Diagnostic, Directive, Entity } from "./types";
-import type { Component, Registry } from "./registry";
+import { coerce, strayProps, type Component, type Registry } from "./registry";
 import { alertKind } from "./components/alert/index";
 
 /** a boundary and nothing else; decks written before directives governed one entity carry it */
@@ -38,6 +38,9 @@ export function group(
                 const props = component.props.safeParse(coerce(directive.props));
                 if (!props.success) {
                     diagnostics.push({ level: "warn", message: `bad props for "${directive.component}": ${props.error.message}` });
+                }
+                for (const stray of strayProps(component.props, directive.props)) {
+                    diagnostics.push({ level: "warn", message: `"${directive.component}" has no prop "${stray}"; it is carried and never read` });
                 }
                 blocks.push(make(span, directive.component, props.success ? props.data : {}, "directive"));
                 i = end;
@@ -102,12 +105,3 @@ function heuristic(
 }
 
 
-function coerce(props: Record<string, string>): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(props)) {
-        if (v === "true" || v === "false") out[k] = v === "true";
-        else if (/^-?\d+(\.\d+)?$/.test(v)) out[k] = Number(v);
-        else out[k] = v;
-    }
-    return out;
-}

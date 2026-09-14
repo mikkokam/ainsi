@@ -4,7 +4,7 @@ import { group } from "./group";
 import { blockHtml, inlineHtml, plainText } from "./html";
 import { BASE_CSS } from "./base";
 import { MARK } from "./mark";
-import type { Layouts, Registry } from "./registry";
+import { coerce, strayProps, type Layouts, type Registry } from "./registry";
 import type { Diagnostic, Entity, Page, Settings } from "./types";
 
 export interface BuildResult {
@@ -68,6 +68,9 @@ export function assemble(source: string, options: Pick<BuildOptions, "registry" 
                 const props = layout.props.safeParse(coerce(directive.props));
                 if (!props.success) {
                     diagnostics.push({ level: "warn", message: `bad props for layout "${layout.name}": ${props.error.message}` });
+                }
+                for (const stray of strayProps(layout.props, directive.props)) {
+                    diagnostics.push({ level: "warn", message: `layout "${layout.name}" has no prop "${stray}"; it is carried and never read` });
                 }
                 current = { name: layout.name, props: props.success ? props.data : {} };
             }
@@ -278,12 +281,3 @@ function placeImage(html: string, entity: Entity): string | null {
     return `${html.slice(0, open + 4)} data-ainsi-entity="${entity.id}"${html.slice(open + 4)}`;
 }
 
-function coerce(props: Record<string, string>): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(props)) {
-        if (v === "true" || v === "false") out[k] = v === "true";
-        else if (/^-?\d+(\.\d+)?$/.test(v)) out[k] = Number(v);
-        else out[k] = v;
-    }
-    return out;
-}
