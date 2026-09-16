@@ -267,9 +267,31 @@ async function drawMermaid(codes: string[], palette: Palette, page: any, diagnos
     }
 }
 
+/*
+ * An svg on the page, hung from the left like every other block.
+ *
+ * mermaid emits `width="100%"` and no height, so the box is as wide as the page while the
+ * drawing keeps the viewBox's ratio, and the default `xMidYMid` then centres the drawing in
+ * the space left over: a gantt that looks centred on a page whose every other line is flush
+ * left. Giving the svg the viewBox's own width and height makes the box the drawing's own
+ * size, which the css then shrinks by ratio, and anchoring it left settles what happens to
+ * whatever space is still spare.
+ */
+function sized(svg: string): string {
+    const open = /^\s*<svg\b[^>]*>/.exec(svg);
+    const box = open && /viewBox="\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/.exec(open[0]);
+    if (!open || !box) return svg;
+    const tag = open[0]
+        .replace(/\s(width|height)="[^"]*"/g, "")
+        .replace(/\smax-width:\s*[^;"]+;?/g, "")
+        .replace(/\spreserveAspectRatio="[^"]*"/g, "")
+        .replace(/^<svg\b/, `<svg width="${box[1]}" height="${box[2]}" preserveAspectRatio="xMinYMin meet"`);
+    return tag + svg.slice(open[0].length);
+}
+
 /** an svg on the page: a figure the fit solver can shrink with everything else */
 const figure = (svg: string, lang: string): string =>
-    `<figure class="ainsi-diagram" data-ainsi-diagram="${lang}">${svg.replace(/<\?xml[^>]*\?>/, "").trim()}</figure>`;
+    `<figure class="ainsi-diagram" data-ainsi-diagram="${lang}">${sized(svg.replace(/<\?xml[^>]*\?>/, "").trim())}</figure>`;
 
 /*
  * Held for the life of the process, by what was drawn and what it was drawn in. The studio

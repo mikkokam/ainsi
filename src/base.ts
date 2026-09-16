@@ -147,7 +147,7 @@ body[data-numbers="off"] .ainsi-number { display: none; }
  * bargain a field of pictures makes; width and height both give way, because an svg told to
  * keep only one of them stretches.
  */
-.ainsi-page .ainsi-diagram { margin: 0; display: flex; justify-content: center; }
+.ainsi-page .ainsi-diagram { margin: 0; }
 .ainsi-page .ainsi-diagram svg {
     display: block;
     width: auto; height: auto;
