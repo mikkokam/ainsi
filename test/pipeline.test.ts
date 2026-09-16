@@ -210,3 +210,14 @@ test("a fence whose renderer cannot draw it stays a code block and says why", as
     expect((entity.node as { type: string }).type).toBe("code");
     expect(diagnostics.some(d => d.message.includes("mermaid fence stays a code block"))).toBe(true);
 }, 30_000);
+
+test.skipIf(!d2Here)("a diagram is stamped at the page's own scale and takes the size the fence asks for", async () => {
+    const { paletteOf, drawDiagrams } = await import("../src/diagram");
+    const assembled = assemble("# T\n\n```d2 size=m\na -> b\n```\n", { registry: defaults, layouts });
+    await drawDiagrams(assembled.pages, paletteOf(""), undefined, []);
+    const html = (assembled.pages[0]!.blocks.flatMap(b => b.entities).find(e => e.kind === "code")!.node as { value: string }).value;
+    expect(html).toContain('data-size="m"');
+    // scaled into the page's own 1280 box, so how large it lands is the stylesheet's business
+    const [, w, h] = /<svg width="(\d+)" height="(\d+)"/.exec(html)!;
+    expect(Math.max(Number(w), Number(h))).toBe(1280);
+}, 30_000);

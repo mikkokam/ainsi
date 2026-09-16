@@ -151,8 +151,14 @@ body[data-numbers="off"] .ainsi-number { display: none; }
 .ainsi-page .ainsi-diagram svg {
     display: block;
     width: auto; height: auto;
-    max-width: 100%; max-height: 17em;
+    max-width: 100%; max-height: 21em;
 }
+/* the same sizes an image takes, and for the same reason: max constraints only, so the ratio
+   holds and the drawing never gets a second aspect of its own */
+.ainsi-page .ainsi-diagram[data-size="s"] svg { max-width: 34%; max-height: 9em; }
+.ainsi-page .ainsi-diagram[data-size="m"] svg { max-width: 60%; max-height: 14em; }
+.ainsi-page .ainsi-diagram[data-size="l"] svg { max-width: 84%; max-height: 18em; }
+.ainsi-page .ainsi-diagram[data-size="full"] svg { max-width: 100%; max-height: none; }
 /*
  * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9
  * page whose width tracks min(1280px, viewport), so 31vw approximates it at every desktop

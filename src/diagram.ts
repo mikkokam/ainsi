@@ -20,6 +20,8 @@ export const FENCES = ["d2", "mermaid"] as const;
 interface Fence {
     lang: string;
     code: string;
+    /** the fence's own info string, `size=l` and nothing else so far */
+    meta: string;
     /** the fence becomes raw html in place, which is what the renderer emits for it */
     set(html: string): void;
 }
@@ -33,6 +35,7 @@ function fences(entities: Entity[]): Fence[] {
             found.push({
                 lang,
                 code: String(node.value ?? ""),
+                meta: String(node.meta ?? ""),
                 set: (html: string) => { node.type = "html"; node.value = html; node.lang = undefined; node.meta = undefined; },
             });
         }
@@ -222,6 +225,11 @@ async function drawMermaid(codes: string[], palette: Palette, page: any, diagnos
                 securityLevel: "strict",
                 theme: "base",
                 fontFamily: p.font,
+                // mermaid lays a gantt out at 1264px and sets its type at 16, which the page
+                // then scales down: the words come out smaller than the deck's own. Laid out
+                // narrower, the same drawing is scaled up to the page and its type with it.
+                gantt: { useWidth: 820, fontSize: 16 },
+                flowchart: { useMaxWidth: true },
                 themeVariables: {
                     background: p.ground,
                     primaryColor: p.tint,
@@ -285,21 +293,37 @@ async function drawMermaid(codes: string[], palette: Palette, page: any, diagnos
  * size, which the css then shrinks by ratio, and anchoring it left settles what happens to
  * whatever space is still spare.
  */
+/** the page's own design width: a drawing is stamped at this, and the css takes it from there */
+const PAGE = 1280;
+
 function sized(svg: string): string {
     const open = /^\s*<svg\b[^>]*>/.exec(svg);
     const box = open && /viewBox="\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)/.exec(open[0]);
     if (!open || !box) return svg;
+    // an svg is vector, so its stamped size is only a starting point, and the one that makes the
+    // css caps behave is the page's own width: a drawing laid out at 400 or at 3000 then reaches
+    // the slide at the same scale, and how large it ends up is the cap's business, not the
+    // renderer's default canvas.
+    const [w, h] = [Number(box[1]), Number(box[2])];
+    const scale = Math.min(PAGE / w, PAGE / h);
     const tag = open[0]
         .replace(/\s(width|height)="[^"]*"/g, "")
         .replace(/\smax-width:\s*[^;"]+;?/g, "")
         .replace(/\spreserveAspectRatio="[^"]*"/g, "")
-        .replace(/^<svg\b/, `<svg width="${box[1]}" height="${box[2]}" preserveAspectRatio="xMinYMin meet"`);
+        .replace(/^<svg\b/, `<svg width="${Math.round(w * scale)}" height="${Math.round(h * scale)}" preserveAspectRatio="xMinYMin meet"`);
     return tag + svg.slice(open[0].length);
 }
 
+/** `size=s|m|l|full` on the fence, the same word an image takes; anything else is ignored */
+const sizeOf = (meta: string): string | undefined =>
+    /(?:^|\s)size=(s|m|l|full)(?:\s|$)/.exec(meta)?.[1];
+
 /** an svg on the page: a figure the fit solver can shrink with everything else */
-const figure = (svg: string, lang: string): string =>
-    `<figure class="ainsi-diagram" data-ainsi-diagram="${lang}">${sized(svg.replace(/<\?xml[^>]*\?>/, "").trim())}</figure>`;
+const figure = (svg: string, fence: Fence): string => {
+    const size = sizeOf(fence.meta);
+    return `<figure class="ainsi-diagram" data-ainsi-diagram="${fence.lang}"${size ? ` data-size="${size}"` : ""}>`
+        + `${sized(svg.replace(/<\?xml[^>]*\?>/, "").trim())}</figure>`;
+};
 
 /*
  * Held for the life of the process, by what was drawn and what it was drawn in. The studio
@@ -329,7 +353,7 @@ export async function drawDiagrams(
         if (held) { fence.set(held); continue; }
         const svg = await drawD2(fence.code, palette, diagnostics);
         if (!svg) continue;
-        const html = figure(svg, "d2");
+        const html = figure(svg, fence);
         drawn.set(key(fence), html);
         fence.set(html);
     }
@@ -354,7 +378,7 @@ export async function drawDiagrams(
     const svgs = await drawMermaid(missing.map(one => one.code), palette, session.page, diagnostics);
     svgs.forEach((svg, i) => {
         if (!svg) return;
-        const html = figure(svg, "mermaid");
+        const html = figure(svg, missing[i]!);
         drawn.set(key(missing[i]!), html);
         missing[i]!.set(html);
     });
