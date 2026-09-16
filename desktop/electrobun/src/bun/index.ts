@@ -314,11 +314,29 @@ paintMenu();
  * commit, and a badge that vanished on the first edit would be a badge nobody trusts. It goes to
  * every open window, because any of them could be showing it.
  */
-const announce = (error?: string) => {
-    const js = `document.dispatchEvent(new CustomEvent("ainsi:update",{detail:${JSON.stringify({ version: offered ?? null, error })}}))`;
+const announce = (error?: string, progress?: string) => {
+    const js = `document.dispatchEvent(new CustomEvent("ainsi:update",{detail:${JSON.stringify({ version: offered ?? null, error, progress })}}))`;
     decksWin?.webview.executeJavascript(js);
     for (const { win } of windows.values()) win.webview.executeJavascript(js);
 };
+
+/*
+ * The updater reports through a status callback and keeps its failures to itself: a download
+ * that stalls leaves `downloadUpdate()` pending, so a second press joins the same promise and
+ * looks like a button that does nothing. Every status is logged, and the ones a person is
+ * waiting on are said on the page: a bundle is tens of megabytes and silence for that long is
+ * indistinguishable from broken.
+ */
+Updater.onStatusChange(entry => {
+    console.log(`[update] ${entry.status}: ${entry.message}`);
+    if (!installing) return;
+    const percent = entry.details?.progress;
+    if (entry.status === "download-progress" && typeof percent === "number") announce(undefined, `downloading ${Math.round(percent)}%`);
+    else if (entry.status === "downloading-full-bundle") announce(undefined, "downloading…");
+    else if (entry.status === "decompressing") announce(undefined, "unpacking…");
+    else if (entry.status === "download-complete") announce(undefined, "restarting…");
+    else if (entry.status === "error") announce(entry.details?.errorMessage ?? entry.message);
+});
 
 /*
  * Loud when someone asked, from the version on the landing or from the menu: a check that says
@@ -343,8 +361,15 @@ async function checkUpdate(loud = false): Promise<void> {
  * grammar the binary does not have. The moment someone is deciding to update is the only moment
  * that sentence gets read.
  */
+/** true from the moment a download starts: the updater's own promise is shared, not queued */
+let installing = false;
+
 async function install(): Promise<void> {
     if (!offered) return;
+    if (installing) {
+        announce(undefined, "still downloading…");
+        return;
+    }
     const { response } = await Utils.showMessageBox({
         type: "question",
         title: "Install Ainsi",
@@ -356,11 +381,30 @@ async function install(): Promise<void> {
         cancelId: 1,
     }).catch(() => ({ response: 0 }));   // no dialog is no reason to refuse an update someone asked for
     if (response !== 0) return;
+    installing = true;
+    announce(undefined, "downloading…");
     try {
         await Updater.downloadUpdate();
+        // the download reports failure by recording it rather than by throwing, so the only way
+        // to know it did not work is to ask afterwards
+        const failed = Updater.updateInfo().error;
+        if (failed) throw new Error(failed);
         await Updater.applyUpdate();   // restarts into the new version; nothing runs after it
+        const after = Updater.updateInfo().error;
+        if (after) throw new Error(after);
     } catch (error) {
-        console.error(`update failed: ${String(error)}`);
+        const message = String(error).replace(/^Error:\s*/, "");
+        console.error(`update failed: ${message}`);
+        announce(message);
+        void Utils.showMessageBox({
+            type: "error",
+            title: "Update failed",
+            message: `Ainsi ${offered} was not installed.`,
+            detail: `${message}\n\nThe dmg on the releases page installs it directly.`,
+            buttons: ["OK"],
+        }).catch(() => undefined);
+    } finally {
+        installing = false;
     }
 }
 

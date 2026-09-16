@@ -51,6 +51,9 @@ export default {
          */
         copy: {
             "../../src": "ainsi/src",
+            // the one file mermaid's renderer reads; depending on the package would put 123 MB
+            // of it in here, and every update downloads this bundle whole
+            "../../vendor": "ainsi/vendor",
             "../../themes": "ainsi/themes",
             "../../samples": "ainsi/samples",
             "../../package.json": "ainsi/package.json",

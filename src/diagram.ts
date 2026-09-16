@@ -180,10 +180,18 @@ async function drawD2(code: string, palette: Palette, diagnostics: Diagnostic[])
     return undefined;
 }
 
-/** mermaid's own bundle, read from the checkout rather than a cdn: a build is offline work */
+/*
+ * mermaid's own bundle, vendored rather than depended on.
+ *
+ * The renderer reads one 5.5 MB file; the npm package is 123 MB, and the desktop app copies
+ * node_modules wholesale into itself, so depending on it doubled the size of every download an
+ * update makes. This is `mermaid@12.0.0`'s `dist/mermaid.min.js`, copied as it ships. To move
+ * versions: install the new one somewhere, copy that file over this one, and say so here.
+ */
+const MERMAID = new URL("../vendor/mermaid.min.js", import.meta.url).pathname;
+
 async function mermaidBundle(): Promise<string | undefined> {
-    const at = Bun.resolveSync("mermaid/dist/mermaid.min.js", import.meta.dir + "/..");
-    return Bun.file(at).text().catch(() => undefined);
+    return Bun.file(MERMAID).text().catch(() => undefined);
 }
 
 /**

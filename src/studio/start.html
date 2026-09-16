@@ -915,11 +915,19 @@
      */
     const updateEl = document.getElementById("update");
     document.addEventListener("ainsi:update", event => {
+        const { version: next, error, progress } = event.detail ?? {};
+        // a bundle is tens of megabytes: while it is coming down, the line beside the version
+        // says how far, because silence for that long reads as a button that did nothing
+        if (progress) {
+            versionEl.textContent = version;
+            updateEl.replaceChildren(document.createTextNode(`· ${progress}`));
+            updateEl.hidden = false;
+            return;
+        }
         versionEl.textContent = version;
         updateEl.replaceChildren();
         updateEl.hidden = true;
-        const { version: next, error } = event.detail ?? {};
-        if (error) return setStatus(`Could not check for updates: ${error}`, false);
+        if (error) return setStatus(`Update failed: ${error}`, false);
         if (!next) return setStatus("Ainsi is up to date", true);
         updateEl.append(
             document.createTextNode(`· ${next} is out · `),
