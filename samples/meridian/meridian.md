@@ -92,6 +92,35 @@ Where the next hundred million goes
 
 ---
 
+# The same sequence, with the dependencies in it
+
+```mermaid
+gantt
+    dateFormat YYYY-MM-DD
+    axisFormat %Y
+    tickInterval 1year
+    section Data platform
+    Two sites live      :done,   dp1, 2026-01-01, 300d
+    Remaining six       :active, dp2, after dp1, 420d
+    Cutover             :crit,   dp3, after dp2, 120d
+    Platform live       :milestone, m1, after dp3, 0d
+    section Consolidation
+    Kaunas and Porto    :done,   c1,  2026-02-01, 330d
+    Third site          :active, c2,  after c1, 300d
+    section Optical range
+    Design              :        o1,  after dp2, 240d
+    Pilot line          :        o2,  after o1, 210d
+    First shipment      :milestone, m2, after o2, 0d
+    Ramp                :        o3,  after o2, 300d
+    section Capital
+    Buyback tranches    :        b1,  2026-01-01, 1460d
+```
+
+<!-- ainsi: prose size=small color=soft -->
+The grid opposite is four programmes at the resolution a board reads. This is the same plan where it has to carry dependencies, a critical path and two milestones: for that, ask your agent for a mermaid gantt, written in the deck and drawn in the theme.
+
+---
+
 <!-- ainsi: layout split side=left size=half -->
 #### The risk we are asked about most
 
