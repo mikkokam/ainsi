@@ -380,7 +380,14 @@ async function install(): Promise<void> {
         defaultId: 0,
         cancelId: 1,
     }).catch(() => ({ response: 0 }));   // no dialog is no reason to refuse an update someone asked for
-    if (response !== 0) return;
+    /*
+     * Only the second button refuses. Reading consent as `response === 0` makes every answer the
+     * dialog did not phrase the way this code expects into a silent no, and a button that
+     * sometimes does nothing is worse than one that sometimes updates: the person pressing it
+     * has already said what they want, twice.
+     */
+    console.log(`[update] dialog answered ${JSON.stringify(response)}`);
+    if (response === 1) return;
     installing = true;
     announce(undefined, "downloading…");
     try {
