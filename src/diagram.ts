@@ -228,14 +228,10 @@ async function drawMermaid(codes: string[], palette: Palette, page: any, diagnos
                 // mermaid lays a gantt out at 1264px and sets its type at 16, which the page
                 // then scales down: the words come out smaller than the deck's own. Laid out
                 // narrower, the same drawing is scaled up to the page and its type with it.
-                gantt: {
-                    useWidth: 820,
-                    // a gantt's height is its own geometry, and height is what decides how large
-                    // the labels read: the page caps the height, so a drawing that spends fewer
-                    // pixels per bar is scaled up further and its type with it
-                    fontSize: 16, sectionFontSize: 14,
-                    barHeight: 18, barGap: 4, topPadding: 16, leftPadding: 120, gridLineStartPadding: 20,
-                },
+                // type only, never geometry: a gantt's rows, bars and axis are laid out against
+                // mermaid's own metrics, and overriding one of them leaves the rest where they
+                // were, which puts the last row through the axis
+                gantt: { useWidth: 820, fontSize: 16 },
                 flowchart: { useMaxWidth: true },
                 themeVariables: {
                     background: p.ground,
