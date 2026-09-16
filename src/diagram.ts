@@ -228,7 +228,14 @@ async function drawMermaid(codes: string[], palette: Palette, page: any, diagnos
                 // mermaid lays a gantt out at 1264px and sets its type at 16, which the page
                 // then scales down: the words come out smaller than the deck's own. Laid out
                 // narrower, the same drawing is scaled up to the page and its type with it.
-                gantt: { useWidth: 820, fontSize: 16 },
+                gantt: {
+                    useWidth: 820,
+                    // a gantt's height is its own geometry, and height is what decides how large
+                    // the labels read: the page caps the height, so a drawing that spends fewer
+                    // pixels per bar is scaled up further and its type with it
+                    fontSize: 16, sectionFontSize: 14,
+                    barHeight: 18, barGap: 4, topPadding: 16, leftPadding: 120, gridLineStartPadding: 20,
+                },
                 flowchart: { useMaxWidth: true },
                 themeVariables: {
                     background: p.ground,
@@ -308,7 +315,9 @@ function sized(svg: string): string {
     const scale = Math.min(PAGE / w, PAGE / h);
     const tag = open[0]
         .replace(/\s(width|height)="[^"]*"/g, "")
-        .replace(/\smax-width:\s*[^;"]+;?/g, "")
+        // mermaid pins the drawing to its own layout width with an inline max-width, which is
+        // the renderer deciding how large the picture reads on a page it has never seen
+        .replace(/max-width:\s*[^;"]+;?/g, "")
         .replace(/\spreserveAspectRatio="[^"]*"/g, "")
         .replace(/^<svg\b/, `<svg width="${Math.round(w * scale)}" height="${Math.round(h * scale)}" preserveAspectRatio="xMinYMin meet"`);
     return tag + svg.slice(open[0].length);

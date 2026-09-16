@@ -147,18 +147,36 @@ body[data-numbers="off"] .ainsi-number { display: none; }
  * bargain a field of pictures makes; width and height both give way, because an svg told to
  * keep only one of them stretches.
  */
-.ainsi-page .ainsi-diagram { margin: 0; }
+/*
+ * The cap belongs to the figure, not to the drawing. mermaid writes a font-size of 16px onto
+ * the svg element itself, so a cap in em measured there would answer to mermaid's type rather
+ * than the page's: a fixed height no theme, no fit step and no wrapper could move. On the
+ * figure, em is the page's own, which is what makes a diagram shrink with the page when the
+ * solver steps it down and grow inside a prose wrapper that was asked for a larger size.
+ *
+ * A flex column is how the cap reaches the drawing: the svg shrinks to the height left for it
+ * and keeps its ratio, where a max-height on the svg would have to fight the aspect the
+ * renderer gave it.
+ */
+.ainsi-page .ainsi-diagram {
+    margin: 0;
+    display: flex; flex-direction: column; align-items: flex-start;
+    max-height: 18em;
+}
 .ainsi-page .ainsi-diagram svg {
     display: block;
     width: auto; height: auto;
-    max-width: 100%; max-height: 21em;
+    max-width: 100%; min-height: 0;
 }
-/* the same sizes an image takes, and for the same reason: max constraints only, so the ratio
-   holds and the drawing never gets a second aspect of its own */
-.ainsi-page .ainsi-diagram[data-size="s"] svg { max-width: 34%; max-height: 9em; }
-.ainsi-page .ainsi-diagram[data-size="m"] svg { max-width: 60%; max-height: 14em; }
-.ainsi-page .ainsi-diagram[data-size="l"] svg { max-width: 84%; max-height: 18em; }
-.ainsi-page .ainsi-diagram[data-size="full"] svg { max-width: 100%; max-height: none; }
+/* the same sizes an image takes: max constraints only, so the ratio holds and the drawing never
+   gets a second aspect of its own */
+.ainsi-page .ainsi-diagram[data-size="s"] { max-height: 8em; }
+.ainsi-page .ainsi-diagram[data-size="s"] svg { max-width: 34%; }
+.ainsi-page .ainsi-diagram[data-size="m"] { max-height: 13em; }
+.ainsi-page .ainsi-diagram[data-size="m"] svg { max-width: 60%; }
+.ainsi-page .ainsi-diagram[data-size="l"] { max-height: 16em; }
+.ainsi-page .ainsi-diagram[data-size="l"] svg { max-width: 84%; }
+.ainsi-page .ainsi-diagram[data-size="full"] { max-height: none; }
 /*
  * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9
  * page whose width tracks min(1280px, viewport), so 31vw approximates it at every desktop

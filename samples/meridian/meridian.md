@@ -94,6 +94,7 @@ Where the next hundred million goes
 
 # The same sequence, with the dependencies in it
 
+<!-- ainsi: prose size=large -->
 ```mermaid
 gantt
     dateFormat YYYY-MM-DD
