@@ -32,6 +32,7 @@
         "zod": "^3.24.1"
     },
     "devDependencies": {
+        "mermaid": "^12.0.0",
         "playwright-core": "^1.62.1"
     }
 }

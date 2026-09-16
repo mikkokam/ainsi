@@ -27,7 +27,9 @@ Run `ainsi deck.md` in one terminal and let the agent work the same file in anot
 
 ## Diagrams
 
-Pictures do not come from the deck. Draw one with whatever tool draws it, build a PNG or an SVG beside the deck, and reference it as an ordinary image.
+A ```d2 or ```mermaid fence is drawn as the deck builds, in the theme's colours, so the agent writes the diagram in the same file as the words. d2 is the one to prefer and needs the `d2` binary; mermaid needs the chromium the fit solver uses, and brings `gantt`, which suits a roadmap with real dates on it. Where neither is installed the fence stays a code block and the build says why.
+
+Anything drawn by another tool is still a picture beside the deck, referenced as an ordinary image.
 
 ## The skill itself
 

@@ -11,6 +11,7 @@ import { pdf, PDF_IMAGES, type PdfImages } from "./pdf";
 import { pack } from "./pack";
 import { pptx } from "./pptx";
 import { serve } from "./serve";
+import { drawDiagrams, paletteOf } from "./diagram";
 import { CHROME, THEMES, USER_THEMES, load, loadLayouts, loadStart, loadStudio, loadTheme, loadViewer, newest, themeDir as themePath } from "./load";
 import type { Registry } from "./registry";
 import type { Block, Diagnostic, Directive, Entity, EntityKind, Page, Settings } from "./types";
@@ -301,6 +302,8 @@ async function build(path: string, entry?: Open): Promise<{ html: string; roots:
     const assembled = assemble(source, buildOptions);
     clock.mark("assemble");
     diagnostics.push(...assembled.diagnostics);
+    // before anything measures the page: a diagram is a picture by the time the fit solver sees it
+    await drawDiagrams(assembled.pages, paletteOf(theme.css), measuring, diagnostics);
     if (!editing) await inlineImages(assembled.pages, diagnostics, dir);
     if (entry) {
         entry.doc = {
@@ -615,6 +618,7 @@ async function thumbnail(source: string, dir: string, themeName?: string): Promi
     const options = { registry, layouts, themeCss: theme.css, themeOverridesCss: theme.overrides, viewer: { css: THUMB_CSS, script: "" } };
     const assembled = assemble(source, options);
     const pages = assembled.pages.slice(0, 1);
+    await drawDiagrams(pages, paletteOf(theme.css), measuring, diagnostics);
     await inlineImages(pages, diagnostics, dir);
     const { html } = renderPages(pages, assembled.title, settings, options);
     return Response.json({ html, ratio: settings.ratio });
@@ -715,6 +719,7 @@ async function fitted(path: string, diagnostics: Diagnostic[]) {
     const { theme, registry, layouts } = await stack(settings.theme, diagnostics, dir);
     const options = { registry, layouts, themeCss: theme.css, themeOverridesCss: theme.overrides, logo: await logoOf(settings.logo, diagnostics, dir), coverLogo: await logoOf(settings.coverLogo, diagnostics, dir) };
     const assembled = assemble(source, options);
+    await drawDiagrams(assembled.pages, paletteOf(theme.css), measuring, diagnostics);
     await inlineImages(assembled.pages, diagnostics, dir);
     const result = await fit(assembled.pages, assembled.title, assembled.settings, options, renderPages, await measuring());
     diagnostics.push(...assembled.diagnostics, ...result.diagnostics);

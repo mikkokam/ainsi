@@ -6,7 +6,7 @@ import { BUILTIN, LAYOUTS, load, loadLayouts } from "../src/load";
 
 const defaults = await load();
 const layouts = await loadLayouts();
-import { build } from "../src/build";
+import { assemble, build } from "../src/build";
 import type { Diagnostic } from "../src/types";
 
 const blocksOf = (md: string) => {
@@ -179,3 +179,34 @@ test("a prop no component declares is warned about, since passthrough would othe
     const clean = blocksOf("<!-- ainsi: boxes stretch=true -->\n\n- **A** one\n- **B** two\n");
     expect(clean.diagnostics.filter(d => d.message.includes("has no prop"))).toEqual([]);
 });
+
+/*
+ * Diagram fences. Both renderers are external: d2 is a binary on PATH and mermaid needs the
+ * same chromium the fit solver does, so each test skips rather than fails where the tool is
+ * missing, the way the browser tests do.
+ */
+const d2Here = await Bun.$`which d2`.quiet().then(() => true).catch(() => false);
+
+test.skipIf(!d2Here)("a d2 fence becomes an svg drawn in the theme's own colours", async () => {
+    const { paletteOf, drawDiagrams } = await import("../src/diagram");
+    const { loadTheme } = await import("../src/load");
+    const theme = await loadTheme(`${import.meta.dir}/../themes/swiss`);
+    const assembled = assemble("# T\n\n```d2\na -> b\n```\n", { registry: defaults, layouts });
+    await drawDiagrams(assembled.pages, paletteOf(theme.css), undefined, []);
+    const entity = assembled.pages[0]!.blocks.flatMap(b => b.entities).find(e => e.kind === "code")!;
+    expect((entity.node as { type: string }).type).toBe("html");
+    expect((entity.node as { value: string }).value).toContain("<svg");
+    // swiss's accent, not the default theme's, which sits under it in the same stylesheet
+    expect((entity.node as { value: string }).value).toContain("#e2231a");
+}, 30_000);
+
+test("a fence whose renderer cannot draw it stays a code block and says why", async () => {
+    const { drawDiagrams } = await import("../src/diagram");
+    const assembled = assemble("# T\n\n```mermaid\nnot a diagram\n```\n", { registry: defaults, layouts });
+    const diagnostics: Diagnostic[] = [];
+    // no browser handed in, which is the same as a machine without chromium
+    await drawDiagrams(assembled.pages, (await import("../src/diagram")).paletteOf(""), undefined, diagnostics);
+    const entity = assembled.pages[0]!.blocks.flatMap(b => b.entities).find(e => e.kind === "code")!;
+    expect((entity.node as { type: string }).type).toBe("code");
+    expect(diagnostics.some(d => d.message.includes("mermaid fence stays a code block"))).toBe(true);
+}, 30_000);

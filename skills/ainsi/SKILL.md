@@ -102,7 +102,9 @@ The lever a deck has over this is content: fewer items, shorter titles, an earli
 
 ## Diagrams
 
-Pictures are built outside the deck, not drawn in it: produce the PNG or SVG beside the deck and reference it as an ordinary image.
+A fenced ```d2 or ```mermaid block is drawn into the page at build time, in the theme's own colours and face, and every export carries the picture rather than the renderer. Prefer d2: it lays out denser graphs without help and it is what the house diagrams are written in. Reach for mermaid where it has a shape d2 does not, a `gantt` above all, which is the better answer for a roadmap of more than a handful of bars; the `roadmap` component stays the right one for a short, blocky one.
+
+d2 needs the `d2` binary on PATH and mermaid needs the same chromium the fit solver uses. Without either, the fence stays a code block and the build says so, so a diagram is never a build failure. A picture made by anything else is still an ordinary image beside the deck.
 
 ## What a deck never contains
 

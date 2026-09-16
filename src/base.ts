@@ -142,6 +142,18 @@ body[data-numbers="off"] .ainsi-number { display: none; }
 .ainsi-page [data-text="large"] { font-size: 1.2em; }
 .ainsi-page img { max-width: 100%; height: auto; display: block; }
 /*
+ * A drawn fence: d2 or mermaid, rendered to svg before the page was measured. The cap is in em
+ * so the fit solver's type step takes the drawing down with the words around it, the same
+ * bargain a field of pictures makes; width and height both give way, because an svg told to
+ * keep only one of them stretches.
+ */
+.ainsi-page .ainsi-diagram { margin: 0; display: flex; justify-content: center; }
+.ainsi-page .ainsi-diagram svg {
+    display: block;
+    width: auto; height: auto;
+    max-width: 100%; max-height: 17em;
+}
+/*
  * A tall image must not clip the page. No fit pass for images: the cap is ~55% of a 16:9
  * page whose width tracks min(1280px, viewport), so 31vw approximates it at every desktop
  * width and 400px matches the 1280px cap and the print page. Max constraints only, so the
